@@ -1,0 +1,54 @@
+// src/components/common/Loading/Loading.styles.scss
+.loading {
+  @include flex-center;
+  @include flex-column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-12);
+  min-height: 200px;
+
+  &__spinner {
+    position: relative;
+    width: 60px;
+    height: 60px;
+  }
+
+  &__spinner-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-radius: var(--radius-full);
+    animation: loading-spin 1.5s linear infinite;
+
+    &:nth-child(1) {
+      border-top-color: var(--kraken-primary);
+      animation-delay: 0s;
+    }
+
+    &:nth-child(2) {
+      border-right-color: var(--kraken-secondary);
+      animation-delay: -0.5s;
+    }
+
+    &:nth-child(3) {
+      border-bottom-color: var(--kraken-accent);
+      animation-delay: -1s;
+    }
+  }
+
+  &__message {
+    font-size: var(--font-size-base);
+    color: var(--gray-600);
+    text-align: center;
+    margin: 0;
+  }
+}
+
+@keyframes loading-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

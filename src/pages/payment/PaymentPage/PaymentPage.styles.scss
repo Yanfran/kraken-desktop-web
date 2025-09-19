@@ -1,0 +1,146 @@
+// src/pages/payment/PaymentPage/PaymentPage.styles.scss
+.payment-page {
+  max-width: 800px;
+  margin: 0 auto;
+
+  &__header {
+    margin-bottom: var(--spacing-8);
+    text-align: center;
+
+    h1 {
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--gray-900);
+      margin: 0 0 var(--spacing-2) 0;
+    }
+
+    p {
+      font-size: var(--font-size-lg);
+      color: var(--gray-600);
+      margin: 0;
+    }
+  }
+
+  &__content {
+    @include flex-column;
+    gap: var(--spacing-8);
+  }
+
+  &__summary {
+    @include card;
+    @include card-body;
+
+    h2 {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--gray-900);
+      margin: 0 0 var(--spacing-4) 0;
+    }
+  }
+
+  &__summary-item {
+    @include flex-between;
+    padding: var(--spacing-3) 0;
+    border-bottom: 1px solid var(--gray-100);
+
+    &:last-child {
+      border-bottom: none;
+      font-weight: var(--font-weight-semibold);
+      padding-top: var(--spacing-4);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    span:last-child {
+      color: var(--kraken-primary);
+    }
+  }
+
+  &__methods {
+    @include card;
+    @include card-body;
+
+    h2 {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--gray-900);
+      margin: 0 0 var(--spacing-4) 0;
+    }
+  }
+
+  &__method-buttons {
+    display: flex;
+    gap: var(--spacing-4);
+
+    @include respond-below('tablet') {
+      flex-direction: column;
+    }
+  }
+
+  &__form {
+    @include card;
+    @include card-body;
+
+    h2 {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--gray-900);
+      margin: 0 0 var(--spacing-6) 0;
+    }
+  }
+
+  &__form-group {
+    margin-bottom: var(--spacing-4);
+
+    label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--gray-700);
+      margin-bottom: var(--spacing-2);
+    }
+
+    input {
+      @include input-base;
+    }
+  }
+
+  &__form-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-4);
+
+    @include respond-below('tablet') {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__form-actions {
+    @include flex-between;
+    gap: var(--spacing-4);
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-6);
+    border-top: 1px solid var(--gray-200);
+
+    @include respond-below('tablet') {
+      flex-direction: column-reverse;
+
+      .button {
+        width: 100%;
+      }
+    }
+  }
+
+  &__error {
+    @include flex-center;
+    @include flex-column;
+    gap: var(--spacing-4);
+    padding: var(--spacing-12);
+    text-align: center;
+
+    h2 {
+      font-size: var(--font-size-2xl);
+      color: var(--error-color);
+      margin: 0;
+    }
+  }
+}
