@@ -1,3 +1,4 @@
+// vite.config.js - VERSIÓN ACTUALIZADA SIN WARNINGS
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
@@ -20,11 +21,14 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
+        // ✅ NUEVA SINTAXIS - Sin warnings
         additionalData: `
-          @import "@styles/variables.scss";
-          @import "@styles/mixins.scss";
-          @import "@styles/breakpoints.scss";
-        `
+          @use "@styles/variables.scss" as *;
+          @use "@styles/mixins.scss" as *;
+          @use "@styles/breakpoints.scss" as *;
+        `,
+        // ✅ SILENCIAR WARNINGS DE DEPRECACIÓN (opcional)
+        silenceDeprecations: ['legacy-js-api', 'import']
       }
     }
   },
