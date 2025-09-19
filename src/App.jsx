@@ -1,7 +1,8 @@
 // src/App.jsx - LOGIN EXACTO COMO MÓVIL
 import React from 'react';
-import './styles/variables.scss';
 import './App.styles.scss';
+
+
 
 // AuthContext simplificado para prueba
 const AuthContext = React.createContext({});
