@@ -1,22 +1,22 @@
 // src/pages/auth/Login/Login.styles.scss
+// KRAKEN LOGIN con soporte completo para modo oscuro y claro usando el sistema de temas
 
-/* ========================================
-   KRAKEN LOGIN - COLORES EXACTOS DE REACT NATIVE
-   Usando constants/Colors.ts
-======================================== */
-
+/* Variables base que serán sobrescritas por el ThemeProvider */
 :root {
-  /* ✅ COLORES EXACTOS DE LA APP MÓVIL */
-  --input-background: #F5F5F5;
-  --border-color: #D0D0D0;
-  --primary: #FF4500;
-  --background: #FFFFFF;
-  --text-primary: #000000;
-  --text-secondary: #757575;
-  --text-light: #FFFFFF;
-  --text-placeholder: #AAAAAA;
-  --error: #F44336;
-  --separator: #EEEEEE;
+  /* Estas variables se actualizan dinámicamente desde ThemeContext */
+  --color-primary: #FF4500;
+  --color-primary-light: #FF7F50;
+  --color-secondary: #0175c8;
+  --color-background: #FFFFFF;
+  --color-card-background: #F8F8F8;
+  --color-text-primary: #000000;
+  --color-text-secondary: #757575;
+  --color-text-placeholder: #AAAAAA;
+  --color-success: #4CAF50;
+  --color-error: #F44336;
+  --color-input-background: #F5F5F5;
+  --color-border: #D0D0D0;
+  --color-separator: #EEEEEE;
 }
 
 * {
@@ -28,8 +28,12 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   overflow-x: hidden;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* CONTENEDOR PRINCIPAL CON ADAPTACIÓN POR TEMA */
 .kraken-login {
   min-height: 100vh;
   width: 100vw;
@@ -39,254 +43,148 @@ body {
   align-items: center;
   justify-content: flex-start;
   padding: 0 20px;
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
   
-  /* FONDO CON IMAGEN REAL - EXACTO COMO MÓVIL */
-  background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  /* Fondo de imagen para modo claro */
+  &[data-theme="light"] {
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+      justify-content: center;
+      padding: 40px 20px;
+    }
+  }
   
-  /* Desktop usa imagen más grande y se centra */
-  @media (min-width: 768px) {
-    background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
-    justify-content: center;
-    padding: 40px 20px;
+  /* Fondo para modo oscuro - sin imagen, gradiente sutil */
+  &[data-theme="dark"] {
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+    
+    @media (min-width: 768px) {
+      justify-content: center;
+      padding: 40px 20px;
+    }
   }
 }
 
-/* LOGO KRAKEN REAL - POSICIONAMIENTO MÓVIL */
+/* LOGO ADAPTATIVO */
 .kraken-login__logo {
+  margin-top: 30px!important;
   text-align: center;
   margin-bottom: 52px;
   z-index: 10;
   position: relative;
-  margin-top: 60px; /* ✅ Espaciado superior como móvil */
+  margin-top: 60px;
   
   @media (min-width: 768px) {
-    margin-top: 0; /* En desktop se centra automáticamente */
     margin-top: 10px;
-    margin-bottom: 0px;
+    margin-bottom: 20px;
   }
 }
 
 .kraken-login__logo-image {
-  width: 200px; /* ✅ Tamaño más ajustado como móvil */
+  width: 200px;
   height: auto;
   max-height: 100px;
   object-fit: contain;
-//   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+  transition: filter 0.3s ease;
+  
+  /* Filtro para modo oscuro para mejorar visibilidad del logo */
+  [data-theme="dark"] & {
+    filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 180, 133, 0.3));
+  }
 }
 
-/* TÍTULO - USANDO COLORES EXACTOS */
+/* TÍTULO ADAPTATIVO */
 .kraken-login__title {
   font-size: 24px;
   font-weight: 700;
-  color: var(--text-primary); /* ✅ #000000 exacto */
+  color: var(--color-text-primary);
   text-align: center;
-  margin-bottom: 28px;
-  // letter-spacing: -0.5px;
+  margin-top: -17px;
+  margin-bottom: 34px;
   z-index: 10;
   position: relative;
+  transition: color 0.3s ease;
 }
 
-
-/* CONTENEDOR PRINCIPAL DEL FORMULARIO */
+/* CONTENEDORES PRINCIPALES */
 .kraken-login__form,
 .kraken-login__google-button,
 .kraken-login__separator,
 .kraken-login__register,
 .kraken-login__terms {
   width: 100%;
-  max-width: 350px;
+  max-width: 380px;
   z-index: 10;
   position: relative;
 }
 
-/* BOTÓN GOOGLE - COLORES EXACTOS DE REACT NATIVE */
-.kraken-login__google-button {
-  width: 100%;
-  padding: 14px 20px;
-  border: 1px solid var(--border-color); /* ✅ #D0D0D0 exacto */
-  border-radius: 50px;
-  background-color: var(--background); /* ✅ #FFFFFF exacto */
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-primary); /* ✅ #000000 exacto */
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  
-  &:hover:not(:disabled) {
-    background-color: #F8F8F8;
-    border-color: var(--primary); /* ✅ #FF4500 exacto */
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-  
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
-.kraken-login__google-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-
-/* BOTÓN GOOGLE - COLORES EXACTOS DE REACT NATIVE */
-.kraken-login__google-button {
-  width: 100%;
-  // padding: 14px 20px;
-  border: 1px solid var(--border-color); /* ✅ #D0D0D0 exacto */
-  border-radius: 50px;
-  background-color: var(--background); /* ✅ #FFFFFF exacto */
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-primary); /* ✅ #000000 exacto */
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  
-  &:hover:not(:disabled) {
-    background-color: #F8F8F8;
-    border-color: var(--primary); /* ✅ #FF4500 exacto */
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-  
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
-.kraken-login__google-icon {
-  width: 25px;
-  height: 25px;
-  flex-shrink: 0;
-  object-fit: contain; /* ✅ Para que la imagen se ajuste correctamente */
-}
-
-/* SEPARADOR CON PUNTO - AJUSTADO */
-.kraken-login__separator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 20px 0; /* ✅ Margen más compacto */
-  position: relative;
-  
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #E2E8F0;
-  }
-}
-
-.kraken-login__separator-dot {
-  width: 6px; /* ✅ Punto más pequeño */
-  height: 6px;
-  background: #CBD5E0;
-  border-radius: 50%;
-  margin: 0 16px;
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 14px;
-    height: 14px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    z-index: -1;
-  }
-}
-
-/* FORMULARIO */
-.kraken-login__form {
-  display: flex;
-  flex-direction: column;
-}
-
-/* CAMPOS DE INPUT - EXACTO COMO REACT NATIVE */
+/* CAMPOS DE INPUT ADAPTATIVOS */
 .kraken-input-field {
-  margin-bottom: 16px; /* ✅ Margen más compacto */
+  margin-bottom: 16px;
   width: 100%;
 }
 
 .kraken-input-field__label {
   display: block;
   font-size: 14px;
-  font-weight: 500; /* ✅ Peso más ligero como móvil */
-  color: #4A5568; /* ✅ Color más suave como móvil */
-  margin-bottom: 6px; /* ✅ Margen más compacto */
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
   margin-left: 5px;
+  transition: color 0.3s ease;
 }
 
 .kraken-input-field__input {
   width: 100%;
-  height: 48px; /* ✅ Altura más compacta */
-  padding: 0 18px; /* ✅ Padding más ajustado */
-  border: 1px solid #D0D0D0;
+  height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--color-border);
   border-radius: 50px;
-  font-size: 15px; /* ✅ Tamaño de fuente más pequeño */
+  font-size: 15px;
   font-family: inherit;
-  color: #000000;
-  background-color: #F5F5F5;
+  color: var(--color-text-primary);
+  background-color: var(--color-input-background);
   transition: all 0.3s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   
   &:focus {
     outline: none;
-    border-color: #FF4500;
-    background-color: #FFFFFF;
+    border-color: var(--color-primary);
+    background-color: var(--color-background);
     box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
   }
   
   &::placeholder {
-    color: #AAAAAA;
-    font-size: 14px; /* ✅ Placeholder más pequeño */
+    color: var(--color-text-placeholder);
+    font-size: 14px;
   }
   
   &--error {
-    border-color: #F44336;
+    border-color: var(--color-error);
     background-color: rgba(244, 67, 54, 0.05);
     
+    [data-theme="dark"] & {
+      background-color: rgba(255, 180, 171, 0.1);
+    }
+    
     &:focus {
-      border-color: #F44336;
+      border-color: var(--color-error);
       box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+      
+      [data-theme="dark"] & {
+        box-shadow: 0 0 0 3px rgba(255, 180, 171, 0.2);
+      }
     }
   }
 }
 
-/* CONTENEDOR DE CONTRASEÑA CON BOTÓN OJO */
+/* CONTENEDOR DE CONTRASEÑA */
 .kraken-input-field__password-container {
   position: relative;
 }
@@ -299,8 +197,9 @@ body {
   background: none;
   border: none;
   cursor: pointer;
+  color: var(--color-text-secondary);
   opacity: 0.6;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
   padding: 4px;
   font-size: 16px;
   border-radius: 50%;
@@ -308,16 +207,21 @@ body {
   &:hover {
     opacity: 1;
     background-color: rgba(0, 0, 0, 0.05);
+    
+    [data-theme="dark"] & {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
   }
 }
 
 .kraken-input-field__error {
   display: block;
-  color: var(--error); /* ✅ #F44336 exacto */
+  color: var(--color-error);
   font-size: 12px;
   margin-top: 4px;
   margin-left: 5px;
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 /* ENLACE OLVIDÉ CONTRASEÑA */
@@ -327,7 +231,7 @@ body {
 }
 
 .kraken-login__forgot-link {
-  color: var(--primary); /* ✅ #FF4500 exacto */
+  color: var(--color-primary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -335,14 +239,9 @@ body {
   padding: 4px 8px;
   border-radius: 6px;
   
-  &:hover {
-    opacity: 0.8;
-    background-color: rgba(255, 69, 0, 0.05);
-    text-decoration: underline;
-  }
 }
 
-/* BOTÓN PRINCIPAL DE LOGIN - COLORES EXACTOS */
+/* BOTÓN PRINCIPAL ADAPTATIVO */
 .kraken-login__submit-button {
   width: 100%;
   height: 48px;
@@ -350,8 +249,8 @@ body {
   border-radius: 50px;
   font-size: 16px;
   font-weight: 600;
-  background-color: var(--primary); /* ✅ #FF4500 exacto */
-  color: var(--text-light); /* ✅ #FFFFFF exacto */
+  background-color: var(--color-primary);
+  color: #FFFFFF;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -363,9 +262,16 @@ body {
   box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
   
   &:hover:not(:disabled) {
-    background-color: #E03E00; /* Un tono más oscuro del primary */
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(255, 69, 0, 0.4);
+    
+    [data-theme="light"] & {
+      background-color: #E03E00;
+    }
+    
+    [data-theme="dark"] & {
+      background-color: #FFCAB0;
+    }
   }
   
   &:active:not(:disabled) {
@@ -401,21 +307,121 @@ body {
   }
 }
 
-/* ENLACE REGISTRO - COLORES EXACTOS */
+/* BOTÓN GOOGLE ADAPTATIVO */
+.kraken-login__google-button {
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: 50px;
+  background-color: var(--color-background);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  
+  [data-theme="dark"] & {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+    
+    [data-theme="light"] & {
+      background-color: #F8F8F8;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    [data-theme="dark"] & {
+      background-color: #211F26;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.kraken-login__google-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+/* SEPARADOR ADAPTATIVO */
+.kraken-login__separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+  position: relative;
+  
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-separator);
+    transition: background-color 0.3s ease;
+  }
+}
+
+.kraken-login__separator-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-text-secondary);
+  border-radius: 50%;
+  margin: 0 16px;
+  position: relative;
+  opacity: 0.6;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: var(--color-background);
+    border-radius: 50%;
+    z-index: -1;
+    transition: background-color 0.3s ease;
+  }
+}
+
+/* ENLACES DE REGISTRO ADAPTATIVOS */
 .kraken-login__register {
   text-align: center;
-  margin-bottom: 0px;
+  margin-bottom: 20px;
 }
 
 .kraken-login__register-text {
   font-size: 14px;
-  color: var(--text-secondary); /* ✅ #757575 exacto */
+  color: var(--color-text-secondary);
+  transition: color 0.3s ease;
 }
 
 .kraken-login__register-link {
   background: none;
   border: none;
-  color: var(--primary); /* ✅ #FF4500 exacto */
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
@@ -427,12 +433,19 @@ body {
   
   &:hover {
     opacity: 0.8;
-    background-color: rgba(255, 69, 0, 0.05);
     text-decoration: underline;
+    
+    [data-theme="light"] & {
+      background-color: rgba(255, 69, 0, 0.05);
+    }
+    
+    [data-theme="dark"] & {
+      background-color: rgba(255, 180, 133, 0.1);
+    }
   }
 }
 
-/* TÉRMINOS Y CONDICIONES - COLORES EXACTOS */
+/* TÉRMINOS Y CONDICIONES ADAPTATIVOS */
 .kraken-login__terms {
   text-align: center;
   padding: 16px 0;
@@ -440,38 +453,26 @@ body {
 
 .kraken-login__terms-text {
   font-size: 12px;
-  color: var(--text-secondary); /* ✅ #757575 exacto */
-  line-height: 1.5;
-  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  transition: color 0.3s ease;
 }
 
 .kraken-login__terms-link {
-  color: var(--primary); /* ✅ #FF4500 exacto */
-  text-decoration: underline;
-  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
   transition: all 0.2s ease;
-  padding: 1px 3px;
-  border-radius: 3px;
   
   &:hover {
-    background-color: rgba(255, 69, 0, 0.05);
     text-decoration: underline;
+    opacity: 0.8;
   }
 }
 
-/* RESPONSIVE DESIGN */
+/* RESPONSIVE ADAPTATIVO */
 @media (max-width: 480px) {
   .kraken-login {
-    padding: 20px 16px;
-  }
-  
-  .kraken-login__logo-kraken {
-    font-size: 32px;
-  }
-  
-  .kraken-login__title {
-    font-size: 24px;
-    margin-bottom: 32px;
+    padding: 0 16px;
   }
   
   .kraken-login__form,
@@ -481,73 +482,26 @@ body {
   .kraken-login__terms {
     max-width: 100%;
   }
-}
-
-@media (min-width: 768px) {
-  .kraken-login {
-    padding: 60px 40px;
-  }
-  
-  .kraken-login__form,
-  .kraken-login__google-button,
-  .kraken-login__separator,
-  .kraken-login__register,
-  .kraken-login__terms {
-    max-width: 400px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .kraken-login__form,
-  .kraken-login__google-button,
-  .kraken-login__separator,
-  .kraken-login__register,
-  .kraken-login__terms {
-    max-width: 380px;
-  }
-  
-  .kraken-login__logo-kraken {
-    font-size: 40px;
-  }
   
   .kraken-login__title {
-    font-size: 24px;
+    font-size: 22px;
+  }
+  
+  .kraken-input-field__input {
+    height: 44px;
+    font-size: 14px;
+  }
+  
+  .kraken-login__submit-button {
+    height: 44px;
+    font-size: 15px;
   }
 }
 
-/* ANIMACIONES DE ENTRADA */
-.kraken-login__logo,
-.kraken-login__title,
-.kraken-login__google-button,
-.kraken-login__separator,
-.kraken-input-field,
-.kraken-login__forgot,
-.kraken-login__submit-button,
-.kraken-login__register,
-.kraken-login__terms {
-  animation: fadeInUp 0.6s ease-out forwards;
-  opacity: 0;
+/* ANIMACIONES SUAVES PARA CAMBIO DE TEMA */
+* {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
 }
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Delays escalonados para efecto secuencial */
-.kraken-login__logo { animation-delay: 0.1s; }
-.kraken-login__title { animation-delay: 0.2s; }
-.kraken-login__google-button { animation-delay: 0.3s; padding: 12px 20px; }
-.kraken-login__separator { animation-delay: 0.4s; }
-.kraken-input-field:nth-of-type(1) { animation-delay: 0.5s; }
-.kraken-input-field:nth-of-type(2) { animation-delay: 0.6s; }
-.kraken-login__forgot { animation-delay: 0.7s; }
-.kraken-login__submit-button { animation-delay: 0.8s; }
-.kraken-login__register { animation-delay: 0.9s; }
-.kraken-login__terms { animation-delay: 1s; }

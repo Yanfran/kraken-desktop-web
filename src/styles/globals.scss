@@ -1,0 +1,356 @@
+// src/styles/globals.scss
+// Estilos globales con soporte para temas Kraken
+
+// Importar variables si las tienes
+// @import './variables.scss';
+
+/* ============================================
+   RESET Y BASE STYLES CON TEMA DINÁMICO
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Variables dinámicas aplicadas por ThemeContext */
+  background-color: var(--color-background, #FFFFFF);
+  color: var(--color-text-primary, #000000);
+  
+  /* Transición suave para cambio de tema */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   CLASES UTILITARIAS CON TEMA
+   ============================================ */
+
+/* Colores de texto */
+.text-primary { color: var(--color-text-primary, #000000); }
+.text-secondary { color: var(--color-text-secondary, #757575); }
+.text-error { color: var(--color-error, #F44336); }
+.text-success { color: var(--color-success, #4CAF50); }
+.text-warning { color: var(--color-warning, #FF9800); }
+
+/* Colores de fondo */
+.bg-primary { background-color: var(--color-primary, #FF4500); }
+.bg-secondary { background-color: var(--color-secondary, #0175c8); }
+.bg-surface { background-color: var(--color-surface, #FEFBFF); }
+.bg-card { background-color: var(--color-card-background, #F8F8F8); }
+
+/* Bordes */
+.border-default { border: 1px solid var(--color-border, #D0D0D0); }
+.border-error { border: 1px solid var(--color-error, #F44336); }
+
+/* ============================================
+   COMPONENTES BASE ADAPTATIVOS
+   ============================================ */
+
+/* Botones base */
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  &:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+  
+  &:not(:disabled):active {
+    transform: translateY(0);
+  }
+}
+
+.btn--primary {
+  background-color: var(--color-primary, #FF4500);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(255, 69, 0, 0.3);
+  
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(255, 69, 0, 0.4);
+  }
+}
+
+.btn--secondary {
+  background-color: var(--color-secondary, #0175c8);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(1, 117, 200, 0.3);
+  
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(1, 117, 200, 0.4);
+  }
+}
+
+.btn--outline {
+  background-color: transparent;
+  color: var(--color-primary, #FF4500);
+  border: 1px solid var(--color-primary, #FF4500);
+  
+  &:hover:not(:disabled) {
+    background-color: var(--color-primary, #FF4500);
+    color: #FFFFFF;
+  }
+}
+
+/* Cards adaptativas */
+.card {
+  background-color: var(--color-card-background, #F8F8F8);
+  border: 1px solid var(--color-border, #D0D0D0);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    
+    [data-theme="dark"] & {
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+
+/* Inputs base */
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border, #D0D0D0);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text-primary, #000000);
+  background-color: var(--color-input-background, #F5F5F5);
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary, #FF4500);
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+    background-color: var(--color-background, #FFFFFF);
+  }
+  
+  &::placeholder {
+    color: var(--color-text-placeholder, #AAAAAA);
+  }
+  
+  &.input--error {
+    border-color: var(--color-error, #F44336);
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+    }
+  }
+}
+
+/* Alertas */
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 16px 0;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.alert--success {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--color-success, #4CAF50);
+  border-color: var(--color-success, #4CAF50);
+  
+  [data-theme="dark"] & {
+    background-color: rgba(76, 175, 80, 0.2);
+  }
+}
+
+.alert--error {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--color-error, #F44336);
+  border-color: var(--color-error, #F44336);
+  
+  [data-theme="dark"] & {
+    background-color: rgba(255, 180, 171, 0.2);
+  }
+}
+
+.alert--warning {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--color-warning, #FF9800);
+  border-color: var(--color-warning, #FF9800);
+  
+  [data-theme="dark"] & {
+    background-color: rgba(255, 152, 0, 0.2);
+  }
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface, #FEFBFF);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-secondary, #757575);
+  border-radius: 4px;
+  opacity: 0.5;
+  
+  &:hover {
+    background: var(--color-primary, #FF4500);
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
+
+/* Mobile First */
+@media (max-width: 480px) {
+  .btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  
+  .card {
+    padding: 16px;
+    border-radius: 8px;
+  }
+  
+  .input {
+    padding: 10px 12px;
+  }
+}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 768px) {
+  .btn {
+    padding: 12px 20px;
+  }
+  
+  .card {
+    padding: 18px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 769px) {
+  .btn {
+    padding: 14px 28px;
+    font-size: 16px;
+  }
+  
+  .card {
+    padding: 24px;
+  }
+  
+  .input {
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+}
+
+/* ============================================
+   ANIMACIONES Y TRANSICIONES
+   ============================================ */
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideIn {
+  from { 
+    transform: translateX(-100%); 
+  }
+  to { 
+    transform: translateX(0); 
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* ============================================
+   MODO ACCESIBILIDAD Y PREFERENCIAS
+   ============================================ */
+
+/* Respetar preferencia de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Alto contraste para accesibilidad */
+@media (prefers-contrast: high) {
+  .btn,
+  .input,
+  .card {
+    border-width: 2px;
+  }
+  
+  .btn--outline {
+    border-width: 3px;
+  }
+}
+
+/* ============================================
+   FOCUS VISIBLE PARA ACCESIBILIDAD
+   ============================================ */
+
+.btn:focus-visible,
+.input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-primary, #FF4500);
+  outline-offset: 2px;
+}
