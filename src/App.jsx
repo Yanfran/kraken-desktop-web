@@ -8,11 +8,7 @@ import './App.styles.scss';
 const AuthContext = React.createContext({});
 
 const AuthProvider = ({ children }) => {
-  // const [user, setUser] = React.useState(null);
-  const [user, setUser] = React.useState({ 
-    email: 'test@test.com', 
-    name: 'Usuario Test' 
-  }); // Simular usuario logueado
+  const [user, setUser] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSignedIn, setIsSignedIn] = React.useState(false);
 
@@ -30,19 +26,33 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signUp = async (email, password, name, lastName) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setUser({ email: 'google@user.com', name: 'Usuario Google' });
-      setIsSignedIn(true);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // No estableces el usuario como logueado después del registro
+      // Solo retorna success para redirigir a email confirmation
       return { success: true };
     } catch (error) {
-      return { success: false };
+      return { success: false, message: 'Error al registrarse' };
     } finally {
       setIsLoading(false);
     }
   };
+    const signInWithGoogle = async () => {
+      setIsLoading(true);
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setUser({ email: 'google@user.com', name: 'Usuario Google' });
+        setIsSignedIn(true);
+        return { success: true };
+      } catch (error) {
+        return { success: false };
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
 
   const logout = () => {
     setUser(null);
@@ -50,7 +60,7 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isSignedIn, isLoading, signIn, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, isSignedIn, isLoading, signIn, signUp, signInWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -61,6 +71,9 @@ export const useAuth = () => React.useContext(AuthContext);
 // Importar componentes
 const Login = React.lazy(() => import('./pages/auth/Login/Login'));
 const Register = React.lazy(() => import('./pages/auth/Register/Register'));
+const EmailConfirmation = React.lazy(() => import('./pages/auth/EmailConfirmation/EmailConfirmation'));
+const CompleteProfile = React.lazy(() => import('./pages/auth/CompleteProfile/CompleteProfile'));
+const PersonalData = React.lazy(() => import('./pages/auth/PersonalData/PersonalData'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'));
 
 // Dashboard con tema integrado
@@ -112,6 +125,33 @@ function App() {
                   element={
                     <PublicRoute>
                       <Register />
+                    </PublicRoute>
+                  }
+                />
+                
+                <Route
+                  path="/email-confirmation"
+                  element={
+                    <PublicRoute>
+                      <EmailConfirmation />
+                    </PublicRoute>
+                  }
+                />
+
+                <Route
+                  path="/complete-profile"
+                  element={
+                    <PublicRoute>
+                      <CompleteProfile />
+                    </PublicRoute>
+                  }
+                />
+
+                <Route
+                  path="/personal-data"
+                  element={
+                    <PublicRoute>
+                      <PersonalData />
                     </PublicRoute>
                   }
                 />

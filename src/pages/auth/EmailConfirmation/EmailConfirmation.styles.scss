@@ -1,0 +1,256 @@
+// src/pages/auth/EmailConfirmation/EmailConfirmation.styles.scss
+// KRAKEN EMAIL CONFIRMATION - Mantiene la misma estructura que Login/Register
+
+/* Variables base que serán sobrescritas por el ThemeProvider */
+:root {
+  /* Estas variables se actualizan dinámicamente desde ThemeContext */
+  --color-primary: #FF4500;
+  --color-primary-light: #FF7F50;
+  --color-secondary: #0175c8;
+  --color-background: #FFFFFF;
+  --color-card-background: #F8F8F8;
+  --color-text-primary: #000000;
+  --color-text-secondary: #757575;
+  --color-text-placeholder: #AAAAAA;
+  --color-success: #4CAF50;
+  --color-error: #F44336;
+  --color-input-background: #F5F5F5;
+  --color-border: #D0D0D0;
+  --color-separator: #EEEEEE;
+}
+
+/* CONTENEDOR PRINCIPAL - EXACTO COMO LOGIN/REGISTER */
+.kraken-email-confirmation {
+  min-height: 100vh;
+  width: 100vw;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 20px;
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
+  
+  /* Fondo de imagen para modo claro */
+  &[data-theme="light"] {
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+      justify-content: center;
+      padding: 40px 20px;
+    }
+  }
+  
+  /* Fondo para modo oscuro */
+  &[data-theme="dark"] {
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+    
+    @media (min-width: 768px) {
+      justify-content: center;
+      padding: 40px 20px;
+    }
+  }
+}
+
+/* LOGO - EXACTAMENTE IGUAL QUE LOGIN/REGISTER */
+.kraken-email-confirmation__logo {
+  margin-top: 30px!important;
+  text-align: center;
+  margin-bottom: 52px;
+  z-index: 10;
+  position: relative;
+  margin-top: 60px;
+  
+  @media (min-width: 768px) {
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+}
+
+.kraken-email-confirmation__logo-image {
+  width: 200px; /* Misma medida que Login/Register */
+  height: auto;
+  max-height: 100px; /* Misma medida que Login/Register */
+  object-fit: contain;
+  transition: filter 0.3s ease;
+  
+  /* Filtro para modo oscuro */
+  [data-theme="dark"] & {
+    filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 180, 133, 0.3));
+  }
+}
+
+/* CONTENIDO PRINCIPAL */
+.kraken-email-confirmation__content {
+  width: 100%;
+  max-width: 380px;
+  z-index: 10;
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* TÍTULO */
+.kraken-email-confirmation__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin: 0;
+  line-height: 1.3;
+  max-width: 400px;
+  z-index: 10;
+  position: relative;
+  transition: color 0.3s ease;
+  
+  @media (max-width: 480px) {
+    font-size: 22px;
+  }
+}
+
+/* DESCRIPCIÓN */
+.kraken-email-confirmation__description {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 350px;
+  transition: color 0.3s ease;
+  
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
+}
+
+/* PREGUNTA PROBLEMAS */
+.kraken-email-confirmation__problems {
+  font-size: 16px;
+  color: var(--color-text-primary);
+  margin: 0;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  margin-bottom: -15px;
+}
+
+/* ENLACE REENVIAR */
+.kraken-email-confirmation__resend-link {
+  display: inline-block;
+  color: var(--color-primary);
+  text-decoration: underline;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  padding: 0px 16px;
+  border-radius: 6px;
+  text-align: center;
+   margin-bottom: -15px;
+  
+  &:hover {
+    opacity: 0.8;
+    text-decoration: none;
+    
+    [data-theme="light"] & {
+      background-color: rgba(255, 69, 0, 0.05);
+    }
+    
+    [data-theme="dark"] & {
+      background-color: rgba(255, 180, 133, 0.1);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
+}
+
+/* LOADING PARA REENVIAR */
+.kraken-email-confirmation__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kraken-email-confirmation__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* LINK VOLVER AL LOGIN */
+.kraken-email-confirmation__back-link {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: underline;
+  
+  &:hover {
+    color: var(--color-primary);
+    text-decoration: none;
+    
+    [data-theme="light"] & {
+      background-color: rgba(255, 69, 0, 0.05);
+    }
+    
+    [data-theme="dark"] & {
+      background-color: rgba(255, 180, 133, 0.1);
+    }
+  }
+}
+
+/* RESPONSIVE ADAPTATIVO */
+@media (max-width: 480px) {
+  .kraken-email-confirmation {
+    padding: 0 16px;
+  }
+  
+  .kraken-email-confirmation__content {
+    max-width: 100%;
+    gap: 20px;
+  }
+  
+  .kraken-email-confirmation__title {
+    font-size: 20px;
+  }
+  
+  .kraken-email-confirmation__description {
+    font-size: 14px;
+  }
+  
+  .kraken-email-confirmation__resend-button {
+    max-width: 100%;
+  }
+}
+
+/* ANIMACIONES SUAVES PARA CAMBIO DE TEMA */
+* {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}

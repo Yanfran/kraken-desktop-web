@@ -1,0 +1,370 @@
+// src/pages/auth/PersonalData/PersonalData.styles.scss
+// KRAKEN PERSONAL DATA - Mantiene consistencia con otras pantallas de auth
+
+/* Variables base que serán sobrescritas por el ThemeProvider */
+:root {
+  --color-primary: #FF4500;
+  --color-background: #FFFFFF;
+  --color-text-primary: #000000;
+  --color-text-secondary: #757575;
+  --color-text-placeholder: #AAAAAA;
+  --color-error: #F44336;
+  --color-input-background: #F5F5F5;
+  --color-border: #D0D0D0;
+}
+
+/* CONTENEDOR PRINCIPAL */
+.kraken-personal-data {
+  min-height: 100vh;
+  width: 100vw;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 20px;
+  padding-bottom: 40px;
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
+  
+  /* Fondo de imagen para modo claro */
+  &[data-theme="light"] {
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+      justify-content: center;
+      padding: 40px 20px;
+    }
+  }
+  
+  /* Fondo para modo oscuro */
+  &[data-theme="dark"] {
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+    
+    @media (min-width: 768px) {
+      justify-content: center;
+      padding: 40px 20px;
+    }
+  }
+}
+
+/* LOGO - IGUAL QUE OTRAS PANTALLAS */
+.kraken-personal-data__logo {
+  margin-top: 30px!important;
+  text-align: center;
+  margin-bottom: 20px;
+  z-index: 10;
+  position: relative;
+  margin-top: 60px;
+  
+  @media (min-width: 768px) {
+    margin-top: 10px;
+    margin-bottom: 15px;
+  }
+}
+
+.kraken-personal-data__logo-image {
+  width: 200px;
+  height: auto;
+  max-height: 100px;
+  object-fit: contain;
+  transition: filter 0.3s ease;
+  
+  [data-theme="dark"] & {
+    filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 180, 133, 0.3));
+  }
+}
+
+/* CONTENIDO PRINCIPAL */
+.kraken-personal-data__content {
+  width: 100%;
+  max-width: 400px;
+  z-index: 10;
+  position: relative;
+}
+
+/* TÍTULO */
+.kraken-personal-data__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin: 0 0 24px 0;
+  transition: color 0.3s ease;
+  
+  @media (max-width: 480px) {
+    font-size: 22px;
+  }
+}
+
+/* FORMULARIO */
+.kraken-personal-data__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* CAMPOS DEL FORMULARIO */
+.kraken-form-field {
+  display: flex;
+  flex-direction: column;
+  
+  &--half {
+    flex: 1;
+  }
+}
+
+.kraken-form-field__row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.kraken-form-field__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+  transition: color 0.3s ease;
+  
+  &--additional {
+    margin-top: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}
+
+/* INPUTS */
+.kraken-form-field__input,
+.kraken-form-field__select {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 25px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background-color: var(--color-input-background);
+  transition: all 0.3s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background-color: var(--color-background);
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+  }
+  
+  &::placeholder {
+    color: var(--color-text-placeholder);
+    font-size: 14px;
+  }
+  
+  &--error {
+    border-color: var(--color-error);
+    background-color: rgba(244, 67, 54, 0.05);
+    
+    &:focus {
+      border-color: var(--color-error);
+      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    height: 44px;
+    font-size: 14px;
+  }
+}
+
+/* CAMPO FIJO DE VENEZUELA */
+.kraken-form-field__fixed-country {
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 25px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  
+  [data-theme="dark"] & {
+    background-color: #2B2930;
+    border-color: #49454F;
+  }
+  
+  @media (max-width: 480px) {
+    height: 44px;
+    font-size: 14px;
+  }
+}
+
+/* TEXTO DE AYUDA */
+.kraken-form-field__helper {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+  margin-left: 4px;
+  transition: color 0.3s ease;
+}
+
+/* MENSAJES DE ERROR */
+.kraken-form-field__error {
+  font-size: 12px;
+  color: var(--color-error);
+  margin-top: 4px;
+  margin-left: 4px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.kraken-form-field__error-general {
+  background-color: rgba(244, 67, 54, 0.05);
+  border: 1px solid var(--color-error);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--color-error);
+  font-size: 14px;
+  text-align: center;
+  margin: 8px 0;
+  
+  [data-theme="dark"] & {
+    background-color: rgba(255, 180, 171, 0.1);
+  }
+}
+
+/* BOTÓN DE ENVÍO */
+.kraken-personal-data__submit-button {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: inherit;
+  margin-top: 16px;
+  
+  &.active {
+    background-color: var(--color-primary);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(255, 69, 0, 0.4);
+      background-color: #E03E00;
+      
+      [data-theme="dark"] & {
+        background-color: #FFCAB0;
+      }
+    }
+  }
+  
+  &.inactive {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    
+    [data-theme="dark"] & {
+      background-color: #49454F;
+      color: #938F99;
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  @media (max-width: 480px) {
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+/* LOADING */
+.kraken-personal-data__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kraken-personal-data__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* TÉRMINOS Y CONDICIONES */
+.kraken-personal-data__terms {
+  text-align: center;
+  padding: 16px 0;
+  margin-top: 8px;
+  
+  p {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin: 0;
+    transition: color 0.3s ease;
+  }
+  
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      text-decoration: underline;
+      opacity: 0.8;
+    }
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  .kraken-personal-data {
+    padding: 0 16px 40px 16px;
+  }
+  
+  .kraken-personal-data__content {
+    max-width: 100%;
+  }
+  
+  .kraken-form-field__row {
+    gap: 8px;
+  }
+  
+  .kraken-personal-data__form {
+    gap: 14px;
+  }
+}
+
+/* ANIMACIONES SUAVES PARA CAMBIO DE TEMA */
+* {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}

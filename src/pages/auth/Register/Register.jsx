@@ -97,19 +97,17 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Manejar registro con email
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
-    // Aquí deberías implementar tu lógica de registro
-    // Por ahora simulo una respuesta
+    // Por ahora solo simula el registro y navega
     try {
-      // Simular registro (reemplaza con tu lógica real)
+      // Simular loading
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Redirigir a confirmación de email o dashboard según tu flujo
+      // Navegar directo a email-confirmation
       navigate('/email-confirmation');
     } catch (error) {
       setErrors({ submit: 'Error al registrarse. Intenta nuevamente.' });
