@@ -8,7 +8,11 @@ import './App.styles.scss';
 const AuthContext = React.createContext({});
 
 const AuthProvider = ({ children }) => {
-  const [user, setUser] = React.useState(null);
+  // const [user, setUser] = React.useState(null);
+  const [user, setUser] = React.useState({ 
+    email: 'test@test.com', 
+    name: 'Usuario Test' 
+  }); // Simular usuario logueado
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSignedIn, setIsSignedIn] = React.useState(false);
 
@@ -54,67 +58,14 @@ const AuthProvider = ({ children }) => {
 
 export const useAuth = () => React.useContext(AuthContext);
 
-// Importar Login page
+// Importar componentes
 const Login = React.lazy(() => import('./pages/auth/Login/Login'));
+const Register = React.lazy(() => import('./pages/auth/Register/Register'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'));
 
-// Dashboard simple con toggle de tema
-const Dashboard = () => {
-  const { user, logout } = useAuth();
-  const { colors, actualTheme, toggleTheme } = React.useContext(
-    React.createContext() // Esto se reemplazará por el ThemeContext real
-  );
-  
-  return (
-    <div style={{ 
-      padding: '40px', 
-      textAlign: 'center',
-      backgroundColor: colors?.background || '#FFFFFF',
-      color: colors?.textPrimary || '#000000',
-      minHeight: '100vh',
-      transition: 'background-color 0.3s ease, color 0.3s ease'
-    }}>
-      {/* Toggle de tema en dashboard */}
-      <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-        <button
-          onClick={toggleTheme}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '24px',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '50%',
-          }}
-        >
-          {actualTheme === 'light' ? '🌙' : '☀️'}
-        </button>
-      </div>
-      
-      <h1>🐙 Dashboard Kraken</h1>
-      <p>¡Bienvenido, {user?.name}!</p>
-      <p style={{ opacity: 0.7, marginBottom: '20px' }}>
-        Tema actual: {actualTheme === 'light' ? 'Claro' : 'Oscuro'}
-      </p>
-      
-      <button 
-        onClick={logout}
-        style={{
-          padding: '12px 24px',
-          backgroundColor: colors?.error || '#ef4444',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontSize: '16px',
-          transition: 'transform 0.2s ease'
-        }}
-        onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
-        onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
-      >
-        Cerrar Sesión
-      </button>
-    </div>
-  );
+// Dashboard con tema integrado
+const DashboardWithTheme = () => {
+  return <Dashboard />;
 };
 
 // Rutas protegidas
@@ -156,12 +107,21 @@ function App() {
                   }
                 />
                 
+                <Route
+                  path="/register"
+                  element={
+                    <PublicRoute>
+                      <Register />
+                    </PublicRoute>
+                  }
+                />
+                
                 {/* Rutas protegidas */}
                 <Route
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <DashboardWithTheme />
                     </ProtectedRoute>
                   }
                 />

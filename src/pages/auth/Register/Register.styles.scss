@@ -1,0 +1,482 @@
+// src/pages/auth/Register/Register.styles.scss
+// KRAKEN REGISTER - Basado en Login.styles.scss con adaptaciones para registro
+
+/* Variables base que serán sobrescritas por el ThemeProvider */
+:root {
+  /* Estas variables se actualizan dinámicamente desde ThemeContext */
+  --color-primary: #FF4500;
+  --color-primary-light: #FF7F50;
+  --color-secondary: #0175c8;
+  --color-background: #FFFFFF;
+  --color-card-background: #F8F8F8;
+  --color-text-primary: #000000;
+  --color-text-secondary: #757575;
+  --color-text-placeholder: #AAAAAA;
+  --color-success: #4CAF50;
+  --color-error: #F44336;
+  --color-input-background: #F5F5F5;
+  --color-border: #D0D0D0;
+  --color-separator: #EEEEEE;
+}
+
+/* CONTENEDOR PRINCIPAL REGISTER */
+.kraken-register {
+  min-height: 100vh;
+  width: 100vw;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 20px;
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
+  
+  /* Fondo de imagen para modo claro */
+  &[data-theme="light"] {
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+      justify-content: center;
+      padding: 40px 20px;
+    }
+  }
+  
+  /* Fondo para modo oscuro */
+  &[data-theme="dark"] {
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+    
+    @media (min-width: 768px) {
+      justify-content: center;
+      padding: 40px 20px;
+    }
+  }
+}
+
+/* LOGO - MISMA ALTURA QUE LOGIN */
+.kraken-register__logo {
+  margin-top: 30px!important;
+  text-align: center;
+  margin-bottom: 52px;
+  z-index: 10;
+  position: relative;
+  margin-top: 60px;
+  
+  @media (min-width: 768px) {
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+}
+
+.kraken-register__logo-image {
+  width: 200px; /* Misma medida que en Login */
+  height: auto;
+  max-height: 100px; /* Misma medida que en Login */
+  object-fit: contain;
+  transition: filter 0.3s ease;
+  
+  /* Filtro para modo oscuro */
+  [data-theme="dark"] & {
+    filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 180, 133, 0.3));
+  }
+}
+
+/* TÍTULO */
+.kraken-register__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin-top: -17px;
+  margin-bottom: 34px;
+  z-index: 10;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+/* CONTENEDORES PRINCIPALES */
+.kraken-register__form,
+.kraken-register__google-button,
+.kraken-register__separator,
+.kraken-register__login,
+.kraken-register__terms {
+  width: 100%;
+  max-width: 380px;
+  z-index: 10;
+  position: relative;
+}
+
+/* BOTÓN GOOGLE */
+.kraken-register__google-button {
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: 50px;
+  background-color: var(--color-background);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  
+  [data-theme="dark"] & {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+    
+    [data-theme="light"] & {
+      background-color: #F8F8F8;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    [data-theme="dark"] & {
+      background-color: #211F26;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.kraken-register__google-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+/* SEPARADOR */
+.kraken-register__separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -8px 0;
+  position: relative;
+  
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-separator);
+    transition: background-color 0.3s ease;
+  }
+}
+
+.kraken-register__separator-dot {
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 50%;
+  margin: 0 16px;
+  position: relative;
+  opacity: 0.8;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: var(--color-background);
+    border-radius: 50%;
+    z-index: -1;
+    transition: background-color 0.3s ease;
+  }
+}
+
+/* FORMULARIO */
+.kraken-register__form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* CAMPOS DE INPUT (Reutilizando del Login) */
+.kraken-input-field {
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.kraken-input-field__label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+  margin-left: 5px;
+  transition: color 0.3s ease;
+}
+
+.kraken-input-field__input {
+  width: 100%;
+  height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 50px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background-color: var(--color-input-background);
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background-color: var(--color-background);
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+  }
+  
+  &::placeholder {
+    color: var(--color-text-placeholder);
+    font-size: 14px;
+  }
+  
+  &--error {
+    border-color: var(--color-error);
+    background-color: rgba(244, 67, 54, 0.05);
+    
+    [data-theme="dark"] & {
+      background-color: rgba(255, 180, 171, 0.1);
+    }
+    
+    &:focus {
+      border-color: var(--color-error);
+      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+      
+      [data-theme="dark"] & {
+        box-shadow: 0 0 0 3px rgba(255, 180, 171, 0.2);
+      }
+    }
+  }
+}
+
+.kraken-input-field__password-container {
+  position: relative;
+}
+
+.kraken-input-field__eye-button {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  padding: 4px;
+  font-size: 16px;
+  border-radius: 50%;
+  
+  &:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+    
+    [data-theme="dark"] & {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.kraken-input-field__error {
+  display: block;
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: 4px;
+  margin-left: 5px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* BOTÓN SUBMIT */
+.kraken-register__submit-button {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: inherit;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 69, 0, 0.4);
+    
+    [data-theme="light"] & {
+      background-color: #E03E00;
+    }
+    
+    [data-theme="dark"] & {
+      background-color: #FFCAB0;
+    }
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+/* LOADING SPINNER */
+.kraken-register__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kraken-register__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ENLACES DE LOGIN */
+.kraken-register__login {
+  text-align: center;
+  margin-bottom: 0px;
+}
+
+.kraken-register__login-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  transition: color 0.3s ease;
+}
+
+.kraken-register__login-link {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  padding: 2px 6px;
+  border-radius: 4px;
+  
+  &:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+    
+    [data-theme="light"] & {
+      background-color: rgba(255, 69, 0, 0.05);
+    }
+    
+    [data-theme="dark"] & {
+      background-color: rgba(255, 180, 133, 0.1);
+    }
+  }
+}
+
+/* TÉRMINOS Y CONDICIONES */
+.kraken-register__terms {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.kraken-register__terms-text {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  transition: color 0.3s ease;
+}
+
+.kraken-register__terms-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  .kraken-register {
+    padding: 0 16px;
+  }
+  
+  .kraken-register__form,
+  .kraken-register__google-button,
+  .kraken-register__separator,
+  .kraken-register__login,
+  .kraken-register__terms {
+    max-width: 100%;
+  }
+  
+  .kraken-register__title {
+    font-size: 22px;
+  }
+  
+  .kraken-input-field__input {
+    height: 44px;
+    font-size: 14px;
+  }
+  
+  .kraken-register__submit-button {
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+/* ANIMACIONES SUAVES PARA CAMBIO DE TEMA */
+* {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}
