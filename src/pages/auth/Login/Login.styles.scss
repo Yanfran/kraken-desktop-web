@@ -238,7 +238,13 @@ body {
   transition: all 0.2s ease;
   padding: 4px 8px;
   border-radius: 6px;
+  background: none; /* Agregar esta línea */
+  border: none;     /* Agregar esta línea también por si acaso */
   
+  &:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
 }
 
 /* BOTÓN PRINCIPAL ADAPTATIVO */
@@ -382,27 +388,22 @@ body {
 }
 
 .kraken-login__separator-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--color-text-secondary);
+  width: auto; /* Cambiar de 6px a auto para texto */
+  height: auto; /* Cambiar de 6px a auto para texto */
+  background: none; /* Quitar fondo ya que ahora es texto */
   border-radius: 50%;
-  margin: 0 16px;
+  margin: -8px 16px;
   position: relative;
-  opacity: 0.6;
+  opacity: 0.8; /* Aumentar un poco la opacidad para mejor legibilidad */
   transition: background-color 0.3s ease, opacity 0.3s ease;
+  font-size: 16px; /* Agregar tamaño de fuente */
+  color: var(--color-text-secondary); /* Agregar color de texto */
+  display: flex; /* Agregar para centrar */
+  align-items: center; /* Centrar verticalmente */
+  justify-content: center; /* Centrar horizontalmente */
   
   &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 14px;
-    height: 14px;
-    background: var(--color-background);
-    border-radius: 50%;
-    z-index: -1;
-    transition: background-color 0.3s ease;
+    display: none; /* Ocultar el círculo de fondo ya que ahora usas texto */
   }
 }
 
