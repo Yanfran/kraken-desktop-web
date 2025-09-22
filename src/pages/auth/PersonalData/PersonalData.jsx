@@ -5,6 +5,43 @@ import { useAuth } from '../../../App';
 import { useTheme } from '../../../contexts/ThemeContext';
 import './PersonalData.styles.scss';
 
+
+// Componente toggle para cambio de tema
+const ThemeToggle = () => {
+  const { actualTheme, toggleTheme } = useTheme();
+  
+  return (
+    <button
+      className="theme-toggle-button"
+      onClick={toggleTheme}
+      aria-label={`Cambiar a modo ${actualTheme === 'light' ? 'oscuro' : 'claro'}`}
+      style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        background: 'none',
+        border: 'none',
+        fontSize: '24px',
+        cursor: 'pointer',
+        zIndex: 20,
+        padding: '8px',
+        borderRadius: '50%',
+        transition: 'background-color 0.2s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.backgroundColor = actualTheme === 'light' 
+          ? 'rgba(0, 0, 0, 0.1)' 
+          : 'rgba(255, 255, 255, 0.1)';
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.backgroundColor = 'transparent';
+      }}
+    >
+      {actualTheme === 'light' ? '🌙' : '☀️'}
+    </button>
+  );
+};
+
 const PersonalData = () => {
   const navigate = useNavigate();
   const { colors, actualTheme } = useTheme();
@@ -183,7 +220,7 @@ const PersonalData = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Redirigir al dashboard o siguiente paso
-      navigate('/dashboard');
+      navigate('/delivery-option');
     } catch (error) {
       setErrors({ submit: 'Error al guardar los datos. Intenta nuevamente.' });
     } finally {
@@ -218,7 +255,11 @@ const PersonalData = () => {
   }, [actualTheme]);
 
   return (
-    <div className="kraken-personal-data" data-theme={actualTheme}>
+    <div className="kraken-personal-data" data-theme={actualTheme}>        
+      {/* Toggle de tema */}
+      <ThemeToggle />
+
+
       {/* Logo */}
       <div className="kraken-personal-data__logo">
         <img

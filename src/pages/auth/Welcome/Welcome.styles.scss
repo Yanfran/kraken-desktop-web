@@ -1,0 +1,292 @@
+// src/pages/auth/Welcome/Welcome.styles.scss
+// KRAKEN WELCOME - Pantalla de bienvenida con pulpo animado
+
+/* Variables base que serán sobrescritas por el ThemeProvider */
+:root {
+  --color-primary: #FF4500;
+  --color-background: #FFFFFF;
+  --color-text-primary: #000000;
+  --color-text-secondary: #757575;
+  --color-success: #4CAF50;
+  --color-button-text: #FFFFFF;
+}
+
+/* Variables para modo oscuro */
+[data-theme="dark"] {
+  --color-background: #121212;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B0B0;
+}
+
+/* CONTENEDOR PRINCIPAL */
+.kraken-welcome {
+  min-height: 100vh;
+  width: 100vw;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
+  
+  /* Fondo de imagen para modo claro */
+  &[data-theme="light"] {
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+    }
+  }
+  
+  /* Fondo para modo oscuro */
+  &[data-theme="dark"] {
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+  }
+}
+
+/* CONTENIDO PRINCIPAL */
+.kraken-welcome__content {
+  max-width: 500px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 10;
+  position: relative;
+}
+
+/* CONTENEDOR DEL PULPO */
+.kraken-welcome__pulpo-container {
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  /* Efecto de resplandor sutil */
+  &::after {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255, 69, 0, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: pulseGlow 4s ease-in-out infinite;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* TÍTULO PRINCIPAL */
+.kraken-welcome__title {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 24px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+  
+  @media (max-width: 480px) {
+    font-size: 32px;
+  }
+}
+
+/* MENSAJES */
+.kraken-welcome__message {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+  animation: fadeInUp 0.6s ease-out both;
+  transition: color 0.3s ease;
+  
+  &:first-of-type {
+    animation-delay: 0.4s;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    font-size: 18px;
+  }
+  
+  &:last-of-type {
+    animation-delay: 0.6s;
+    margin-bottom: 40px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 15px;
+    
+    &:first-of-type {
+      font-size: 17px;
+    }
+  }
+}
+
+/* BOTÓN PRINCIPAL - AZUL como en la imagen */
+.kraken-welcome__button {
+  width: 100%;
+  max-width: 300px;
+  height: 52px;
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  border: none;
+  border-radius: 26px;
+  color: var(--color-button-text);
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  animation: fadeInUp 0.6s ease-out 0.8s both;
+  
+  &:hover {
+    background: linear-gradient(135deg, #357ABD 0%, #2E6DA4 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 16px;
+    height: 48px;
+  }
+}
+
+/* LINK DE AYUDA */
+.kraken-welcome__help-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.6s ease-out 1s both;
+  
+  &:hover {
+    background-color: rgba(255, 69, 0, 0.1);
+    transform: translateY(-1px);
+  }
+}
+
+.kraken-welcome__help-icon {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.kraken-welcome__help-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  transition: color 0.3s ease;
+}
+
+.kraken-welcome__help-highlight {
+  color: var(--color-primary);
+  font-weight: 500;
+  text-decoration: underline;
+  
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+/* ANIMACIONES */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  .kraken-welcome {
+    padding: 20px 15px;
+  }
+  
+  .kraken-welcome__content {
+    max-width: 100%;
+  }
+  
+  .kraken-welcome__pulpo-container {
+    margin-bottom: 24px;
+    
+    &::after {
+      width: 180px;
+      height: 180px;
+    }
+  }
+}
+
+/* MODO OSCURO - Ajustes específicos */
+[data-theme="dark"] {
+  .kraken-welcome__title {
+    text-shadow: 0 2px 8px rgba(255, 69, 0, 0.3);
+  }
+  
+  .kraken-welcome__button {
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+    
+    &:hover {
+      box-shadow: 0 6px 20px rgba(74, 144, 226, 0.5);
+    }
+  }
+  
+  .kraken-welcome__help-link {
+    &:hover {
+      background-color: rgba(255, 69, 0, 0.15);
+    }
+  }
+  
+  .kraken-welcome__pulpo-container::after {
+    background: radial-gradient(circle, rgba(255, 69, 0, 0.15) 0%, transparent 70%);
+  }
+}
+
+/* ACCESIBILIDAD */
+@media (prefers-reduced-motion: reduce) {
+  .kraken-welcome__title,
+  .kraken-welcome__message,
+  .kraken-welcome__button,
+  .kraken-welcome__help-link {
+    animation: none;
+  }
+  
+  .kraken-welcome__pulpo-container::after {
+    animation: none;
+  }
+}
+
+/* MODO DE ALTO CONTRASTE */
+@media (prefers-contrast: high) {
+  .kraken-welcome__button {
+    border: 2px solid #4A90E2;
+  }
+  
+  .kraken-welcome__help-highlight {
+    text-decoration: underline !important;
+  }
+}
