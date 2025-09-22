@@ -1,252 +1,357 @@
-/* src/pages/auth/Login/Login.styles.scss - TODOS LOS ESTILOS DEL LOGIN */
+// src/pages/auth/Login/Login.styles.scss
 
-/* LOGIN SCREEN - EXACTO COMO MÓVIL */
-.login-screen {
+/* ========================================
+   KRAKEN LOGIN - COLORES EXACTOS DE REACT NATIVE
+   Usando constants/Colors.ts
+======================================== */
+
+:root {
+  /* ✅ COLORES EXACTOS DE LA APP MÓVIL */
+  --input-background: #F5F5F5;
+  --border-color: #D0D0D0;
+  --primary: #FF4500;
+  --background: #FFFFFF;
+  --text-primary: #000000;
+  --text-secondary: #757575;
+  --text-light: #FFFFFF;
+  --text-placeholder: #AAAAAA;
+  --error: #F44336;
+  --separator: #EEEEEE;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  overflow-x: hidden;
+}
+
+.kraken-login {
   min-height: 100vh;
-  background-image: url('../../../assets/images/fondo-app-dashboard-767px.png');
+  width: 100vw;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 20px;
+  
+  /* FONDO CON IMAGEN REAL - EXACTO COMO MÓVIL */
+  background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  position: relative;
-}
-
-/* Desktop usa imagen más grande */
-@media (min-width: 768px) {
-  .login-screen {
-    background-image: url('../../../assets/images/fondo-app-dashboard-1200px.png');
+  
+  /* Desktop usa imagen más grande y se centra */
+  @media (min-width: 768px) {
+    background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+    justify-content: center;
+    padding: 40px 20px;
   }
 }
 
-.login-screen__scroll {
-  width: 100%;
-  max-width: 420px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  padding: 40px 30px;
-  backdrop-filter: blur(10px);
-  margin: 0 auto;
-}
-
-/* LOGO - EXACTO COMO MÓVIL */
-.app-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin-top: 0;
-  margin-bottom: 30px;
-}
-
-.app-logo img {
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-/* APP CONTAINER - EXACTO COMO MÓVIL */
-.app-container {
-  width: 100%;
-//   max-width: 420px;
-  padding: 0 20px;
-  margin: 0 auto;
-}
-
-/* LAYOUT PRINCIPAL */
-.login-screen__layout {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* TÍTULO - EXACTO COMO MÓVIL */
-.login-screen__title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #000000;
+/* LOGO KRAKEN REAL - POSICIONAMIENTO MÓVIL */
+.kraken-login__logo {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 52px;
+  z-index: 10;
+  position: relative;
+  margin-top: 60px; /* ✅ Espaciado superior como móvil */
+  
+  @media (min-width: 768px) {
+    margin-top: 0; /* En desktop se centra automáticamente */
+    margin-top: 10px;
+    margin-bottom: 0px;
+  }
 }
 
-/* BOTÓN GOOGLE - EXACTO COMO MÓVIL */
-.login-screen__social-button {
+.kraken-login__logo-image {
+  width: 200px; /* ✅ Tamaño más ajustado como móvil */
+  height: auto;
+  max-height: 100px;
+  object-fit: contain;
+//   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* TÍTULO - USANDO COLORES EXACTOS */
+.kraken-login__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary); /* ✅ #000000 exacto */
+  text-align: center;
+  margin-bottom: 28px;
+  // letter-spacing: -0.5px;
+  z-index: 10;
+  position: relative;
+}
+
+
+/* CONTENEDOR PRINCIPAL DEL FORMULARIO */
+.kraken-login__form,
+.kraken-login__google-button,
+.kraken-login__separator,
+.kraken-login__register,
+.kraken-login__terms {
   width: 100%;
-  padding: 16px;
-  border: 1px solid #D0D0D0;
-  border-radius: 12px;
-  background-color: #FFFFFF;
+  max-width: 350px;
+  z-index: 10;
+  position: relative;
+}
+
+/* BOTÓN GOOGLE - COLORES EXACTOS DE REACT NATIVE */
+.kraken-login__google-button {
+  width: 100%;
+  padding: 14px 20px;
+  border: 1px solid var(--border-color); /* ✅ #D0D0D0 exacto */
+  border-radius: 50px;
+  background-color: var(--background); /* ✅ #FFFFFF exacto */
+  cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 24px;
-  cursor: pointer;
-  transition: all 0.2s ease;
   font-family: inherit;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.login-screen__social-button:hover:not(:disabled) {
-  background-color: #F8F8F8;
-  border-color: #FF4500;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.login-screen__social-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.login-screen__social-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-}
-
-.login-screen__social-text {
   font-size: 16px;
   font-weight: 500;
-  color: #000000;
+  color: var(--text-primary); /* ✅ #000000 exacto */
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  
+  &:hover:not(:disabled) {
+    background-color: #F8F8F8;
+    border-color: var(--primary); /* ✅ #FF4500 exacto */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
-/* SEPARADOR - EXACTO COMO MÓVIL */
-.login-screen__separator {
+.kraken-login__google-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+
+/* BOTÓN GOOGLE - COLORES EXACTOS DE REACT NATIVE */
+.kraken-login__google-button {
+  width: 100%;
+  // padding: 14px 20px;
+  border: 1px solid var(--border-color); /* ✅ #D0D0D0 exacto */
+  border-radius: 50px;
+  background-color: var(--background); /* ✅ #FFFFFF exacto */
+  cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  margin: 24px 0;
-}
-
-.login-screen__separator-line {
-  flex: 1;
-  height: 1px;
-  background-color: #E0E0E0;
-}
-
-.login-screen__separator-text {
-  padding: 0 16px;
-  font-size: 14px;
-  color: #757575;
+  justify-content: center;
+  gap: 12px;
+  font-family: inherit;
+  font-size: 16px;
   font-weight: 500;
-  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary); /* ✅ #000000 exacto */
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  
+  &:hover:not(:disabled) {
+    background-color: #F8F8F8;
+    border-color: var(--primary); /* ✅ #FF4500 exacto */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.kraken-login__google-icon {
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+  object-fit: contain; /* ✅ Para que la imagen se ajuste correctamente */
+}
+
+/* SEPARADOR CON PUNTO - AJUSTADO */
+.kraken-login__separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0; /* ✅ Margen más compacto */
+  position: relative;
+  
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #E2E8F0;
+  }
+}
+
+.kraken-login__separator-dot {
+  width: 6px; /* ✅ Punto más pequeño */
+  height: 6px;
+  background: #CBD5E0;
+  border-radius: 50%;
+  margin: 0 16px;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    z-index: -1;
+  }
 }
 
 /* FORMULARIO */
-.login-screen__form {
+.kraken-login__form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* CAMPOS DE INPUT - EXACTO COMO REACT NATIVE */
+.kraken-input-field {
+  margin-bottom: 16px; /* ✅ Margen más compacto */
   width: 100%;
 }
 
-/* INPUT FIELD - EXACTO COMO MÓVIL */
-.input-field {
-  margin-bottom: 20px;
-}
-
-.input-field__label {
+.kraken-input-field__label {
   display: block;
   font-size: 14px;
-  font-weight: 600;
-  color: #000000;
-  margin-bottom: 8px;
+  font-weight: 500; /* ✅ Peso más ligero como móvil */
+  color: #4A5568; /* ✅ Color más suave como móvil */
+  margin-bottom: 6px; /* ✅ Margen más compacto */
+  margin-left: 5px;
 }
 
-.input-field__container {
+.kraken-input-field__input {
+  width: 100%;
+  height: 48px; /* ✅ Altura más compacta */
+  padding: 0 18px; /* ✅ Padding más ajustado */
+  border: 1px solid #D0D0D0;
+  border-radius: 50px;
+  font-size: 15px; /* ✅ Tamaño de fuente más pequeño */
+  font-family: inherit;
+  color: #000000;
+  background-color: #F5F5F5;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  
+  &:focus {
+    outline: none;
+    border-color: #FF4500;
+    background-color: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+  }
+  
+  &::placeholder {
+    color: #AAAAAA;
+    font-size: 14px; /* ✅ Placeholder más pequeño */
+  }
+  
+  &--error {
+    border-color: #F44336;
+    background-color: rgba(244, 67, 54, 0.05);
+    
+    &:focus {
+      border-color: #F44336;
+      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+    }
+  }
+}
+
+/* CONTENEDOR DE CONTRASEÑA CON BOTÓN OJO */
+.kraken-input-field__password-container {
   position: relative;
 }
 
-.input-field__input {
-  width: 100%;
-  padding: 16px 18px;
-  border: 1px solid #D0D0D0;
-  border-radius: 12px;
-  font-size: 16px;
-  background-color: #F5F5F5;
-  color: #000000;
-  transition: all 0.3s ease;
-  outline: none;
-  font-family: inherit;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.input-field__input:focus {
-  border-color: #FF4500;
-  background-color: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
-}
-
-.input-field__input::placeholder {
-  color: #AAAAAA;
-  font-size: 15px;
-}
-
-.input-field__input--error {
-  border-color: #F44336;
-  background-color: rgba(244, 67, 54, 0.05);
-}
-
-.input-field__input--error:focus {
-  border-color: #F44336;
-  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
-}
-
-.input-field__icon {
+.kraken-input-field__eye-button {
   position: absolute;
-  right: 15px;
+  right: 18px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  font-size: 18px;
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.2s ease;
-  padding: 2px;
+  padding: 4px;
+  font-size: 16px;
+  border-radius: 50%;
+  
+  &:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 }
 
-.input-field__icon:hover {
-  opacity: 1;
-}
-
-.input-field__error {
+.kraken-input-field__error {
   display: block;
-  color: #F44336;
+  color: var(--error); /* ✅ #F44336 exacto */
   font-size: 12px;
-  margin-top: 6px;
+  margin-top: 4px;
+  margin-left: 5px;
   font-weight: 500;
 }
 
-/* ENLACE OLVIDE CONTRASEÑA - EXACTO COMO MÓVIL */
-.login-screen__forgot {
-  text-align: right;
-  margin-bottom: 24px;
+/* ENLACE OLVIDÉ CONTRASEÑA */
+.kraken-login__forgot {
+  text-align: end;
+  margin-bottom: 20px;
 }
 
-.login-screen__forgot-link {
-  color: #FF4500;
+.kraken-login__forgot-link {
+  color: var(--primary); /* ✅ #FF4500 exacto */
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 6px;
+  
+  &:hover {
+    opacity: 0.8;
+    background-color: rgba(255, 69, 0, 0.05);
+    text-decoration: underline;
+  }
 }
 
-.login-screen__forgot-link:hover {
-  opacity: 0.8;
-  text-decoration: underline;
-}
-
-/* BOTÓN LOGIN - EXACTO COMO MÓVIL */
-.login-screen__login-button {
+/* BOTÓN PRINCIPAL DE LOGIN - COLORES EXACTOS */
+.kraken-login__submit-button {
   width: 100%;
-  padding: 16px 24px;
+  height: 48px;
   border: none;
-  border-radius: 12px;
+  border-radius: 50px;
   font-size: 16px;
   font-weight: 600;
-  background-color: #FF4500;
-  color: #FFFFFF;
+  background-color: var(--primary); /* ✅ #FF4500 exacto */
+  color: var(--text-light); /* ✅ #FFFFFF exacto */
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -254,39 +359,38 @@
   justify-content: center;
   gap: 10px;
   font-family: inherit;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
+  
+  &:hover:not(:disabled) {
+    background-color: #E03E00; /* Un tono más oscuro del primary */
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 69, 0, 0.4);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
 }
 
-.login-screen__login-button:hover:not(:disabled) {
-  background-color: #E03E00;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(255, 69, 0, 0.4);
-}
-
-.login-screen__login-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.login-screen__login-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 0 4px 12px rgba(255, 69, 0, 0.2);
-}
-
-/* LOADING - EXACTO COMO MÓVIL */
-.login-screen__loading {
+/* LOADING SPINNER */
+.kraken-login__loading {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.login-screen__spinner {
+.kraken-login__spinner {
   width: 18px;
   height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #FFFFFF;
+  border-top: 2px solid #ffffff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -297,89 +401,135 @@
   }
 }
 
-/* ENLACE REGISTRO - EXACTO COMO MÓVIL */
-.login-screen__register-link {
+/* ENLACE REGISTRO - COLORES EXACTOS */
+.kraken-login__register {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 0px;
 }
 
-.login-screen__register-text {
-  font-size: 15px;
-  color: #757575;
+.kraken-login__register-text {
+  font-size: 14px;
+  color: var(--text-secondary); /* ✅ #757575 exacto */
 }
 
-.login-screen__register-button {
-  color: #FF4500;
+.kraken-login__register-link {
+  background: none;
+  border: none;
+  color: var(--primary); /* ✅ #FF4500 exacto */
   text-decoration: none;
   font-weight: 600;
-  font-size: 15px;
-  transition: opacity 0.2s ease;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  padding: 2px 6px;
+  border-radius: 4px;
+  
+  &:hover {
+    opacity: 0.8;
+    background-color: rgba(255, 69, 0, 0.05);
+    text-decoration: underline;
+  }
 }
 
-.login-screen__register-button:hover {
-  opacity: 0.8;
-  text-decoration: underline;
-}
-
-/* TÉRMINOS Y CONDICIONES - EXACTO COMO MÓVIL */
-.login-screen__terms {
-  margin-bottom: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #EEEEEE;
-}
-
-.login-screen__terms-text {
-  font-size: 12px;
-  color: #757575;
-  line-height: 1.5;
+/* TÉRMINOS Y CONDICIONES - COLORES EXACTOS */
+.kraken-login__terms {
   text-align: center;
+  padding: 16px 0;
+}
+
+.kraken-login__terms-text {
+  font-size: 12px;
+  color: var(--text-secondary); /* ✅ #757575 exacto */
+  line-height: 1.5;
   margin: 0;
 }
 
-.login-screen__terms-link {
-  color: #FF4500;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.login-screen__terms-link:hover {
+.kraken-login__terms-link {
+  color: var(--primary); /* ✅ #FF4500 exacto */
   text-decoration: underline;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 1px 3px;
+  border-radius: 3px;
+  
+  &:hover {
+    background-color: rgba(255, 69, 0, 0.05);
+    text-decoration: underline;
+  }
 }
 
-/* BUILD INFO - EXACTO COMO MÓVIL */
-.login-screen__build-info {
-  text-align: center;
-  padding-top: 15px;
-  border-top: 1px solid #EEEEEE;
+/* RESPONSIVE DESIGN */
+@media (max-width: 480px) {
+  .kraken-login {
+    padding: 20px 16px;
+  }
+  
+  .kraken-login__logo-kraken {
+    font-size: 32px;
+  }
+  
+  .kraken-login__title {
+    font-size: 24px;
+    margin-bottom: 32px;
+  }
+  
+  .kraken-login__form,
+  .kraken-login__google-button,
+  .kraken-login__separator,
+  .kraken-login__register,
+  .kraken-login__terms {
+    max-width: 100%;
+  }
 }
 
-.login-screen__build-text {
-  font-size: 11px;
-  color: #757575;
-  margin: 0 0 4px 0;
+@media (min-width: 768px) {
+  .kraken-login {
+    padding: 60px 40px;
+  }
+  
+  .kraken-login__form,
+  .kraken-login__google-button,
+  .kraken-login__separator,
+  .kraken-login__register,
+  .kraken-login__terms {
+    max-width: 400px;
+  }
 }
 
-.login-screen__version {
-  margin-top: 8px;
+@media (min-width: 1024px) {
+  .kraken-login__form,
+  .kraken-login__google-button,
+  .kraken-login__separator,
+  .kraken-login__register,
+  .kraken-login__terms {
+    max-width: 380px;
+  }
+  
+  .kraken-login__logo-kraken {
+    font-size: 40px;
+  }
+  
+  .kraken-login__title {
+    font-size: 24px;
+  }
 }
 
-.login-screen__version-badge {
-  display: inline-block;
-  background-color: #FF4500;
-  color: #FFFFFF;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+/* ANIMACIONES DE ENTRADA */
+.kraken-login__logo,
+.kraken-login__title,
+.kraken-login__google-button,
+.kraken-login__separator,
+.kraken-input-field,
+.kraken-login__forgot,
+.kraken-login__submit-button,
+.kraken-login__register,
+.kraken-login__terms {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
 }
 
-/* ANIMACIONES SUAVES */
-.login-screen__scroll {
-  animation: slideIn 0.6s ease-out;
-}
-
-@keyframes slideIn {
+@keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -390,15 +540,14 @@
   }
 }
 
-.input-field__input:focus {
-  animation: inputFocus 0.3s ease-out;
-}
-
-@keyframes inputFocus {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.01);
-  }
-}
+/* Delays escalonados para efecto secuencial */
+.kraken-login__logo { animation-delay: 0.1s; }
+.kraken-login__title { animation-delay: 0.2s; }
+.kraken-login__google-button { animation-delay: 0.3s; padding: 12px 20px; }
+.kraken-login__separator { animation-delay: 0.4s; }
+.kraken-input-field:nth-of-type(1) { animation-delay: 0.5s; }
+.kraken-input-field:nth-of-type(2) { animation-delay: 0.6s; }
+.kraken-login__forgot { animation-delay: 0.7s; }
+.kraken-login__submit-button { animation-delay: 0.8s; }
+.kraken-login__register { animation-delay: 0.9s; }
+.kraken-login__terms { animation-delay: 1s; }

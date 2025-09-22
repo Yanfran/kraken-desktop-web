@@ -1,83 +1,24 @@
 // src/pages/auth/Login/Login.jsx
-import React from 'react';
-import { useAuth } from '@hooks/useAuth';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth';
 import './Login.styles.scss';
 
-// Componentes (mover desde App.jsx)
-const AppLogo = ({ size = 200 }) => {
-  return (
-    <div className="app-logo">
-      <img 
-        src="../../../assets/images/logo.png" 
-        alt="Kraken Logo"
-        style={{
-          width: size,
-          height: 'auto',
-          maxHeight: size * 0.6,
-          objectFit: 'contain'
-        }}
-      />
-    </div>
-  );
-};
-
-const InputField = ({ 
-  label, 
-  placeholder, 
-  value, 
-  onChange, 
-  type = "text",
-  error,
-  rightIcon,
-  onRightIconPress,
-  ...props 
-}) => {
-  return (
-    <div className="input-field">
-      <label className="input-field__label">{label}</label>
-      <div className="input-field__container">
-        <input
-          className={`input-field__input ${error ? 'input-field__input--error' : ''}`}
-          type={type}
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          {...props}
-        />
-        {rightIcon && (
-          <button 
-            type="button"
-            className="input-field__icon"
-            onClick={onRightIconPress}
-          >
-            {rightIcon}
-          </button>
-        )}
-      </div>
-      {error && <span className="input-field__error">{error}</span>}
-    </div>
-  );
-};
-
-const AppContainer = ({ children }) => {
-  return (
-    <div className="app-container">
-      {children}
-    </div>
-  );
-};
-
 const Login = () => {
+  const navigate = useNavigate();
   const { signIn, signInWithGoogle, isLoading } = useAuth();
   
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [emailError, setEmailError] = React.useState('');
-  const [passwordError, setPasswordError] = React.useState('');
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [buildInfo] = React.useState({ version: '1.0.0' });
+  // Estados del formulario
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [buildInfo] = useState({ version: '1.0.0' });
 
-  const handleLogin = async () => {
+  // Función para manejar el login
+  const handleLogin = async (e) => {
+    e.preventDefault();
     setEmailError('');
     setPasswordError('');
     let hasError = false;
@@ -104,106 +45,140 @@ const Login = () => {
     await signInWithGoogle();
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <div className="login-screen">
-      <div className="login-screen__scroll">
-        <AppLogo size={200} />
-
-        <AppContainer>
-          <div className="login-screen__layout">
-            <h1 className="login-screen__title">Iniciar Sesión</h1>
-
-            <button
-              className="login-screen__social-button login-screen__google-button"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-            >
-              <img
-                src="https://developers.google.com/identity/images/g-logo.png"
-                alt="Google"
-                className="login-screen__social-icon"
-              />
-              <span className="login-screen__social-text">Continuar con Google</span>
-            </button>
-
-            <div className="login-screen__separator">
-              <div className="login-screen__separator-line"></div>
-              <span className="login-screen__separator-text">o</span>
-              <div className="login-screen__separator-line"></div>
-            </div>
-
-            <div className="login-screen__form">
-              <InputField
-                label="Email"
-                placeholder="Email"
-                value={email}
-                onChange={setEmail}
-                type="email"
-                error={emailError}
-              />
-
-              <InputField
-                label="Contraseña"
-                placeholder="Contraseña"
-                value={password}
-                onChange={setPassword}
-                type={showPassword ? 'text' : 'password'}
-                error={passwordError}
-                rightIcon={showPassword ? '🙈' : '👁️'}
-                onRightIconPress={() => setShowPassword(!showPassword)}
-              />
-
-              <div className="login-screen__forgot">
-                <a href="#forgot" className="login-screen__forgot-link">
-                  ¿Olvidaste tu contraseña?
-                </a>
-              </div>
-
-              <button
-                className="login-screen__login-button"
-                onClick={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="login-screen__loading">
-                    <div className="login-screen__spinner"></div>
-                    <span>Iniciando sesión...</span>
-                  </div>
-                ) : (
-                  'Iniciar Sesión'
-                )}
-              </button>
-
-              <div className="login-screen__register-link">
-                <span className="login-screen__register-text">¿No tienes cuenta? </span>
-                <a href="#register" className="login-screen__register-button">Regístrate</a>
-              </div>
-
-              <div className="login-screen__terms">
-                <p className="login-screen__terms-text">
-                  Al iniciar sesión, aceptas nuestros{' '}
-                  <a href="#terms" className="login-screen__terms-link">Términos y Condiciones</a>
-                  {' '}y nuestra{' '}
-                  <a href="#privacy" className="login-screen__terms-link">Política de Privacidad</a>
-                </p>
-              </div>
-
-              <div className="login-screen__build-info">
-                <p className="login-screen__build-text">© 2025 Kraken Admin.</p>
-                <p className="login-screen__build-text">Todos los derechos reservados.</p>
-                {buildInfo && (
-                  <div className="login-screen__version">
-                    <span className="login-screen__version-badge">
-                      {buildInfo.version}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </AppContainer>
+    <div className="kraken-login">
+      
+      {/* Logo Kraken Real */}
+      <div className="kraken-login__logo">
+        <img 
+          src="/src/assets/images/logo.jpg" 
+          alt="Kraken Logo"
+          className="kraken-login__logo-image"
+        />
       </div>
+
+      {/* Título */}
+      <p className="kraken-login__title">Iniciar Sesión</p>
+
+      {/* Botón Google */}
+      <button
+        className="kraken-login__google-button"
+        onClick={handleGoogleLogin}
+        disabled={isLoading}
+        type="button"
+      >
+        <img 
+          src="/src/assets/images/google-icon.png" 
+          alt="Google"
+          className="kraken-login__google-icon"
+        />
+        {isLoading ? (
+          <div className="kraken-login__loading">
+            <div className="kraken-login__spinner"></div>
+            <span>Conectando...</span>
+          </div>
+        ) : (
+          'Continuar con Google'
+        )}
+      </button>
+
+      {/* Separador con punto */}
+      <div className="kraken-login__separator">
+        <div className="kraken-login__separator-dot"></div>
+      </div>
+
+      {/* Formulario de campos */}
+      <form onSubmit={handleLogin} className="kraken-login__form">
+        
+        {/* Campo Email */}
+        <div className="kraken-input-field">
+          <label className="kraken-input-field__label">Correo electrónico</label>
+          <input
+            className={`kraken-input-field__input ${emailError ? 'kraken-input-field__input--error' : ''}`}
+            type="email"
+            placeholder=""
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+          />
+          {emailError && <span className="kraken-input-field__error">{emailError}</span>}
+        </div>
+
+        {/* Campo Contraseña */}
+        <div className="kraken-input-field">
+          <label className="kraken-input-field__label">Contraseña</label>
+          <div className="kraken-input-field__password-container">
+            <input
+              className={`kraken-input-field__input ${passwordError ? 'kraken-input-field__input--error' : ''}`}
+              type={showPassword ? 'text' : 'password'}
+              placeholder=""
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+            <button 
+              type="button"
+              className="kraken-input-field__eye-button"
+              onClick={togglePasswordVisibility}
+            >
+              👁️
+            </button>
+          </div>
+          {passwordError && <span className="kraken-input-field__error">{passwordError}</span>}
+        </div>
+
+        {/* Enlace olvidé contraseña */}
+        <div className="kraken-login__forgot">
+          <a href="#forgot" className="kraken-login__forgot-link">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </div>
+
+        {/* Botón Iniciar sesión */}
+        <button
+          type="submit"
+          className="kraken-login__submit-button"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <div className="kraken-login__loading">
+              <div className="kraken-login__spinner"></div>
+              <span>Iniciando sesión...</span>
+            </div>
+          ) : (
+            'Iniciar sesión'
+          )}
+        </button>
+      </form>
+
+      {/* Enlace registro */}
+      <div className="kraken-login__register">
+        <span className="kraken-login__register-text">¿No tienes cuenta? </span>
+        <button 
+          type="button"
+          className="kraken-login__register-link"
+          onClick={() => navigate('/register')}
+        >
+          Registrarse
+        </button>
+      </div>
+
+      {/* Términos y condiciones */}
+      <div className="kraken-login__terms">
+        <p className="kraken-login__terms-text">
+          Al iniciar sesión, aceptas nuestros{' '}
+          <a href="#terms" className="kraken-login__terms-link">Términos y Condiciones</a>
+          {' '}y nuestra{' '}
+          <a href="#privacy" className="kraken-login__terms-link">Política de Privacidad</a>
+        </p>
+      </div>
+
     </div>
+    
   );
 };
 
