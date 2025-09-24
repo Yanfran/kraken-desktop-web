@@ -78,7 +78,7 @@ const CompleteProfile = React.lazy(() => import('./pages/auth/CompleteProfile/Co
 const PersonalData = React.lazy(() => import('./pages/auth/PersonalData/PersonalData'));
 const DeliveryOption = React.lazy(() => import('./pages/auth/DeliveryOption/DeliveryOption'));
 const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
-const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard/Dashboard'));
+const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 
 // Dashboard con tema integrado
 const DashboardWithTheme = () => {

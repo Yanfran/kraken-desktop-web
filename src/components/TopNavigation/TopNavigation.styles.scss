@@ -1,4 +1,4 @@
-// src/components/TopNavigation/TopNavigation.styles.scss - SOLUCION LAYOUT
+// src/components/TopNavigation/TopNavigation.styles.scss - SOLUCIÓN INMEDIATA
 
 /* HEADER PRINCIPAL - AJUSTE PARA SIDEBAR */
 .top-navigation {
@@ -8,18 +8,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
+  position: relative; /* CAMBIO CRÍTICO: de sticky a relative */
   top: 0;
   z-index: 100;
   height: 80px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  margin: 0;
   
-  /* IMPORTANTE: El TopNavigation debe ajustarse al sidebar */
-  margin-left: 0; /* Por defecto sin margen */
-  width: 100%; /* Ocupa todo el ancho disponible del contenedor padre */
-  
-  /* No necesitamos margin-left aquí porque ya está dentro de .dashboard-main
-     que ya tiene el margin-left aplicado */
+  /* ALTERNATIVA: Si necesitas sticky, usa fixed */
+  /* position: fixed;
+  left: 280px;
+  right: 0;
+  transition: left 0.3s ease; */
 }
 
 /* SECCIÓN IZQUIERDA - Solo toggle móvil */
@@ -58,16 +59,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px; /* ESPACIO IMPORTANTE ENTRE LOGO Y MENÚ */
+  gap: 32px;
   max-width: 900px;
   margin: 0 auto;
 }
 
-/* LOGO KRAKEN - SEPARADO DEL MENÚ */
+/* LOGO KRAKEN */
 .top-navigation__logo-container {
   display: flex;
   align-items: center;
-  flex-shrink: 0; /* NO se encoge */
+  flex-shrink: 0;
 }
 
 .top-navigation__logo-image {

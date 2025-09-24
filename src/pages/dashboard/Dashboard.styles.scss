@@ -1,0 +1,404 @@
+// src/pages/dashboard/Dashboard/Dashboard.styles.scss - NOMBRES CORREGIDOS
+
+/* Variables del tema */
+:root {
+  --color-primary: #FF4500;
+  --color-secondary: #0175c8;
+  --color-background: #FFFFFF;
+  --color-surface: #F8F9FA;
+  --color-text-primary: #000000;
+  --color-text-secondary: #757575;
+  --color-border: #E1E5E9;
+  --color-success: #4CAF50;
+  --color-warning: #FF9800;
+  --color-error: #F44336;
+}
+
+/* CONTENEDOR PRINCIPAL - CLASE CORREGIDA */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-surface);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  
+  &[data-theme="dark"] {
+    --color-background: #1D1B20;
+    --color-surface: #141218;
+    --color-text-primary: #E6E0E9;
+    --color-text-secondary: #CAC4D0;
+    --color-border: #49454F;
+  }
+}
+
+/* MAIN CONTENT - CLASE CORREGIDA */
+.dashboard-main {
+  flex: 1;
+  margin-left: 280px; /* MARGEN PARA SIDEBAR ABIERTO */
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
+  
+  /* CUANDO SIDEBAR ESTÁ CERRADO */
+  &.sidebar-closed {
+    margin-left: 80px;
+  }
+  
+  /* EN MÓVIL SIN MARGEN */
+  @media (max-width: 768px) {
+    margin-left: 0;
+    
+    &.sidebar-closed {
+      margin-left: 0;
+    }
+  }
+}
+
+/* CONTENT AREA */
+.dashboard-content {
+  flex: 1;
+  padding: 24px;
+  // max-width: 1200px;
+  //  max-width: 1600px!important;
+  max-width: none;
+  margin: 0;
+  width: 100%;
+}
+
+.dashboard-section {
+  background-color: var(--color-background);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.dashboard-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dashboard-section h2 {
+  color: var(--color-text-primary);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* TABS */
+.dashboard-tabs {
+  display: flex;
+  gap: 4px;
+  background-color: var(--color-surface);
+  border-radius: 25px;
+  padding: 4px;
+}
+
+.dashboard-tab {
+  padding: 8px 20px;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 500;
+  
+  &:hover {
+    color: var(--color-text-primary);
+  }
+  
+  &.active {
+    background-color: var(--color-success);
+    color: white;
+    font-weight: 600;
+  }
+}
+
+/* TABLA DE ENVIOS */
+.dashboard-shipments-table {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dashboard-table-header {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 0.8fr auto;
+  gap: 16px;
+  padding: 12px 20px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 0.8fr auto;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: var(--color-surface);
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.dashboard-tracking-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-package-icon {
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-surface);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 1px solid var(--color-border);
+}
+
+.dashboard-tracking-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-tracking-number {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.dashboard-item-type {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-status {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  
+  &.pending {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: var(--color-warning);
+    border: 1px solid rgba(255, 152, 0, 0.2);
+  }
+  
+  &.received {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #2196F3;
+    border: 1px solid rgba(33, 150, 243, 0.2);
+  }
+  
+  &.shipped {
+    background-color: rgba(156, 39, 176, 0.1);
+    color: #9C27B0;
+    border: 1px solid rgba(156, 39, 176, 0.2);
+  }
+  
+  &.ready {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: var(--color-success);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+  }
+}
+
+.dashboard-date {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.dashboard-cost {
+  color: var(--color-text-primary);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.dashboard-origin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.dashboard-origin-flag {
+  width: 24px;
+  height: 16px;
+  border-radius: 2px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.dashboard-origin-text {
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-more-options {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    transform: scale(1.1);
+  }
+}
+
+/* DISCOUNT BANNER */
+.dashboard-discount-banner {
+  background-color: rgba(244, 67, 54, 0.05);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-border);
+}
+
+.dashboard-no-prealert {
+  color: var(--color-error);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dashboard-discount {
+  color: var(--color-error);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-see-all {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  width: 100%;
+  border-top: 1px solid var(--color-border);
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: var(--color-surface);
+  }
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 1024px) {
+  .dashboard-content {
+    padding: 20px;
+  }
+  
+  .dashboard-table-header,
+  .dashboard-table-row {
+    grid-template-columns: 1.5fr 1fr 1fr auto;
+    gap: 12px;
+  }
+  
+  .dashboard-origin {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 16px;
+  }
+  
+  .dashboard-section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .dashboard-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .dashboard-table-header {
+    display: none;
+  }
+  
+  .dashboard-table-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background-color: var(--color-background);
+  }
+  
+  .dashboard-tracking-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .dashboard-more-options {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-content {
+    padding: 12px;
+  }
+  
+  .dashboard-section {
+    padding: 12px;
+  }
+  
+  .dashboard-tabs {
+    width: 100%;
+  }
+  
+  .dashboard-tab {
+    flex: 1;
+    text-align: center;
+  }
+}

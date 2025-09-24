@@ -1,10 +1,10 @@
 // src/pages/dashboard/Dashboard/Dashboard.jsx - COMPLETO Y CORREGIDO
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // Importar componentes separados
-import Sidebar from '../../../components/Sidebar/Sidebar';
-import TopNavigation from '../../../components/TopNavigation/TopNavigation';
+import Sidebar from '../../components/Sidebar/Sidebar';
+import TopNavigation from '../../components/TopNavigation/TopNavigation';
 import './Dashboard.styles.scss';
 
 const Dashboard = () => {
