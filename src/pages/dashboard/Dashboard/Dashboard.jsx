@@ -1,4 +1,4 @@
-// src/pages/dashboard/Dashboard/Dashboard.jsx - REFACTORIZADO
+// src/pages/dashboard/Dashboard/Dashboard.jsx - COMPLETO Y CORREGIDO
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../../contexts/ThemeContext';
 
@@ -12,7 +12,7 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('inicio');
 
-  // Estados para datos del dashboard (mantenemos los mismos datos)
+  // Estados para datos del dashboard
   const [shipments, setShipments] = useState([
     {
       id: 'TV',
@@ -23,6 +23,42 @@ const Dashboard = () => {
       cost: '$8.50',
       preAlert: false,
       discount: '-10%'
+    },
+    {
+      id: 'TV',
+      trackingNumber: '1847545474654444',
+      status: 'Recibido en Almacén',
+      date: 'Feb 7, 2025 • 09:30',
+      origin: 'USA',
+      cost: '$6.40',
+      preAlert: true
+    },
+    {
+      id: 'TV',
+      trackingNumber: 'HG141350004590',
+      status: 'Enviado a Venezuela',
+      date: 'Feb 7, 2025 • 09:30',
+      origin: 'USA',
+      cost: '$118.12',
+      preAlert: true
+    },
+    {
+      id: 'TV',
+      trackingNumber: 'TRF40045001548',
+      status: 'Disponible para entrega',
+      date: 'Feb 7, 2025 • 09:30',
+      origin: 'USA',
+      cost: '$6.50',
+      preAlert: true
+    },
+    {
+      id: 'TV',
+      trackingNumber: '1240014587TR40',
+      status: 'Disponible para entrega',
+      date: 'Feb 7, 2025 • 09:30',
+      origin: 'CHINA',
+      cost: '$10.00',
+      preAlert: true
     }
   ]);
 
@@ -54,6 +90,15 @@ const Dashboard = () => {
     }
   };
 
+  // Función para obtener el estatus apropiado
+  const getStatusClass = (status) => {
+    if (status.toLowerCase().includes('pendiente')) return 'pending';
+    if (status.toLowerCase().includes('recibido')) return 'received';
+    if (status.toLowerCase().includes('enviado')) return 'shipped';
+    if (status.toLowerCase().includes('disponible')) return 'ready';
+    return 'pending';
+  };
+
   // Aplicar tema al contenedor principal
   useEffect(() => {
     const dashboardContainer = document.querySelector('.dashboard-container');
@@ -79,7 +124,7 @@ const Dashboard = () => {
         setActiveTab={setActiveTab}
       />
 
-      {/* Main Content Area */}
+      {/* Main Content Area - CLASES CORRECTAS */}
       <main className={`dashboard-main ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         {/* Top Navigation Component */}
         <TopNavigation 
@@ -94,7 +139,7 @@ const Dashboard = () => {
           {/* Mostrar contenido basado en activeTab */}
           {activeTab === 'inicio' && (
             <>
-              {/* Último Envío */}
+              {/* Listado de Envíos */}
               <section className="dashboard-section">
                 <div className="dashboard-section-header">
                   <h2>Listado de Envíos</h2>
@@ -117,107 +162,72 @@ const Dashboard = () => {
                     <div key={index} className="dashboard-table-row">
                       <div className="dashboard-tracking-info">
                         <div className="dashboard-package-icon">📦</div>
-                        <div>
+                        <div className="dashboard-tracking-details">
                           <span className="dashboard-tracking-number">{shipment.trackingNumber}</span>
                           <span className="dashboard-item-type">{shipment.id}</span>
                         </div>
                       </div>
+
                       <div className="dashboard-status-info">
-                        <span className="dashboard-status pending">{shipment.status}</span>
+                        <span className={`dashboard-status ${getStatusClass(shipment.status)}`}>
+                          {shipment.status}
+                        </span>
                         <span className="dashboard-date">{shipment.date}</span>
                       </div>
-                      <span className="dashboard-cost">{shipment.cost}</span>
-                      <span className="dashboard-origin">{shipment.origin}</span>
-                      <button className="dashboard-more-options">⋮</button>
-                    </div>
-                  ))}
-                </div>
 
-                {shipments[0]?.discount && (
-                  <div className="dashboard-discount-banner">
-                    <span className="dashboard-no-prealert">📋 No pre-alertado</span>
-                    <span className="dashboard-discount">Perdiste {shipments[0].discount}</span>
-                  </div>
-                )}
-              </section>
+                      <div className="dashboard-cost">
+                        {shipment.cost}
+                      </div>
 
-              {/* Pre-Alertas */}
-              <section className="dashboard-section">
-                <h2>Pre-Alertas Pendientes</h2>
-
-                <div className="dashboard-prealerts-table">
-                  <div className="dashboard-table-header">
-                    <span>Tracking</span>
-                    <span>Estatus</span>
-                    <span>Entrega en</span>
-                    <span></span>
-                  </div>
-
-                  {preAlerts.map((alert, index) => (
-                    <div key={index} className="dashboard-table-row">
-                      <div className="dashboard-tracking-info">
-                        <div className="dashboard-package-icon">📦</div>
-                        <div>
-                          <span className="dashboard-tracking-number">{alert.trackingNumber}</span>
-                          <span className="dashboard-item-type">{alert.id}</span>
+                      <div className="dashboard-origin">
+                        <div className="dashboard-origin-flag">
+                          {shipment.origin === 'CHINA' ? '🇨🇳' : '🇺🇸'}
                         </div>
+                        <span className="dashboard-origin-text">{shipment.origin}</span>
                       </div>
-                      <div className="dashboard-status-info">
-                        <span className="dashboard-status prealert">{alert.status}</span>
-                        <span className="dashboard-date">{alert.date}</span>
-                      </div>
-                      <div className="dashboard-delivery-info">
-                        <span>{alert.deliveryLocation}</span>
-                      </div>
-                      <button className="dashboard-more-options">⋮</button>
+
+                      <button className="dashboard-more-options">
+                        ⋮
+                      </button>
                     </div>
                   ))}
 
-                  <button className="dashboard-see-all-prealerts">Ver todos</button>
+                  {/* Banner de descuento solo para el primer envío sin pre-alerta */}
+                  {shipments[0] && !shipments[0].preAlert && (
+                    <div className="dashboard-discount-banner">
+                      <span className="dashboard-no-prealert">
+                        No tienes pre-alerta para este paquete
+                      </span>
+                      <span className="dashboard-discount">-10%</span>
+                    </div>
+                  )}
                 </div>
-              </section>
 
-              {/* Banner Promocional */}
-              <section className="dashboard-promo">
-                <div className="dashboard-promo-content">
-                  <div className="dashboard-promo-text">
-                    <h3>Esta es una novedad:</h3>
-                    <p>Tenemos un 10% de descuento en envíos Navideños</p>
-                  </div>
-                  <div className="dashboard-promo-graphic">
-                    <div className="dashboard-promo-triangle">△</div>
-                  </div>
-                </div>
-                
-                {/* Pagination dots */}
-                <div className="dashboard-promo-pagination">
-                  <span className="dot active"></span>
-                  <span className="dot"></span>
-                  <span className="dot"></span>
-                </div>
+                <button className="dashboard-see-all">
+                  Ver todos los envíos →
+                </button>
               </section>
             </>
           )}
 
-          {/* Contenido para otras pestañas */}
           {activeTab === 'calcular' && (
             <section className="dashboard-section">
               <h2>Calculadora de Envíos</h2>
-              <p>Aquí irá el componente de calculadora...</p>
+              <p>Aquí va el contenido de la calculadora...</p>
             </section>
           )}
 
           {activeTab === 'pre-alertar' && (
             <section className="dashboard-section">
               <h2>Pre-Alertar Paquetes</h2>
-              <p>Aquí irá el formulario de pre-alertas...</p>
+              <p>Aquí va el formulario para pre-alertar paquetes...</p>
             </section>
           )}
 
           {activeTab === 'rastrear' && (
             <section className="dashboard-section">
-              <h2>Rastrear Paquetes</h2>
-              <p>Aquí irá el sistema de tracking...</p>
+              <h2>Rastrear Envíos</h2>
+              <p>Aquí va el sistema de rastreo...</p>
             </section>
           )}
 
@@ -232,6 +242,27 @@ const Dashboard = () => {
             <section className="dashboard-section">
               <h2>Mis Pre-Alertas</h2>
               <p>Listado completo de todas mis pre-alertas...</p>
+            </section>
+          )}
+
+          {activeTab === 'perfil-usuario' && (
+            <section className="dashboard-section">
+              <h2>Perfil de Usuario</h2>
+              <p>Aquí va la configuración del perfil...</p>
+            </section>
+          )}
+
+          {activeTab === 'facturacion' && (
+            <section className="dashboard-section">
+              <h2>Facturación</h2>
+              <p>Aquí va el historial de facturación...</p>
+            </section>
+          )}
+
+          {activeTab === 'seguridad' && (
+            <section className="dashboard-section">
+              <h2>Seguridad</h2>
+              <p>Aquí van las configuraciones de seguridad...</p>
             </section>
           )}
         </div>

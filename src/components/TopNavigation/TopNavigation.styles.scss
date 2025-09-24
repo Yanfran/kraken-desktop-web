@@ -1,6 +1,6 @@
-// src/pages/dashboard/Dashboard/components/TopNavigation/TopNavigation.styles.scss
+// src/components/TopNavigation/TopNavigation.styles.scss - SOLUCION LAYOUT
 
-/* HEADER PRINCIPAL */
+/* HEADER PRINCIPAL - AJUSTE PARA SIDEBAR */
 .top-navigation {
   background-color: var(--color-background);
   border-bottom: 1px solid #E1E5E9;
@@ -13,6 +13,13 @@
   z-index: 100;
   height: 80px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  /* IMPORTANTE: El TopNavigation debe ajustarse al sidebar */
+  margin-left: 0; /* Por defecto sin margen */
+  width: 100%; /* Ocupa todo el ancho disponible del contenedor padre */
+  
+  /* No necesitamos margin-left aquí porque ya está dentro de .dashboard-main
+     que ya tiene el margin-left aplicado */
 }
 
 /* SECCIÓN IZQUIERDA - Solo toggle móvil */
@@ -78,44 +85,39 @@
   line-height: 1.2;
   
   small {
-    font-size: 8px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
     display: block;
-    margin-top: 2px;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-text-secondary);
   }
 }
 
-/* MENÚ AZUL - SEPARADO DEL LOGO */
+/* MENÚ AZUL - ESTILO EXACTO */
 .top-navigation__main-nav {
   display: flex;
   gap: 0;
-  background-color: #0175c8; /* Azul exacto */
-  border-radius: 28px;
+  background-color: var(--color-secondary);
+  border-radius: 25px;
   padding: 4px;
-  box-shadow: 0 4px 16px rgba(1, 117, 200, 0.4);
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0; /* NO se encoge */
+  box-shadow: 0 4px 12px rgba(1, 117, 200, 0.3);
 }
 
 .top-navigation__nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 12px 18px;
+  gap: 2px;
+  padding: 10px 16px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  border-radius: 24px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 11px;
-  font-weight: 500;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  font-size: 10px;
   min-width: 70px;
-  position: relative;
-  z-index: 1;
+  text-align: center;
+  font-weight: 500;
   
   &:hover {
     color: white;
@@ -124,28 +126,15 @@
   }
   
   &.active {
-    background-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.2);
     color: white;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transform: translateY(-1px);
-    
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
-      border-radius: 24px;
-      z-index: -1;
-    }
   }
 }
 
 .top-navigation__nav-icon {
-  font-size: 16px;
+  font-size: 18px;
   margin-bottom: 2px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
