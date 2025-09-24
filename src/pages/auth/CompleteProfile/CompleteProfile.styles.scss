@@ -41,7 +41,7 @@
     
     @media (min-width: 768px) {
       background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
-      justify-content: center;
+      justify-content: flex-start;
       padding: 40px 20px;
     }
   }
@@ -51,7 +51,7 @@
     background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
     
     @media (min-width: 768px) {
-      justify-content: center;
+      justify-content: flex-start;
       padding: 40px 20px;
     }
   }

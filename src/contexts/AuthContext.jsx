@@ -1,301 +1,137 @@
-// src/contexts/AuthContext.jsx - Context robusto para web (sin cambios, ya está correcto)
-import React, { createContext, useContext, useEffect, useState } from 'react';
+// src/contexts/AuthContext.jsx
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { authService } from '../services/auth/authService';
 
-// Tipos de usuario (estructura preparada para servicios reales)
-const createUser = (data) => ({
-  id: data.id || null,
-  email: data.email,
-  name: data.name || data.nombres,
-  lastName: data.lastName || data.apellidos,
-  phone: data.phone || data.telefonoCelular,
-  nro: data.nro || data.nroIdentificacionCliente,
-  emailVerified: data.emailVerified || data.fromEmail || false,
-  profileComplete: data.profileComplete || false,
-  fromGoogle: data.fromGoogle || false,
-  clienteActivo: data.clienteActivo || false,
-  codCliente: data.codCliente || null,
-  birthday: data.birthday || data.fechaNacimiento,
-  phoneSecondary: data.phoneSecundary || data.telefonoCelularSecundario,
-  avatarId: data.avatarId || '1',
-});
+const AuthContext = createContext(null);
 
-// Context inicial
-const AuthContext = createContext({
+// Estados del usuario
+const initialState = {
   user: null,
-  isLoading: false,
+  isLoading: true,
   isSignedIn: false,
-  signIn: async () => ({ success: false, message: 'Not implemented' }),
-  signUp: async () => ({ success: false, message: 'Not implemented' }),
-  signInWithGoogle: async () => ({ success: false, message: 'Not implemented' }),
-  signOut: async () => {},
-  confirmEmail: () => {},
-  setUserState: async () => {},
-  resendVerificationEmail: async () => ({ success: false, message: 'Not implemented' }),
-});
+  error: null
+};
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+// Reducer para manejar las acciones de autenticación
+function authReducer(state, action) {
+  switch (action.type) {
+    case 'LOADING':
+      return { ...state, isLoading: true, error: null };
+    
+    case 'LOGIN_SUCCESS':
+      return {
+        ...state,
+        user: action.payload,
+        isLoading: false,
+        isSignedIn: true,
+        error: null
+      };
+    
+    case 'LOGOUT':
+      return {
+        ...state,
+        user: null,
+        isLoading: false,
+        isSignedIn: false,
+        error: null
+      };
+    
+    case 'ERROR':
+      return {
+        ...state,
+        error: action.payload,
+        isLoading: false
+      };
+    
+    case 'UPDATE_USER':
+      return {
+        ...state,
+        user: { ...state.user, ...action.payload },
+        isLoading: false
+      };
+    
+    default:
+      return state;
+  }
+}
 
-  // Estado computado
-  const isSignedIn = !!user;
+export function AuthProvider({ children }) {
+  const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Cargar usuario del localStorage al iniciar
+  // Verificar token al cargar la aplicación
   useEffect(() => {
-    const loadStoredUser = async () => {
+    const initAuth = async () => {
       try {
-        const storedUser = localStorage.getItem('userData');
-        const storedToken = localStorage.getItem('authToken');
+        dispatch({ type: 'LOADING' });
         
-        if (storedUser && storedToken) {
-          const userData = JSON.parse(storedUser);
-          setUser(createUser(userData));
-          console.log('Usuario cargado desde localStorage:', userData.email);
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Aquí validarías el token con tu backend
+          const userData = await authService.validateToken(token);
+          dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
+        } else {
+          dispatch({ type: 'LOGOUT' });
         }
       } catch (error) {
-        console.error('Error cargando usuario:', error);
-        // Limpiar storage corrupto
-        localStorage.removeItem('userData');
-        localStorage.removeItem('authToken');
-      } finally {
-        setIsLoading(false);
+        console.error('Error al verificar autenticación:', error);
+        localStorage.removeItem('token');
+        dispatch({ type: 'LOGOUT' });
       }
     };
 
-    loadStoredUser();
+    initAuth();
   }, []);
 
-  // Guardar usuario en localStorage
-  const saveUserToStorage = async (userData, token) => {
+  // Funciones de autenticación
+  const login = async (credentials) => {
     try {
-      localStorage.setItem('userData', JSON.stringify(userData));
-      if (token) {
-        localStorage.setItem('authToken', token);
-      }
+      dispatch({ type: 'LOADING' });
+      const response = await authService.login(credentials);
+      
+      localStorage.setItem('token', response.token);
+      dispatch({ type: 'LOGIN_SUCCESS', payload: response.user });
+      
+      return response;
     } catch (error) {
-      console.error('Error guardando usuario:', error);
+      dispatch({ type: 'ERROR', payload: error.message });
+      throw error;
     }
   };
 
-  // Limpiar storage
-  const clearUserFromStorage = () => {
-    localStorage.removeItem('userData');
-    localStorage.removeItem('authToken');
-  };
-
-  // SIGN IN - Preparado para API real
-  const signIn = async (email, password) => {
-    setIsLoading(true);
-    console.log('Iniciando sesión para:', email);
-
+  const logout = async () => {
     try {
-      // TODO: Reemplazar con llamada API real
-      // const response = await authService.signIn(email, password);
-      
-      // Simulación estática por ahora
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Simular diferentes casos
-      if (email === 'test@error.com') {
-        return { success: false, message: 'Credenciales inválidas' };
-      }
-      
-      if (email === 'test@unverified.com') {
-        return { 
-          success: false, 
-          message: 'Debes verificar tu email antes de continuar',
-          code: 'EMAIL_NOT_VERIFIED'
-        };
-      }
-
-      // Usuario exitoso - datos estáticos
-      const mockUserData = {
-        id: '123',
-        email: email,
-        name: 'Usuario',
-        lastName: 'Kraken',
-        phone: '+58412345679',
-        emailVerified: true,
-        profileComplete: true,
-        fromGoogle: false,
-      };
-
-      const mockToken = 'mock-jwt-token-12345';
-      const userData = createUser(mockUserData);
-      
-      setUser(userData);
-      await saveUserToStorage(mockUserData, mockToken);
-      
-      console.log('Login exitoso:', userData.email);
-      return { success: true, message: 'Login exitoso' };
-
+      localStorage.removeItem('token');
+      dispatch({ type: 'LOGOUT' });
     } catch (error) {
-      console.error('Error en signIn:', error);
-      return { success: false, message: 'Error de conexión' };
-    } finally {
-      setIsLoading(false);
+      console.error('Error al cerrar sesión:', error);
     }
   };
 
-  // SIGN UP - Preparado para API real
-  const signUp = async (email, password, name, lastName) => {
-    setIsLoading(true);
-    console.log('Registrando usuario:', email);
-
+  const register = async (userData) => {
     try {
-      // TODO: Reemplazar con llamada API real
-      // const response = await authService.signUp(email, password, name, lastName);
+      dispatch({ type: 'LOADING' });
+      const response = await authService.register(userData);
       
-      // Simulación estática
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // No auto-login después del registro, usuario debe verificar email
+      dispatch({ type: 'LOGOUT' });
       
-      // Simular diferentes casos
-      if (email === 'test@exists.com') {
-        return { 
-          success: false, 
-          message: 'Este email ya está registrado',
-          field: 'email'
-        };
-      }
-
-      // Registro exitoso - NO loguear automáticamente
-      // El usuario debe verificar email primero
-      console.log('Registro exitoso para:', email);
-      return { 
-        success: true, 
-        message: 'Registro exitoso. Revisa tu email para verificar tu cuenta.' 
-      };
-
+      return response;
     } catch (error) {
-      console.error('Error en signUp:', error);
-      return { success: false, message: 'Error de conexión' };
-    } finally {
-      setIsLoading(false);
+      dispatch({ type: 'ERROR', payload: error.message });
+      throw error;
     }
   };
 
-  // GOOGLE SIGN IN - Preparado para API real
-  const signInWithGoogle = async () => {
-    setIsLoading(true);
-    console.log('Iniciando sesión con Google...');
-
-    try {
-      // TODO: Reemplazar con Google OAuth real
-      // const googleResponse = await googleAuth.signIn();
-      // const response = await authService.googleSignIn(googleResponse.token);
-      
-      // Simulación estática
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockGoogleUser = {
-        id: '456',
-        email: 'google.user@gmail.com',
-        name: 'Usuario',
-        lastName: 'Google',
-        emailVerified: true,
-        profileComplete: false, // Nuevo usuario de Google necesita completar perfil
-        fromGoogle: true,
-      };
-
-      const mockToken = 'mock-google-jwt-token-67890';
-      const userData = createUser(mockGoogleUser);
-      
-      setUser(userData);
-      await saveUserToStorage(mockGoogleUser, mockToken);
-      
-      console.log('Google login exitoso:', userData.email);
-      return { success: true, message: 'Login con Google exitoso' };
-
-    } catch (error) {
-      console.error('Error en Google signIn:', error);
-      return { success: false, message: 'Error con Google Sign In' };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // SIGN OUT
-  const signOut = async () => {
-    console.log('Cerrando sesión...');
-    
-    try {
-      // TODO: Invalidar token en el servidor
-      // await authService.signOut();
-      
-      setUser(null);
-      clearUserFromStorage();
-      console.log('Sesión cerrada exitosamente');
-      
-    } catch (error) {
-      console.error('Error en signOut:', error);
-      // Limpiar localmente aunque falle el servidor
-      setUser(null);
-      clearUserFromStorage();
-    }
-  };
-
-  // CONFIRMAR EMAIL
-  const confirmEmail = () => {
-    console.log('Confirmando email del usuario...');
-    setUser(prev => prev ? createUser({ ...prev, emailVerified: true }) : prev);
-    
-    // TODO: Actualizar en servidor
-    // await authService.confirmEmail(user.id);
-  };
-
-  // ACTUALIZAR ESTADO DEL USUARIO
-  const setUserState = async (userData, token = null) => {
-    try {
-      if (userData) {
-        const newUserData = createUser(userData);
-        setUser(newUserData);
-        await saveUserToStorage(userData, token);
-        console.log('Estado del usuario actualizado');
-      } else {
-        setUser(null);
-        clearUserFromStorage();
-      }
-    } catch (error) {
-      console.error('Error actualizando estado del usuario:', error);
-    }
-  };
-
-  // REENVIAR EMAIL DE VERIFICACIÓN
-  const resendVerificationEmail = async (email) => {
-    try {
-      console.log('Reenviando email de verificación a:', email);
-      
-      // TODO: Reemplazar con API real
-      // const response = await authService.resendVerificationEmail(email);
-      
-      // Simulación
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return {
-        success: true,
-        message: 'Email de verificación reenviado exitosamente'
-      };
-      
-    } catch (error) {
-      console.error('Error reenviando email:', error);
-      return {
-        success: false,
-        message: 'Error al reenviar el email'
-      };
-    }
+  const updateUser = (userData) => {
+    dispatch({ type: 'UPDATE_USER', payload: userData });
   };
 
   const value = {
-    user,
-    isLoading,
-    isSignedIn,
-    signIn,
-    signUp,
-    signInWithGoogle,
-    signOut,
-    confirmEmail,
-    setUserState,
-    resendVerificationEmail,
+    ...state,
+    login,
+    logout,
+    register,
+    updateUser
   };
 
   return (
@@ -303,13 +139,12 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-// Hook para usar el contexto
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
   return context;
-};
+}

@@ -203,7 +203,7 @@ const Login = () => {
           <button
             type="button"
             className="kraken-login__forgot-link"
-            onClick={() => navigate('/forgot-password')}
+            onClick={() => navigate('/forgot')}
           >
             ¿Olvidaste tu contraseña?
           </button>
