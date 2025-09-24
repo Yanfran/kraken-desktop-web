@@ -1,10 +1,10 @@
-// src/App.jsx - Actualizado con ThemeProvider
+// src/App.jsx - Tu versión que funciona ✅
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from './contexts/ThemeContext'; // Nuevo ThemeProvider
+import { ThemeProvider } from './contexts/ThemeContext'; // ✅ CORRECTO
 import './App.styles.scss';
 
-// AuthContext simplificado (tu código actual)
+// AuthContext simplificado (tu código actual que funciona)
 const AuthContext = React.createContext({});
 
 const AuthProvider = ({ children }) => {
@@ -39,20 +39,20 @@ const AuthProvider = ({ children }) => {
       setIsLoading(false);
     }
   };
-    const signInWithGoogle = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setUser({ email: 'google@user.com', name: 'Usuario Google' });
-        setIsSignedIn(true);
-        return { success: true };
-      } catch (error) {
-        return { success: false };
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
+
+  const signInWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setUser({ email: 'google@user.com', name: 'Usuario Google' });
+      setIsSignedIn(true);
+      return { success: true };
+    } catch (error) {
+      return { success: false };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const logout = () => {
     setUser(null);
@@ -66,9 +66,10 @@ const AuthProvider = ({ children }) => {
   );
 };
 
+// ✅ Hook exportado que usan tus componentes
 export const useAuth = () => React.useContext(AuthContext);
 
-// Importar componentes
+// Importar componentes con lazy loading ✅
 const Login = React.lazy(() => import('./pages/auth/Login/Login'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword/ForgotPassword'));
 const Register = React.lazy(() => import('./pages/auth/Register/Register'));
@@ -77,14 +78,14 @@ const CompleteProfile = React.lazy(() => import('./pages/auth/CompleteProfile/Co
 const PersonalData = React.lazy(() => import('./pages/auth/PersonalData/PersonalData'));
 const DeliveryOption = React.lazy(() => import('./pages/auth/DeliveryOption/DeliveryOption'));
 const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
-const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'));
+const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard/Dashboard'));
 
 // Dashboard con tema integrado
 const DashboardWithTheme = () => {
   return <Dashboard />;
 };
 
-// Rutas protegidas
+// Rutas protegidas ✅
 const ProtectedRoute = ({ children }) => {
   const { isSignedIn } = useAuth();
   return isSignedIn ? children : <Navigate to="/login" replace />;

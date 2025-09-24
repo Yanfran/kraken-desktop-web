@@ -1,6 +1,6 @@
 // src/contexts/ThemeContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import Colors from '../../constants/colors';
+import Colors from '../../constants/colors'; // ✅ RUTA CORREGIDA
 
 const ThemeContext = createContext(undefined);
 

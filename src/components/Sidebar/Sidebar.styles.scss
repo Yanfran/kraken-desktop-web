@@ -1,0 +1,355 @@
+// src/pages/dashboard/Dashboard/components/Sidebar/Sidebar.styles.scss
+
+/* SIDEBAR PRINCIPAL - EXACTO AL DISEÑO */
+.dashboard-sidebar {
+  width: 280px;
+  background-color: var(--color-background);
+  border-right: 1px solid #E1E5E9;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: fixed;
+  height: 100vh;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  
+  &.closed {
+    width: 80px;
+  }
+  
+  @media (max-width: 768px) {
+    left: -280px;
+    
+    &.open {
+      left: 0;
+    }
+  }
+}
+
+/* OVERLAY PARA MOBILE */
+.dashboard-sidebar__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  
+  @media (min-width: 769px) {
+    display: none;
+  }
+}
+
+/* CONTENIDO DEL SIDEBAR */
+.dashboard-sidebar__content {
+  display: flex;
+  flex-direction: column;
+  padding: 32px 0 24px;
+  height: 100%;
+}
+
+/* USER PROFILE - AVATAR CIRCULAR NARANJA */
+.dashboard-sidebar__user-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24px;
+  margin-bottom: 32px;
+}
+
+.dashboard-sidebar__user-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF4500 0%, #FF6B35 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
+  position: relative;
+}
+
+.dashboard-sidebar__user-initial {
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-sidebar__user-info {
+  text-align: center;
+}
+
+.dashboard-sidebar__user-name {
+  color: var(--color-text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.dashboard-sidebar__user-id {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-sidebar__user-number {
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  background-color: #F0F2F5;
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  border: 1px solid #E1E5E9;
+}
+
+/* CASILLERO INFO */
+.dashboard-sidebar__casillero-info {
+  padding: 0 24px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.dashboard-sidebar__casillero-label {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  margin-bottom: 12px;
+  display: block;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.dashboard-sidebar__directions-btn {
+  background: none;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 8px 20px;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: none;
+  
+  &:hover {
+    background-color: var(--color-primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 69, 0, 0.3);
+  }
+}
+
+/* MENU DE NAVEGACION - ESTILO EXACTO */
+.dashboard-sidebar__menu {
+  flex: 1;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-sidebar__menu-item {
+  width: 100%;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  
+  &:hover {
+    background-color: #F8F9FA;
+    color: var(--color-text-primary);
+    transform: translateX(4px);
+  }
+  
+  &.active {
+    background-color: rgba(255, 69, 0, 0.08);
+    color: var(--color-primary);
+    font-weight: 600;
+    border-left: 3px solid var(--color-primary);
+    margin-left: -3px;
+    padding-left: 23px;
+  }
+}
+
+.dashboard-sidebar__arrow {
+  font-size: 14px;
+  opacity: 0.5;
+  color: var(--color-primary);
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+  
+  .dashboard-sidebar__menu-item:hover & {
+    transform: rotate(90deg);
+    opacity: 0.8;
+  }
+}
+
+/* SELECTOR DE IDIOMA - DISEÑO EXACTO */
+.dashboard-sidebar__language-selector {
+  padding: 24px;
+  border-top: 1px solid #E1E5E9;
+  text-align: center;
+  margin-top: auto;
+}
+
+.dashboard-sidebar__language-selector > span {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.dashboard-sidebar__language-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.dashboard-sidebar__language-btn {
+  width: 36px;
+  height: 32px;
+  background: none;
+  border: 1px solid #E1E5E9;
+  color: var(--color-text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &.active {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: white;
+    box-shadow: 0 2px 4px rgba(1, 117, 200, 0.3);
+  }
+  
+  &:hover:not(.active) {
+    border-color: var(--color-text-secondary);
+    background-color: #F8F9FA;
+  }
+}
+
+/* BOTON DE LOGOUT - ESTILO EXACTO */
+.dashboard-sidebar__logout-btn {
+  margin: 16px 24px 0;
+  padding: 14px 20px;
+  background-color: transparent;
+  border: 1.5px solid #E1E5E9;
+  color: var(--color-text-secondary);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  &:hover {
+    background-color: #F44336;
+    border-color: #F44336;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+  }
+}
+
+/* RESPONSIVE ESPECÍFICO */
+@media (max-width: 768px) {
+  .dashboard-sidebar {
+    width: 100vw;
+    max-width: 320px;
+  }
+  
+  .dashboard-sidebar__content {
+    padding: 24px 0 16px;
+  }
+  
+  .dashboard-sidebar__user-profile {
+    padding: 0 20px;
+    margin-bottom: 24px;
+  }
+  
+  .dashboard-sidebar__user-avatar {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .dashboard-sidebar__user-initial {
+    font-size: 24px;
+  }
+  
+  .dashboard-sidebar__casillero-info {
+    padding: 0 20px;
+    margin-bottom: 24px;
+  }
+  
+  .dashboard-sidebar__menu {
+    padding: 0 12px;
+  }
+  
+  .dashboard-sidebar__logout-btn {
+    margin: 12px 20px 0;
+    padding: 12px 16px;
+  }
+}
+
+/* DARK MODE OVERRIDES */
+[data-theme="dark"] {
+  .dashboard-sidebar {
+    background-color: var(--color-background);
+    border-right-color: var(--color-border);
+    
+    .dashboard-sidebar__user-number {
+      background-color: #2B2930;
+      border-color: var(--color-border);
+      color: var(--color-text-primary);
+    }
+    
+    .dashboard-sidebar__menu-item {
+      &:hover {
+        background-color: var(--color-surface);
+      }
+      
+      &.active {
+        background-color: rgba(255, 180, 133, 0.15);
+      }
+    }
+    
+    .dashboard-sidebar__language-btn {
+      border-color: var(--color-border);
+      
+      &:hover:not(.active) {
+        background-color: var(--color-surface);
+        border-color: var(--color-text-secondary);
+      }
+    }
+    
+    .dashboard-sidebar__logout-btn {
+      border-color: var(--color-border);
+    }
+  }
+}
