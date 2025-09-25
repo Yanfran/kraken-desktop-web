@@ -1,4 +1,3 @@
-// src/components/TopNavigation/TopNavigation.jsx - CON IMÁGENES DEL DEMO
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import './TopNavigation.styles.scss';
@@ -15,32 +14,32 @@ const TopNavigation = ({
     { 
       id: 'inicio', 
       label: 'Inicio', 
-      icon: '/src/assets/images/icon-kraken-web-pulpo-peq.png', // Ajustar según tus archivos
+      icon: '/src/assets/images/icon-kraken-web-pulpo-peq.png',
       iconAlt: '🏠'
     },
     { 
       id: 'calcular', 
       label: 'Calcular', 
-      icon: '/src/assets/images/icon-kraken-web-calculadora.png', // Ajustar según tus archivos
+      icon: '/src/assets/images/icon-kraken-web-calculadora.png',
       iconAlt: '🧮'
     },
     { 
       id: 'pre-alertar', 
       label: 'Pre-Alertar', 
-      icon: '/src/assets/images/icon-kraken-web-parlante_1.png', // Ajustar según tus archivos
+      icon: '/src/assets/images/icon-kraken-web-parlante_1.png',
       iconAlt: '📦'
     },
     { 
       id: 'rastrear', 
       label: 'Rastrear', 
-      icon: '/src/assets/images/icon-kraken-web-rastrear-_1.png', // Ajustar según tus archivos
+      icon: '/src/assets/images/icon-kraken-web-rastrear-_1.png',
       iconAlt: '📍'
     }
   ];
 
   return (
     <header className="top-navigation" data-theme={actualTheme}>
-      {/* Parte Izquierda - Solo toggle para móvil */}
+      {/* Parte Izquierda - Toggle móvil + Logo */}
       <div className="top-navigation__left">
         <button 
           className="top-navigation__sidebar-toggle"
@@ -49,25 +48,23 @@ const TopNavigation = ({
         >
           ☰
         </button>
-      </div>
-
-      {/* Parte Central - Logo Kraken + Menú Azul */}
-      <div className="top-navigation__center">
-        {/* Logo Kraken */}
+        
+        {/* Logo Kraken pegado a la izquierda */}
         <div className="top-navigation__logo-container">
           <img 
             src="/src/assets/images/logo.jpg" 
             alt="Kraken Logo" 
             className="top-navigation__logo-image"
             onError={(e) => {
-              // Fallback - mostrar texto si no encuentra la imagen
               e.target.style.display = 'none';
               e.target.parentNode.innerHTML = '<div class="top-navigation__logo-fallback">KRAKEN<br><small>COURIER & CARGO</small></div>';
             }}
           />
         </div>
+      </div>
 
-        {/* Menú Azul con Imágenes */}
+      {/* Parte Central - Solo el menú azul, centrado */}
+      <div className="top-navigation__center">
         <nav className="top-navigation__main-nav">
           {menuItems.map((item) => (
             <button
@@ -81,7 +78,6 @@ const TopNavigation = ({
                   alt={item.label}
                   className="top-navigation__nav-icon-image"
                   onError={(e) => {
-                    // Fallback a emoji si la imagen no carga
                     e.target.style.display = 'none';
                     e.target.parentNode.innerHTML = `<span class="top-navigation__nav-icon-emoji">${item.iconAlt}</span>`;
                   }}
@@ -94,8 +90,8 @@ const TopNavigation = ({
       </div>
 
       {/* Parte Derecha */}
-      <div className="top-navigation__right">
-        {/* Información de entrega */}
+      {/* <div className="top-navigation__right">
+        Información de entrega
         <div className="top-navigation__delivery-info">
           <span className="top-navigation__delivery-label">Tu dirección de entrega</span>
           <span className="top-navigation__delivery-location">
@@ -104,10 +100,10 @@ const TopNavigation = ({
           </span>
         </div>
         
-        {/* Indicador Desktop */}
+        Indicador Desktop
         <span className="top-navigation__desktop-indicator">DESKTOP</span>
         
-        {/* Iconos de la derecha */}
+        Iconos de la derecha
         <button 
           className="top-navigation__notifications"
           aria-label="Notificaciones"
@@ -115,7 +111,7 @@ const TopNavigation = ({
           🔔
         </button>
         
-        {/* Toggle de tema */}
+        Toggle de tema
         <button 
           className="top-navigation__theme-toggle" 
           onClick={toggleTheme}
@@ -123,7 +119,7 @@ const TopNavigation = ({
         >
           {actualTheme === 'light' ? '🌙' : '☀️'}
         </button>
-      </div>
+      </div> */}
     </header>
   );
 };

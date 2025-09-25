@@ -1,30 +1,27 @@
-// src/pages/dashboard/Dashboard/components/Sidebar/Sidebar.styles.scss
-
-/* SIDEBAR PRINCIPAL - EXACTO AL DISEÑO */
+/* SIDEBAR PRINCIPAL - ALTURA AJUSTADA */
 .dashboard-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
   width: 280px;
   background-color: var(--color-background);
   border-right: 1px solid #E1E5E9;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 200;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
-  position: fixed;
-  height: 100vh;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   
-  &.closed {
-    width: 80px;
+  &.open {
+    transform: translateX(0);
   }
   
-  @media (max-width: 768px) {
-    left: -280px;
-    
-    &.open {
-      left: 0;
-    }
+  @media (min-width: 1200px) {
+    position: sticky;
+    transform: translateX(0);
+    flex-shrink: 0;
   }
 }
 
@@ -36,48 +33,48 @@
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 150;
   
-  @media (min-width: 769px) {
+  @media (min-width: 1200px) {
     display: none;
   }
 }
 
-/* CONTENIDO DEL SIDEBAR */
+/* CONTENIDO DEL SIDEBAR - CON SCROLL */
 .dashboard-sidebar__content {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 32px 0 24px;
-  height: 100%;
+  overflow: hidden; /* Evitar scroll en el contenedor */
 }
 
-/* USER PROFILE - AVATAR CIRCULAR NARANJA */
+/* USER PROFILE - FIJO ARRIBA */
 .dashboard-sidebar__user-profile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 24px;
-  margin-bottom: 32px;
+  flex-shrink: 0; /* No se comprime */
+  padding: 32px 24px 24px;
+  text-align: center;
+  background-color: var(--color-background);
+  border-bottom: 1px solid #F5F5F5;
 }
 
 .dashboard-sidebar__user-avatar {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #FF4500 0%, #FF6B35 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  margin: 0 auto 16px;
   box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
-  position: relative;
+  border: 3px solid white;
 }
 
 .dashboard-sidebar__user-initial {
-  color: white;
   font-size: 28px;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-sidebar__user-info {
@@ -112,11 +109,12 @@
   border: 1px solid #E1E5E9;
 }
 
-/* CASILLERO INFO */
+/* CASILLERO INFO - FIJO */
 .dashboard-sidebar__casillero-info {
-  padding: 0 24px;
-  margin-bottom: 32px;
+  flex-shrink: 0; /* No se comprime */
+  padding: 0 24px 24px;
   text-align: center;
+  border-bottom: 1px solid #F5F5F5;
 }
 
 .dashboard-sidebar__casillero-label {
@@ -148,13 +146,32 @@
   }
 }
 
-/* MENU DE NAVEGACION - ESTILO EXACTO */
+/* MENU - ÁREA CON SCROLL */
 .dashboard-sidebar__menu {
-  flex: 1;
-  padding: 0 16px;
+  flex: 1; /* Toma el espacio disponible */
+  padding: 16px;
+  overflow-y: auto; /* Solo scroll vertical cuando sea necesario */
   display: flex;
   flex-direction: column;
   gap: 4px;
+  
+  /* Personalizar scrollbar */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.2);
+    }
+  }
 }
 
 .dashboard-sidebar__menu-item {
@@ -173,6 +190,7 @@
   font-size: 14px;
   font-weight: 500;
   position: relative;
+  flex-shrink: 0; /* No se comprimen */
   
   &:hover {
     background-color: #F8F9FA;
@@ -203,12 +221,13 @@
   }
 }
 
-/* SELECTOR DE IDIOMA - DISEÑO EXACTO */
+/* SELECTOR DE IDIOMA - FIJO EN PARTE INFERIOR */
 .dashboard-sidebar__language-selector {
-  padding: 24px;
+  flex-shrink: 0; /* No se comprime */
+  padding: 20px 24px 16px;
   border-top: 1px solid #E1E5E9;
   text-align: center;
-  margin-top: auto;
+  background-color: var(--color-background);
 }
 
 .dashboard-sidebar__language-selector > span {
@@ -253,9 +272,10 @@
   }
 }
 
-/* BOTON DE LOGOUT - ESTILO EXACTO */
+/* BOTÓN LOGOUT - FIJO EN LA PARTE INFERIOR */
 .dashboard-sidebar__logout-btn {
-  margin: 16px 24px 0;
+  flex-shrink: 0; /* No se comprime */
+  margin: 0 24px 24px;
   padding: 14px 20px;
   background-color: transparent;
   border: 1.5px solid #E1E5E9;
@@ -277,20 +297,15 @@
   }
 }
 
-/* RESPONSIVE ESPECÍFICO */
+/* RESPONSIVE */
 @media (max-width: 768px) {
   .dashboard-sidebar {
     width: 100vw;
     max-width: 320px;
   }
   
-  .dashboard-sidebar__content {
-    padding: 24px 0 16px;
-  }
-  
   .dashboard-sidebar__user-profile {
-    padding: 0 20px;
-    margin-bottom: 24px;
+    padding: 24px 20px 20px;
   }
   
   .dashboard-sidebar__user-avatar {
@@ -303,25 +318,36 @@
   }
   
   .dashboard-sidebar__casillero-info {
-    padding: 0 20px;
-    margin-bottom: 24px;
+    padding: 0 20px 20px;
   }
   
   .dashboard-sidebar__menu {
     padding: 0 12px;
   }
   
+  .dashboard-sidebar__language-selector {
+    padding: 16px 20px 12px;
+  }
+  
   .dashboard-sidebar__logout-btn {
-    margin: 12px 20px 0;
+    margin: 0 20px 20px;
     padding: 12px 16px;
   }
 }
 
-/* DARK MODE OVERRIDES */
+/* DARK MODE */
 [data-theme="dark"] {
   .dashboard-sidebar {
     background-color: var(--color-background);
     border-right-color: var(--color-border);
+    
+    .dashboard-sidebar__user-profile {
+      border-bottom-color: var(--color-border);
+    }
+    
+    .dashboard-sidebar__casillero-info {
+      border-bottom-color: var(--color-border);
+    }
     
     .dashboard-sidebar__user-number {
       background-color: #2B2930;
@@ -337,6 +363,10 @@
       &.active {
         background-color: rgba(255, 180, 133, 0.15);
       }
+    }
+    
+    .dashboard-sidebar__language-selector {
+      border-top-color: var(--color-border);
     }
     
     .dashboard-sidebar__language-btn {

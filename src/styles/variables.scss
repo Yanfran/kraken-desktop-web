@@ -96,4 +96,21 @@
   --transition-fast: 150ms ease;
   --transition-base: 300ms ease;
   --transition-slow: 500ms ease;
+
+
+  // ===== VARIABLES DEL MENÚ AZUL =====
+  --kraken-menu-bg: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  --kraken-menu-primary: #4A90E2;
+  --kraken-menu-primary-dark: #357ABD;
+  --kraken-menu-text: rgba(255, 255, 255, 0.8);
+  --kraken-menu-text-active: #ffffff;
+  --kraken-menu-hover-bg: rgba(255, 255, 255, 0.15);
+  --kraken-menu-active-bg: rgba(255, 255, 255, 0.25);
+  --kraken-menu-shadow: rgba(74, 144, 226, 0.25);
+  
+  // Variables del layout
+  --menu-border-radius: 25px;
+  --menu-item-border-radius: 20px;
+  --menu-padding: 6px;
+  --menu-item-padding: 12px 16px;
 }
