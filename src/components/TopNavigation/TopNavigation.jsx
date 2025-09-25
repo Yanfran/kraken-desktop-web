@@ -1,4 +1,4 @@
-// src/pages/dashboard/Dashboard/components/TopNavigation/TopNavigation.jsx
+// src/components/TopNavigation/TopNavigation.jsx - CON IMÁGENES DEL DEMO
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import './TopNavigation.styles.scss';
@@ -12,10 +12,30 @@ const TopNavigation = ({
   const { actualTheme, toggleTheme } = useTheme();
 
   const menuItems = [
-    { id: 'inicio', label: 'Inicio', icon: '🏠' },
-    { id: 'calcular', label: 'Calcular', icon: '🧮' },
-    { id: 'pre-alertar', label: 'Pre-Alertar', icon: '📦' },
-    { id: 'rastrear', label: 'Rastrear', icon: '📍' }
+    { 
+      id: 'inicio', 
+      label: 'Inicio', 
+      icon: '/src/assets/images/icon-kraken-web-pulpo-peq.png', // Ajustar según tus archivos
+      iconAlt: '🏠'
+    },
+    { 
+      id: 'calcular', 
+      label: 'Calcular', 
+      icon: '/src/assets/images/icon-kraken-web-calculadora.png', // Ajustar según tus archivos
+      iconAlt: '🧮'
+    },
+    { 
+      id: 'pre-alertar', 
+      label: 'Pre-Alertar', 
+      icon: '/src/assets/images/icon-kraken-web-parlante_1.png', // Ajustar según tus archivos
+      iconAlt: '📦'
+    },
+    { 
+      id: 'rastrear', 
+      label: 'Rastrear', 
+      icon: '/src/assets/images/icon-kraken-web-rastrear-_1.png', // Ajustar según tus archivos
+      iconAlt: '📍'
+    }
   ];
 
   return (
@@ -47,7 +67,7 @@ const TopNavigation = ({
           />
         </div>
 
-        {/* Menú Azul */}
+        {/* Menú Azul con Imágenes */}
         <nav className="top-navigation__main-nav">
           {menuItems.map((item) => (
             <button
@@ -55,7 +75,18 @@ const TopNavigation = ({
               className={`top-navigation__nav-item ${activeTab === item.id ? 'active' : ''}`}
               onClick={() => setActiveTab(item.id)}
             >
-              <span className="top-navigation__nav-icon">{item.icon}</span>
+              <div className="top-navigation__nav-icon-container">
+                <img 
+                  src={item.icon}
+                  alt={item.label}
+                  className="top-navigation__nav-icon-image"
+                  onError={(e) => {
+                    // Fallback a emoji si la imagen no carga
+                    e.target.style.display = 'none';
+                    e.target.parentNode.innerHTML = `<span class="top-navigation__nav-icon-emoji">${item.iconAlt}</span>`;
+                  }}
+                />
+              </div>
               <span className="top-navigation__nav-label">{item.label}</span>
             </button>
           ))}
@@ -76,6 +107,14 @@ const TopNavigation = ({
         {/* Indicador Desktop */}
         <span className="top-navigation__desktop-indicator">DESKTOP</span>
         
+        {/* Iconos de la derecha */}
+        <button 
+          className="top-navigation__notifications"
+          aria-label="Notificaciones"
+        >
+          🔔
+        </button>
+        
         {/* Toggle de tema */}
         <button 
           className="top-navigation__theme-toggle" 
@@ -83,11 +122,6 @@ const TopNavigation = ({
           aria-label={`Cambiar a modo ${actualTheme === 'light' ? 'oscuro' : 'claro'}`}
         >
           {actualTheme === 'light' ? '🌙' : '☀️'}
-        </button>
-        
-        {/* Notificaciones */}
-        <button className="top-navigation__notifications" aria-label="Notificaciones">
-          🔔
         </button>
       </div>
     </header>

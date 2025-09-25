@@ -31,25 +31,50 @@
 }
 
 /* MAIN CONTENT - CLASE CORREGIDA */
+// .dashboard-main {
+//   flex: 1;
+//   margin-left: 280px; /* MARGEN PARA SIDEBAR ABIERTO */
+//   display: flex;
+//   flex-direction: column;
+//   transition: margin-left 0.3s ease;
+//   min-height: 100vh;
+  
+//   /* CUANDO SIDEBAR ESTÁ CERRADO */
+//   &.sidebar-closed {
+//     margin-left: 80px;
+//   }
+  
+//   /* EN MÓVIL SIN MARGEN */
+//   @media (max-width: 768px) {
+//     margin-left: 0;
+    
+//     &.sidebar-closed {
+//       margin-left: 0;
+//     }
+//   }
+// }
+
 .dashboard-main {
   flex: 1;
-  margin-left: 280px; /* MARGEN PARA SIDEBAR ABIERTO */
+  margin-left: 280px;
   display: flex;
   flex-direction: column;
   transition: margin-left 0.3s ease;
   min-height: 100vh;
+  width: calc(100vw - 280px); /* FORZAR ANCHO COMPLETO */
   
-  /* CUANDO SIDEBAR ESTÁ CERRADO */
   &.sidebar-closed {
     margin-left: 80px;
+    width: calc(100vw - 80px); /* AJUSTAR CUANDO SIDEBAR CERRADO */
   }
   
-  /* EN MÓVIL SIN MARGEN */
   @media (max-width: 768px) {
     margin-left: 0;
+    width: 100vw;
     
     &.sidebar-closed {
       margin-left: 0;
+      width: 100vw;
     }
   }
 }
@@ -57,9 +82,7 @@
 /* CONTENT AREA */
 .dashboard-content {
   flex: 1;
-  padding: 24px;
-  // max-width: 1200px;
-  //  max-width: 1600px!important;
+  padding: 24px 40px; /* Más padding horizontal */
   max-width: none;
   margin: 0;
   width: 100%;
@@ -72,6 +95,8 @@
   margin-bottom: 24px;
   border: 1px solid var(--color-border);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  width: 100%; /* Asegurar que ocupe todo el ancho disponible */
+  max-width: none; /* Sin límites de ancho */
 }
 
 .dashboard-section-header {
@@ -124,6 +149,7 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
+  width: 100%;
 }
 
 .dashboard-table-header {

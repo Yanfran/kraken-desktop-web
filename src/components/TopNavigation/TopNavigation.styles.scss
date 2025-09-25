@@ -1,6 +1,6 @@
-// src/components/TopNavigation/TopNavigation.styles.scss - SOLUCIÓN INMEDIATA
+// src/components/TopNavigation/TopNavigation.styles.scss - CON SOPORTE PARA IMÁGENES
 
-/* HEADER PRINCIPAL - AJUSTE PARA SIDEBAR */
+/* HEADER PRINCIPAL */
 .top-navigation {
   background-color: var(--color-background);
   border-bottom: 1px solid #E1E5E9;
@@ -8,19 +8,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative; /* CAMBIO CRÍTICO: de sticky a relative */
+  position: sticky;
   top: 0;
   z-index: 100;
   height: 80px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
   margin: 0;
-  
-  /* ALTERNATIVA: Si necesitas sticky, usa fixed */
-  /* position: fixed;
-  left: 280px;
-  right: 0;
-  transition: left 0.3s ease; */
 }
 
 /* SECCIÓN IZQUIERDA - Solo toggle móvil */
@@ -53,7 +47,7 @@
   }
 }
 
-/* SECCIÓN CENTRAL - Logo + Menú SEPARADOS */
+/* SECCIÓN CENTRAL - Logo + Menú */
 .top-navigation__center {
   flex: 1;
   display: flex;
@@ -93,7 +87,7 @@
   }
 }
 
-/* MENÚ AZUL - ESTILO EXACTO */
+/* MENÚ AZUL - CON IMÁGENES */
 .top-navigation__main-nav {
   display: flex;
   gap: 0;
@@ -107,7 +101,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   padding: 10px 16px;
   background: none;
   border: none;
@@ -134,12 +128,49 @@
   }
 }
 
-.top-navigation__nav-icon {
-  font-size: 18px;
+/* CONTENEDOR DEL ICONO */
+.top-navigation__nav-icon-container {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 2px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
+/* IMAGEN DEL ICONO */
+.top-navigation__nav-icon-image {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: brightness(0) invert(1) opacity(0.7); /* Hacer blanco semi-transparente */
+  transition: all 0.3s ease;
+  
+  .top-navigation__nav-item:hover & {
+    filter: brightness(0) invert(1) opacity(1); /* Blanco completo en hover */
+  }
+  
+  .top-navigation__nav-item.active & {
+    filter: brightness(0) invert(1) opacity(1); /* Blanco completo en activo */
+  }
+}
+
+/* FALLBACK EMOJI */
+.top-navigation__nav-icon-emoji {
+  font-size: 16px;
+  filter: grayscale(1) brightness(2);
+  transition: all 0.3s ease;
+  
+  .top-navigation__nav-item:hover & {
+    filter: none;
+  }
+  
+  .top-navigation__nav-item.active & {
+    filter: none;
+  }
+}
+
+/* LABEL DEL MENÚ */
 .top-navigation__nav-label {
   font-size: 10px;
   text-transform: capitalize;
@@ -205,7 +236,8 @@
   }
 }
 
-.top-navigation__theme-toggle {
+.top-navigation__theme-toggle,
+.top-navigation__notifications {
   background: none;
   border: none;
   font-size: 18px;
@@ -223,21 +255,7 @@
 }
 
 .top-navigation__notifications {
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  color: var(--color-text-secondary);
   position: relative;
-  
-  &:hover {
-    background-color: var(--color-surface);
-    color: var(--color-text-primary);
-    transform: scale(1.1);
-  }
   
   &::after {
     content: '';
@@ -279,8 +297,9 @@
     border-radius: 17px;
   }
   
-  .top-navigation__nav-icon {
-    font-size: 14px;
+  .top-navigation__nav-icon-image {
+    width: 14px;
+    height: 14px;
   }
   
   .top-navigation__right {
@@ -307,7 +326,8 @@
     font-size: 8px;
   }
   
-  .top-navigation__nav-icon {
-    font-size: 12px;
+  .top-navigation__nav-icon-image {
+    width: 12px;
+    height: 12px;
   }
 }
