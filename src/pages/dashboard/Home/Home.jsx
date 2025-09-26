@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NewsCarousel from '../../../components/NewsCarousel/NewsCarousel';
 import './Home.styles.scss';
 
-const Home = () => {
+const Home = ({ onNavigateToShipments }) => {
   const [lastShipment, setLastShipment] = useState({
     id: 'TV',
     trackingNumber: '0001111222223311',
@@ -58,6 +58,12 @@ const Home = () => {
     }
   ]);
 
+  const handleViewAllShipments = () => {
+    if (onNavigateToShipments) {
+      onNavigateToShipments();
+    }
+  };
+
   return (
     <div className="dashboard-home">
       {/* Dirección de entrega */}
@@ -112,7 +118,7 @@ const Home = () => {
           <span className="alert-icon">🚫</span>
           <span className="alert-text">No pre-alertado</span>
           <span className="alert-discount">Perdiste {lastShipment.discount}</span>
-          <button className="alert-link">Ver todos</button>
+          <button className="alert-link" onClick={handleViewAllShipments}>Ver todos</button>
         </div>
       </section>
 

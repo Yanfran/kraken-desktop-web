@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import TopNavigation from '../../components/TopNavigation/TopNavigation';
 import Home from './Home/Home';
+import ShipmentsList from './ShipmentsList/ShipmentsList';
 import './Dashboard.styles.scss';
 
 const Dashboard = () => {
@@ -98,11 +99,16 @@ const Dashboard = () => {
     }
   }, [activeTab]);
 
+  // Función para manejar navegación a otras pestañas
+  const navigateToTab = (tabName) => {
+    setActiveTab(tabName);
+  };
+
   // Función para renderizar el contenido basado en activeTab
   const renderContent = () => {
     switch (activeTab) {
       case 'inicio':
-        return <Home />;
+        return <Home onNavigateToShipments={() => navigateToTab('mis-envios')} />;
       
       case 'calcular':
         return (
@@ -129,62 +135,7 @@ const Dashboard = () => {
         );
       
       case 'mis-envios':
-        return (
-          <div className="dashboard-content">
-            {/* Listado de Envíos Completo */}
-            <section className="dashboard-section">
-              <div className="dashboard-section-header">
-                <h2>Listado de Envíos</h2>
-                <div className="dashboard-tabs">
-                  <button className="dashboard-tab active">Activos</button>
-                  <button className="dashboard-tab">Historial</button>
-                </div>
-              </div>
-
-              <div className="dashboard-shipments-table">
-                <div className="dashboard-table-header">
-                  <span>N° Guía</span>
-                  <span>Estatus</span>
-                  <span>Costo del envío</span>
-                  <span>Origen</span>
-                  <span></span>
-                </div>
-
-                {shipments.map((shipment, index) => (
-                  <div key={index} className="dashboard-table-row">
-                    <div className="dashboard-tracking-info">
-                      <div className="dashboard-package-icon">📦</div>
-                      <div className="dashboard-tracking-details">
-                        <span className="dashboard-tracking-number">{shipment.trackingNumber}</span>
-                        <span className="dashboard-item-type">{shipment.id}</span>
-                      </div>
-                    </div>
-
-                    <div className="dashboard-status-info">
-                      <span className={`dashboard-status ${getStatusClass(shipment.status)}`}>
-                        {shipment.status}
-                      </span>
-                      <span className="dashboard-date">{shipment.date}</span>
-                    </div>
-
-                    <div className="dashboard-cost">
-                      {shipment.cost}
-                    </div>
-
-                    <div className="dashboard-origin">
-                      <div className="dashboard-origin-flag">
-                        {shipment.origin === 'CHINA' ? '🇨🇳' : '🇺🇸'}
-                      </div>
-                      <span className="dashboard-origin-text">{shipment.origin}</span>
-                    </div>
-
-                    <button className="dashboard-more-btn">⋮</button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-        );
+        return <ShipmentsList />;
       
       case 'mis-pre-alertas':
         return (

@@ -33,18 +33,18 @@
   transition: background-color 0.3s ease;
   
   /* Fondo de imagen para modo claro */
-  &[data-theme="light"] {
-    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+  // &[data-theme="light"] {
+  //   background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+  //   background-size: cover;
+  //   background-position: center;
+  //   background-repeat: no-repeat;
     
-    @media (min-width: 768px) {
-      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
-      justify-content: flex-start;;
-      padding: 40px 20px;
-    }
-  }
+  //   @media (min-width: 768px) {
+  //     background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+  //     justify-content: flex-start;;
+  //     padding: 40px 20px;
+  //   }
+  // }
   
   /* Fondo para modo oscuro */
   &[data-theme="dark"] {
