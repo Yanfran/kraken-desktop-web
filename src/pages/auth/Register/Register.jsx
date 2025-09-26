@@ -1,11 +1,12 @@
-// src/pages/auth/Register/Register.jsx
+// src/pages/auth/Register/Register.jsx - IMPLEMENTACIÓN COMPLETA CON TU DISEÑO
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../App'; // Tu hook de autenticación actual
-import { useTheme } from '../../../contexts/ThemeContext'; // Hook de tema
+import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Usar el nuevo AuthContext
+import { useTheme } from '../../../contexts/ThemeContext';
+import toast from 'react-hot-toast'; // ✅ AGREGADO: Para notificaciones
 import './Register.styles.scss';
 
-// Componente toggle para cambio de tema (igual al del login)
+// Componente toggle para cambio de tema (mantener igual)
 const ThemeToggle = () => {
   const { actualTheme, toggleTheme } = useTheme();
   
@@ -43,10 +44,10 @@ const ThemeToggle = () => {
 
 const Register = () => {
   const navigate = useNavigate();
-  const { signUp, signInWithGoogle, isLoading } = useAuth();
+  const { signUp, signInWithGoogle, isLoading } = useAuth(); // ✅ FUNCIONALIDAD REAL
   const { colors, actualTheme } = useTheme();
   
-  // Estados del formulario
+  // ✅ ESTADOS DEL FORMULARIO
   const [formData, setFormData] = useState({
     name: '',
     lastName: '',
@@ -56,7 +57,7 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
 
-  // Manejar cambios en los inputs
+  // ✅ MANEJAR CAMBIOS EN INPUTS
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Limpiar error cuando el usuario empieza a escribir
@@ -65,7 +66,7 @@ const Register = () => {
     }
   };
 
-  // Validación del formulario
+  // ✅ VALIDACIÓN DEL FORMULARIO
   const validateForm = () => {
     const newErrors = {};
     
@@ -97,94 +98,107 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async (e) => {
+  // ✅ MANEJAR SUBMIT DEL FORMULARIO
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
-    // Por ahora solo simula el registro y navega
     try {
-      // Simular loading
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = await signUp(
+        formData.email,
+        formData.password,
+        formData.name.trim(),
+        formData.lastName.trim()
+      );
       
-      // Navegar directo a email-confirmation
-      navigate('/email-confirmation');
+      if (result.success) {
+        toast.success('¡Registro exitoso! Verifica tu email para continuar.');
+        navigate('/email-confirmation', { 
+          state: { email: formData.email }
+        });
+      } else {
+        // Manejar errores específicos del backend
+        if (result.field) {
+          setErrors({ [result.field]: result.message });
+        } else {
+          setErrors({ submit: result.message });
+        }
+        toast.error(result.message);
+      }
     } catch (error) {
-      setErrors({ submit: 'Error al registrarse. Intenta nuevamente.' });
+      console.error('Error en registro:', error);
+      setErrors({ submit: 'Error de conexión. Intenta de nuevo.' });
+      toast.error('Error de conexión. Intenta de nuevo.');
     }
   };
 
-  // Manejar registro con Google
-  const handleGoogleRegister = async () => {
-    const result = await signInWithGoogle();
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setErrors({ submit: 'Error al registrarse con Google' });
+  // ✅ MANEJAR GOOGLE SIGN UP
+  const handleGoogleSignUp = async () => {
+    try {
+      const result = await signInWithGoogle();
+      
+      if (result.success) {
+        toast.success('¡Registro exitoso con Google!');
+        navigate('/dashboard');
+      } else {
+        toast.error(result.message || 'Error con Google Auth');
+      }
+    } catch (error) {
+      console.error('Error en Google sign up:', error);
+      toast.error('Error con autenticación de Google');
     }
   };
-
-  // Aplicar tema al contenedor principal
-  React.useEffect(() => {
-    const registerContainer = document.querySelector('.kraken-register');
-    if (registerContainer) {
-      registerContainer.setAttribute('data-theme', actualTheme);
-    }
-  }, [actualTheme]);
 
   return (
     <div className="kraken-register" data-theme={actualTheme}>
-      {/* Toggle de tema */}
+      {/* Theme Toggle */}
       <ThemeToggle />
-      
+
       {/* Logo */}
       <div className="kraken-register__logo">
-        <img
-          src="/src/assets/images/logo.jpg"
-          alt="Kraken Logo"
+        <img 
+          src="/kraken-logo.png" 
+          alt="Kraken Logo" 
           className="kraken-register__logo-image"
-          onError={(e) => {
-            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='%23FF4500' text-anchor='middle' dy='0.3em'%3EKRAKEN%3C/text%3E%3C/svg%3E";
-          }}
         />
       </div>
 
       {/* Título */}
-      <h1 className="kraken-register__title">Registro</h1>
+      <h1 className="kraken-register__title">Crear cuenta</h1>
 
       {/* Botón Google */}
       <button
         type="button"
         className="kraken-register__google-button"
-        onClick={handleGoogleRegister}
+        onClick={handleGoogleSignUp}
         disabled={isLoading}
       >
-        <img
-          src="/google-icon.png"
-          alt="Google"
+        <img 
+          src="/google-icon.png" 
+          alt="Google" 
           className="kraken-register__google-icon"
-          onError={(e) => {
-            e.target.src = "https://developers.google.com/identity/images/g-logo.png";
-          }}
         />
-        {isLoading ? 'Registrando...' : 'Continuar con Google'}
+        Continuar con Google
       </button>
 
       {/* Separador */}
       <div className="kraken-register__separator">
-        <div className="kraken-register__separator-dot">o</div>
+        <div className="kraken-register__separator-line"></div>
+        <span className="kraken-register__separator-text">o</span>
+        <div className="kraken-register__separator-line"></div>
       </div>
 
-      {/* Formulario de registro */}
+      {/* Formulario */}
       <form onSubmit={handleSubmit} className="kraken-register__form">
-        {/* Campo Nombre */}
+        {/* Nombre */}
         <div className="kraken-input-field">
           <label className="kraken-input-field__label">Nombre</label>
           <input
             type="text"
-            placeholder="Nombre"
             value={formData.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
+            placeholder="Ingresa tu nombre"
             className={`kraken-input-field__input ${errors.name ? 'kraken-input-field__input--error' : ''}`}
             disabled={isLoading}
             autoComplete="given-name"
@@ -194,14 +208,14 @@ const handleSubmit = async (e) => {
           )}
         </div>
 
-        {/* Campo Apellido */}
+        {/* Apellido */}
         <div className="kraken-input-field">
           <label className="kraken-input-field__label">Apellido</label>
           <input
             type="text"
-            placeholder="Apellido"
             value={formData.lastName}
             onChange={(e) => handleInputChange('lastName', e.target.value)}
+            placeholder="Ingresa tu apellido"
             className={`kraken-input-field__input ${errors.lastName ? 'kraken-input-field__input--error' : ''}`}
             disabled={isLoading}
             autoComplete="family-name"
@@ -211,14 +225,14 @@ const handleSubmit = async (e) => {
           )}
         </div>
 
-        {/* Campo Email */}
+        {/* Email */}
         <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Correo electrónico</label>
+          <label className="kraken-input-field__label">Email</label>
           <input
             type="email"
-            placeholder="Correo electrónico"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
+            placeholder="Ingresa tu email"
             className={`kraken-input-field__input ${errors.email ? 'kraken-input-field__input--error' : ''}`}
             disabled={isLoading}
             autoComplete="email"
@@ -228,15 +242,15 @@ const handleSubmit = async (e) => {
           )}
         </div>
 
-        {/* Campo Contraseña */}
+        {/* Password */}
         <div className="kraken-input-field">
           <label className="kraken-input-field__label">Contraseña</label>
           <div className="kraken-input-field__password-container">
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Contraseña"
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
+              placeholder="Ingresa tu contraseña"
               className={`kraken-input-field__input ${errors.password ? 'kraken-input-field__input--error' : ''}`}
               disabled={isLoading}
               autoComplete="new-password"

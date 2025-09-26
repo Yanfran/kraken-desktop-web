@@ -1,11 +1,12 @@
-// src/pages/auth/Login/Login.jsx
+// src/pages/auth/Login/Login.jsx - IMPLEMENTACIÓN COMPLETA CON TU DISEÑO
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../App'; // Tu hook de autenticación actual
-import { useTheme } from '../../../contexts/ThemeContext'; // Nuevo hook de tema
+import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Usar el nuevo AuthContext
+import { useTheme } from '../../../contexts/ThemeContext';
+import toast from 'react-hot-toast'; // ✅ AGREGADO: Para notificaciones
 import './Login.styles.scss';
 
-// Componente toggle para cambio de tema
+// Componente toggle para cambio de tema (mantener igual)
 const ThemeToggle = () => {
   const { actualTheme, toggleTheme } = useTheme();
   
@@ -43,10 +44,10 @@ const ThemeToggle = () => {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, signInWithGoogle, isLoading } = useAuth();
+  const { signIn, signInWithGoogle, isLoading } = useAuth(); // ✅ FUNCIONALIDAD REAL
   const { colors, actualTheme } = useTheme();
   
-  // Estados del formulario
+  // ✅ ESTADOS DEL FORMULARIO
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -54,7 +55,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
 
-  // Manejar cambios en los inputs
+  // ✅ MANEJAR CAMBIOS EN INPUTS
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Limpiar error cuando el usuario empieza a escribir
@@ -63,7 +64,7 @@ const Login = () => {
     }
   };
 
-  // Validación simple
+  // ✅ VALIDACIÓN DEL FORMULARIO
   const validateForm = () => {
     const newErrors = {};
     
@@ -75,56 +76,67 @@ const Login = () => {
     
     if (!formData.password) {
       newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Manejar login con email
+  // ✅ MANEJAR SUBMIT DEL FORMULARIO
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
-    const result = await signIn(formData.email, formData.password);
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setErrors({ submit: result.message || 'Error de autenticación' });
+    try {
+      const result = await signIn(formData.email, formData.password);
+      
+      if (result.success) {
+        toast.success('¡Bienvenido de vuelta!');
+        navigate('/dashboard');
+      } else {
+        // Manejar errores específicos del backend
+        if (result.field) {
+          setErrors({ [result.field]: result.message });
+        } else {
+          setErrors({ submit: result.message });
+        }
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Error en login:', error);
+      setErrors({ submit: 'Error de conexión. Intenta de nuevo.' });
+      toast.error('Error de conexión. Intenta de nuevo.');
     }
   };
 
-  // Manejar login con Google
-  const handleGoogleLogin = async () => {
-    const result = await signInWithGoogle();
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setErrors({ submit: 'Error al iniciar sesión con Google' });
+  // ✅ MANEJAR GOOGLE SIGN IN
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithGoogle();
+      
+      if (result.success) {
+        toast.success('¡Bienvenido!');
+        navigate('/dashboard');
+      } else {
+        toast.error(result.message || 'Error con Google Auth');
+      }
+    } catch (error) {
+      console.error('Error en Google sign in:', error);
+      toast.error('Error con autenticación de Google');
     }
   };
-
-  // Aplicar tema al contenedor principal
-  React.useEffect(() => {
-    const loginContainer = document.querySelector('.kraken-login');
-    if (loginContainer) {
-      loginContainer.setAttribute('data-theme', actualTheme);
-    }
-  }, [actualTheme]);
 
   return (
     <div className="kraken-login" data-theme={actualTheme}>
-      {/* Toggle de tema */}
+      {/* Theme Toggle */}
       <ThemeToggle />
-      
+
       {/* Logo */}
       <div className="kraken-login__logo">
-        <img
-          src="/src/assets/images/logo.jpg" // Ajusta la ruta según tu estructura
-          alt="Kraken Logo"
+        <img 
+          src="/kraken-logo.png" 
+          alt="Kraken Logo" 
           className="kraken-login__logo-image"
         />
       </div>
@@ -136,32 +148,34 @@ const Login = () => {
       <button
         type="button"
         className="kraken-login__google-button"
-        onClick={handleGoogleLogin}
+        onClick={handleGoogleSignIn}
         disabled={isLoading}
       >
-        <img
-          src="/src/assets/images/google-icon.png"
-          alt="Google"
+        <img 
+          src="/google-icon.png" 
+          alt="Google" 
           className="kraken-login__google-icon"
         />
-        {isLoading ? 'Iniciando sesión...' : 'Continuar con Google'}
+        Continuar con Google
       </button>
 
       {/* Separador */}
       <div className="kraken-login__separator">
-        <div className="kraken-login__separator-dot">o</div>
+        <div className="kraken-login__separator-line"></div>
+        <span className="kraken-login__separator-text">o</span>
+        <div className="kraken-login__separator-line"></div>
       </div>
 
-      {/* Formulario de login */}
+      {/* Formulario */}
       <form onSubmit={handleSubmit} className="kraken-login__form">
-        {/* Campo Email */}
+        {/* Email */}
         <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Correo electrónico</label>
+          <label className="kraken-input-field__label">Email</label>
           <input
             type="email"
-            placeholder="Ingresa tu email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
+            placeholder="Ingresa tu email"
             className={`kraken-input-field__input ${errors.email ? 'kraken-input-field__input--error' : ''}`}
             disabled={isLoading}
             autoComplete="email"
@@ -171,15 +185,15 @@ const Login = () => {
           )}
         </div>
 
-        {/* Campo Contraseña */}
+        {/* Password */}
         <div className="kraken-input-field">
           <label className="kraken-input-field__label">Contraseña</label>
           <div className="kraken-input-field__password-container">
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Ingresa tu contraseña"
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
+              placeholder="Ingresa tu contraseña"
               className={`kraken-input-field__input ${errors.password ? 'kraken-input-field__input--error' : ''}`}
               disabled={isLoading}
               autoComplete="current-password"
@@ -191,22 +205,11 @@ const Login = () => {
               tabIndex="-1"
             >
               {showPassword ? '🙈' : '👁️'}
-            </button> 
+            </button>
           </div>
           {errors.password && (
             <span className="kraken-input-field__error">{errors.password}</span>
           )}
-        </div>
-
-        {/* Olvidé contraseña */}
-        <div className="kraken-login__forgot">
-          <button
-            type="button"
-            className="kraken-login__forgot-link"
-            onClick={() => navigate('/forgot')}
-          >
-            ¿Olvidaste tu contraseña?
-          </button>
         </div>
 
         {/* Error general */}
@@ -239,10 +242,21 @@ const Login = () => {
               Iniciando sesión...
             </div>
           ) : (
-            'Iniciar Sesión'
+            'Inicia sesión con e-mail'
           )}
         </button>
       </form>
+
+      {/* Forgot Password */}
+      <div className="kraken-login__forgot">
+        <button
+          type="button"
+          className="kraken-login__forgot-link"
+          onClick={() => navigate('/forgot-password')}
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
 
       {/* Link de registro */}
       <div className="kraken-login__register">
