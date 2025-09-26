@@ -191,7 +191,7 @@ const Login = () => {
               tabIndex="-1"
             >
               {showPassword ? '🙈' : '👁️'}
-            </button>
+            </button> 
           </div>
           {errors.password && (
             <span className="kraken-input-field__error">{errors.password}</span>
