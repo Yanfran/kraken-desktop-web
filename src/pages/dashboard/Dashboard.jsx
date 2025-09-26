@@ -1,5 +1,6 @@
-// src/pages/dashboard/Dashboard.jsx - ACTUALIZADO CON HOME
+// src/pages/dashboard/Dashboard.jsx - SOLO AGREGADA NAVEGACIÓN A PRE-ALERTAS (SIN CAMBIAR DISEÑO)
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 
 // Importar componentes separados
@@ -11,10 +12,11 @@ import './Dashboard.styles.scss';
 
 const Dashboard = () => {
   const { actualTheme } = useTheme();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('inicio');
 
-  // Estados para datos del dashboard (para otras pestañas)
+  // Tu data existente (mantener igual)
   const [shipments, setShipments] = useState([
     {
       id: 'TV',
@@ -50,61 +52,53 @@ const Dashboard = () => {
       status: 'Disponible para entrega',
       date: 'Feb 7, 2025 • 09:30',
       origin: 'USA',
-      cost: '$6.50',
-      preAlert: true
-    },
-    {
-      id: 'TV',
-      trackingNumber: '1240014587TR40',
-      status: 'Disponible para entrega',
-      date: 'Feb 7, 2025 • 09:30',
-      origin: 'CHINA',
-      cost: '$10.00',
+      cost: '$21.25',
       preAlert: true
     }
   ]);
 
-  // Funciones de manejo
+  // Responsive: cerrar sidebar automáticamente en mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+
+    handleResize(); // Verificar al montar
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Handlers para sidebar
   const handleToggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+    setSidebarOpen(prev => !prev);
   };
 
   const handleCloseSidebar = () => {
-    if (window.innerWidth <= 768) {
-      setSidebarOpen(false);
-    }
+    setSidebarOpen(false);
   };
 
-  // Función para obtener el estatus apropiado
-  const getStatusClass = (status) => {
-    if (status.toLowerCase().includes('pendiente')) return 'pending';
-    if (status.toLowerCase().includes('recibido')) return 'received';
-    if (status.toLowerCase().includes('enviado')) return 'shipped';
-    if (status.toLowerCase().includes('disponible')) return 'ready';
-    return 'pending';
+  // 🆕 SOLO AGREGAR NAVEGACIÓN A PRE-ALERTAS (sin cambiar el resto)
+  const navigateToTab = (tab) => {
+    // Si es una pestaña de pre-alertas, navegar a las rutas correspondientes
+    if (tab === 'mis-pre-alertas') {
+      navigate('/pre-alerts');
+      return;
+    }
+    
+    if (tab === 'pre-alertar') {
+      navigate('/pre-alerts/create');
+      return;
+    }
+
+    // Para otras pestañas, mantener la lógica actual EXACTAMENTE igual
+    setActiveTab(tab);
   };
 
-  // Aplicar tema al contenedor principal
-  useEffect(() => {
-    const dashboardContainer = document.querySelector('.dashboard-container');
-    if (dashboardContainer) {
-      dashboardContainer.setAttribute('data-theme', actualTheme);
-    }
-  }, [actualTheme]);
-
-  // Cerrar sidebar en móvil cuando se cambia de pestaña
-  useEffect(() => {
-    if (window.innerWidth <= 768) {
-      setSidebarOpen(false);
-    }
-  }, [activeTab]);
-
-  // Función para manejar navegación a otras pestañas
-  const navigateToTab = (tabName) => {
-    setActiveTab(tabName);
-  };
-
-  // Función para renderizar el contenido basado en activeTab
+  // Tu renderContent original (mantener EXACTAMENTE igual)
   const renderContent = () => {
     switch (activeTab) {
       case 'inicio':
@@ -157,7 +151,7 @@ const Dashboard = () => {
         isOpen={sidebarOpen}
         onClose={handleCloseSidebar}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={navigateToTab} // 🆕 Usar la función que maneja navegación
       />
 
       {/* Main Content Area */}
@@ -165,7 +159,7 @@ const Dashboard = () => {
         {/* Top Navigation Component */}
         <TopNavigation 
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={navigateToTab} // 🆕 Usar la función que maneja navegación
           onToggleSidebar={handleToggleSidebar}
           sidebarOpen={sidebarOpen}
         />

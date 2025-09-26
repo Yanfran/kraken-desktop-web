@@ -1,4 +1,4 @@
-// src/App.jsx - Tu versión que funciona ✅
+// src/App.jsx - Actualizado con rutas de Pre-Alertas ✅
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext'; // ✅ CORRECTO
@@ -79,6 +79,11 @@ const PersonalData = React.lazy(() => import('./pages/auth/PersonalData/Personal
 const DeliveryOption = React.lazy(() => import('./pages/auth/DeliveryOption/DeliveryOption'));
 const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
 const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
+
+// 🆕 NUEVOS COMPONENTES DE PRE-ALERTAS
+const PreAlert = React.lazy(() => import('./pages/PreAlert/PreAlert'));
+const PreAlertList = React.lazy(() => import('./pages/PreAlert/PreAlertList'));
+const PreAlertDetail = React.lazy(() => import('./pages/PreAlert/PreAlertDetail'));
 
 // Dashboard con tema integrado
 const DashboardWithTheme = () => {
@@ -187,12 +192,49 @@ function App() {
                   }
                 />
                 
-                {/* Rutas protegidas */}
+                {/* Rutas protegidas principales */}
                 <Route
                   path="/dashboard"
                   element={
                     <ProtectedRoute>
                       <DashboardWithTheme />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* 🆕 NUEVAS RUTAS DE PRE-ALERTAS */}
+                <Route
+                  path="/pre-alerts"
+                  element={
+                    <ProtectedRoute>
+                      <PreAlertList />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/pre-alerts/create"
+                  element={
+                    <ProtectedRoute>
+                      <PreAlert />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/pre-alerts/:id"
+                  element={
+                    <ProtectedRoute>
+                      <PreAlertDetail />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/pre-alerts/edit/:id"
+                  element={
+                    <ProtectedRoute>
+                      <PreAlert />
                     </ProtectedRoute>
                   }
                 />
