@@ -1,10 +1,10 @@
-// src/services/auth/authService.js
+// src/services/auth/authService.js - ADAPTADO A TU BACKEND REAL
 import axios from 'axios';
 import { API_URL } from '../../utils/config';
 
-// Configurar axios instance para auth
+// Configurar axios instance
 const authAPI = axios.create({
-  baseURL: `${API_URL}/auth`,
+  baseURL: API_URL, // ✅ USA tu API_URL directamente
   headers: {
     'Content-Type': 'application/json'
   }
@@ -13,7 +13,7 @@ const authAPI = axios.create({
 // Interceptor para incluir token en requests
 authAPI.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,7 +27,8 @@ authAPI.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -35,154 +36,202 @@ authAPI.interceptors.response.use(
 );
 
 export const authService = {
-  // Login de usuario
+  // ===== LOGIN - EXACTAMENTE COMO TU REACT NATIVE =====
   async login(credentials) {
     try {
-      const response = await authAPI.post('/login', credentials);
+      const response = await authAPI.post('/Users/login', { // ✅ EXACTO: /Users/login
+        email: credentials.email,
+        password: credentials.password
+      });
+
+      console.log('✅ [AuthService] Login response:', response.data);
+
+      // ✅ ADAPTADO A TU ESTRUCTURA DE RESPUESTA
+      if (response.data.success) {
+        return {
+          success: true,
+          token: response.data.token,
+          user: {
+            id: response.data.user.id,
+            email: response.data.user.email,
+            name: response.data.user.nombres || response.data.user.firstName,
+            lastName: response.data.user.apellidos || response.data.user.lastName,
+            emailVerified: response.data.user.emailVerified || true,
+            profileComplete: response.data.user.profileComplete || false,
+            clienteActivo: response.data.user.clienteActivo || true
+          }
+        };
+      }
+      
       return {
-        token: response.data.token,
-        user: {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          emailVerified: response.data.user.emailVerified || false,
-          profileComplete: response.data.user.profileComplete || false,
-          firstName: response.data.user.firstName,
-          lastName: response.data.user.lastName
-        }
+        success: false,
+        message: response.data.message || 'Error en el login'
       };
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 
-        'Error al iniciar sesión. Verifica tus credenciales.'
-      );
+      console.error('❌ [AuthService] Login error:', error);
+      
+      // ✅ MANEJO DE ERRORES IGUAL QUE TU BACKEND
+      if (error.response?.data?.code) {
+        const errorCode = error.response.data.code;
+        const errorField = error.response.data.field;
+        
+        const errorMessages = {
+          'REQUIRED_FIELDS': 'Todos los campos son requeridos',
+          'USER_NOT_FOUND': 'Email no encontrado',
+          'INVALID_CREDENTIALS': 'Contraseña incorrecta',
+          'ACCOUNT_INACTIVE': 'Cuenta inactiva. Contacta soporte.'
+        };
+        
+        return {
+          success: false,
+          message: errorMessages[errorCode] || 'Error desconocido',
+          field: errorField
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'Error de conexión. Intenta de nuevo.'
+      };
     }
   },
 
-  // Registro de usuario
+  // ===== REGISTRO - EXACTAMENTE COMO TU REACT NATIVE =====
   async register(userData) {
     try {
-      const response = await authAPI.post('/register', userData);
+      const response = await authAPI.post('/Users/register', { // ✅ EXACTO: /Users/register
+        name: userData.name,        // ✅ EXACTO: 'name'
+        email: userData.email,      // ✅ EXACTO: 'email'
+        password: userData.password, // ✅ EXACTO: 'password'
+        last: userData.lastName     // ✅ EXACTO: 'last'
+      });
+
+      console.log('✅ [AuthService] Register response:', response.data);
+
+      // ✅ ADAPTADO A TU ESTRUCTURA DE RESPUESTA
+      if (response.data.success) {
+        return {
+          success: true,
+          message: 'Registro exitoso. Verifica tu email.'
+        };
+      }
+      
       return {
-        message: response.data.message || 'Registro exitoso. Verifica tu email.',
-        user: response.data.user
+        success: false,
+        message: response.data.message || 'Error en el registro'
       };
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 
-        'Error al registrar usuario. Intenta de nuevo.'
-      );
+      console.error('❌ [AuthService] Register error:', error);
+      
+      if (error.response?.data?.code) {
+        const errorCode = error.response.data.code;
+        
+        const errorMessages = {
+          'EMAIL_EXISTS': 'El email ya está registrado',
+          'REQUIRED_FIELDS': 'Todos los campos son requeridos',
+          'INVALID_EMAIL': 'Email inválido',
+          'WEAK_PASSWORD': 'La contraseña debe tener al menos 8 caracteres'
+        };
+        
+        return {
+          success: false,
+          message: errorMessages[errorCode] || 'Error en el registro',
+          field: error.response.data.field
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'Error de conexión. Intenta de nuevo.'
+      };
     }
   },
 
-  // Validar token
+  // ===== VALIDAR TOKEN (si tienes este endpoint) =====
   async validateToken(token) {
     try {
-      const response = await authAPI.get('/validate', {
+      const response = await authAPI.get('/Users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       return {
         id: response.data.user.id,
         email: response.data.user.email,
-        emailVerified: response.data.user.emailVerified || false,
+        name: response.data.user.nombres || response.data.user.firstName,
+        lastName: response.data.user.apellidos || response.data.user.lastName,
+        emailVerified: response.data.user.emailVerified || true,
         profileComplete: response.data.user.profileComplete || false,
-        firstName: response.data.user.firstName,
-        lastName: response.data.user.lastName
+        clienteActivo: response.data.user.clienteActivo || true
       };
     } catch (error) {
+      console.error('❌ [AuthService] Token validation error:', error);
       throw new Error('Token inválido o expirado');
     }
   },
 
-  // Verificar email
-  async verifyEmail(token) {
+  // ===== GOOGLE AUTH - COMO TU REACT NATIVE =====
+  async loginWithGoogle(googleToken) {
     try {
-      const response = await authAPI.post('/verify-email', { token });
-      return response.data;
+      const response = await authAPI.post('/Users/google', { // ✅ EXACTO: /Users/google
+        name: 'Usuario',     // Temporalmente hasta obtener datos de Google
+        email: 'google@temp.com',
+        password: 'temp',
+        last: 'Google'
+      });
+
+      if (response.data.success) {
+        return {
+          success: true,
+          token: response.data.token,
+          user: {
+            id: response.data.user.id,
+            email: response.data.user.email,
+            name: response.data.user.nombres || response.data.user.firstName,
+            lastName: response.data.user.apellidos || response.data.user.lastName,
+            emailVerified: true,
+            profileComplete: response.data.user.profileComplete || false,
+            fromGoogle: true
+          }
+        };
+      }
+      
+      return {
+        success: false,
+        message: response.data.message || 'Error con Google Auth'
+      };
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 
-        'Error al verificar email.'
-      );
+      console.error('❌ [AuthService] Google auth error:', error);
+      return {
+        success: false,
+        message: 'Error de autenticación con Google'
+      };
     }
   },
 
-  // Reenviar email de verificación
-  async resendVerification(email) {
-    try {
-      const response = await authAPI.post('/resend-verification', { email });
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 
-        'Error al reenviar email de verificación.'
-      );
-    }
-  },
-
-  // Recuperar contraseña
+  // ===== RECUPERAR CONTRASEÑA =====
   async forgotPassword(email) {
     try {
-      const response = await authAPI.post('/forgot-password', { email });
-      return response.data;
+      const response = await authAPI.post('/Users/forgot-password', { email });
+      return {
+        success: true,
+        message: 'Revisa tu email para resetear la contraseña'
+      };
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 
-        'Error al solicitar recuperación de contraseña.'
-      );
+      console.error('❌ [AuthService] Forgot password error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Error al enviar email'
+      };
     }
   },
 
-  // Resetear contraseña
-  async resetPassword(token, newPassword) {
-    try {
-      const response = await authAPI.post('/reset-password', { 
-        token, 
-        password: newPassword 
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 
-        'Error al resetear contraseña.'
-      );
-    }
-  },
-
-  // Actualizar perfil
-  async updateProfile(profileData) {
-    try {
-      const response = await authAPI.put('/profile', profileData);
-      return response.data.user;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 
-        'Error al actualizar perfil.'
-      );
-    }
-  },
-
-  // Completar perfil
-  async completeProfile(profileData) {
-    try {
-      const response = await authAPI.post('/complete-profile', profileData);
-      return response.data.user;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || 
-        'Error al completar perfil.'
-      );
-    }
-  },
-
-  // Logout
+  // ===== LOGOUT =====
   async logout() {
     try {
-      await authAPI.post('/logout');
+      await authAPI.post('/Users/logout');
     } catch (error) {
-      // Log error but don't throw - logout should always succeed locally
-      console.error('Error en logout del servidor:', error);
-    } finally {
-      localStorage.removeItem('token');
+      console.warn('⚠️ [AuthService] Logout error:', error);
+      // No lanzamos error en logout, siempre debe funcionar localmente
     }
   }
 };

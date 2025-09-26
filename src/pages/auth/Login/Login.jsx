@@ -135,7 +135,7 @@ const Login = () => {
       {/* Logo */}
       <div className="kraken-login__logo">
         <img 
-          src="/kraken-logo.png" 
+          src="/src/assets/images/logo.jpg" 
           alt="Kraken Logo" 
           className="kraken-login__logo-image"
         />
@@ -152,7 +152,7 @@ const Login = () => {
         disabled={isLoading}
       >
         <img 
-          src="/google-icon.png" 
+          src="/src/assets/images/google-icon.png" 
           alt="Google" 
           className="kraken-login__google-icon"
         />

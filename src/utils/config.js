@@ -1,21 +1,21 @@
-// src/utils/config.js - Configuración general del proyecto
+// src/utils/config.js - CONFIGURACIÓN CON TU BACKEND REAL
 export const API_CONFIG = {
+  // ✅ USA LA MISMA URL QUE TU REACT NATIVE
   BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:7031/api',
   TIMEOUT: 30000,
   
-  // Endpoints principales (basados en tu backend C#)
+  // ✅ ENDPOINTS REALES DE TU BACKEND
   ENDPOINTS: {
-    // Auth
+    // Auth - EXACTOS DE TU BACKEND
     AUTH: {
-      LOGIN: '/users/login',
-      REGISTER: '/users/register',
-      LOGOUT: '/users/logout',
-      PROFILE: '/users/profile',
-      FORGOT_PASSWORD: '/users/forgot-password',
-      RESET_PASSWORD: '/users/reset-password',
-      VERIFY_EMAIL: '/users/verify-email',
-      RESEND_VERIFICATION: '/users/resend-verification',
-      GOOGLE_AUTH: '/users/google-auth',
+      LOGIN: '/Users/login',
+      REGISTER: '/Users/register',
+      GOOGLE: '/Users/google',
+      FORGOT_PASSWORD: '/Users/forgot-password',
+      RESET_PASSWORD: '/Users/reset-password',
+      VERIFY_EMAIL: '/Users/verify-email',
+      UPDATE_PROFILE: '/Users/update-profile',
+      RESET_PASSWORD_PROFILE: '/Users/reset-password-profile',
     },
     
     // Calculator
@@ -24,15 +24,12 @@ export const API_CONFIG = {
       RATES: '/calculator/rates',
     },
     
-    // Address
+    // Address - BASADO EN TU addressService
     ADDRESS: {
-      COUNTRIES: '/address/countries',
-      STATES: (countryId) => `/address/states/${countryId}`,
-      MUNICIPALITIES: (stateId) => `/address/municipalities/${stateId}`,
-      PARISHES: (municipalityId) => `/address/parishes/${municipalityId}`,
+      LIST: '/Casilleros/list',
     },
     
-    // Pre-alerts (basado en tu React Native)
+    // Pre-alerts - BASADO EN TU preAlertService
     PRE_ALERTS: {
       GET_ALL: (userId) => `/PostPreAlert/getPreAlertas/${userId}`,
       GET_PENDING: '/PostPreAlert/getPreAlertasPendientes',
@@ -41,21 +38,39 @@ export const API_CONFIG = {
       DELETE: (id) => `/PostPreAlert/delete/${id}`,
     },
     
-    // Packages
+    // Packages - BASADO EN TU packegeContentService
     PACKAGES: {
-      LIST: '/packages',
-      DETAIL: (id) => `/packages/${id}`,
-      CONTENTS: '/packages/contents',
+      CONTENTS: '/PaqueteContenidos/getContent',
     },
     
-    // Payment (basado en tu PaymentController)
+    // Novedades - BASADO EN TU novedadesService
+    NEWS: {
+      LIST: '/Novedades/list',
+    },
+    
+    // Guides - BASADO EN TU guiasService
+    GUIDES: {
+      LIST: '/guias',
+      DETAIL: (id) => `/guias/${id}`,
+      UPLOAD_INVOICE: (id) => `/guias/${id}/upload-invoice`,
+    },
+    
+    // Payment - BASADO EN TU PaymentController
     PAYMENT: {
       MERCANTIL_AUTH: '/payment/mercantil/auth',
       MERCANTIL_PAY: '/payment/mercantil/card/pay',
       MOBILE_PAYMENT: '/payment/mobile',
-    }
+      GET_DATA: (id) => `/payment/${id}/data`,
+      GET_MULTIPLE: '/payment/multiple/data',
+    },
+    
+    // Build Info
+    BUILD_INFO: '/buildinfo',
   }
 };
+
+// ✅ EXPORT DIRECTO DE API_URL (REQUERIDO)
+export const API_URL = API_CONFIG.BASE_URL;
 
 export const GOOGLE_CONFIG = {
   CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID,
@@ -112,20 +127,19 @@ export const validateConfig = () => {
   return missing.length === 0;
 };
 
-// ===== FUNCIÓN PARA OBTENER URL COMPLETA =====
-export const getApiUrl = (endpoint) => {
-  return `${API_CONFIG.BASE_URL}${endpoint}`;
-};
-
-// ===== FUNCIÓN PARA LOGGING EN DESARROLLO =====
+// ===== LOGGING =====
 export const isDevelopment = () => APP_CONFIG.ENVIRONMENT === 'development';
 
 export const log = (...args) => {
   if (isDevelopment()) {
-    console.log('[Kraken]', ...args);
+    console.log('🔗 [Kraken]', ...args);
   }
 };
 
 export const logError = (...args) => {
-  console.error('[Kraken Error]', ...args);
+  console.error('❌ [Kraken Error]', ...args);
 };
+
+// ===== DEBUG INFO =====
+console.log('🔗 API_URL configurada:', API_URL);
+console.log('🎯 Modo:', isDevelopment() ? 'DESARROLLO' : 'PRODUCCIÓN');
