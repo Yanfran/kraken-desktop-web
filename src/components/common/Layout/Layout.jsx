@@ -1,12 +1,12 @@
-// src/components/common/Layout/Layout.jsx - Layout principal para desktop
+// src/components/common/Layout/Layout.jsx - IMPORT CORREGIDO
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext'; // ✅ CORREGIDO
 import './Layout.styles.scss';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth(); // ✅ CAMBIO: usar signOut
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -33,9 +33,13 @@ const Layout = ({ children }) => {
     },
   ];
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error en logout:', error);
+    }
   };
 
   return (
@@ -75,38 +79,26 @@ const Layout = ({ children }) => {
                 {user.name?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <div className="layout__user-details">
-                <div className="layout__user-name">{user.name}</div>
-                <div className="layout__user-email">{user.email}</div>
+                <span className="layout__user-name">{user.name}</span>
+                <span className="layout__user-email">{user.email}</span>
               </div>
             </div>
           )}
+          
           <button 
-            className="layout__logout-btn"
+            className="layout__logout-button"
             onClick={handleLogout}
             title="Cerrar sesión"
           >
-            <span className="layout__logout-icon">🚪</span>
+            🚪
             {sidebarOpen && <span>Salir</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="layout__main">
-        <header className="layout__header">
-          <h1 className="layout__page-title">
-            {navigationItems.find(item => item.path === location.pathname)?.label || 'Kraken Desktop'}
-          </h1>
-          <div className="layout__header-actions">
-            <button className="layout__notification-btn">
-              🔔
-            </button>
-          </div>
-        </header>
-
-        <div className="layout__content">
-          {children}
-        </div>
+      {/* Main Content */}
+      <main className={`layout__main ${sidebarOpen ? 'layout__main--sidebar-open' : 'layout__main--sidebar-closed'}`}>
+        {children}
       </main>
     </div>
   );

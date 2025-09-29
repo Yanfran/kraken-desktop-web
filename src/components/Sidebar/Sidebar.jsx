@@ -1,11 +1,11 @@
-// src/pages/dashboard/Dashboard/components/Sidebar/Sidebar.jsx
+// src/components/Sidebar/Sidebar.jsx - IMPORT CORREGIDO
 import React from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../contexts/AuthContext'; // ✅ CORREGIDO
 import { useTheme } from '../../contexts/ThemeContext';
 import './Sidebar.styles.scss';
 
 const Sidebar = ({ isOpen, onClose, activeTab, setActiveTab }) => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth(); // ✅ CAMBIO: usar signOut en lugar de logout
   const { actualTheme } = useTheme();
 
   const sidebarMenuItems = [
@@ -15,6 +15,16 @@ const Sidebar = ({ isOpen, onClose, activeTab, setActiveTab }) => {
     { id: 'facturacion', label: 'Facturación', hasArrow: true },
     { id: 'seguridad', label: 'Seguridad', hasArrow: true }
   ];
+
+  // ✅ FUNCIÓN DE LOGOUT MEJORADA
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // El AuthContext ya maneja la redirección
+    } catch (error) {
+      console.error('Error en logout:', error);
+    }
+  };
 
   return (
     <aside className={`dashboard-sidebar ${isOpen ? 'open' : 'closed'}`} data-theme={actualTheme}>
@@ -30,7 +40,9 @@ const Sidebar = ({ isOpen, onClose, activeTab, setActiveTab }) => {
             </span>
           </div>
           <div className="dashboard-sidebar__user-info">
-            <h3 className="dashboard-sidebar__user-name">Nombre</h3>
+            <h3 className="dashboard-sidebar__user-name">
+              {user?.name || 'Usuario'} {user?.lastName || ''}
+            </h3>
             <p className="dashboard-sidebar__user-id">N° de Casillero</p>
             <p className="dashboard-sidebar__user-number">KV000111</p>
           </div>
@@ -66,7 +78,7 @@ const Sidebar = ({ isOpen, onClose, activeTab, setActiveTab }) => {
         </div>
 
         {/* Logout Button */}
-        <button className="dashboard-sidebar__logout-btn" onClick={logout}>
+        <button className="dashboard-sidebar__logout-btn" onClick={handleLogout}>
           CERRAR SESIÓN
         </button>
       </div>
