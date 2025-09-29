@@ -156,19 +156,39 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ===== FUNCIÓN DE REGISTRO =====
-  const signUp = async (email, password, name, lastName) => {
+  const signUp = async (userData) => {
     try {
-      dispatch({ type: 'LOADING' });
-      const response = await authService.register({ email, password, name, lastName });
+      dispatch({ type: 'SET_LOADING', payload: true });
       
-      dispatch({ type: 'LOGOUT' }); // No autenticar automáticamente tras registro
-      return response;
+      const result = await authService.register({
+        name: userData.name,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password
+      });
+
+      if (result.success && result.token) {
+        localStorage.setItem('authToken', result.token);
+        localStorage.setItem('userData', JSON.stringify(result.user));
+        Cookies.set('authToken', result.token, { expires: 7 });
+
+        dispatch({ type: 'LOGIN_SUCCESS', payload: result.user });
+        return { success: true };
+      }
+
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return result;
     } catch (error) {
-      const errorMessage = 'Error en el registro. Intenta de nuevo.';
-      dispatch({ type: 'ERROR', payload: errorMessage });
-      return { success: false, message: errorMessage };
+      console.error('[AuthContext] Sign up error:', error);
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return {
+        success: false,
+        message: 'Error de conexión. Intenta de nuevo.'
+      };
     }
   };
+
+  
 
   // ===== FUNCIÓN DE GOOGLE SIGN IN =====
   const signInWithGoogle = async () => {
@@ -239,7 +259,16 @@ export const AuthProvider = ({ children }) => {
 
   // ===== REENVIAR EMAIL DE VERIFICACIÓN =====
   const resendVerificationEmail = async (email) => {
-    return await authService.resendVerificationEmail(email);
+    try {
+      const response = await authService.resendVerificationEmail(email);
+      return response;
+    } catch (error) {
+      console.error('[AuthContext] Resend verification error:', error);
+      return {
+        success: false,
+        message: 'Error al reenviar email de verificación'
+      };
+    }
   };
 
   // ===== VALOR DEL CONTEXTO =====
@@ -252,7 +281,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signInWithGoogle,
     setUserState,
-    resendVerificationEmail
+    resendVerificationEmail  
   };
 
   return (

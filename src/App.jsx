@@ -17,6 +17,7 @@ const EmailConfirmation = React.lazy(() => import('./pages/auth/EmailConfirmatio
 const CompleteProfile = React.lazy(() => import('./pages/auth/CompleteProfile/CompleteProfile'));
 const PersonalData = React.lazy(() => import('./pages/auth/PersonalData/PersonalData'));
 const DeliveryOption = React.lazy(() => import('./pages/auth/DeliveryOption/DeliveryOption'));
+const EmailVerify = React.lazy(() => import('./pages/auth/EmailVerify/EmailVerify'));
 const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
 
 // Protected pages - TUS COMPONENTES EXISTENTES
@@ -93,6 +94,12 @@ function App() {
                 <Route path="/email-confirmation" element={
                   <SemiProtectedRoute>
                     <EmailConfirmation />
+                  </SemiProtectedRoute>
+                } />
+
+                <Route path="/email-verify" element={
+                  <SemiProtectedRoute>
+                    <EmailVerify />
                   </SemiProtectedRoute>
                 } />
 

@@ -1,295 +1,365 @@
 // src/services/addressService.js
-import apiClient from './apiClient';
+// Servicio completo para manejo de direcciones, países y tipos de documento
+
+import axiosInstance from './axiosInstance';
 
 /**
- * Service for address-related operations
- * Adapted from React Native app-kraken for web compatibility
+ * Obtiene la lista de países con códigos telefónicos
+ * @returns {Promise<Object>} Respuesta con lista de países
  */
-
-/**
- * @typedef {Object} UserAddress
- * @property {number} id
- * @property {string} nombres
- * @property {string} apellidos
- * @property {string} telefono
- * @property {string} cedula
- * @property {string} email
- * @property {string} direccion
- * @property {number} estadoId
- * @property {number} municipioId
- * @property {number} parroquiaId
- * @property {string} codigoPostal
- * @property {string} estado
- * @property {string} municipio
- * @property {string} parroquia
- */
-
-/**
- * @typedef {Object} ApiResponse
- * @property {boolean} success
- * @property {string} message
- * @property {any} data
- * @property {string[]} errors
- */
-
-/**
- * Get user addresses
- * @returns {Promise<ApiResponse>}
- */
-export const getUserAddresses = async () => {
+export const getAddress = async () => {
   try {
-    const response = await apiClient.get('/Address/getUserAddresses');
+    const response = await axiosInstance.get('/Addresses/countries');
     
-    return {
-      success: true,
-      data: response.data.data || response.data || [],
-      message: 'Direcciones cargadas exitosamente'
-    };
-  } catch (error) {
-    console.error('Error fetching user addresses:', error);
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    }
     
     return {
       success: false,
-      message: error.message || 'Error al cargar direcciones',
-      errors: error.errors || [error.message],
-      data: []
+      message: response.data.message || 'Error al obtener países'
+    };
+  } catch (error) {
+    console.error('Error en getAddress:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al obtener países',
+      error: error.message
     };
   }
 };
 
 /**
- * Get states by country
- * @param {number} countryId - Country ID (1 for Venezuela)
- * @returns {Promise<ApiResponse>}
+ * Obtiene los tipos de documento disponibles
+ * @returns {Promise<Object>} Respuesta con lista de tipos de documento
  */
-export const getStatesByCountry = async (countryId = 1) => {
+export const getDocumentTypes = async () => {
   try {
-    const response = await apiClient.get(`/Address/getStatesByCountry/${countryId}`);
+    const response = await axiosInstance.get('/Addresses/document-types');
     
-    return {
-      success: true,
-      data: response.data.data || response.data || [],
-      message: 'Estados cargados exitosamente'
-    };
-  } catch (error) {
-    console.error('Error fetching states:', error);
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    }
     
     return {
       success: false,
-      message: error.message || 'Error al cargar estados',
-      errors: error.errors || [error.message],
-      data: []
+      message: response.data.message || 'Error al obtener tipos de documento'
+    };
+  } catch (error) {
+    console.error('Error en getDocumentTypes:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al obtener tipos de documento',
+      error: error.message
     };
   }
 };
 
 /**
- * Get municipalities by state
- * @param {number} stateId - State ID
- * @returns {Promise<ApiResponse>}
+ * Obtiene los estados de un país
+ * @param {string|number} countryId - ID del país
+ * @returns {Promise<Object>} Respuesta con lista de estados
+ */
+export const getStatesByCountry = async (countryId) => {
+  try {
+    const response = await axiosInstance.get(`/Addresses/states/${countryId}`);
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    }
+    
+    return {
+      success: false,
+      message: response.data.message || 'Error al obtener estados'
+    };
+  } catch (error) {
+    console.error('Error en getStatesByCountry:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al obtener estados',
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Obtiene los municipios de un estado
+ * @param {string|number} stateId - ID del estado
+ * @returns {Promise<Object>} Respuesta con lista de municipios
  */
 export const getMunicipalitiesByState = async (stateId) => {
   try {
-    if (!stateId) {
-      throw new Error('State ID es requerido');
-    }
-
-    const response = await apiClient.get(`/Address/getMunicipalitiesByState/${stateId}`);
+    const response = await axiosInstance.get(`/Addresses/municipalities/${stateId}`);
     
-    return {
-      success: true,
-      data: response.data.data || response.data || [],
-      message: 'Municipios cargados exitosamente'
-    };
-  } catch (error) {
-    console.error('Error fetching municipalities:', error);
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    }
     
     return {
       success: false,
-      message: error.message || 'Error al cargar municipios',
-      errors: error.errors || [error.message],
-      data: []
+      message: response.data.message || 'Error al obtener municipios'
+    };
+  } catch (error) {
+    console.error('Error en getMunicipalitiesByState:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al obtener municipios',
+      error: error.message
     };
   }
 };
 
 /**
- * Get parishes by municipality
- * @param {number} municipalityId - Municipality ID
- * @returns {Promise<ApiResponse>}
+ * Obtiene las parroquias de un municipio
+ * @param {string|number} municipalityId - ID del municipio
+ * @returns {Promise<Object>} Respuesta con lista de parroquias
  */
 export const getParishesByMunicipality = async (municipalityId) => {
   try {
-    if (!municipalityId) {
-      throw new Error('Municipality ID es requerido');
+    const response = await axiosInstance.get(`/Addresses/parishes/${municipalityId}`);
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
     }
-
-    const response = await apiClient.get(`/Address/getParishesByMunicipality/${municipalityId}`);
-    
-    return {
-      success: true,
-      data: response.data.data || response.data || [],
-      message: 'Parroquias cargadas exitosamente'
-    };
-  } catch (error) {
-    console.error('Error fetching parishes:', error);
     
     return {
       success: false,
-      message: error.message || 'Error al cargar parroquias',
-      errors: error.errors || [error.message],
-      data: []
+      message: response.data.message || 'Error al obtener parroquias'
+    };
+  } catch (error) {
+    console.error('Error en getParishesByMunicipality:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al obtener parroquias',
+      error: error.message
     };
   }
 };
 
 /**
- * Create new address
- * @param {Object} addressData - Address data
- * @returns {Promise<ApiResponse>}
+ * Obtiene las tiendas/lockers disponibles
+ * @returns {Promise<Object>} Respuesta con lista de tiendas
  */
-export const createAddress = async (addressData) => {
+export const getStores = async () => {
   try {
-    const response = await apiClient.post('/Address/createAddress', addressData);
+    const response = await axiosInstance.get('/Addresses/stores');
     
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: response.data.message || 'Dirección creada exitosamente'
-    };
-  } catch (error) {
-    console.error('Error creating address:', error);
-    
-    return {
-      success: false,
-      message: error.message || 'Error al crear dirección',
-      errors: error.errors || [error.message],
-      data: null
-    };
-  }
-};
-
-/**
- * Update address
- * @param {number} addressId - Address ID
- * @param {Object} addressData - Updated address data
- * @returns {Promise<ApiResponse>}
- */
-export const updateAddress = async (addressId, addressData) => {
-  try {
-    if (!addressId) {
-      throw new Error('Address ID es requerido');
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
     }
-
-    const response = await apiClient.put(`/Address/updateAddress/${addressId}`, addressData);
-    
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: response.data.message || 'Dirección actualizada exitosamente'
-    };
-  } catch (error) {
-    console.error('Error updating address:', error);
     
     return {
       success: false,
-      message: error.message || 'Error al actualizar dirección',
-      errors: error.errors || [error.message],
-      data: null
+      message: response.data.message || 'Error al obtener tiendas'
+    };
+  } catch (error) {
+    console.error('Error en getStores:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al obtener tiendas',
+      error: error.message
     };
   }
 };
 
 /**
- * Delete address
- * @param {number} addressId - Address ID
- * @returns {Promise<ApiResponse>}
+ * Registra los datos personales y dirección del usuario
+ * @param {Object} data - Datos del formulario
+ * @returns {Promise<Object>} Respuesta del servidor
+ */
+export const registerPersonalData = async (data) => {
+  try {
+    const response = await axiosInstance.post('/Addresses/register-address-profile', data);
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data,
+        message: response.data.message,
+        token: response.data.token
+      };
+    }
+    
+    return {
+      success: false,
+      message: response.data.message || 'Error al registrar datos personales'
+    };
+  } catch (error) {
+    console.error('Error en registerPersonalData:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al registrar datos',
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Obtiene las direcciones del usuario
+ * @param {string|number} clientId - ID del cliente (opcional)
+ * @returns {Promise<Object>} Respuesta con lista de direcciones
+ */
+export const getUserAddresses = async (clientId = null) => {
+  try {
+    const endpoint = clientId 
+      ? `/Addresses/user-addresses?clientId=${clientId}`
+      : '/Addresses/user-addresses';
+      
+    const response = await axiosInstance.get(endpoint);
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    }
+    
+    return {
+      success: false,
+      message: response.data.message || 'Error al obtener direcciones del usuario'
+    };
+  } catch (error) {
+    console.error('Error en getUserAddresses:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al obtener direcciones',
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Establece una dirección como predeterminada
+ * @param {number} clientId - ID del cliente
+ * @param {number} addressId - ID de la dirección
+ * @returns {Promise<Object>} Respuesta del servidor
+ */
+export const setDefaultAddress = async (clientId, addressId) => {
+  try {
+    const response = await axiosInstance.post('/Addresses/set-default-address', {
+      clientId,
+      addressId
+    });
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        message: response.data.message
+      };
+    }
+    
+    return {
+      success: false,
+      message: response.data.message || 'Error al establecer dirección predeterminada'
+    };
+  } catch (error) {
+    console.error('Error en setDefaultAddress:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión',
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Elimina una dirección del usuario
+ * @param {number} addressId - ID de la dirección a eliminar
+ * @returns {Promise<Object>} Respuesta del servidor
  */
 export const deleteAddress = async (addressId) => {
   try {
-    if (!addressId) {
-      throw new Error('Address ID es requerido');
+    const response = await axiosInstance.delete(`/Addresses/${addressId}`);
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        message: response.data.message
+      };
     }
-
-    const response = await apiClient.delete(`/Address/deleteAddress/${addressId}`);
-    
-    return {
-      success: true,
-      data: response.data.data || null,
-      message: response.data.message || 'Dirección eliminada exitosamente'
-    };
-  } catch (error) {
-    console.error('Error deleting address:', error);
     
     return {
       success: false,
-      message: error.message || 'Error al eliminar dirección',
-      errors: error.errors || [error.message],
-      data: null
+      message: response.data.message || 'Error al eliminar dirección'
+    };
+  } catch (error) {
+    console.error('Error en deleteAddress:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al eliminar dirección',
+      error: error.message
     };
   }
 };
 
 /**
- * Get delivery data (casilleros, oficinas, etc.)
- * @returns {Promise<ApiResponse>}
+ * Actualiza una dirección existente
+ * @param {number} addressId - ID de la dirección
+ * @param {Object} data - Datos actualizados
+ * @returns {Promise<Object>} Respuesta del servidor
  */
-export const getDeliveryData = async () => {
+export const updateAddress = async (addressId, data) => {
   try {
-    const response = await apiClient.get('/Address/getDeliveryOptions');
+    const response = await axiosInstance.put(`/Addresses/${addressId}`, data);
     
-    return {
-      success: true,
-      data: response.data.data || response.data || [],
-      message: 'Opciones de entrega cargadas exitosamente'
-    };
-  } catch (error) {
-    console.error('Error fetching delivery data:', error);
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    }
     
     return {
       success: false,
-      message: error.message || 'Error al cargar opciones de entrega',
-      errors: error.errors || [error.message],
-      data: []
+      message: response.data.message || 'Error al actualizar dirección'
+    };
+  } catch (error) {
+    console.error('Error en updateAddress:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión al actualizar dirección',
+      error: error.message
     };
   }
 };
 
-/**
- * Validate address
- * @param {Object} addressData - Address data to validate
- * @returns {Promise<ApiResponse>}
- */
-export const validateAddress = async (addressData) => {
-  try {
-    const response = await apiClient.post('/Address/validateAddress', addressData);
-    
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: response.data.message || 'Dirección validada exitosamente'
-    };
-  } catch (error) {
-    console.error('Error validating address:', error);
-    
-    return {
-      success: false,
-      message: error.message || 'Error al validar dirección',
-      errors: error.errors || [error.message],
-      data: null
-    };
-  }
-};
-
-// Export all functions as default
+// Exportación por defecto de todas las funciones
 export default {
-  getUserAddresses,
+  getAddress,
+  getDocumentTypes,
   getStatesByCountry,
   getMunicipalitiesByState,
   getParishesByMunicipality,
-  createAddress,
-  updateAddress,
+  getStores,
+  registerPersonalData,
+  getUserAddresses,
+  setDefaultAddress,
   deleteAddress,
-  getDeliveryData,
-  validateAddress,
+  updateAddress
 };

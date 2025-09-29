@@ -95,24 +95,32 @@ export const authService = {
       };
     }
   },
-
-  // ===== REGISTRO - EXACTAMENTE COMO TU REACT NATIVE =====
+  
+  // ===== REGISTER - NUEVO MÉTODO =====
   async register(userData) {
     try {
-      const response = await authAPI.post('/Users/register', { // ✅ EXACTO: /Users/register
-        name: userData.name,        // ✅ EXACTO: 'name'
-        email: userData.email,      // ✅ EXACTO: 'email'
-        password: userData.password, // ✅ EXACTO: 'password'
-        last: userData.lastName     // ✅ EXACTO: 'last'
+      const response = await authAPI.post('/Users/register', {
+        email: userData.email,
+        password: userData.password,
+        name: userData.name,
+        last: userData.lastName
       });
 
       console.log('✅ [AuthService] Register response:', response.data);
 
-      // ✅ ADAPTADO A TU ESTRUCTURA DE RESPUESTA
       if (response.data.success) {
         return {
           success: true,
-          message: 'Registro exitoso. Verifica tu email.'
+          token: response.data.token,
+          user: {
+            id: response.data.user.id,
+            email: response.data.user.email,
+            name: response.data.user.nombres || userData.name,
+            lastName: response.data.user.apellidos || userData.lastName,
+            emailVerified: false,
+            profileComplete: false,
+            clienteActivo: false
+          }
         };
       }
       
@@ -125,24 +133,45 @@ export const authService = {
       
       if (error.response?.data?.code) {
         const errorCode = error.response.data.code;
+        const errorField = error.response.data.field;
         
         const errorMessages = {
-          'EMAIL_EXISTS': 'El email ya está registrado',
+          'USER_ALREADY_EXISTS': 'El email ya está registrado',
+          'EMAIL_ALREADY_EXISTS': 'El email ya está registrado',
           'REQUIRED_FIELDS': 'Todos los campos son requeridos',
-          'INVALID_EMAIL': 'Email inválido',
-          'WEAK_PASSWORD': 'La contraseña debe tener al menos 8 caracteres'
+          'INVALID_EMAIL': 'Email inválido'
         };
         
         return {
           success: false,
           message: errorMessages[errorCode] || 'Error en el registro',
-          field: error.response.data.field
+          field: errorField
         };
       }
       
       return {
         success: false,
         message: 'Error de conexión. Intenta de nuevo.'
+      };
+    }
+  },
+
+  // En authService.js, agregar este método:
+  async resendVerificationEmail(email) {
+    try {
+      const response = await authAPI.post('/Users/resend-verification-email', {
+        email
+      });
+
+      return {
+        success: response.data.success,
+        message: response.data.message || 'Email de verificación enviado'
+      };
+    } catch (error) {
+      console.error('❌ [AuthService] Resend verification error:', error);
+      return {
+        success: false,
+        message: 'Error al reenviar email de verificación'
       };
     }
   },

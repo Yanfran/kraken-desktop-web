@@ -1,11 +1,11 @@
 // src/pages/auth/EmailConfirmation/EmailConfirmation.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../App';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
+import toast from 'react-hot-toast';
 import './EmailConfirmation.styles.scss';
 
-// Componente toggle para cambio de tema
 const ThemeToggle = () => {
   const { actualTheme, toggleTheme } = useTheme();
   
@@ -43,38 +43,93 @@ const ThemeToggle = () => {
 
 const EmailConfirmation = () => {
   const navigate = useNavigate();
-  const { colors, actualTheme } = useTheme();
+  const location = useLocation();
+  const { signOut, resendVerificationEmail, user } = useAuth();
+  const { actualTheme } = useTheme();
+  
   const [isResending, setIsResending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
-  // Simular reenvío de email de confirmación
-  const handleResendEmail = async () => {
-    setIsResending(true);
+  // ✅ MEJOR OBTENCIÓN DE EMAIL con múltiples fallbacks
+  const email = React.useMemo(() => {
+    // 1. Del state de navegación
+    if (location.state?.email) return location.state.email;
+    
+    // 2. Del usuario en context
+    if (user?.email) return user.email;
+    
+    // 3. Del localStorage
     try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      // Mostrar mensaje de éxito o manejar según tu lógica
-      alert('Correo de confirmación reenviado');
+      const userData = localStorage.getItem('userData');
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        if (parsed.email) return parsed.email;
+      }
+    } catch (e) {
+      console.error('Error parsing userData:', e);
+    }
+    
+    return null;
+  }, [location.state, user]);
+
+  // ✅ MOSTRAR ALERTA SI NO HAY EMAIL
+  React.useEffect(() => {
+    if (!email) {
+      toast.error('No se encontró el email. Redirigiendo...');
+      setTimeout(() => navigate('/register'), 2000);
+    }
+  }, [email, navigate]);
+
+  const handleResendEmail = async () => {
+    // ✅ DESCOMENTAR ESTA VALIDACIÓN
+    if (isResending || emailSent || !email) {
+      if (!email) {
+        toast.error('No se encontró el email. Intenta registrarte nuevamente.');
+      }
+      return;
+    }
+
+    try {
+      setIsResending(true);
+      console.log('📧 Enviando email a:', email); // Debug
+      
+      const result = await resendVerificationEmail(email);
+      
+      if (result.success) {
+        setEmailSent(true);
+        toast.success('¡Correo enviado! Revisa tu bandeja de entrada y spam.');
+        setTimeout(() => setEmailSent(false), 20000);
+      } else {
+        toast.error(result.message || 'No se pudo reenviar el correo.');
+      }
     } catch (error) {
-      alert('Error al reenviar el correo');
+      console.error('Error al reenviar email:', error);
+      toast.error('Error de conexión.');
     } finally {
       setIsResending(false);
     }
   };
 
-  // Aplicar tema al contenedor principal
-  React.useEffect(() => {
-    const confirmationContainer = document.querySelector('.kraken-email-confirmation');
-    if (confirmationContainer) {
-      confirmationContainer.setAttribute('data-theme', actualTheme);
-    }
-  }, [actualTheme]);
+  const handleBackToLogin = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
+  // ✅ MOSTRAR LOADING SI NO HAY EMAIL
+  if (!email) {
+    return (
+      <div className="kraken-email-confirmation" data-theme={actualTheme}>
+        <ThemeToggle />
+        <div className="kraken-email-confirmation__content">
+          <p>Cargando...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="kraken-email-confirmation" data-theme={actualTheme}>
-      {/* Toggle de tema */}
       <ThemeToggle />
       
-      {/* Logo - Mismas medidas que Login/Register */}
       <div className="kraken-email-confirmation__logo">
         <img
           src="/src/assets/images/logo.jpg"
@@ -86,27 +141,26 @@ const EmailConfirmation = () => {
         />
       </div>
 
-      {/* Contenido principal */}
       <div className="kraken-email-confirmation__content">
-        {/* Título */}
         <h1 className="kraken-email-confirmation__title">
           Falta un solo paso para terminar tu registro
         </h1>
 
-        {/* Descripción */}
         <p className="kraken-email-confirmation__description">
           Revisa tu bandeja de entrada o carpeta de spam y confirma tu e-mail.
         </p>
 
-        {/* Pregunta de problemas */}
         <p className="kraken-email-confirmation__problems">
           ¿Problemas?
         </p>
 
-        {/* Enlace de reenviar */}
         <a
           href="#"
           className="kraken-email-confirmation__resend-link"
+          style={{ 
+            pointerEvents: (isResending || emailSent) ? 'none' : 'auto',
+            opacity: (isResending || emailSent) ? 0.6 : 1 
+          }}
           onClick={(e) => {
             e.preventDefault();
             handleResendEmail();
@@ -117,15 +171,16 @@ const EmailConfirmation = () => {
               <div className="kraken-email-confirmation__spinner"></div>
               Reenviando...
             </div>
+          ) : emailSent ? (
+            <span style={{ color: '#4CAF50' }}>✓ Enviado</span>
           ) : (
             'Reenviar correo de confirmación'
           )}
         </a>
 
-        {/* Link para volver al login */}
         <button
           className="kraken-email-confirmation__back-link"
-          onClick={() => navigate('/login')}
+          onClick={handleBackToLogin}
         >
           Volver al inicio de sesión
         </button>

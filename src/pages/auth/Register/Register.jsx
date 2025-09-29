@@ -5,6 +5,8 @@ import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Usar el 
 import { useTheme } from '../../../contexts/ThemeContext';
 import toast from 'react-hot-toast'; // ✅ AGREGADO: Para notificaciones
 import './Register.styles.scss';
+// AGREGAR después de tus imports existentes:
+import PasswordValidator, { validatePassword } from '../../../components/auth/PasswordValidator/PasswordValidator';
 
 // Componente toggle para cambio de tema (mantener igual)
 const ThemeToggle = () => {
@@ -47,6 +49,8 @@ const Register = () => {
   const { signUp, signInWithGoogle, isLoading } = useAuth(); // ✅ FUNCIONALIDAD REAL
   const { colors, actualTheme } = useTheme();
   
+
+  
   // ✅ ESTADOS DEL FORMULARIO
   const [formData, setFormData] = useState({
     name: '',
@@ -56,13 +60,35 @@ const Register = () => {
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordValidator, setShowPasswordValidator] = useState(false); // ← AGREGAR
 
   // ✅ MANEJAR CAMBIOS EN INPUTS
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Limpiar error cuando el usuario empieza a escribir
+    
+    // Limpiar error del campo al escribir
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+
+    // ✅ AGREGAR ESTE BLOQUE:
+    if (field === 'password') {
+      setShowPasswordValidator(value.length > 0);
+      
+      if (value.length > 0) {
+        const validation = validatePassword(value);
+        if (validation.isValid && errors.password) {
+          setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.password;
+            return newErrors;
+          });
+        }
+      }
     }
   };
 
@@ -99,18 +125,51 @@ const Register = () => {
   };
 
   // ✅ MANEJAR SUBMIT DEL FORMULARIO
+  // ✅ MANEJAR SUBMIT DEL FORMULARIO
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validar campos básicos
+    const newErrors = {};
     
-    if (!validateForm()) return;
+    if (!formData.name.trim()) {
+      newErrors.name = 'El nombre es requerido';
+    }
+    
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'El apellido es requerido';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'El email es requerido';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email inválido';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'La contraseña es requerida';
+    } else {
+      // ✅ Validar contraseña segura
+      const passwordValidation = validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        newErrors.password = passwordValidation.errors[0];
+      }
+    }
+    
+    // Si hay errores, detener
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('Por favor, corrige los errores del formulario');
+      return;
+    }
     
     try {
-      const result = await signUp(
-        formData.email,
-        formData.password,
-        formData.name.trim(),
-        formData.lastName.trim()
-      );
+      const result = await signUp({
+        name: formData.name.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        password: formData.password
+      });
       
       if (result.success) {
         toast.success('¡Registro exitoso! Verifica tu email para continuar.');
@@ -158,7 +217,7 @@ const Register = () => {
       {/* Logo */}
       <div className="kraken-register__logo">
         <img 
-          src="/kraken-logo.png" 
+          src="/src/assets/images/logo.jpg" 
           alt="Kraken Logo" 
           className="kraken-register__logo-image"
         />
@@ -175,7 +234,7 @@ const Register = () => {
         disabled={isLoading}
       >
         <img 
-          src="/google-icon.png" 
+          src="/src/assets/images/google-icon.png" 
           alt="Google" 
           className="kraken-register__google-icon"
         />
@@ -267,6 +326,12 @@ const Register = () => {
           {errors.password && (
             <span className="kraken-input-field__error">{errors.password}</span>
           )}
+
+          {/* ✅ AGREGAR ESTO: */}
+          <PasswordValidator 
+            password={formData.password} 
+            visible={showPasswordValidator}
+          />
         </div>
 
         {/* Error general */}
@@ -288,11 +353,14 @@ const Register = () => {
         )}
 
         {/* Botón Submit */}
-        <button
-          type="submit"
-          className="kraken-register__submit-button"
-          disabled={isLoading}
-        >
+          <button
+            type="submit"
+            className="kraken-register__submit-button"
+            disabled={
+              isLoading || 
+              (formData.password && !validatePassword(formData.password).isValid)
+            }
+          >
           {isLoading ? (
             <div className="kraken-register__loading">
               <div className="kraken-register__spinner"></div>

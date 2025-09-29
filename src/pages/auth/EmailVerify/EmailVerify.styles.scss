@@ -1,0 +1,149 @@
+// src/pages/auth/EmailVerify/EmailVerify.styles.scss
+
+.kraken-email-verify {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-background, #FFFFFF);
+  padding: 20px;
+  transition: background-color 0.3s ease;
+
+  &[data-theme="dark"] {
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+  }
+}
+
+.kraken-email-verify__container {
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+.kraken-email-verify__logo {
+  margin-bottom: 40px;
+}
+
+.kraken-email-verify__logo-image {
+  width: 180px;
+  height: auto;
+  max-height: 90px;
+  object-fit: contain;
+
+  [data-theme="dark"] & {
+    filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 180, 133, 0.3));
+  }
+}
+
+.kraken-email-verify__content {
+  background: var(--color-card-background, #F8F8F8);
+  border-radius: 16px;
+  padding: 48px 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  [data-theme="dark"] & {
+    background: rgba(29, 27, 32, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.kraken-email-verify__spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 69, 0, 0.2);
+  border-top: 4px solid #FF4500;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 24px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.kraken-email-verify__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: bold;
+  margin: 0 auto 24px;
+
+  &--success {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  &--error {
+    background-color: #F44336;
+    color: white;
+  }
+}
+
+.kraken-email-verify__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary, #000000);
+  margin-bottom: 16px;
+
+  [data-theme="dark"] & {
+    color: #FFFFFF;
+  }
+}
+
+.kraken-email-verify__message {
+  font-size: 16px;
+  color: var(--color-text-secondary, #757575);
+  line-height: 1.5;
+  margin-bottom: 24px;
+
+  [data-theme="dark"] & {
+    color: #B0B0B0;
+  }
+}
+
+.kraken-email-verify__back-button {
+  width: 100%;
+  max-width: 280px;
+  height: 48px;
+  background-color: var(--color-primary, #FF4500);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+
+  &:hover {
+    background-color: #E03E00;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .kraken-email-verify__content {
+    padding: 32px 24px;
+  }
+
+  .kraken-email-verify__title {
+    font-size: 20px;
+  }
+
+  .kraken-email-verify__message {
+    font-size: 14px;
+  }
+}

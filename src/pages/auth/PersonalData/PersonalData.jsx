@@ -1,10 +1,11 @@
 // src/pages/auth/PersonalData/PersonalData.jsx
+// VERSIÓN COMPLETA - Replica funcionalidad de React Native
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../App';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { getAddress, getDocumentTypes } from '../../../services/addressService';
 import './PersonalData.styles.scss';
-
 
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
@@ -15,27 +16,6 @@ const ThemeToggle = () => {
       className="theme-toggle-button"
       onClick={toggleTheme}
       aria-label={`Cambiar a modo ${actualTheme === 'light' ? 'oscuro' : 'claro'}`}
-      style={{
-        position: 'absolute',
-        top: '20px',
-        right: '20px',
-        background: 'none',
-        border: 'none',
-        fontSize: '24px',
-        cursor: 'pointer',
-        zIndex: 20,
-        padding: '8px',
-        borderRadius: '50%',
-        transition: 'background-color 0.2s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.backgroundColor = actualTheme === 'light' 
-          ? 'rgba(0, 0, 0, 0.1)' 
-          : 'rgba(255, 255, 255, 0.1)';
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.backgroundColor = 'transparent';
-      }}
     >
       {actualTheme === 'light' ? '🌙' : '☀️'}
     </button>
@@ -44,14 +24,20 @@ const ThemeToggle = () => {
 
 const PersonalData = () => {
   const navigate = useNavigate();
-  const { colors, actualTheme } = useTheme();
-  const [isLoading, setIsLoading] = useState(false);
+  const { actualTheme } = useTheme();
+  
+  // Estados principales
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [countryOptions, setCountryOptions] = useState([]);
+  const [documentTypeDB, setDocumentTypeDB] = useState([]);
 
   // Estados del formulario
   const [formData, setFormData] = useState({
     documentType: '',
     documentNumber: '',
     countryCode: '',
+    countryIso2: '',
     countryName: '',
     phone: '',
     phoneOperator: '',
@@ -61,24 +47,67 @@ const PersonalData = () => {
 
   const [errors, setErrors] = useState({});
 
-  // Opciones de documento
-  const documentOptions = [
-    { label: "Cédula", value: "cedula" },
-    { label: "Pasaporte", value: "pasaporte" }
-  ];
+  // ===== CONFIGURACIONES =====
 
-  // Códigos de país con formato de teléfono
+  // Validaciones de documentos (igual que React Native)
+  const documentValidations = {
+    cedula: {
+      pattern: /^[0-9]+$/,
+      minLength: 4,
+      maxLength: 9,
+      description: "Solo números (0-9), entre 4 y 9 dígitos"
+    },
+    pasaporte: {
+      pattern: /^[A-Za-z0-9]+$/,
+      minLength: 6,
+      maxLength: 12,
+      description: "Letras y números, entre 6 y 12 caracteres"
+    },
+    rif: {
+      pattern: /^[A-Za-z0-9]+$/,
+      minLength: 6,
+      maxLength: 12,
+      description: "Letras y números, entre 6 y 12 caracteres"
+    },
+    otro: {
+      pattern: /^[A-Za-z0-9]+$/,
+      minLength: 4,
+      maxLength: 20,
+      description: "Letras y números, entre 4 y 20 caracteres"
+    }
+  };
+
+  // Formatos de teléfono por país
   const phoneFormats = {
+    "+58": { mask: "###-##-##", length: 7, name: "Venezuela" },
     "+1": { mask: "(###) ###-####", length: 10, name: "Estados Unidos" },
-    "+58": { mask: "(####) ###-####", length: 11, name: "Venezuela" },
-    "+34": { mask: "(###) ###-###", length: 9, name: "España" },
-    "+57": { mask: "(###) ###-####", length: 10, name: "Colombia" },
-    "+507": { mask: "(###) ####-####", length: 8, name: "Panamá" },
-    "+593": { mask: "(##) ####-####", length: 9, name: "Ecuador" },
-    "+51": { mask: "(###) ###-###", length: 9, name: "Perú" },
+    "+86": { mask: "(###) ####-####", length: 11, name: "China" },
+    "+55": { mask: "(##) #####-####", length: 11, name: "Brasil" },
     "+54": { mask: "(##) ####-####", length: 10, name: "Argentina" },
-    "+56": { mask: "(#) ####-####", length: 9, name: "Chile" },
-    "+55": { mask: "(##) #####-####", length: 11, name: "Brasil" }
+    "+52": { mask: "(###) ###-####", length: 10, name: "México" },
+    "+57": { mask: "(###) ###-####", length: 10, name: "Colombia" },
+    "+56": { mask: "(##) ####-####", length: 9, name: "Chile" },
+    "+51": { mask: "(###) ###-####", length: 9, name: "Perú" },
+    "+593": { mask: "(##) ####-####", length: 9, name: "Ecuador" },
+    "+591": { mask: "(###) ###-####", length: 8, name: "Bolivia" },
+    "+595": { mask: "(###) ###-####", length: 8, name: "Paraguay" },
+    "+598": { mask: "(###) ###-####", length: 8, name: "Uruguay" },
+    "+502": { mask: "####-####", length: 8, name: "Guatemala" },
+    "+53": { mask: "(##) ####-####", length: 8, name: "Cuba" },
+    "+504": { mask: "####-####", length: 8, name: "Honduras" },
+    "+503": { mask: "####-####", length: 8, name: "El Salvador" },
+    "+505": { mask: "####-####", length: 8, name: "Nicaragua" },
+    "+506": { mask: "####-####", length: 8, name: "Costa Rica" },
+    "+507": { mask: "####-####", length: 8, name: "Panamá" },
+    "+501": { mask: "####-####", length: 7, name: "Belice" },
+    "+34": { mask: "(###) ###-###", length: 9, name: "España" },
+    "+351": { mask: "(###) ###-###", length: 9, name: "Portugal" },
+    "+39": { mask: "(###) ####-###", length: 10, name: "Italia" },
+    "+49": { mask: "(###) ###-####", length: 10, name: "Alemania" },
+    "+61": { mask: "(###) ###-###", length: 9, name: "Australia" },
+    "+31": { mask: "(##) ####-####", length: 9, name: "Países Bajos" },
+    "+297": { mask: "###-####", length: 7, name: "Aruba" },
+    "+599": { mask: "(###) ###-####", length: 9, name: "Curazao" }
   };
 
   // Operadores venezolanos
@@ -90,7 +119,117 @@ const PersonalData = () => {
     { label: "(0426)", value: "(0426)" }
   ];
 
-  // Función para formatear teléfono según el país
+  // ===== FUNCIONES DE CARGA DE DATOS =====
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Cargar países (códigos de teléfono)
+        const addressRes = await getAddress();
+        if (addressRes.success) {
+          const phoneCodes = addressRes.data.map((item) => ({
+            label: `+${item.phoneCode} (${item.name})`,
+            value: `+${item.phoneCode}`,
+            iso2: item.iso2,
+            name: item.name
+          }));
+          setCountryOptions(phoneCodes);
+        }
+
+        // Cargar tipos de documento
+        const docTypesRes = await getDocumentTypes();
+        if (docTypesRes.success) {
+          setDocumentTypeDB(docTypesRes.data);
+        }
+      } catch (error) {
+        console.error("Error al cargar datos iniciales:", error);
+        setErrors({ submit: 'Error al cargar datos iniciales' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
+  // ===== FUNCIONES DE VALIDACIÓN =====
+
+  // Validar documento según su tipo
+  const validateDocument = (type, value) => {
+    if (!type || !value) return { isValid: false, message: "" };
+    
+    const validation = documentValidations[type];
+    if (!validation) return { isValid: false, message: "Tipo de documento no válido" };
+
+    const { pattern, minLength, maxLength } = validation;
+
+    if (!pattern.test(value)) {
+      return {
+        isValid: false,
+        message: "Contiene caracteres no permitidos. " + validation.description
+      };
+    }
+
+    if (value.length < minLength) {
+      return {
+        isValid: false,
+        message: `Debe tener al menos ${minLength} caracteres`
+      };
+    }
+
+    if (value.length > maxLength) {
+      return {
+        isValid: false,
+        message: `No puede tener más de ${maxLength} caracteres`
+      };
+    }
+
+    return { isValid: true, message: "" };
+  };
+
+  // Verificar si el teléfono está completo
+  const isPhoneComplete = () => {
+    if (!formData.phone || !formData.countryCode) return false;
+    const format = phoneFormats[formData.countryCode];
+    if (!format) return formData.phone.length >= 7;
+    return formData.phone.replace(/\D/g, "").length === format.length;
+  };
+
+  // Verificar si el teléfono venezolano adicional es válido
+  const isVenezuelanPhoneValid = () => {
+    if (formData.countryCode === "+58") return true;
+    
+    if (!formData.venezuelanPhone && !formData.venezuelanOperator) return true;
+    
+    if (formData.venezuelanPhone || formData.venezuelanOperator) {
+      return formData.venezuelanOperator && 
+             formData.venezuelanPhone.replace(/\D/g, "").length === 7;
+    }
+    
+    return true;
+  };
+
+  // Validar formulario completo
+  const isFormComplete = () => {
+    const documentValidation = validateDocument(
+      formData.documentType, 
+      formData.documentNumber
+    );
+    
+    return formData.documentType &&
+           formData.documentNumber &&
+           documentValidation.isValid &&
+           formData.countryCode &&
+           isPhoneComplete() &&
+           (formData.countryCode !== "+58" || formData.phoneOperator) &&
+           isVenezuelanPhoneValid();
+  };
+
+  // ===== FUNCIONES DE FORMATO =====
+
+  // Formatear teléfono según el país
   const formatPhone = (text) => {
     const cleaned = text.replace(/\D/g, "");
     const format = phoneFormats[formData.countryCode];
@@ -115,7 +254,7 @@ const PersonalData = () => {
     return formatted;
   };
 
-  // Función para formatear teléfono venezolano
+  // Formatear teléfono venezolano
   const formatVenezuelanPhone = (text) => {
     const cleaned = text.replace(/\D/g, "");
     const limitedCleaned = cleaned.slice(0, 7);
@@ -136,107 +275,168 @@ const PersonalData = () => {
     return formatted;
   };
 
-  // Validar documento
-  const validateDocument = () => {
-    if (!formData.documentType || !formData.documentNumber) return false;
-    
-    if (formData.documentType === 'cedula') {
-      const cleaned = formData.documentNumber.replace(/\D/g, '');
-      return cleaned.length >= 6 && cleaned.length <= 12;
-    }
-    
-    if (formData.documentType === 'pasaporte') {
-      return formData.documentNumber.length >= 6 && formData.documentNumber.length <= 12;
-    }
-    
-    return false;
-  };
+  // ===== HANDLERS =====
 
-  // Validar teléfono
-  const isPhoneComplete = () => {
-    if (!formData.phone || !formData.countryCode) return false;
-    const format = phoneFormats[formData.countryCode];
-    if (!format) return formData.phone.length >= 7;
-    return formData.phone.replace(/\D/g, "").length === format.length;
-  };
-
-  // Validar teléfono venezolano
-  const isVenezuelanPhoneValid = () => {
-    if (formData.countryCode === "+58") return true;
-    
-    if (!formData.venezuelanPhone && !formData.venezuelanOperator) return true;
-    
-    if (formData.venezuelanPhone || formData.venezuelanOperator) {
-      return formData.venezuelanOperator && formData.venezuelanPhone.replace(/\D/g, "").length === 7;
-    }
-    
-    return true;
-  };
-
-  // Validar formulario completo
-  const isFormComplete = () => {
-    return validateDocument() &&
-           formData.countryCode &&
-           isPhoneComplete() &&
-           (formData.countryCode !== "+58" || formData.phoneOperator) &&
-           isVenezuelanPhoneValid();
-  };
-
-  // Manejar cambios en los inputs
+  // Manejar cambios en inputs generales
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Limpiar error cuando el usuario empieza a escribir
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  // Manejar cambio de país
-  const handleCountryChange = (countryCode) => {
-    const countryName = phoneFormats[countryCode]?.name || '';
+  // Manejar cambio de tipo de documento
+  const handleDocumentTypeChange = (value) => {
     setFormData(prev => ({
       ...prev,
-      countryCode,
-      countryName,
-      phone: '',
-      phoneOperator: ''
+      documentType: value,
+      documentNumber: '' // Limpiar al cambiar tipo
     }));
+    setErrors(prev => ({ ...prev, documentNumber: '' }));
+  };
+
+  // Manejar cambio en número de documento
+  const handleDocumentNumberChange = (text) => {
+    if (!formData.documentType) {
+      return;
+    }
+
+    const validation = documentValidations[formData.documentType];
+    if (!validation) return;
+
+    let cleaned = '';
+    
+    switch (formData.documentType) {
+      case 'cedula':
+        cleaned = text.replace(/[^0-9]/g, '');
+        break;
+      case 'pasaporte':
+      case 'rif':
+      case 'otro':
+        cleaned = text.replace(/[^A-Za-z0-9]/g, '');
+        break;
+      default:
+        cleaned = text;
+    }
+
+    const limited = cleaned.slice(0, validation.maxLength);
+    handleInputChange('documentNumber', limited);
+  };
+
+  // Manejar cambio de país
+  const handleCountryChange = (value) => {
+    const country = countryOptions.find(c => c.value === value);
+    
+    setFormData(prev => ({
+      ...prev,
+      countryCode: value,
+      countryIso2: country?.iso2 || '',
+      countryName: country?.name || '',
+      phone: '',
+      phoneOperator: '',
+      venezuelanPhone: '',
+      venezuelanOperator: ''
+    }));
+  };
+
+  // Manejar cambio de teléfono
+  const handlePhoneChange = (text) => {
+    const formatted = formatPhone(text);
+    handleInputChange('phone', formatted);
+  };
+
+  // Manejar cambio de teléfono venezolano
+  const handleVenezuelanPhoneChange = (text) => {
+    const formatted = formatVenezuelanPhone(text);
+    handleInputChange('venezuelanPhone', formatted);
   };
 
   // Manejar envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validación final
+    const documentValidation = validateDocument(
+      formData.documentType, 
+      formData.documentNumber
+    );
+    
+    if (!documentValidation.isValid) {
+      setErrors({ submit: `Error en documento: ${documentValidation.message}` });
+      return;
+    }
+
     if (!isFormComplete()) {
       setErrors({ submit: 'Por favor, complete todos los campos requeridos' });
       return;
     }
     
-    setIsLoading(true);
+    setIsSaving(true);
     
     try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Preparar datos para enviar (igual estructura que React Native)
+      const submitData = {
+        documentType: formData.documentType,
+        documentNumber: formData.documentNumber,
+        countryCode: formData.countryCode,
+        countryIso2: formData.countryIso2,
+        phone: formData.phone,
+        ...(formData.countryCode === "+58" && { phoneOperator: formData.phoneOperator }),
+        ...(formData.countryCode !== "+58" && 
+            formData.venezuelanPhone && 
+            formData.venezuelanOperator && {
+          venezuelanPhone: formData.venezuelanPhone,
+          venezuelanOperator: formData.venezuelanOperator
+        })
+      };
+
+      console.log('Datos a enviar:', submitData);
       
-      // Redirigir al dashboard o siguiente paso
-      navigate('/delivery-option');
+      // Simular guardado (reemplazar con llamada a API real)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Redirigir a siguiente paso
+      navigate('/delivery-option', { state: submitData });
     } catch (error) {
+      console.error('Error al guardar:', error);
       setErrors({ submit: 'Error al guardar los datos. Intenta nuevamente.' });
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
+  // ===== HELPERS PARA UI =====
+
+  // Convertir tipos de documento de DB a formato local
+  const documentOptions = documentTypeDB.map(item => ({
+    label: item.displayName,
+    value: item.displayName
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ /g, '')
+  }));
+
   // Obtener placeholder del documento
   const getDocumentPlaceholder = () => {
-    if (formData.documentType === 'cedula') {
-      return 'Ej: A1234567';
+    if (!formData.documentType) return "Seleccione tipo de documento primero";
+    
+    const validation = documentValidations[formData.documentType];
+    if (!validation) return "Número de documento";
+    
+    switch (formData.documentType) {
+      case 'cedula':
+        return "Ej: 12345678";
+      case 'pasaporte':
+        return "Ej: A1234567";
+      case 'rif':
+        return "Ej: J123456789";
+      case 'otro':
+        return "Documento de identidad";
+      default:
+        return "Número de documento";
     }
-    if (formData.documentType === 'pasaporte') {
-      return 'Ej: A1234567';
-    }
-    return 'Seleccione un tipo primero';
   };
 
   // Obtener placeholder del teléfono
@@ -246,7 +446,22 @@ const PersonalData = () => {
     return `Celular ${format.mask}`;
   };
 
-  // Aplicar tema al contenedor
+  // Obtener mensaje de error de teléfono
+  const getPhoneErrorMessage = () => {
+    const format = phoneFormats[formData.countryCode];
+    if (!format) return "Ingrese un número válido";
+    return `Ingrese un número completo ${format.mask}`;
+  };
+
+  // Obtener validación actual del documento
+  const currentDocumentValidation = validateDocument(
+    formData.documentType, 
+    formData.documentNumber
+  );
+
+  // ===== RENDER =====
+
+  // Aplicar tema
   useEffect(() => {
     const container = document.querySelector('.kraken-personal-data');
     if (container) {
@@ -254,11 +469,20 @@ const PersonalData = () => {
     }
   }, [actualTheme]);
 
-  return (
-    <div className="kraken-personal-data" data-theme={actualTheme}>        
-      {/* Toggle de tema */}
-      <ThemeToggle />
+  if (isLoading) {
+    return (
+      <div className="kraken-personal-data" data-theme={actualTheme}>
+        <div className="kraken-personal-data__loading">
+          <div className="kraken-personal-data__spinner"></div>
+          <p>Cargando datos...</p>
+        </div>
+      </div>
+    );
+  }
 
+  return (
+    <div className="kraken-personal-data" data-theme={actualTheme}>
+      <ThemeToggle />
 
       {/* Logo */}
       <div className="kraken-personal-data__logo">
@@ -283,10 +507,10 @@ const PersonalData = () => {
             <select
               className="kraken-form-field__select"
               value={formData.documentType}
-              onChange={(e) => handleInputChange('documentType', e.target.value)}
+              onChange={(e) => handleDocumentTypeChange(e.target.value)}
               required
             >
-              <option value="">Pasaporte</option>
+              <option value="">Seleccione</option>
               {documentOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -301,32 +525,72 @@ const PersonalData = () => {
             <input
               type="text"
               className={`kraken-form-field__input ${
-                formData.documentNumber && !validateDocument() ? 'kraken-form-field__input--error' : ''
+                formData.documentNumber && !currentDocumentValidation.isValid 
+                  ? 'kraken-form-field__input--error' 
+                  : ''
               }`}
               placeholder={getDocumentPlaceholder()}
               value={formData.documentNumber}
-              onChange={(e) => handleInputChange('documentNumber', e.target.value)}
+              onChange={(e) => handleDocumentNumberChange(e.target.value)}
+              disabled={!formData.documentType}
               required
             />
-            <p className="kraken-form-field__helper">Letras y números, entre 6 y 12 caracteres</p>
+            
+            {/* Mensaje de error de documento */}
+            {formData.documentNumber && !currentDocumentValidation.isValid && (
+              <p className="kraken-form-field__error">
+                {currentDocumentValidation.message}
+              </p>
+            )}
+            
+            {/* Ayuda para el tipo de documento */}
+            {formData.documentType && !formData.documentNumber && (
+              <p className="kraken-form-field__helper">
+                {documentValidations[formData.documentType]?.description}
+              </p>
+            )}
           </div>
 
-          {/* Código de País */}
-          <div className="kraken-form-field">
-            <label className="kraken-form-field__label">Código de País</label>
-            <select
-              className="kraken-form-field__select"
-              value={formData.countryCode}
-              onChange={(e) => handleCountryChange(e.target.value)}
-              required
-            >
-              <option value="">+1 (Estados Unidos)</option>
-              {Object.entries(phoneFormats).map(([code, format]) => (
-                <option key={code} value={code}>
-                  {code} ({format.name})
-                </option>
-              ))}
-            </select>
+          {/* Código de País y Operador (si es Venezuela) */}
+          <div className="kraken-form-field__row">
+            <div className={`kraken-form-field ${
+              formData.countryCode === '+58' ? 'kraken-form-field--60' : ''
+            }`}>
+              <label className="kraken-form-field__label">Código de País</label>
+              <select
+                className="kraken-form-field__select"
+                value={formData.countryCode}
+                onChange={(e) => handleCountryChange(e.target.value)}
+                required
+              >
+                <option value="">Seleccione</option>
+                {countryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Operador venezolano (solo si país es +58) */}
+            {formData.countryCode === '+58' && (
+              <div className="kraken-form-field kraken-form-field--38">
+                <label className="kraken-form-field__label">Operador</label>
+                <select
+                  className="kraken-form-field__select"
+                  value={formData.phoneOperator}
+                  onChange={(e) => handleInputChange('phoneOperator', e.target.value)}
+                  required
+                >
+                  <option value="">Operador</option>
+                  {venezuelanOperators.map((operator) => (
+                    <option key={operator.value} value={operator.value}>
+                      {operator.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Número de Celular */}
@@ -337,17 +601,18 @@ const PersonalData = () => {
               className="kraken-form-field__input"
               placeholder={getPhonePlaceholder()}
               value={formData.phone}
-              onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+              onChange={(e) => handlePhoneChange(e.target.value)}
               required
             />
+            
             {formData.countryCode && formData.phone && !isPhoneComplete() && (
               <p className="kraken-form-field__error">
-                Ingrese un número completo según el formato {phoneFormats[formData.countryCode]?.mask}
+                {getPhoneErrorMessage()}
               </p>
             )}
           </div>
 
-          {/* Sección venezolana adicional si no es +58 */}
+          {/* Sección venezolana adicional (solo si país NO es +58) */}
           {formData.countryCode && formData.countryCode !== "+58" && (
             <>
               <div className="kraken-form-field">
@@ -386,11 +651,28 @@ const PersonalData = () => {
                   className="kraken-form-field__input"
                   placeholder="Celular venezolano ###-##-## (opcional)"
                   value={formData.venezuelanPhone}
-                  onChange={(e) => handleInputChange('venezuelanPhone', formatVenezuelanPhone(e.target.value))}
+                  onChange={(e) => handleVenezuelanPhoneChange(e.target.value)}
                 />
-                {formData.venezuelanPhone && !isVenezuelanPhoneValid() && (
+                
+                {formData.venezuelanPhone && 
+                 formData.venezuelanPhone.replace(/\D/g, "").length > 0 && 
+                 formData.venezuelanPhone.replace(/\D/g, "").length < 7 && (
                   <p className="kraken-form-field__error">
-                    Debe completar tanto el operador como el número
+                    Ingrese un número venezolano completo ###-##-##
+                  </p>
+                )}
+
+                {formData.venezuelanOperator && !formData.venezuelanPhone && (
+                  <p className="kraken-form-field__error">
+                    Debe ingresar el número si seleccionó un operador
+                  </p>
+                )}
+
+                {formData.venezuelanPhone && 
+                 formData.venezuelanPhone.replace(/\D/g, "").length === 7 && 
+                 !formData.venezuelanOperator && (
+                  <p className="kraken-form-field__error">
+                    Debe seleccionar un operador si ingresó el número
                   </p>
                 )}
               </div>
@@ -407,12 +689,14 @@ const PersonalData = () => {
           {/* Botón de envío */}
           <button
             type="submit"
-            className={`kraken-personal-data__submit-button ${isFormComplete() ? 'active' : 'inactive'}`}
-            disabled={!isFormComplete() || isLoading}
+            className={`kraken-personal-data__submit-button ${
+              isFormComplete() ? 'active' : 'inactive'
+            }`}
+            disabled={!isFormComplete() || isSaving}
           >
-            {isLoading ? (
-              <div className="kraken-personal-data__loading">
-                <div className="kraken-personal-data__spinner"></div>
+            {isSaving ? (
+              <div className="kraken-personal-data__loading-inline">
+                <div className="kraken-personal-data__spinner-small"></div>
                 Guardando...
               </div>
             ) : (

@@ -254,3 +254,82 @@
               border-color 0.3s ease,
               box-shadow 0.3s ease;
 }
+
+
+
+
+
+// Estilos para el botón de reenviar
+.kraken-email-confirmation__resend-button {
+  width: 100%;
+  max-width: 380px;
+  padding: 14px 24px;
+  background: none;
+  border: none;
+  color: var(--color-primary, #FF4500);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: all 0.2s ease;
+  margin-top: 16px;
+  font-family: inherit;
+
+  &:hover:not(:disabled) {
+    opacity: 0.8;
+  }
+
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Loading spinner
+.kraken-email-confirmation__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.kraken-email-confirmation__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 69, 0, 0.3);
+  border-top: 2px solid #FF4500;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Estado de enviado
+.kraken-email-confirmation__sent {
+  color: var(--color-success, #4CAF50);
+}
+
+// Botón de volver al login
+.kraken-email-confirmation__back-link {
+  margin-top: 24px;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary, #757575);
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: all 0.2s ease;
+  font-family: inherit;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
