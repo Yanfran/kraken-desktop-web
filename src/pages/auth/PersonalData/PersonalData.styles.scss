@@ -10,7 +10,7 @@
   --color-text-placeholder: #AAAAAA;
   --color-error: #F44336;
   --color-success: #10b981;
-  --color-input-background: #F5F5F5;
+  --color-input-background: #f0f0f0;
   --color-border: #D0D0D0;
 }
 
@@ -100,7 +100,7 @@
 /* ===== CONTENIDO PRINCIPAL ===== */
 .kraken-personal-data__content {
   width: 100%;
-  max-width: 420px;
+  max-width: 380px!important;
   z-index: 10;
   position: relative;
 }
@@ -133,14 +133,22 @@
   
   &--half {
     flex: 1;
-    min-width: 0; // Importante para flex items con input
+    min-width: 0;
   }
   
+  // Por defecto ocupa todo el ancho
+  &--full {
+    flex: 1;
+    width: 100%;
+  }
+  
+  // Solo cuando es Venezuela, se reduce a 60%
   &--60 {
     flex: 0 0 60%;
     max-width: 60%;
   }
   
+  // Campo de operador ocupa 38%
   &--38 {
     flex: 0 0 38%;
     max-width: 38%;
@@ -151,13 +159,18 @@
   display: flex;
   gap: 12px;
   align-items: flex-start;
+  
+  // Cuando solo hay un elemento, que ocupe todo
+  &--single {
+    width: 100%;
+  }
 }
 
 .kraken-form-field__label {
   font-size: 14px;
   font-weight: 500;
-  color: var(--color-text-secondary);
-  margin-bottom: 6px;
+  color: var(--color-text-primary);
+  // margin-bottom: 6px;
   transition: color 0.3s ease;
   
   &--additional {
@@ -175,7 +188,7 @@
   width: 100%;
   height: 48px;
   padding: 0 16px;
-  border: 1px solid var(--color-border);
+  border: 1px solid transparent;
   border-radius: 25px;
   font-size: 15px;
   font-family: inherit;

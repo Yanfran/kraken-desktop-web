@@ -1,9 +1,11 @@
 // src/pages/auth/DeliveryOption/DeliveryOption.jsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../../contexts/ThemeContext';
-import './DeliveryOption.styles.scss';
+// TU CÓDIGO ORIGINAL + Funcionalidad del backend
 
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useTheme } from '../../../contexts/ThemeContext';
+import axiosInstance from '../../../services/axiosInstance';
+import './DeliveryOption.styles.scss';
 
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
@@ -43,12 +45,17 @@ const ThemeToggle = () => {
 
 const DeliveryOption = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme } = useTheme();
   const actualTheme = theme === 'auto' ? 'light' : theme;
   
+  // ✅ DATOS DE PERSONAL DATA
+  const personalData = location.state || {};
+  
   // Estados principales
-  const [selectedOption, setSelectedOption] = useState(''); // 'store' o 'home'
+  const [selectedOption, setSelectedOption] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   
   // Estados para formulario de domicilio
   const [formData, setFormData] = useState({
@@ -73,116 +80,156 @@ const DeliveryOption = () => {
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false);
   const [loadingParishes, setLoadingParishes] = useState(false);
 
-  // Datos mock
-  const mockStates = [
-    { label: 'Distrito Capital', value: 'distrito_capital' },
-    { label: 'Miranda', value: 'miranda' },
-    { label: 'Carabobo', value: 'carabobo' },
-    { label: 'Zulia', value: 'zulia' }
-  ];
+  // ✅ DATOS REALES DEL BACKEND
+  const [availableCities, setAvailableCities] = useState([]);
+  const [allStores, setAllStores] = useState([]);
+  const [filteredStores, setFilteredStores] = useState([]);
 
-  // Ciudades disponibles para retiro en tienda
-  const availableCities = [
-    { label: 'Caracas', value: 'caracas' },
-    { label: 'Valencia', value: 'valencia' },
-    { label: 'Maracaibo', value: 'maracaibo' },
-    { label: 'Barquisimeto', value: 'barquisimeto' }
-  ];
-
-  // Tiendas por ciudad
-  const storesByCity = {
-    caracas: [
-      { label: 'Tienda Centro Comercial Sambil', value: 'sambil_caracas' },
-      { label: 'Tienda Centro Comercial CCCT', value: 'ccct_caracas' },
-      { label: 'Tienda Las Mercedes', value: 'las_mercedes' }
-    ],
-    valencia: [
-      { label: 'Tienda Centro Comercial Sambil Valencia', value: 'sambil_valencia' },
-      { label: 'Tienda Carabobo Plaza', value: 'carabobo_plaza' }
-    ],
-    maracaibo: [
-      { label: 'Tienda Centro Comercial Sambil Maracaibo', value: 'sambil_maracaibo' }
-    ],
-    barquisimeto: [
-      { label: 'Tienda Centro Comercial Sambil Barquisimeto', value: 'sambil_barquisimeto' }
-    ]
-  };
-
-  const mockMunicipalities = {
-    distrito_capital: [
-      { label: 'Libertador', value: 'libertador' }
-    ],
-    miranda: [
-      { label: 'Chacao', value: 'chacao' },
-      { label: 'Baruta', value: 'baruta' },
-      { label: 'Sucre', value: 'sucre' }
-    ],
-    carabobo: [
-      { label: 'Valencia', value: 'valencia' },
-      { label: 'Puerto Cabello', value: 'puerto_cabello' }
-    ],
-    zulia: [
-      { label: 'Maracaibo', value: 'maracaibo' },
-      { label: 'San Francisco', value: 'san_francisco' }
-    ]
-  };
-
-  const mockParishes = {
-    libertador: [
-      { label: 'Catedral', value: 'catedral' },
-      { label: 'San Juan', value: 'san_juan' },
-      { label: 'Santa Teresa', value: 'santa_teresa' }
-    ],
-    chacao: [
-      { label: 'Chacao', value: 'chacao_parish' }
-    ],
-    baruta: [
-      { label: 'Baruta', value: 'baruta_parish' },
-      { label: 'El Cafetal', value: 'el_cafetal' }
-    ],
-    valencia: [
-      { label: 'Valencia', value: 'valencia_parish' },
-      { label: 'Miguel Peña', value: 'miguel_pena' }
-    ],
-    puerto_cabello: [
-      { label: 'Borburata', value: 'borburata' }
-    ],
-    maracaibo: [
-      { label: 'Bolívar', value: 'bolivar' },
-      { label: 'Coquivacoa', value: 'coquivacoa' }
-    ],
-    san_francisco: [
-      { label: 'San Francisco', value: 'san_francisco_parish' }
-    ]
-  };
-
-  // Cargar estados iniciales
+  // ✅ CARGAR DATOS INICIALES DEL BACKEND
   useEffect(() => {
-    setStatesList(mockStates);
+    const loadInitialData = async () => {
+      try {
+        setIsLoadingData(true);
+        
+        // Cargar delivery data (ciudades y tiendas)
+        const deliveryRes = await axiosInstance.get('/Addresses/delivery-data');
+        console.log('🏪 Delivery data:', deliveryRes.data);
+        
+        if (deliveryRes.data.success) {
+          const { ciudad, tiendas } = deliveryRes.data.data;
+          
+          // Guardar todas las tiendas
+          setAllStores(tiendas);
+          
+          // Configurar ciudad disponible
+          if (ciudad) {
+            setAvailableCities([{
+              label: ciudad.name,
+              value: ciudad.id.toString()
+            }]);
+          }
+          
+          // Filtrar solo tiendas tipo 2
+          const storesType2 = tiendas
+            .filter(t => t.idTiendaTipo === 2)
+            .map(t => ({
+              label: t.nombre,
+              value: t.id.toString(),
+              idEstado: t.idEstado
+            }));
+          
+          setFilteredStores(storesType2);
+        }
+        
+        // Cargar estados de Venezuela
+        const statesRes = await axiosInstance.get('/Addresses/states/1');
+        console.log('📍 States:', statesRes.data);
+        
+        if (statesRes.data.success) {
+          const states = statesRes.data.data.map(item => ({
+            label: item.name,
+            value: item.id.toString()
+          }));
+          setStatesList(states);
+        }
+        
+      } catch (error) {
+        console.error("❌ Error cargando datos:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadInitialData();
   }, []);
 
-  // Cargar municipios cuando cambia el estado
+  // ✅ CARGAR ESTADOS AL INICIO (como en tu app)
   useEffect(() => {
-    if (formData.state) {
-      setLoadingMunicipalities(true);
-      setTimeout(() => {
-        setMunicipalitiesList(mockMunicipalities[formData.state] || []);
-        setLoadingMunicipalities(false);
-        setFormData(prev => ({ ...prev, municipality: '', parish: '' }));
-      }, 300);
+    const loadStates = async () => {
+      try {
+        const res = await axiosInstance.get('/Addresses/states/1'); // 1 = Venezuela
+        
+        if (res.data.success) {
+          const states = res.data.data.map(item => ({
+            label: item.name,
+            value: item.id.toString()
+          }));
+          setStatesList(states);
+        }
+      } catch (error) {
+        console.error("❌ Error cargando estados:", error);
+      }
+    };
+    
+    loadStates();
+  }, []);
+
+  // ✅ CARGAR MUNICIPIOS cuando cambia el estado (igual que tu app)
+  useEffect(() => {
+    if (!formData.state) {
+      setMunicipalitiesList([]);
+      setParishesList([]);
+      setFormData(prev => ({ ...prev, municipality: '', parish: '' }));
+      return;
     }
+    
+    const loadMunicipalities = async () => {
+      try {
+        setLoadingMunicipalities(true);
+        const res = await axiosInstance.get(`/Addresses/municipalities/${formData.state}`);
+        
+        if (res.data.success) {
+          const municipalities = res.data.data.map(item => ({
+            label: item.name,
+            value: item.id.toString()
+          }));
+          setMunicipalitiesList(municipalities);
+        }
+        
+        // Limpiar municipio y parroquia al cambiar estado
+        setFormData(prev => ({ ...prev, municipality: '', parish: '' }));
+        setParishesList([]);
+      } catch (error) {
+        console.error("❌ Error cargando municipios:", error);
+      } finally {
+        setLoadingMunicipalities(false);
+      }
+    };
+    
+    loadMunicipalities();
   }, [formData.state]);
 
-  // Cargar parroquias cuando cambia el municipio
+  // ✅ CARGAR PARROQUIAS cuando cambia el municipio (igual que tu app)
   useEffect(() => {
-    if (formData.municipality) {
-      setLoadingParishes(true);
-      setTimeout(() => {
-        setParishesList(mockParishes[formData.municipality] || []);
-        setLoadingParishes(false);
-        setFormData(prev => ({ ...prev, parish: '' }));
-      }, 300);
+    if (!formData.municipality) {
+      setParishesList([]);
+      setFormData(prev => ({ ...prev, parish: '' }));
+      return;
     }
+    
+    const loadParishes = async () => {
+      try {
+        setLoadingParishes(true);
+        const res = await axiosInstance.get(`/Addresses/parishes/${formData.municipality}`);
+        
+        if (res.data.success) {
+          const parishes = res.data.data.map(item => ({
+            label: item.name,
+            value: item.id.toString()
+          }));
+          setParishesList(parishes);
+        }
+        
+        // Limpiar parroquia al cambiar municipio
+        setFormData(prev => ({ ...prev, parish: '' }));
+      } catch (error) {
+        console.error("❌ Error cargando parroquias:", error);
+      } finally {
+        setLoadingParishes(false);
+      }
+    };
+    
+    loadParishes();
   }, [formData.municipality]);
 
   // Aplicar tema
@@ -195,10 +242,9 @@ const DeliveryOption = () => {
 
   // Handlers
   const handleOptionChange = (value) => {
-    console.log('🔄 Opción seleccionada:', value); // Debug
+    console.log('🔄 Opción seleccionada:', value);
     setSelectedOption(value);
     
-    // Limpiar formularios al cambiar de opción
     if (value !== 'home') {
       setFormData({
         state: '',
@@ -225,12 +271,11 @@ const DeliveryOption = () => {
   };
 
   const handleStoreInputChange = (field, value) => {
-    console.log('🏪 Store input cambiado:', field, value); // Debug
+    console.log('🏪 Store input cambiado:', field, value);
     setStoreData(prev => ({
       ...prev,
       [field]: value
     }));
-    // Si cambia la ciudad, limpiar la tienda
     if (field === 'city') {
       setStoreData(prev => ({
         ...prev,
@@ -258,7 +303,7 @@ const DeliveryOption = () => {
     return false;
   };
 
-  // Submit
+  // ✅ SUBMIT AL BACKEND
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isFormValid()) return;
@@ -266,31 +311,67 @@ const DeliveryOption = () => {
     setIsLoading(true);
     
     try {
-      const deliveryData = {
-        type: selectedOption,
-        ...(selectedOption === 'home' && { formData }),
-        ...(selectedOption === 'store' && { storeData })
+      // Preparar payload
+      const payload = {
+        ...personalData,
+        method: selectedOption,
+        delivery: selectedOption === 'home' ? {
+          state: formData.state,
+          municipality: formData.municipality,
+          parish: formData.parish,
+          address: formData.address,
+          reference: formData.reference || ''
+        } : {
+          locker: storeData.store,
+          state: filteredStores.find(s => s.value === storeData.store)?.idEstado?.toString() || '18'
+        },
+        alias: selectedOption === 'home' ? formData.addressName : '',
+        setAsDefault: true
       };
       
-      console.log('Delivery data:', deliveryData);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('📤 Enviando payload:', payload);
       
-     navigate('/welcome');
+      const response = await axiosInstance.post('/Addresses/register-address-profile', payload);
+      
+      if (response.data.success) {
+        if (response.data.token) {
+          localStorage.setItem('authToken', response.data.token);
+        }
+        navigate('/welcome');
+      }
       
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error:', error);
+      alert(error.response?.data?.message || 'Error al guardar la dirección');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ✅ LOADING INICIAL
+  if (isLoadingData) {
+    return (
+      <div className="kraken-delivery-option" data-theme={actualTheme}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          gap: '16px'
+        }}>
+          <div className="kraken-delivery-option__spinner"></div>
+          <p style={{ color: 'var(--color-text-secondary)' }}>Cargando datos...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="kraken-delivery-option" data-theme={actualTheme}>
 
-      {/* Toggle de tema */}
       <ThemeToggle />
 
-      {/* Logo */}
       <div className="kraken-delivery-option__logo">
         <img
           src="/src/assets/images/logo.jpg"
@@ -302,7 +383,6 @@ const DeliveryOption = () => {
         />
       </div>
 
-      {/* Contenido principal */}
       <div className="kraken-delivery-option__content">
         <h1 className="kraken-delivery-option__title">
           ¿En dónde deseas recibir tus paquetes?
@@ -315,7 +395,7 @@ const DeliveryOption = () => {
 
         <form onSubmit={handleSubmit} className="kraken-delivery-option__form">
           
-          {/* Radio Options - Exactamente como en móvil */}
+          {/* Radio Options - TU DISEÑO EXACTO */}
           <div className="kraken-delivery-options">
             
             <label className="kraken-radio-container">
@@ -347,7 +427,6 @@ const DeliveryOption = () => {
           {selectedOption === 'store' && (
             <div className="kraken-form-section">
               
-              {/* Ciudad */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Ciudad</label>
                 <select
@@ -356,7 +435,7 @@ const DeliveryOption = () => {
                   onChange={(e) => handleStoreInputChange('city', e.target.value)}
                   required
                 >
-                  <option value="">Caracas</option>
+                  <option value="">Seleccione</option>
                   {availableCities.map((city) => (
                     <option key={city.value} value={city.value}>
                       {city.label}
@@ -365,7 +444,6 @@ const DeliveryOption = () => {
                 </select>
               </div>
 
-              {/* Retiro en Tienda */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Retiro en Tienda</label>
                 <select
@@ -373,9 +451,10 @@ const DeliveryOption = () => {
                   value={storeData.store}
                   onChange={(e) => handleStoreInputChange('store', e.target.value)}
                   required
+                  disabled={!storeData.city}
                 >
                   <option value="">Seleccione</option>
-                  {storeData.city && storesByCity[storeData.city]?.map((store) => (
+                  {filteredStores.map((store) => (
                     <option key={store.value} value={store.value}>
                       {store.label}
                     </option>
@@ -389,7 +468,6 @@ const DeliveryOption = () => {
           {selectedOption === 'home' && (
             <div className="kraken-form-section">
               
-              {/* Estado */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Estado</label>
                 <select
@@ -407,7 +485,6 @@ const DeliveryOption = () => {
                 </select>
               </div>
 
-              {/* Municipio */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Municipio</label>
                 <select
@@ -428,7 +505,6 @@ const DeliveryOption = () => {
                 </select>
               </div>
 
-              {/* Parroquia */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Parroquia (opcional)</label>
                 <select
@@ -448,7 +524,6 @@ const DeliveryOption = () => {
                 </select>
               </div>
 
-              {/* Dirección */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Dirección</label>
                 <input
@@ -461,7 +536,6 @@ const DeliveryOption = () => {
                 />
               </div>
 
-              {/* Punto de referencia */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Punto de referencia (opcional)</label>
                 <input
@@ -473,7 +547,6 @@ const DeliveryOption = () => {
                 />
               </div>
 
-              {/* Nombre para esta dirección */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Nombre para esta dirección (ej. Casa)</label>
                 <input
@@ -488,7 +561,7 @@ const DeliveryOption = () => {
             </div>
           )}
 
-          {/* Botones - Exactamente como en móvil */}
+          {/* Botones - TU DISEÑO EXACTO */}
           <div className="kraken-delivery-option__buttons">
             <button
               type="submit"
@@ -507,7 +580,7 @@ const DeliveryOption = () => {
             
             <button
               type="button"
-              onClick={() => navigate('/auth/personal-data')}
+              onClick={() => navigate('/personal-data')}
               className="kraken-delivery-option__button-secondary"
             >
               Anterior

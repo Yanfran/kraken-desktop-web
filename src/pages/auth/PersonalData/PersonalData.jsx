@@ -1,10 +1,10 @@
 // src/pages/auth/PersonalData/PersonalData.jsx
-// VERSIÓN COMPLETA - Replica funcionalidad de React Native
+// VERSIÓN FUNCIONAL - Adaptada a tu estructura actual
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { getAddress, getDocumentTypes } from '../../../services/addressService';
+import axiosInstance from '../../../services/axiosInstance';
 import './PersonalData.styles.scss';
 
 // Componente toggle para cambio de tema
@@ -49,7 +49,7 @@ const PersonalData = () => {
 
   // ===== CONFIGURACIONES =====
 
-  // Validaciones de documentos (igual que React Native)
+  // Validaciones de documentos
   const documentValidations = {
     cedula: {
       pattern: /^[0-9]+$/,
@@ -127,9 +127,11 @@ const PersonalData = () => {
         setIsLoading(true);
         
         // Cargar países (códigos de teléfono)
-        const addressRes = await getAddress();
-        if (addressRes.success) {
-          const phoneCodes = addressRes.data.map((item) => ({
+        const addressRes = await axiosInstance.get('/Addresses/countries');
+        console.log('📍 Countries response:', addressRes.data);
+        
+        if (addressRes.data.success) {
+          const phoneCodes = addressRes.data.data.map((item) => ({
             label: `+${item.phoneCode} (${item.name})`,
             value: `+${item.phoneCode}`,
             iso2: item.iso2,
@@ -139,13 +141,15 @@ const PersonalData = () => {
         }
 
         // Cargar tipos de documento
-        const docTypesRes = await getDocumentTypes();
-        if (docTypesRes.success) {
-          setDocumentTypeDB(docTypesRes.data);
+        const docTypesRes = await axiosInstance.get('/Addresses/document-types');
+        console.log('📄 Document types response:', docTypesRes.data);
+        
+        if (docTypesRes.data.success) {
+          setDocumentTypeDB(docTypesRes.data.data);
         }
       } catch (error) {
-        console.error("Error al cargar datos iniciales:", error);
-        setErrors({ submit: 'Error al cargar datos iniciales' });
+        console.error("❌ Error al cargar datos iniciales:", error);
+        setErrors({ submit: 'Error al cargar datos iniciales. Verifica tu conexión.' });
       } finally {
         setIsLoading(false);
       }
@@ -156,7 +160,6 @@ const PersonalData = () => {
 
   // ===== FUNCIONES DE VALIDACIÓN =====
 
-  // Validar documento según su tipo
   const validateDocument = (type, value) => {
     if (!type || !value) return { isValid: false, message: "" };
     
@@ -189,7 +192,6 @@ const PersonalData = () => {
     return { isValid: true, message: "" };
   };
 
-  // Verificar si el teléfono está completo
   const isPhoneComplete = () => {
     if (!formData.phone || !formData.countryCode) return false;
     const format = phoneFormats[formData.countryCode];
@@ -197,7 +199,6 @@ const PersonalData = () => {
     return formData.phone.replace(/\D/g, "").length === format.length;
   };
 
-  // Verificar si el teléfono venezolano adicional es válido
   const isVenezuelanPhoneValid = () => {
     if (formData.countryCode === "+58") return true;
     
@@ -211,7 +212,6 @@ const PersonalData = () => {
     return true;
   };
 
-  // Validar formulario completo
   const isFormComplete = () => {
     const documentValidation = validateDocument(
       formData.documentType, 
@@ -229,7 +229,6 @@ const PersonalData = () => {
 
   // ===== FUNCIONES DE FORMATO =====
 
-  // Formatear teléfono según el país
   const formatPhone = (text) => {
     const cleaned = text.replace(/\D/g, "");
     const format = phoneFormats[formData.countryCode];
@@ -254,7 +253,6 @@ const PersonalData = () => {
     return formatted;
   };
 
-  // Formatear teléfono venezolano
   const formatVenezuelanPhone = (text) => {
     const cleaned = text.replace(/\D/g, "");
     const limitedCleaned = cleaned.slice(0, 7);
@@ -277,7 +275,6 @@ const PersonalData = () => {
 
   // ===== HANDLERS =====
 
-  // Manejar cambios en inputs generales
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
@@ -286,17 +283,15 @@ const PersonalData = () => {
     }
   };
 
-  // Manejar cambio de tipo de documento
   const handleDocumentTypeChange = (value) => {
     setFormData(prev => ({
       ...prev,
       documentType: value,
-      documentNumber: '' // Limpiar al cambiar tipo
+      documentNumber: ''
     }));
     setErrors(prev => ({ ...prev, documentNumber: '' }));
   };
 
-  // Manejar cambio en número de documento
   const handleDocumentNumberChange = (text) => {
     if (!formData.documentType) {
       return;
@@ -324,7 +319,6 @@ const PersonalData = () => {
     handleInputChange('documentNumber', limited);
   };
 
-  // Manejar cambio de país
   const handleCountryChange = (value) => {
     const country = countryOptions.find(c => c.value === value);
     
@@ -340,23 +334,19 @@ const PersonalData = () => {
     }));
   };
 
-  // Manejar cambio de teléfono
   const handlePhoneChange = (text) => {
     const formatted = formatPhone(text);
     handleInputChange('phone', formatted);
   };
 
-  // Manejar cambio de teléfono venezolano
   const handleVenezuelanPhoneChange = (text) => {
     const formatted = formatVenezuelanPhone(text);
     handleInputChange('venezuelanPhone', formatted);
   };
 
-  // Manejar envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validación final
     const documentValidation = validateDocument(
       formData.documentType, 
       formData.documentNumber
@@ -375,7 +365,6 @@ const PersonalData = () => {
     setIsSaving(true);
     
     try {
-      // Preparar datos para enviar (igual estructura que React Native)
       const submitData = {
         documentType: formData.documentType,
         documentNumber: formData.documentNumber,
@@ -391,15 +380,12 @@ const PersonalData = () => {
         })
       };
 
-      console.log('Datos a enviar:', submitData);
+      console.log('📤 Enviando datos:', submitData);
       
-      // Simular guardado (reemplazar con llamada a API real)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Redirigir a siguiente paso
+      // Navegar a delivery-option con los datos
       navigate('/delivery-option', { state: submitData });
     } catch (error) {
-      console.error('Error al guardar:', error);
+      console.error('❌ Error al guardar:', error);
       setErrors({ submit: 'Error al guardar los datos. Intenta nuevamente.' });
     } finally {
       setIsSaving(false);
@@ -408,7 +394,6 @@ const PersonalData = () => {
 
   // ===== HELPERS PARA UI =====
 
-  // Convertir tipos de documento de DB a formato local
   const documentOptions = documentTypeDB.map(item => ({
     label: item.displayName,
     value: item.displayName
@@ -418,7 +403,6 @@ const PersonalData = () => {
       .replace(/ /g, '')
   }));
 
-  // Obtener placeholder del documento
   const getDocumentPlaceholder = () => {
     if (!formData.documentType) return "Seleccione tipo de documento primero";
     
@@ -439,21 +423,18 @@ const PersonalData = () => {
     }
   };
 
-  // Obtener placeholder del teléfono
   const getPhonePlaceholder = () => {
     const format = phoneFormats[formData.countryCode];
     if (!format) return "Celular";
     return `Celular ${format.mask}`;
   };
 
-  // Obtener mensaje de error de teléfono
   const getPhoneErrorMessage = () => {
     const format = phoneFormats[formData.countryCode];
     if (!format) return "Ingrese un número válido";
     return `Ingrese un número completo ${format.mask}`;
   };
 
-  // Obtener validación actual del documento
   const currentDocumentValidation = validateDocument(
     formData.documentType, 
     formData.documentNumber
@@ -461,7 +442,6 @@ const PersonalData = () => {
 
   // ===== RENDER =====
 
-  // Aplicar tema
   useEffect(() => {
     const container = document.querySelector('.kraken-personal-data');
     if (container) {
@@ -536,14 +516,12 @@ const PersonalData = () => {
               required
             />
             
-            {/* Mensaje de error de documento */}
             {formData.documentNumber && !currentDocumentValidation.isValid && (
               <p className="kraken-form-field__error">
                 {currentDocumentValidation.message}
               </p>
             )}
             
-            {/* Ayuda para el tipo de documento */}
             {formData.documentType && !formData.documentNumber && (
               <p className="kraken-form-field__helper">
                 {documentValidations[formData.documentType]?.description}
@@ -551,10 +529,10 @@ const PersonalData = () => {
             )}
           </div>
 
-          {/* Código de País y Operador (si es Venezuela) */}
-          <div className="kraken-form-field__row">
+          {/* Código de País y Operador */}
+          <div className={`kraken-form-field__row ${formData.countryCode !== '+58' ? 'kraken-form-field__row--single' : ''}`}>
             <div className={`kraken-form-field ${
-              formData.countryCode === '+58' ? 'kraken-form-field--60' : ''
+              formData.countryCode === '+58' ? 'kraken-form-field--60' : 'kraken-form-field--full'
             }`}>
               <label className="kraken-form-field__label">Código de País</label>
               <select
@@ -572,7 +550,7 @@ const PersonalData = () => {
               </select>
             </div>
 
-            {/* Operador venezolano (solo si país es +58) */}
+            {/* Operador venezolano - solo aparece si país es +58 */}
             {formData.countryCode === '+58' && (
               <div className="kraken-form-field kraken-form-field--38">
                 <label className="kraken-form-field__label">Operador</label>
@@ -612,7 +590,7 @@ const PersonalData = () => {
             )}
           </div>
 
-          {/* Sección venezolana adicional (solo si país NO es +58) */}
+          {/* Sección venezolana adicional */}
           {formData.countryCode && formData.countryCode !== "+58" && (
             <>
               <div className="kraken-form-field">
@@ -707,7 +685,7 @@ const PersonalData = () => {
           {/* Términos y condiciones */}
           <div className="kraken-personal-data__terms">
             <p>
-              Al iniciar sesión, aceptas nuestros{' '}
+              Al continuar, aceptas nuestros{' '}
               <a href="/terms" target="_blank" rel="noopener noreferrer">
                 Términos y Condiciones
               </a>{' '}
