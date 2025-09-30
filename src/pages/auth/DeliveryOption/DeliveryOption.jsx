@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
 import axiosInstance from '../../../services/axiosInstance';
+import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
 import './DeliveryOption.styles.scss';
 
 // Componente toggle para cambio de tema
@@ -85,23 +86,24 @@ const DeliveryOption = () => {
   const [allStores, setAllStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
 
-  // ✅ CARGAR DATOS INICIALES DEL BACKEND
+  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  const userEmail = userData.email;
+
+  // ✅ CARGAR DATOS INICIALES DEL BACKEND (IGUAL QUE TU APP)
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         setIsLoadingData(true);
         
-        // Cargar delivery data (ciudades y tiendas)
+        // 1. Cargar delivery data (ciudades y tiendas)
         const deliveryRes = await axiosInstance.get('/Addresses/delivery-data');
         console.log('🏪 Delivery data:', deliveryRes.data);
         
         if (deliveryRes.data.success) {
           const { ciudad, tiendas } = deliveryRes.data.data;
           
-          // Guardar todas las tiendas
           setAllStores(tiendas);
           
-          // Configurar ciudad disponible
           if (ciudad) {
             setAvailableCities([{
               label: ciudad.name,
@@ -109,7 +111,6 @@ const DeliveryOption = () => {
             }]);
           }
           
-          // Filtrar solo tiendas tipo 2
           const storesType2 = tiendas
             .filter(t => t.idTiendaTipo === 2)
             .map(t => ({
@@ -121,8 +122,8 @@ const DeliveryOption = () => {
           setFilteredStores(storesType2);
         }
         
-        // Cargar estados de Venezuela
-        const statesRes = await axiosInstance.get('/Addresses/states/1');
+        // 2. Cargar estados usando location-data (COMO TU APP)
+        const statesRes = await axiosInstance.get('/Addresses/location-data?countryId=1');
         console.log('📍 States:', statesRes.data);
         
         if (statesRes.data.success) {
@@ -143,28 +144,7 @@ const DeliveryOption = () => {
     loadInitialData();
   }, []);
 
-  // ✅ CARGAR ESTADOS AL INICIO (como en tu app)
-  useEffect(() => {
-    const loadStates = async () => {
-      try {
-        const res = await axiosInstance.get('/Addresses/states/1'); // 1 = Venezuela
-        
-        if (res.data.success) {
-          const states = res.data.data.map(item => ({
-            label: item.name,
-            value: item.id.toString()
-          }));
-          setStatesList(states);
-        }
-      } catch (error) {
-        console.error("❌ Error cargando estados:", error);
-      }
-    };
-    
-    loadStates();
-  }, []);
-
-  // ✅ CARGAR MUNICIPIOS cuando cambia el estado (igual que tu app)
+  // ✅ CARGAR MUNICIPIOS cuando cambia el estado (USANDO location-data)
   useEffect(() => {
     if (!formData.state) {
       setMunicipalitiesList([]);
@@ -176,7 +156,8 @@ const DeliveryOption = () => {
     const loadMunicipalities = async () => {
       try {
         setLoadingMunicipalities(true);
-        const res = await axiosInstance.get(`/Addresses/municipalities/${formData.state}`);
+        // ✅ CORRECTO: Usar location-data con stateId
+        const res = await axiosInstance.get(`/Addresses/location-data?stateId=${formData.state}`);
         
         if (res.data.success) {
           const municipalities = res.data.data.map(item => ({
@@ -186,7 +167,6 @@ const DeliveryOption = () => {
           setMunicipalitiesList(municipalities);
         }
         
-        // Limpiar municipio y parroquia al cambiar estado
         setFormData(prev => ({ ...prev, municipality: '', parish: '' }));
         setParishesList([]);
       } catch (error) {
@@ -199,7 +179,7 @@ const DeliveryOption = () => {
     loadMunicipalities();
   }, [formData.state]);
 
-  // ✅ CARGAR PARROQUIAS cuando cambia el municipio (igual que tu app)
+  // ✅ CARGAR PARROQUIAS cuando cambia el municipio (USANDO location-data)
   useEffect(() => {
     if (!formData.municipality) {
       setParishesList([]);
@@ -210,7 +190,8 @@ const DeliveryOption = () => {
     const loadParishes = async () => {
       try {
         setLoadingParishes(true);
-        const res = await axiosInstance.get(`/Addresses/parishes/${formData.municipality}`);
+        // ✅ CORRECTO: Usar location-data con municipalityId
+        const res = await axiosInstance.get(`/Addresses/location-data?municipalityId=${formData.municipality}`);
         
         if (res.data.success) {
           const parishes = res.data.data.map(item => ({
@@ -220,7 +201,6 @@ const DeliveryOption = () => {
           setParishesList(parishes);
         }
         
-        // Limpiar parroquia al cambiar municipio
         setFormData(prev => ({ ...prev, parish: '' }));
       } catch (error) {
         console.error("❌ Error cargando parroquias:", error);
@@ -309,21 +289,36 @@ const DeliveryOption = () => {
     if (!isFormValid()) return;
     
     setIsLoading(true);
+
+    if (!userEmail) {
+      alert('No se pudo identificar al usuario. Inicia sesión nuevamente.');
+      navigate('/login');
+      return;
+    }
     
     try {
-      // Preparar payload
+      // Preparar payload según el método
       const payload = {
+        email: userEmail,
         ...personalData,
         method: selectedOption,
         delivery: selectedOption === 'home' ? {
+          city: '',
+          locker: '',
           state: formData.state,
           municipality: formData.municipality,
-          parish: formData.parish,
+          parish: formData.parish || '',
           address: formData.address,
           reference: formData.reference || ''
         } : {
+          // ✅ PARA STORE: Necesita city Y locker
+          city: storeData.city,
           locker: storeData.store,
-          state: filteredStores.find(s => s.value === storeData.store)?.idEstado?.toString() || '18'
+          state: filteredStores.find(s => s.value === storeData.store)?.idEstado?.toString() || '18',
+          municipality: '',
+          parish: '',
+          address: '',
+          reference: formData.reference || ''
         },
         alias: selectedOption === 'home' ? formData.addressName : '',
         setAsDefault: true
@@ -331,7 +326,7 @@ const DeliveryOption = () => {
       
       console.log('📤 Enviando payload:', payload);
       
-      const response = await axiosInstance.post('/Addresses/register-address-profile', payload);
+      const response = await axiosInstance.post('/Addresses/register', payload);
       
       if (response.data.success) {
         if (response.data.token) {
@@ -342,7 +337,10 @@ const DeliveryOption = () => {
       
     } catch (error) {
       console.error('❌ Error:', error);
-      alert(error.response?.data?.message || 'Error al guardar la dirección');
+      const errorMsg = error.response?.data?.message || 
+                       error.response?.data?.title ||
+                       'Error al guardar la dirección';
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -469,59 +467,35 @@ const DeliveryOption = () => {
             <div className="kraken-form-section">
               
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Estado</label>
-                <select
-                  className="kraken-form-field__select"
+                <label className="kraken-form-field__label">Estado</label>                
+                <SearchableSelect
+                  options={statesList}
                   value={formData.state}
-                  onChange={(e) => handleInputChange('state', e.target.value)}
-                  required
-                >
-                  <option value="">Seleccione</option>
-                  {statesList.map((state) => (
-                    <option key={state.value} value={state.value}>
-                      {state.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => handleInputChange('state', value)}
+                  placeholder="Buscar estado..."
+                />              
               </div>
 
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label">Municipio</label>
-                <select
-                  className="kraken-form-field__select"
+                <SearchableSelect
+                  options={municipalitiesList}
                   value={formData.municipality}
-                  onChange={(e) => handleInputChange('municipality', e.target.value)}
-                  required
+                  onChange={(value) => handleInputChange('municipality', value)}
+                  placeholder={loadingMunicipalities ? "Cargando..." : "Buscar municipio..."}
                   disabled={!formData.state || loadingMunicipalities}
-                >
-                  <option value="">
-                    {loadingMunicipalities ? 'Cargando...' : 'Seleccione'}
-                  </option>
-                  {municipalitiesList.map((municipality) => (
-                    <option key={municipality.value} value={municipality.value}>
-                      {municipality.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Parroquia (opcional)</label>
-                <select
-                  className="kraken-form-field__select"
+                <label className="kraken-form-field__label">Parroquia (opcional)</label>                
+                <SearchableSelect
+                  options={parishesList}
                   value={formData.parish}
-                  onChange={(e) => handleInputChange('parish', e.target.value)}
+                  onChange={(value) => handleInputChange('parish', value)}
+                  placeholder={loadingParishes ? "Cargando..." : "Buscar parroquia..."}
                   disabled={!formData.municipality || loadingParishes}
-                >
-                  <option value="">
-                    {loadingParishes ? 'Cargando...' : 'Seleccione'}
-                  </option>
-                  {parishesList.map((parish) => (
-                    <option key={parish.value} value={parish.value}>
-                      {parish.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div className="kraken-form-field">

@@ -1,7 +1,7 @@
 // src/pages/auth/CompleteProfile/CompleteProfile.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../App';
+import { useAuth } from '../../../contexts/AuthContext'; // ✅ Importar desde contexts
 import { useTheme } from '../../../contexts/ThemeContext';
 import './CompleteProfile.styles.scss';
 
@@ -43,19 +43,26 @@ const ThemeToggle = () => {
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
-  const { colors, actualTheme } = useTheme();
+  const { actualTheme } = useTheme();
   const [isCompleting, setIsCompleting] = useState(false);
 
-  // Simular completar perfil  
+  // Completar perfil con loading visible
   const handleCompleteProfile = async () => {
+    console.log('🔄 [CompleteProfile] Iniciando proceso...');
     setIsCompleting(true);
+    
     try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      // Redirigir a personal-data en lugar del dashboard
-      navigate('/personal-data');
+      // Simular llamada a API - puedes reemplazar esto con tu lógica real
+      console.log('⏳ [CompleteProfile] Procesando...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log('✅ [CompleteProfile] Proceso completado, redirigiendo...');
+      // Redirigir a personal-data
+      navigate('/personal-data', { replace: true });
+      
     } catch (error) {
-      alert('Error al completar el perfil');
+      console.error('❌ [CompleteProfile] Error:', error);
+      alert('Error al completar el perfil. Por favor intenta de nuevo.');
     } finally {
       setIsCompleting(false);
     }
@@ -118,7 +125,7 @@ const CompleteProfile = () => {
           </div>
         </div>
 
-        {/* Botón de completar perfil */}
+        {/* Botón de completar perfil con loading mejorado */}
         <button
           className="kraken-complete-profile__complete-button"
           onClick={handleCompleteProfile}
@@ -127,7 +134,7 @@ const CompleteProfile = () => {
           {isCompleting ? (
             <div className="kraken-complete-profile__loading">
               <div className="kraken-complete-profile__spinner"></div>
-              Completando...
+              <span>Procesando...</span>
             </div>
           ) : (
             <span>
@@ -136,6 +143,13 @@ const CompleteProfile = () => {
             </span>
           )}
         </button>
+
+        {/* Mensaje adicional durante el loading */}
+        {isCompleting && (
+          <p className="kraken-complete-profile__loading-message">
+            Esto solo tomará un momento...
+          </p>
+        )}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { useAuth } from '../../../hooks/useAuth'; // ✅ CORRECTO: Importar desde hooks, no contexts
+import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Importar desde contexts
 import AnimatedPulpo from './AnimatedPulpo';
 import './Welcome.styles.scss';
 
@@ -45,9 +45,8 @@ const ThemeToggle = () => {
 const Welcome = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { user } = useAuth(); // ✅ Solo necesitamos user del hook web
+  const { user } = useAuth(); // ✅ Ahora importado correctamente
   const actualTheme = theme === 'auto' ? 'light' : theme;
-  const [isAnimating, setIsAnimating] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Aplicar tema al contenedor
@@ -78,9 +77,6 @@ const Welcome = () => {
     setIsNavigating(true);
     
     try {
-      // ✅ En tu sistema web, simplemente navegar al dashboard
-      // El usuario ya está autenticado si llegó hasta aquí
-      
       console.log('👤 [Welcome] Usuario actual:', user);
       
       // Pequeña pausa para mejor UX

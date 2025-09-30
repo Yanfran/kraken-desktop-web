@@ -243,11 +243,14 @@
   &:active:not(:disabled) {
     transform: translateY(0);
   }
-  
-  &:disabled {
-    opacity: 0.7;
+    
+   &:disabled {
+    opacity: 0.8; // Un poco más visible cuando está deshabilitado
     cursor: not-allowed;
     transform: none;
+    
+    // Efecto de pulsación sutil para mostrar que está procesando
+    animation: pulse 1.5s ease-in-out infinite;
   }
   
   @media (max-width: 480px) {
@@ -255,6 +258,20 @@
     font-size: 15px;
     max-width: 100%;
   }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(255, 69, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(255, 69, 0, 0.5);
+  }
+}
+
+.kraken-complete-profile__loading span {
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 /* FLECHA DEL BOTÓN */
@@ -272,21 +289,50 @@
 .kraken-complete-profile__loading {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 12px; // Mayor separación entre spinner y texto
 }
 
 .kraken-complete-profile__spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #ffffff;
+  width: 20px; // Spinner más grande
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3); // Borde más grueso
+  border-top-color: #ffffff;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0; // Evitar que se achique
 }
 
 @keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* MENSAJE DE LOADING ADICIONAL DEBAJO DEL BOTÓN */
+.kraken-complete-profile__loading-message {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #757575;
+  text-align: center;
+  animation: fadeInUp 0.3s ease-out;
+  
+  [data-theme="dark"] & {
+    color: #B0B0B0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
 import axiosInstance from '../../../services/axiosInstance';
 import './PersonalData.styles.scss';
+import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
 
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
@@ -394,7 +395,13 @@ const PersonalData = () => {
 
   // ===== HELPERS PARA UI =====
 
-  const documentOptions = documentTypeDB.map(item => ({
+  const sortedDocumentTypeDB = [...documentTypeDB].sort((a, b) => {
+    if (a.displayName.toLowerCase() === "cédula") return -1;
+    if (b.displayName.toLowerCase() === "cédula") return 1;
+    return 0;
+  });
+
+  const documentOptions = sortedDocumentTypeDB.map(item => ({
     label: item.displayName,
     value: item.displayName
       .toLowerCase()
@@ -535,19 +542,12 @@ const PersonalData = () => {
               formData.countryCode === '+58' ? 'kraken-form-field--60' : 'kraken-form-field--full'
             }`}>
               <label className="kraken-form-field__label">Código de País</label>
-              <select
-                className="kraken-form-field__select"
+              <SearchableSelect
+                options={countryOptions}
                 value={formData.countryCode}
-                onChange={(e) => handleCountryChange(e.target.value)}
-                required
-              >
-                <option value="">Seleccione</option>
-                {countryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={handleCountryChange}
+                placeholder="Buscar país..."
+              />
             </div>
 
             {/* Operador venezolano - solo aparece si país es +58 */}
