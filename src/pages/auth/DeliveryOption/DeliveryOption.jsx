@@ -7,6 +7,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import axiosInstance from '../../../services/axiosInstance';
 import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
 import './DeliveryOption.styles.scss';
+import { useAuth } from '../../../contexts/AuthContext';
 
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
@@ -48,6 +49,7 @@ const DeliveryOption = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme } = useTheme();
+  const { setUserState } = useAuth();
   const actualTheme = theme === 'auto' ? 'light' : theme;
   
   // ✅ DATOS DE PERSONAL DATA
@@ -329,9 +331,19 @@ const DeliveryOption = () => {
       const response = await axiosInstance.post('/Addresses/register', payload);
       
       if (response.data.success) {
+        // Guardar token
         if (response.data.token) {
           localStorage.setItem('authToken', response.data.token);
         }
+        
+        // ✅ ACTUALIZAR USUARIO CON LA RESPUESTA DEL SERVIDOR
+        if (response.data.user) {
+          localStorage.setItem('userData', JSON.stringify(response.data.user));
+          
+          // También actualizar el contexto          
+          await setUserState(response.data.user, response.data.token);
+        }
+        
         navigate('/welcome');
       }
       

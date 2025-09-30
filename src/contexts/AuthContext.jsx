@@ -244,6 +244,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const confirmEmail = () => {
+    console.log('✅ [AuthContext] Confirmando email...');
+    
+    if (state.user) {
+      const updatedUser = {
+        ...state.user,
+        emailVerified: true,
+        fromEmail: true
+      };
+      
+      localStorage.setItem('userData', JSON.stringify(updatedUser));
+      dispatch({ type: 'UPDATE_USER', payload: { emailVerified: true, fromEmail: true } });
+      
+      console.log('✅ [AuthContext] Email confirmado');
+    }
+  };
+
   // ===== FUNCIÓN PARA ACTUALIZAR USUARIO =====
   const setUserState = async (userData, token = null) => {
     if (userData && token) {
@@ -280,6 +297,7 @@ export const AuthProvider = ({ children }) => {
     signOut,
     signUp,
     signInWithGoogle,
+    confirmEmail,
     setUserState,
     resendVerificationEmail  
   };
