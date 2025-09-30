@@ -338,10 +338,14 @@ const DeliveryOption = () => {
         
         // ✅ ACTUALIZAR USUARIO CON LA RESPUESTA DEL SERVIDOR
         if (response.data.user) {
+          console.log('💾 Guardando usuario actualizado:', response.data.user);
           localStorage.setItem('userData', JSON.stringify(response.data.user));
           
-          // También actualizar el contexto          
+          // Actualizar el contexto
           await setUserState(response.data.user, response.data.token);
+          
+          // ✅ ESPERAR A QUE EL CONTEXTO SE ACTUALICE
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
         navigate('/welcome');

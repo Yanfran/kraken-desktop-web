@@ -261,14 +261,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+
   // ===== FUNCIÓN PARA ACTUALIZAR USUARIO =====
   const setUserState = async (userData, token = null) => {
-    if (userData && token) {
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userData', JSON.stringify(userData));
-      Cookies.set('authToken', token, { expires: 7 });
+    if (userData) {
+      console.log('🔄 [AuthContext] setUserState - Actualizando usuario:', userData);
       
+      // Guardar en localStorage
+      localStorage.setItem('userData', JSON.stringify(userData));
+      
+      if (token) {
+        localStorage.setItem('authToken', token);
+        Cookies.set('authToken', token, { expires: 7 });
+      }
+      
+      // ✅ SIEMPRE despachar al reducer para actualizar el contexto
       dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
+      
+      console.log('✅ [AuthContext] Usuario actualizado en el contexto');
     } else {
       await signOut();
     }
