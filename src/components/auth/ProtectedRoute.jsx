@@ -1,63 +1,91 @@
 // src/components/auth/ProtectedRoute.jsx - Sistema de rutas protegidas
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Loading from '../common/Loading/Loading';
 
 // ===== RUTA PROTEGIDA =====
 export const ProtectedRoute = ({ children }) => {
-  const { isSignedIn, isLoading, user } = useAuth();
+  const { isSignedIn, isLoading } = useAuth();
   const location = useLocation();
+  const [localUser, setLocalUser] = useState(null);
+  const [checkingUser, setCheckingUser] = useState(true);
 
-  // Mostrar loading mientras se verifica la autenticación
-  if (isLoading) {
+  // Leer usuario desde localStorage (fuente de verdad)
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        setLocalUser(parsed);
+        console.log('🔍 [ProtectedRoute] Usuario desde localStorage:', {
+          email: parsed.email,
+          emailVerified: parsed.emailVerified,
+          fromEmail: parsed.fromEmail,
+          profileComplete: parsed.profileComplete
+        });
+      } catch (error) {
+        console.error('Error parsing userData:', error);
+      }
+    }
+    setCheckingUser(false);
+  }, [location.pathname]);
+
+  if (isLoading || checkingUser) {
     return <Loading />;
   }
 
-  // Si no está autenticado, redirigir a login
   if (!isSignedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Si está autenticado pero el email no está verificado
-  if (user && !user.emailVerified) {
+  // Usar localUser (localStorage) en lugar de user (contexto)
+  if (localUser && !localUser.emailVerified && !localUser.fromEmail) {
+    console.log('⚠️ [ProtectedRoute] Email no verificado, redirigiendo...');
     return <Navigate to="/email-confirmation" replace />;
   }
 
-  // Si está autenticado pero el perfil no está completo
-  if (user && !user.profileComplete) {
+  if (localUser && !localUser.profileComplete) {
+    console.log('⚠️ [ProtectedRoute] Perfil incompleto, redirigiendo...');
     return <Navigate to="/complete-profile" replace />;
   }
 
-  // Todo correcto, mostrar el componente
+  console.log('✅ [ProtectedRoute] Acceso permitido');
   return children;
 };
 
 // ===== RUTA PÚBLICA (solo para no autenticados) =====
 export const PublicRoute = ({ children }) => {
-  const { isSignedIn, isLoading, user } = useAuth();
+  const { isSignedIn, isLoading } = useAuth();
+  const [localUser, setLocalUser] = useState(null);
 
-  // Mostrar loading mientras se verifica la autenticación
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      try {
+        setLocalUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Error parsing userData:', error);
+      }
+    }
+  }, []);
+
   if (isLoading) {
     return <Loading />;
   }
 
-  // Si está autenticado, redirigir al dashboard
-  if (isSignedIn && user?.emailVerified && user?.profileComplete) {
+  if (isSignedIn && localUser?.emailVerified && localUser?.profileComplete) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Si está autenticado pero falta verificar email
-  if (isSignedIn && user && !user.emailVerified) {
+  if (isSignedIn && localUser && !localUser.emailVerified && !localUser.fromEmail) {
     return <Navigate to="/email-confirmation" replace />;
   }
 
-  // Si está autenticado pero falta completar perfil
-  if (isSignedIn && user && !user.profileComplete) {
+  if (isSignedIn && localUser && !localUser.profileComplete) {
     return <Navigate to="/complete-profile" replace />;
   }
 
-  // No está autenticado, mostrar el componente público
   return children;
 };
 
@@ -65,16 +93,13 @@ export const PublicRoute = ({ children }) => {
 export const SemiProtectedRoute = ({ children, requireAuth = false }) => {
   const { isSignedIn, isLoading } = useAuth();
 
-  // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
     return <Loading />;
   }
 
-  // Si requiere autenticación y no está autenticado
   if (requireAuth && !isSignedIn) {
     return <Navigate to="/login" replace />;
   }
 
-  // Permitir acceso (útil para email-confirmation, complete-profile, etc.)
   return children;
 };
