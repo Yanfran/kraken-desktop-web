@@ -1,39 +1,43 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import './TopNavigation.styles.scss';
 
 const TopNavigation = ({ 
-  activeTab, 
-  setActiveTab, 
   onToggleSidebar, 
   sidebarOpen 
 }) => {
   const { actualTheme, toggleTheme } = useTheme();
+  const location = useLocation();
 
   const menuItems = [
     { 
       id: 'inicio', 
       label: 'Inicio', 
       icon: '/src/assets/images/icon-kraken-web-pulpo-peq.png',
-      iconAlt: '🏠'
+      iconAlt: '🏠',
+      path: '/dashboard'
     },
     { 
       id: 'calcular', 
       label: 'Calcular', 
       icon: '/src/assets/images/icon-kraken-web-calculadora.png',
-      iconAlt: '🧮'
+      iconAlt: '🧮',
+      path: '/calculator'
     },
     { 
       id: 'pre-alertar', 
       label: 'Pre-Alertar', 
       icon: '/src/assets/images/icon-kraken-web-parlante_1.png',
-      iconAlt: '📦'
+      iconAlt: '📦',
+      path: '/pre-alert'
     },
     { 
       id: 'rastrear', 
       label: 'Rastrear', 
       icon: '/src/assets/images/icon-kraken-web-rastrear-_1.png',
-      iconAlt: '📍'
+      iconAlt: '📍',
+      path: '/rastrear'
     }
   ];
 
@@ -67,10 +71,10 @@ const TopNavigation = ({
       <div className="top-navigation__center">
         <nav className="top-navigation__main-nav">
           {menuItems.map((item) => (
-            <button
+            <Link
               key={item.id}
-              className={`top-navigation__nav-item ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(item.id)}
+              to={item.path}
+              className={`top-navigation__nav-item ${location.pathname === item.path ? 'active' : ''}`}
             >
               <div className="top-navigation__nav-icon-container">
                 <img 
@@ -84,7 +88,7 @@ const TopNavigation = ({
                 />
               </div>
               <span className="top-navigation__nav-label">{item.label}</span>
-            </button>
+            </Link>
           ))}
         </nav>
       </div>

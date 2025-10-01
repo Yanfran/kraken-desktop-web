@@ -8,6 +8,8 @@ import Loading from './components/common/Loading/Loading';
 import { Toaster } from 'react-hot-toast';
 import './App.styles.scss';
 
+import DashboardLayout from './components/common/Layout/DashboardLayout';
+
 // ===== LAZY LOADING DE COMPONENTES =====
 // Auth pages - TUS COMPONENTES EXISTENTES
 const Login = React.lazy(() => import('./pages/auth/Login/Login'));
@@ -27,6 +29,11 @@ const PreAlert = React.lazy(() => import('./pages/PreAlert/PreAlert'));
 const PreAlertList = React.lazy(() => import('./pages/PreAlert/PreAlertList'));
 const PreAlertDetail = React.lazy(() => import('./pages/PreAlert/PreAlertDetail'));
 const PreAlertEdit = React.lazy(() => import('./pages/PreAlert/PreAlertEdit'));
+const ShipmentsList = React.lazy(() => import('./pages/dashboard/ShipmentsList/ShipmentsList'));
+const Profile = React.lazy(() => import('./pages/profile/Profile/Profile'));
+const Billing = React.lazy(() => import('./pages/Billing/Billing'));
+const Security = React.lazy(() => import('./pages/Security/Security'));
+const Rastrear = React.lazy(() => import('./pages/Rastrear/Rastrear'));
 
 // Hook simplificado para compatibilidad con tu código existente
 export const useAuth = () => {
@@ -132,37 +139,89 @@ function App() {
                 {/* ===== RUTAS PROTEGIDAS ===== */}
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <DashboardLayout>
+                      <Dashboard />
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
 
                 <Route path="/calculator" element={
                   <ProtectedRoute>
-                    <Calculator />
+                    <DashboardLayout>
+                      <Calculator />
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
 
                 <Route path="/pre-alert" element={
                   <ProtectedRoute>
-                    <PreAlert />
+                    <DashboardLayout>
+                      <PreAlert />
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
 
                 <Route path="/pre-alert/list" element={
                   <ProtectedRoute>
-                    <PreAlertList />
+                    <DashboardLayout>
+                      <PreAlertList />
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
 
                 <Route path="/pre-alert/:id" element={
                   <ProtectedRoute>
-                    <PreAlertDetail />
+                    <DashboardLayout>
+                      <PreAlertDetail />
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
 
                 <Route path="/pre-alert/edit/:id" element={
                   <ProtectedRoute>
-                    <PreAlertEdit />
+                    <DashboardLayout>
+                      <PreAlertEdit />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/dashboard/mis-envios" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <ShipmentsList />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Profile />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/billing" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Billing />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/security" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Security />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/rastrear" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Rastrear />
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
 

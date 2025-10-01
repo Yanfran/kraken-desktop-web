@@ -1,19 +1,21 @@
 // src/components/Sidebar/Sidebar.jsx - IMPORT CORREGIDO
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext'; // ✅ CORREGIDO
 import { useTheme } from '../../contexts/ThemeContext';
 import './Sidebar.styles.scss';
 
-const Sidebar = ({ isOpen, onClose, activeTab, setActiveTab }) => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { user, signOut } = useAuth(); // ✅ CAMBIO: usar signOut en lugar de logout
   const { actualTheme } = useTheme();
+  const location = useLocation();
 
   const sidebarMenuItems = [
-    { id: 'mis-envios', label: 'Mis Envíos' },
-    { id: 'mis-pre-alertas', label: 'Mis Pre-Alertas' },
-    { id: 'perfil', label: 'Perfil de Usuario', hasArrow: true },
-    { id: 'facturacion', label: 'Facturación', hasArrow: true },
-    { id: 'seguridad', label: 'Seguridad', hasArrow: true }
+    { id: 'mis-envios', label: 'Mis Envíos', path: '/dashboard/mis-envios' },
+    { id: 'mis-pre-alertas', label: 'Mis Pre-Alertas', path: '/pre-alert/list' },
+    { id: 'perfil', label: 'Perfil de Usuario', path: '/profile', hasArrow: true },
+    { id: 'facturacion', label: 'Facturación', path: '/billing', hasArrow: true },
+    { id: 'seguridad', label: 'Seguridad', path: '/security', hasArrow: true }
   ];
 
   // ✅ FUNCIÓN DE LOGOUT MEJORADA
@@ -57,14 +59,15 @@ const Sidebar = ({ isOpen, onClose, activeTab, setActiveTab }) => {
         {/* Sidebar Menu */}
         <nav className="dashboard-sidebar__menu">
           {sidebarMenuItems.map((item) => (
-            <button
+            <Link
               key={item.id}
-              className={`dashboard-sidebar__menu-item ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(item.id)}
+              to={item.path}
+              className={`dashboard-sidebar__menu-item ${location.pathname === item.path ? 'active' : ''}`}
+              onClick={onClose}
             >
               <span>{item.label}</span>
               {item.hasArrow && <span className="dashboard-sidebar__arrow">›</span>}
-            </button>
+            </Link>
           ))}
         </nav>
 
