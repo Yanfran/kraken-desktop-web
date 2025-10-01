@@ -1,39 +1,36 @@
 // src/services/preAlertService.js
-import apiClient from '@services/apiClient';
+import axiosInstance from './axiosInstance';
 
 /**
  * Service for Pre-Alert operations
  * Adapted from React Native app-kraken for web compatibility
+ * 
+ * Backend endpoints:
+ * - GET /PostPreAlert/getPreAlertasPendientes
+ * - GET /PostPreAlert/{id}
+ * - POST /PostPreAlert/create
+ * - POST /PostPreAlert/update/{id}
+ * - POST /PostPreAlert/delete
+ * - GET /PaqueteContenidos/getContent
  */
 
-// Types and interfaces (for JSDoc)
 /**
  * @typedef {Object} PreAlerta
  * @property {number} id
- * @property {string|string[]} trackings
- * @property {string} contenido
- * @property {number} valor
- * @property {number} peso
- * @property {number} cantidad
- * @property {string} tipoEnvio
- * @property {number|null} IdGuia
- * @property {string} fechaCreacion
- * @property {string} fechaActualizacion
- * @property {Object} direccion
- */
-
-/**
- * @typedef {Object} PreAlertaPayload
- * @property {string[]} trackings
- * @property {number[]} contenidos
- * @property {number} valor
- * @property {number} peso
- * @property {number} cantidad
- * @property {string} tipoEnvio
- * @property {boolean} useNewAddress
- * @property {number|null} addressId
- * @property {Object|null} newAddress
- * @property {File[]} facturas
+ * @property {string|string[]} trackings - Array de números de tracking
+ * @property {string} tracking - Primer tracking (para mostrar)
+ * @property {string} contenido - Contenido concatenado
+ * @property {Object[]} contenidos - Array de objetos {id, contenido}
+ * @property {number} valor - Valor declarado
+ * @property {number} peso - Peso del paquete
+ * @property {number} cantidad - Cantidad de items
+ * @property {string} tipoEnvio - Tipo de envío
+ * @property {number|null} idGuia - ID de guía asociada (null si es pre-alerta)
+ * @property {string} estatus - Estado de la pre-alerta
+ * @property {string} fecha - Fecha formateada
+ * @property {string} fechaRaw - Fecha sin formatear
+ * @property {string} fechaCreacion - Fecha de creación
+ * @property {Object} direccion - Información de dirección
  */
 
 /**
@@ -41,7 +38,7 @@ import apiClient from '@services/apiClient';
  * @property {boolean} success
  * @property {string} message
  * @property {any} data
- * @property {string[]} errors
+ * @property {string[]} [errors]
  */
 
 /**
@@ -50,15 +47,19 @@ import apiClient from '@services/apiClient';
  */
 export const getPreAlertasPendientes = async () => {
   try {
-    const response = await apiClient.get('/PreAlert/getPreAlertasPendientes');
+    console.log('📋 Obteniendo pre-alertas pendientes...');
+    
+    const response = await axiosInstance.get('/PostPreAlert/getPreAlertasPendientes');
+    
+    console.log('✅ Pre-alertas obtenidas:', response.data);
     
     return {
       success: true,
-      data: response.data.data || response.data,
-      message: 'Pre-alertas cargadas exitosamente'
+      data: response.data.data || [],
+      message: response.data.message || 'Pre-alertas cargadas exitosamente'
     };
   } catch (error) {
-    console.error('Error fetching pending pre-alerts:', error);
+    console.error('❌ Error fetching pending pre-alerts:', error);
     
     return {
       success: false,
@@ -80,7 +81,11 @@ export const getPreAlertaById = async (id) => {
       throw new Error('ID de pre-alerta inválido');
     }
 
-    const response = await apiClient.get(`/PreAlert/getPreAlertaById/${id}`);
+    console.log(`📋 Obteniendo pre-alerta ID: ${id}`);
+    
+    const response = await axiosInstance.get(`/PostPreAlert/${id}`);
+    
+    console.log('✅ Pre-alerta obtenida:', response.data);
     
     return {
       success: true,
@@ -88,7 +93,7 @@ export const getPreAlertaById = async (id) => {
       message: 'Pre-alerta cargada exitosamente'
     };
   } catch (error) {
-    console.error('Error fetching pre-alert by ID:', error);
+    console.error('❌ Error fetching pre-alert by ID:', error);
     
     return {
       success: false,
@@ -101,11 +106,13 @@ export const getPreAlertaById = async (id) => {
 
 /**
  * Create a new pre-alert
- * @param {PreAlertaPayload} payload - Pre-alert data
+ * @param {Object} payload - Pre-alert data
  * @returns {Promise<ApiResponse>}
  */
 export const createPreAlerta = async (payload) => {
   try {
+    console.log('📤 Creando pre-alerta...', payload);
+    
     // Validate required fields
     if (!payload.trackings || payload.trackings.length === 0) {
       throw new Error('Debe proporcionar al menos un número de tracking');
@@ -118,23 +125,25 @@ export const createPreAlerta = async (payload) => {
     // Prepare FormData for file upload
     const formData = new FormData();
     
-    // Add basic fields
+    // Add trackings array
     payload.trackings.forEach((tracking, index) => {
       formData.append(`trackings[${index}]`, tracking);
     });
     
+    // Add contenidos array
     payload.contenidos.forEach((contenido, index) => {
       formData.append(`contenidos[${index}]`, contenido);
     });
     
+    // Add other fields
     formData.append('valor', payload.valor?.toString() || '0');
     formData.append('peso', payload.peso?.toString() || '0');
     formData.append('cantidad', payload.cantidad?.toString() || '1');
     formData.append('tipoEnvio', payload.tipoEnvio || 'maritimo');
     formData.append('useNewAddress', payload.useNewAddress ? 'true' : 'false');
     
+    // Address handling
     if (payload.useNewAddress && payload.newAddress) {
-      // Add new address fields
       Object.entries(payload.newAddress).forEach(([key, value]) => {
         if (value !== null && value !== undefined && value !== '') {
           formData.append(`newAddress.${key}`, value.toString());
@@ -144,18 +153,20 @@ export const createPreAlerta = async (payload) => {
       formData.append('addressId', payload.addressId.toString());
     }
     
-    // Add files
+    // Add invoice files
     if (payload.facturas && payload.facturas.length > 0) {
-      payload.facturas.forEach((file, index) => {
-        formData.append(`facturas`, file);
+      payload.facturas.forEach((file) => {
+        formData.append('facturas', file);
       });
     }
 
-    const response = await apiClient.post('/PreAlert/createPreAlerta', formData, {
+    const response = await axiosInstance.post('/PostPreAlert/create', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    
+    console.log('✅ Pre-alerta creada:', response.data);
     
     return {
       success: true,
@@ -163,7 +174,7 @@ export const createPreAlerta = async (payload) => {
       message: response.data.message || 'Pre-alerta creada exitosamente'
     };
   } catch (error) {
-    console.error('Error creating pre-alert:', error);
+    console.error('❌ Error creating pre-alert:', error);
     
     return {
       success: false,
@@ -177,7 +188,7 @@ export const createPreAlerta = async (payload) => {
 /**
  * Update an existing pre-alert
  * @param {number} id - Pre-alert ID
- * @param {PreAlertaPayload} payload - Updated pre-alert data
+ * @param {Object} payload - Updated pre-alert data
  * @returns {Promise<ApiResponse>}
  */
 export const updatePreAlerta = async (id, payload) => {
@@ -186,10 +197,11 @@ export const updatePreAlerta = async (id, payload) => {
       throw new Error('ID de pre-alerta inválido');
     }
 
-    // Prepare FormData for file upload
+    console.log(`📤 Actualizando pre-alerta ID: ${id}`, payload);
+
+    // Prepare FormData
     const formData = new FormData();
     
-    // Add basic fields
     payload.trackings.forEach((tracking, index) => {
       formData.append(`trackings[${index}]`, tracking);
     });
@@ -214,18 +226,19 @@ export const updatePreAlerta = async (id, payload) => {
       formData.append('addressId', payload.addressId.toString());
     }
     
-    // Add files
     if (payload.facturas && payload.facturas.length > 0) {
-      payload.facturas.forEach((file, index) => {
-        formData.append(`facturas`, file);
+      payload.facturas.forEach((file) => {
+        formData.append('facturas', file);
       });
     }
 
-    const response = await apiClient.put(`/PreAlert/updatePreAlerta/${id}`, formData, {
+    const response = await axiosInstance.post(`/PostPreAlert/update/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    
+    console.log('✅ Pre-alerta actualizada:', response.data);
     
     return {
       success: true,
@@ -233,7 +246,7 @@ export const updatePreAlerta = async (id, payload) => {
       message: response.data.message || 'Pre-alerta actualizada exitosamente'
     };
   } catch (error) {
-    console.error('Error updating pre-alert:', error);
+    console.error('❌ Error updating pre-alert:', error);
     
     return {
       success: false,
@@ -255,7 +268,11 @@ export const deletePreAlerta = async (id) => {
       throw new Error('ID de pre-alerta inválido');
     }
 
-    const response = await apiClient.delete(`/PreAlert/deletePreAlerta/${id}`);
+    console.log(`🗑️ Eliminando pre-alerta ID: ${id}`);
+
+    const response = await axiosInstance.post('/PostPreAlert/delete', { id });
+    
+    console.log('✅ Pre-alerta eliminada:', response.data);
     
     return {
       success: true,
@@ -263,7 +280,7 @@ export const deletePreAlerta = async (id) => {
       message: response.data.message || 'Pre-alerta eliminada exitosamente'
     };
   } catch (error) {
-    console.error('Error deleting pre-alert:', error);
+    console.error('❌ Error deleting pre-alert:', error);
     
     return {
       success: false,
@@ -275,20 +292,24 @@ export const deletePreAlerta = async (id) => {
 };
 
 /**
- * Get package contents for dropdown
+ * Get package contents for dropdown (from PaqueteContenidos controller)
  * @returns {Promise<ApiResponse>}
  */
 export const getPaquetesContenidos = async () => {
   try {
-    const response = await apiClient.get('/PaqueteContenidos/getPaquetesContenidos');
+    console.log('📦 Obteniendo contenidos de paquetes...');
+    
+    const response = await axiosInstance.get('/PaqueteContenidos/getContent');
+    
+    console.log('✅ Contenidos obtenidos:', response.data);
     
     return {
       success: true,
-      data: response.data.data || response.data,
-      message: 'Contenidos cargados exitosamente'
+      data: response.data.data || [],
+      message: response.data.message || 'Contenidos cargados exitosamente'
     };
   } catch (error) {
-    console.error('Error fetching package contents:', error);
+    console.error('❌ Error fetching package contents:', error);
     
     return {
       success: false,
@@ -315,13 +336,15 @@ export const uploadInvoiceFiles = async (preAlertId, files) => {
       throw new Error('No se proporcionaron archivos');
     }
 
+    console.log(`📤 Subiendo ${files.length} archivo(s) para pre-alerta ${preAlertId}`);
+
     const formData = new FormData();
-    files.forEach((file, index) => {
+    files.forEach((file) => {
       formData.append('files', file);
     });
 
-    const response = await apiClient.post(
-      `/PreAlert/uploadInvoices/${preAlertId}`, 
+    const response = await axiosInstance.post(
+      `/PostPreAlert/uploadInvoices/${preAlertId}`, 
       formData,
       {
         headers: {
@@ -330,48 +353,21 @@ export const uploadInvoiceFiles = async (preAlertId, files) => {
       }
     );
     
+    console.log('✅ Archivos subidos:', response.data);
+    
     return {
       success: true,
       data: response.data.data || response.data,
       message: response.data.message || 'Archivos subidos exitosamente'
     };
   } catch (error) {
-    console.error('Error uploading invoice files:', error);
+    console.error('❌ Error uploading invoice files:', error);
     
     return {
       success: false,
       message: error.response?.data?.message || 'Error al subir archivos',
       errors: error.response?.data?.errors || [error.message],
       data: null
-    };
-  }
-};
-
-/**
- * Get pre-alert statistics for the current user
- * @returns {Promise<ApiResponse>}
- */
-export const getPreAlertStats = async () => {
-  try {
-    const response = await apiClient.get('/PreAlert/getStats');
-    
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: 'Estadísticas cargadas exitosamente'
-    };
-  } catch (error) {
-    console.error('Error fetching pre-alert stats:', error);
-    
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al cargar estadísticas',
-      errors: error.response?.data?.errors || [error.message],
-      data: {
-        total: 0,
-        pending: 0,
-        processed: 0
-      }
     };
   }
 };
@@ -387,9 +383,13 @@ export const searchPreAlertByTracking = async (trackingNumber) => {
       throw new Error('Número de tracking requerido');
     }
 
-    const response = await apiClient.get(`/PreAlert/searchByTracking`, {
+    console.log(`🔍 Buscando pre-alerta con tracking: ${trackingNumber}`);
+
+    const response = await axiosInstance.get('/PostPreAlert/searchByTracking', {
       params: { tracking: trackingNumber.trim() }
     });
+    
+    console.log('✅ Resultado de búsqueda:', response.data);
     
     return {
       success: true,
@@ -397,7 +397,7 @@ export const searchPreAlertByTracking = async (trackingNumber) => {
       message: 'Búsqueda completada exitosamente'
     };
   } catch (error) {
-    console.error('Error searching pre-alert by tracking:', error);
+    console.error('❌ Error searching pre-alert by tracking:', error);
     
     return {
       success: false,
@@ -417,6 +417,5 @@ export default {
   deletePreAlerta,
   getPaquetesContenidos,
   uploadInvoiceFiles,
-  getPreAlertStats,
   searchPreAlertByTracking
 };
