@@ -1,9 +1,9 @@
-// src/pages/dashboard/Home/Home.jsx - UPDATED WITH REAL API SERVICES
-import React, { useState, useEffect, useCallback } from 'react';
+// src/pages/dashboard/Home/Home.jsx - DISEÑO EXACTO COMO REACT NATIVE
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import NewsCarousel from '../../../components/NewsCarousel/NewsCarousel';
 import { getLastShipment } from '../../../services/guiasService';
-import { getPreAlertasPendientes } from '../../../services/preAlertService';
+import { getPreAlertasPendientes, deletePreAlerta } from '../../../services/preAlertService';
 import { getNovedades } from '../../../services/novedadesService';
 import './Home.styles.scss';
 
@@ -21,6 +21,10 @@ const Home = ({ onNavigateToShipments }) => {
   const [lastShipment, setLastShipment] = useState(null);
   const [preAlerts, setPreAlerts] = useState([]);
   const [newsItems, setNewsItems] = useState([]);
+  
+  // Menu states
+  const [visibleMenus, setVisibleMenus] = useState({});
+  const menuRefs = useRef({});
   
   // Error states
   const [errors, setErrors] = useState({
@@ -52,7 +56,7 @@ const Home = ({ onNavigateToShipments }) => {
       setErrors(prev => ({ 
         ...prev, 
         lastShipment: 'Error de conexión al cargar el último envío' 
-      }));
+        }));
     } finally {
       setLoading(prev => ({ ...prev, lastShipment: false }));
     }
@@ -75,6 +79,7 @@ const Home = ({ onNavigateToShipments }) => {
           trackingNumber: Array.isArray(alert.trackings) 
             ? alert.trackings[0] 
             : alert.tracking || 'Sin tracking',
+          trackingsCount: Array.isArray(alert.trackings) ? alert.trackings.length : 1,
           status: 'Pre-alertado',
           date: alert.fecha || alert.fechaCreacion || '',
           deliveryLocation: formatDeliveryLocation(alert),
@@ -122,7 +127,6 @@ const Home = ({ onNavigateToShipments }) => {
         
         setNewsItems(formattedNews);
       } else {
-        // If no news, show empty array (carousel will handle it)
         setNewsItems([]);
       }
     } catch (error) {
@@ -164,11 +168,67 @@ const Home = ({ onNavigateToShipments }) => {
   }, [user, loadLastShipment, loadPreAlerts, loadNews]);
 
   /**
-   * Handle navigation to all shipments
+   * Close menu when clicking outside
    */
-  const handleViewAllShipments = () => {
-    if (onNavigateToShipments) {
-      onNavigateToShipments();
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const openMenus = Object.keys(visibleMenus).filter(key => visibleMenus[key]);
+      openMenus.forEach(menuId => {
+        if (menuRefs.current[menuId] && !menuRefs.current[menuId].contains(event.target)) {
+          setVisibleMenus(prev => ({ ...prev, [menuId]: false }));
+        }
+      });
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [visibleMenus]);
+
+  /**
+   * Toggle menu
+   */
+  const toggleMenu = (id) => {
+    setVisibleMenus(prev => ({
+      ...Object.keys(prev).reduce((acc, key) => ({ ...acc, [key]: false }), {}),
+      [id]: !prev[id]
+    }));
+  };
+
+  /**
+   * Menu handlers
+   */
+  const handleViewDetail = (alert) => {
+    console.log('Ver detalle:', alert);
+    setVisibleMenus({});
+    // TODO: Navigate to detail page
+  };
+
+  const handleEdit = (alert) => {
+    console.log('Editar:', alert);
+    setVisibleMenus({});
+    // TODO: Navigate to edit page
+  };
+
+  const handleHelp = (alert) => {
+    console.log('Ayuda:', alert);
+    setVisibleMenus({});
+    // TODO: Open help modal
+  };
+
+  const handleDelete = async (alert) => {
+    if (window.confirm(`¿Estás seguro de eliminar la pre-alerta ${alert.trackingNumber}?`)) {
+      setVisibleMenus({});
+      try {
+        const response = await deletePreAlerta(alert.id);
+        if (response.success) {
+          setPreAlerts(prev => prev.filter(p => p.id !== alert.id));
+        } else {
+          alert('Error al eliminar la pre-alerta');
+        }
+      } catch (error) {
+        console.error('Error deleting pre-alert:', error);
+        alert('Error de conexión al eliminar la pre-alerta');
+      }
     }
   };
 
@@ -213,17 +273,17 @@ const Home = ({ onNavigateToShipments }) => {
       </div>
 
       {/* Último Envío */}
-      <section className="last-shipment">
-        <div className="last-shipment__header">
-          <h2 className="last-shipment__title">Último Envío</h2>
+      <section className="last-shipment-card">
+        <div className="last-shipment-card__header">
+          <h2 className="last-shipment-card__title">Último Envío</h2>
           {lastShipment && (
-            <div className="last-shipment__origin">
-              <span className="last-shipment__origin-label">Origen</span>
-              <div className="last-shipment__origin-info">
-                <span className="last-shipment__origin-flag">
+            <div className="last-shipment-card__origin">
+              <span className="last-shipment-card__origin-label">Origen</span>
+              <div className="last-shipment-card__origin-info">
+                <span className="last-shipment-card__origin-flag">
                   {getOriginFlag(lastShipment.origin)}
                 </span>
-                <span className="last-shipment__origin-country">
+                <span className="last-shipment-card__origin-country">
                   {lastShipment.origin}
                 </span>
               </div>
@@ -231,63 +291,82 @@ const Home = ({ onNavigateToShipments }) => {
           )}
         </div>
 
+        {/* Menu button for last shipment */}
+        {lastShipment && (
+          <div className="last-shipment-card__menu" ref={el => menuRefs.current['lastShipment'] = el}>
+            <button 
+              className="last-shipment-card__menu-button"
+              onClick={() => toggleMenu('lastShipment')}
+              aria-label="Más opciones"
+            >
+              ⋮
+            </button>
+
+            {visibleMenus['lastShipment'] && (
+              <div className="menu-dropdown">
+                <button onClick={() => handleViewDetailShipment(lastShipment)} className="menu-dropdown__item">
+                  <span className="menu-dropdown__icon">👁️</span>
+                  Ver detalle
+                </button>
+                <button onClick={() => handlePayShipment(lastShipment)} className="menu-dropdown__item">
+                  <span className="menu-dropdown__icon">💳</span>
+                  Pagar
+                </button>
+                <button onClick={() => handleHelpShipment(lastShipment)} className="menu-dropdown__item">
+                  <span className="menu-dropdown__icon">❓</span>
+                  Ayuda
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {loading.lastShipment ? (
-          <div className="last-shipment__loading">
+          <div className="last-shipment-card__loading">
             <div className="spinner"></div>
             <p>Cargando último envío...</p>
           </div>
-        ) : errors.lastShipment ? (
-          <div className="last-shipment__error">
-            <span className="error-icon">⚠️</span>
-            <p>{errors.lastShipment}</p>
-          </div>
         ) : lastShipment ? (
           <>
-            <div className="last-shipment__content">
-              <div className="last-shipment__tracking">
-                <span className="last-shipment__label">N° Guía</span>
-                <div className="last-shipment__tracking-info">
-                  <span className="last-shipment__number">
-                    {lastShipment.trackingNumber}
-                  </span>
-                  {lastShipment.trackingNumbers?.length > 1 && (
-                    <span className="last-shipment__type">
-                      +{lastShipment.trackingNumbers.length - 1} más
-                    </span>
-                  )}
+            <div className="last-shipment-card__row">
+              <div className="last-shipment-card__cell">
+                <span className="last-shipment-card__label">N° Guía</span>
+                <div className="last-shipment-card__value">
+                  <span className="last-shipment-card__tracking">{lastShipment.trackingNumber}</span>
+                  <span className="last-shipment-card__content">{lastShipment.id}</span>
                 </div>
               </div>
 
-              <div className="last-shipment__status">
-                <span className="last-shipment__label">Estatus</span>
-                <div className="last-shipment__status-info">
-                  <div className={`last-shipment__status-badge ${getStatusClass(lastShipment.status)}`}>
+              <div className="last-shipment-card__cell">
+                <span className="last-shipment-card__label">Estatus</span>
+                <div className="last-shipment-card__value">
+                  <span className={`last-shipment-card__badge ${getStatusClass(lastShipment.status)}`}>
                     {lastShipment.status}
-                  </div>
-                  <span className="last-shipment__date">{lastShipment.date}</span>
+                  </span>
+                  <span className="last-shipment-card__date">{lastShipment.date}</span>
                 </div>
               </div>
 
-              <div className="last-shipment__cost">
-                <span className="last-shipment__label">Costo del envío</span>
-                <span className="last-shipment__price">{lastShipment.cost}</span>
+              <div className="last-shipment-card__cell">
+                <span className="last-shipment-card__label">Costo del envío</span>
+                <span className="last-shipment-card__price">{lastShipment.cost}</span>
               </div>
             </div>
 
             {/* Alert for non-prealerted shipments */}
             {!lastShipment.prealerted && lastShipment.discount && (
-              <div className="last-shipment__alert">
+              <div className="last-shipment-card__alert">
                 <span className="alert-icon">🚫</span>
                 <span className="alert-text">No pre-alertado</span>
                 <span className="alert-discount">Perdiste {lastShipment.discount}</span>
-                <button className="alert-link" onClick={handleViewAllShipments}>
+                <button className="alert-link" onClick={onNavigateToShipments}>
                   Ver todos
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="last-shipment__empty">
+          <div className="last-shipment-card__empty">
             <span className="empty-icon">📦</span>
             <p>No tienes envíos registrados</p>
           </div>
@@ -295,66 +374,84 @@ const Home = ({ onNavigateToShipments }) => {
       </section>
 
       {/* Pre-Alertas Pendientes */}
-      <section className="pre-alerts">
-        <h2 className="pre-alerts__title">Pre-Alertas Pendientes</h2>
+      <section className="pre-alerts-card">
+        <h2 className="pre-alerts-card__title">
+          Pre-Alertas Pendientes ({preAlerts.length})
+        </h2>
         
+        {/* Table Header */}
+        <div className="pre-alerts-card__header">
+          <span className="pre-alerts-card__header-text">Tracking</span>
+          <span className="pre-alerts-card__header-text">Estatus</span>
+          <span className="pre-alerts-card__header-text">Entrega en</span>
+        </div>
+
         {loading.preAlerts ? (
-          <div className="pre-alerts__loading">
+          <div className="pre-alerts-card__loading">
             <div className="spinner"></div>
             <p>Cargando pre-alertas...</p>
           </div>
-        ) : errors.preAlerts ? (
-          <div className="pre-alerts__error">
-            <span className="error-icon">⚠️</span>
-            <p>{errors.preAlerts}</p>
-          </div>
         ) : preAlerts.length > 0 ? (
           <>
-            <div className="pre-alerts__list">
-              {preAlerts.slice(0, 2).map((alert) => (
-                <div key={alert.id} className="pre-alert-item">
-                  <div className="pre-alert-item__info">
-                    <div className="pre-alert-item__tracking">
-                      <span className="pre-alert-item__label">Tracking</span>
-                      <div className="pre-alert-item__tracking-info">
-                        <span className="pre-alert-item__number">
-                          {alert.trackingNumber}
-                        </span>
-                        <span className="pre-alert-item__type">
-                          {alert.contenido}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="pre-alert-item__status">
-                      <span className="pre-alert-item__label">Estatus</span>
-                      <div className="pre-alert-item__status-badge">
-                        {alert.status}
-                      </div>
-                      <span className="pre-alert-item__date">{alert.date}</span>
-                    </div>
-
-                    <div className="pre-alert-item__delivery">
-                      <span className="pre-alert-item__label">Entrega en</span>
-                      <span className="pre-alert-item__location">
-                        {alert.deliveryLocation}
-                      </span>
-                    </div>
+            <div className="pre-alerts-card__list">
+              {preAlerts.slice(0, 3).map((alert) => (
+                <div key={alert.id} className="pre-alert-row">
+                  <div className="pre-alert-row__tracking">
+                    <span className="pre-alert-row__number">{alert.trackingNumber}</span>
+                    <span className="pre-alert-row__content">{alert.contenido}</span>
                   </div>
 
-                  <button className="pre-alert-item__menu" aria-label="Más opciones">
-                    ⋮
-                  </button>
+                  <div className="pre-alert-row__status">
+                    <span className="pre-alert-row__badge">{alert.status}</span>
+                    <span className="pre-alert-row__date">{alert.date}</span>
+                  </div>
+
+                  <div className="pre-alert-row__delivery">
+                    {alert.deliveryLocation}
+                  </div>
+
+                  <div className="pre-alert-row__menu" ref={el => menuRefs.current[alert.id] = el}>
+                    <button 
+                      className="pre-alert-row__menu-button"
+                      onClick={() => toggleMenu(alert.id)}
+                      aria-label="Más opciones"
+                    >
+                      ⋮
+                    </button>
+
+                    {visibleMenus[alert.id] && (
+                      <div className="menu-dropdown">
+                        <button onClick={() => handleViewDetail(alert)} className="menu-dropdown__item">
+                          <span className="menu-dropdown__icon">👁️</span>
+                          Ver detalle
+                        </button>
+                        <button onClick={() => handleEdit(alert)} className="menu-dropdown__item">
+                          <span className="menu-dropdown__icon">✏️</span>
+                          Editar
+                        </button>
+                        <button onClick={() => handleHelp(alert)} className="menu-dropdown__item">
+                          <span className="menu-dropdown__icon">❓</span>
+                          Ayuda
+                        </button>
+                        <button onClick={() => handleDelete(alert)} className="menu-dropdown__item menu-dropdown__item--danger">
+                          <span className="menu-dropdown__icon">🗑️</span>
+                          Eliminar
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <button className="pre-alerts__view-all">
-              Ver todos ({preAlerts.length})
-            </button>
+            {preAlerts.length > 3 && (
+              <button className="pre-alerts-card__view-all">
+                Ver todos ({preAlerts.length - 3} más)
+              </button>
+            )}
           </>
         ) : (
-          <div className="pre-alerts__empty">
+          <div className="pre-alerts-card__empty">
             <span className="empty-icon">📋</span>
             <p>No tienes pre-alertas pendientes</p>
           </div>
