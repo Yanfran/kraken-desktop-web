@@ -215,19 +215,23 @@ const Home = ({ onNavigateToShipments }) => {
     // TODO: Open help modal
   };
 
+  
+
   /**
    * Menu handlers for pre-alerts
    */
   const handleViewDetail = (alert) => {
     console.log('Ver detalle:', alert);
     setVisibleMenus({});
-    // TODO: Navigate to detail page
+    // Navigate to detail page
+    window.location.href = `/pre-alerts/${alert.id}`;
   };
 
   const handleEdit = (alert) => {
     console.log('Editar:', alert);
     setVisibleMenus({});
-    // TODO: Navigate to edit page
+    // Navigate to edit page
+    window.location.href = `/pre-alerts/edit/${alert.id}`;
   };
 
   const handleHelp = (alert) => {
