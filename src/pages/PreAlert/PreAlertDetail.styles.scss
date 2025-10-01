@@ -1,13 +1,18 @@
 // src/pages/PreAlert/PreAlertDetail.styles.scss
 .pre-alert-detail {
-  min-height: 100vh;
-  background: #F5F5F7;
-  padding: 24px;
+  // min-height: 100vh;
+  // background: #F5F5F7;
+  // padding: 24px;
 
-  &__container {
-    max-width: 900px;
-    margin: 0 auto;
-  }
+  padding: 24px;
+  max-width: 100%;
+  margin: 0;
+  background: transparent;
+
+  // &__container {
+  //   max-width: 900px;
+  //   margin: 0 auto;
+  // }
 
   /* Header */
   &__header {

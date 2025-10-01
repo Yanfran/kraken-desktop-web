@@ -1,8 +1,9 @@
 import React from 'react';
+import '../../styles/page.scss';
 
 const Billing = () => {
   return (
-    <div>
+    <div className="page-container">
       <h1>Billing</h1>
     </div>
   );

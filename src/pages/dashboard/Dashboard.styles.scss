@@ -64,8 +64,8 @@
   width: calc(100vw - 280px); /* FORZAR ANCHO COMPLETO */
   
   &.sidebar-closed {
-    margin-left: 80px;
-    width: calc(100vw - 80px); /* AJUSTAR CUANDO SIDEBAR CERRADO */
+    // margin-left: 80px;
+    // width: calc(100vw - 80px); /* AJUSTAR CUANDO SIDEBAR CERRADO */
   }
   
   @media (max-width: 768px) {
