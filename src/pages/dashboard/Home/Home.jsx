@@ -1,4 +1,4 @@
-// src/pages/dashboard/Home/Home.jsx - DISEÑO EXACTO COMO REACT NATIVE
+// src/pages/dashboard/Home/Home.jsx - ESTRUCTURA CORREGIDA SEGÚN IMAGEN
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import NewsCarousel from '../../../components/NewsCarousel/NewsCarousel';
@@ -195,7 +195,28 @@ const Home = ({ onNavigateToShipments }) => {
   };
 
   /**
-   * Menu handlers
+   * Menu handlers for last shipment
+   */
+  const handleViewDetailShipment = (shipment) => {
+    console.log('Ver detalle shipment:', shipment);
+    setVisibleMenus({});
+    // TODO: Navigate to detail page
+  };
+
+  const handlePayShipment = (shipment) => {
+    console.log('Pagar shipment:', shipment);
+    setVisibleMenus({});
+    // TODO: Navigate to payment page
+  };
+
+  const handleHelpShipment = (shipment) => {
+    console.log('Ayuda shipment:', shipment);
+    setVisibleMenus({});
+    // TODO: Open help modal
+  };
+
+  /**
+   * Menu handlers for pre-alerts
    */
   const handleViewDetail = (alert) => {
     console.log('Ver detalle:', alert);
@@ -291,36 +312,6 @@ const Home = ({ onNavigateToShipments }) => {
           )}
         </div>
 
-        {/* Menu button for last shipment */}
-        {lastShipment && (
-          <div className="last-shipment-card__menu" ref={el => menuRefs.current['lastShipment'] = el}>
-            <button 
-              className="last-shipment-card__menu-button"
-              onClick={() => toggleMenu('lastShipment')}
-              aria-label="Más opciones"
-            >
-              ⋮
-            </button>
-
-            {visibleMenus['lastShipment'] && (
-              <div className="menu-dropdown">
-                <button onClick={() => handleViewDetailShipment(lastShipment)} className="menu-dropdown__item">
-                  <span className="menu-dropdown__icon">👁️</span>
-                  Ver detalle
-                </button>
-                <button onClick={() => handlePayShipment(lastShipment)} className="menu-dropdown__item">
-                  <span className="menu-dropdown__icon">💳</span>
-                  Pagar
-                </button>
-                <button onClick={() => handleHelpShipment(lastShipment)} className="menu-dropdown__item">
-                  <span className="menu-dropdown__icon">❓</span>
-                  Ayuda
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
         {loading.lastShipment ? (
           <div className="last-shipment-card__loading">
             <div className="spinner"></div>
@@ -328,12 +319,13 @@ const Home = ({ onNavigateToShipments }) => {
           </div>
         ) : lastShipment ? (
           <>
+            {/* GRID CON 4 COLUMNAS: 3 DATOS + MENÚ */}
             <div className="last-shipment-card__row">
               <div className="last-shipment-card__cell">
                 <span className="last-shipment-card__label">N° Guía</span>
                 <div className="last-shipment-card__value">
                   <span className="last-shipment-card__tracking">{lastShipment.trackingNumber}</span>
-                  <span className="last-shipment-card__content">{lastShipment.id}</span>
+                  <span className="last-shipment-card__content">{lastShipment.contenido || 'TV'}</span>
                 </div>
               </div>
 
@@ -351,19 +343,47 @@ const Home = ({ onNavigateToShipments }) => {
                 <span className="last-shipment-card__label">Costo del envío</span>
                 <span className="last-shipment-card__price">{lastShipment.cost}</span>
               </div>
-            </div>
 
-            {/* Alert for non-prealerted shipments */}
-            {!lastShipment.prealerted && lastShipment.discount && (
-              <div className="last-shipment-card__alert">
-                <span className="alert-icon">🚫</span>
-                <span className="alert-text">No pre-alertado</span>
-                <span className="alert-discount">Perdiste {lastShipment.discount}</span>
-                <button className="alert-link" onClick={onNavigateToShipments}>
-                  Ver todos
+              {/* MENÚ EN LA MISMA FILA */}
+              <div className="last-shipment-card__menu" ref={el => menuRefs.current['lastShipment'] = el}>
+                <button 
+                  className="last-shipment-card__menu-button"
+                  onClick={() => toggleMenu('lastShipment')}
+                  aria-label="Más opciones"
+                >
+                  ⋮
                 </button>
+
+                {visibleMenus['lastShipment'] && (
+                  <div className="menu-dropdown">
+                    <button onClick={() => handleViewDetailShipment(lastShipment)} className="menu-dropdown__item">
+                      <span className="menu-dropdown__icon">👁️</span>
+                      Ver detalle
+                    </button>
+                    <button onClick={() => handlePayShipment(lastShipment)} className="menu-dropdown__item">
+                      <span className="menu-dropdown__icon">💳</span>
+                      Pagar
+                    </button>
+                    <button onClick={() => handleHelpShipment(lastShipment)} className="menu-dropdown__item">
+                      <span className="menu-dropdown__icon">❓</span>
+                      Ayuda
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* ALERT SIN FONDO - EN LA MISMA FILA */}
+              {!lastShipment.prealerted && lastShipment.discount && (
+                <div className="last-shipment-card__alert">
+                  <span className="alert-icon">🚫</span>
+                  <span className="alert-text">No pre-alertado</span>
+                  <span className="alert-discount">Perdiste {lastShipment.discount}</span>
+                  <button className="alert-link" onClick={onNavigateToShipments}>
+                    Ver todos
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         ) : (
           <div className="last-shipment-card__empty">
@@ -446,7 +466,7 @@ const Home = ({ onNavigateToShipments }) => {
 
             {preAlerts.length > 3 && (
               <button className="pre-alerts-card__view-all">
-                Ver todos ({preAlerts.length - 3} más)
+                Ver todos
               </button>
             )}
           </>
