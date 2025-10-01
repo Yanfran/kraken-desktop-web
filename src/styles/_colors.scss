@@ -1,0 +1,49 @@
+// kraken-desktop-web/src/styles/_colors.scss
+
+// Colores principales
+$primary: #FF4500; // Naranja KRAKEN
+$secondary: #0175c8; // Azul para botones secundarios
+$primary-light: #FF7F50; // Naranja claro
+
+// Fondo
+$background: #FFFFFF;
+$card-background: #F8F8F8;
+$background-light: #F8F9FA;
+
+// Texto
+$text-primary: #000000;
+$text-secondary: #757575;
+$text-light: #FFFFFF;
+$text-placeholder: #AAAAAA;
+
+// Estados
+$success: #4CAF50;
+$error: #F44336;
+$warning: #FF9800;
+$info: #2196F3;
+$disabled: #BDBDBD;
+
+// Navegación
+$tab-background: #FFFFFF;
+$tab-active: #FF4500;
+$tab-inactive: #757575;
+$drawer-background: #FFFFFF;
+$drawer-active-background: #FFE0D5;
+
+// Bordes y separadores
+$border: #E0E0E0;
+$border-light: #F3F4F6;
+$separator: #EEEEEE;
+
+// Otros
+$shadow: #000000;
+$overlay: rgba(0, 0, 0, 0.5);
+$transparent: transparent;
+
+// Colores específicos de pre-alerta móvil
+$pre-alert-card-bg: #E8F2FF;
+$pre-alert-border-light: #D0E7FF;
+$multi-tracking-badge-bg: #E3F2FD;
+$multi-tracking-badge-text: #1976D2;
+$multi-content-badge-bg: #FFF3E0;
+$multi-content-badge-text: #F57C00;

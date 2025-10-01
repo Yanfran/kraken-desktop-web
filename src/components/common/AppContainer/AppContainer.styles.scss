@@ -1,0 +1,15 @@
+// src/components/common/AppContainer/AppContainer.styles.scss
+
+.app-container {
+  width: 100%;
+  padding-left: 20px;
+  padding-right: 20px;
+
+  /* Mimic webContainer from mobile for larger screens if needed, or adjust as per web design */
+  @media (min-width: 768px) {
+    max-width: 420px; /* Example: if you want a max width for the content */
+    margin-left: auto; /* Center the container */
+    margin-right: auto; /* Center the container */
+    background-color: #fff; /* Example background color */
+  }
+}

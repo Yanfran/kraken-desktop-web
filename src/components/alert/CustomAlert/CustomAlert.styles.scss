@@ -1,0 +1,150 @@
+// src/components/alert/CustomAlert/CustomAlert.styles.scss
+@import '../../../styles/_colors.scss';
+
+.custom-alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 1000; // Ensure it's on top
+}
+
+.custom-alert-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.custom-alert-container {
+  background-color: white;
+  border-radius: 16px;
+  min-width: 300px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  z-index: 1001; // Above the overlay
+}
+
+.custom-alert-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 24px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 16px;
+}
+
+.custom-alert-icon-container {
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+
+  ion-icon {
+    font-size: 32px;
+  }
+}
+
+.custom-alert-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: $text-primary;
+  text-align: center;
+  line-height: 24px;
+}
+
+.custom-alert-body {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 24px;
+}
+
+.custom-alert-message {
+  font-size: 16px;
+  color: $text-primary;
+  line-height: 22px;
+  text-align: center;
+}
+
+.custom-alert-footer {
+  border-top: 1px solid #F0F0F0;
+  padding: 20px;
+}
+
+.custom-alert-button-row {
+  display: flex;
+  gap: 12px;
+}
+
+.custom-alert-button {
+  border-radius: 12px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  padding-left: 24px;
+  padding-right: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease;
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.custom-alert-single-button {
+  width: 100%;
+}
+
+.custom-alert-cancel-button {
+  flex: 1;
+  background-color: #F8F9FA;
+  border: 2px solid #E5E5E5;
+
+  .custom-alert-cancel-button-text {
+    color: $text-primary;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.custom-alert-confirm-button {
+  flex: 1;
+
+  .custom-alert-confirm-button-text {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+  }
+}
+
+.custom-alert-spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

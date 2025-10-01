@@ -74,7 +74,7 @@ function authReducer(state, action) {
 }
 
 // ===== CONTEXTO =====
-const AuthContext = createContext({
+export const AuthContext = createContext({
   user: null,
   isLoading: true,
   isSignedIn: false,

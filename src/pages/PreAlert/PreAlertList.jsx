@@ -15,9 +15,9 @@ import {
 
 // Components
 import AppContainer from '@components/common/AppContainer';
-import Button from '@components/common/Button';
-import LoadingSpinner from '@components/common/LoadingSpinner';
-import CustomAlert from '@components/alert/CustomAlert';
+import Button from '@components/common/Button/Button';
+import LoadingSpinner from '@components/common/Loading/Loading';
+import CustomAlert from '@components/alert/CustomAlert/CustomAlert';
 
 // Hooks
 import { useAuth } from '@hooks/useAuth';
@@ -191,9 +191,7 @@ const PreAlertList = () => {
 
   return (
     <div className="pre-alert-list" onClick={closeAllMenus}>
-      <AppContainer>
-        <div className="pre-alert-list__layout">
-          
+      <div className="pre-alert-list__layout">
           {/* Header */}
           <div className="pre-alert-list__header">
             <div className="pre-alert-list__header-content">
@@ -250,193 +248,117 @@ const PreAlertList = () => {
                   </div>
                 </div>
 
-                {/* Table */}
+                {/* Unified List/Cards */}
                 <div className="pre-alert-list__table-container">
-                  <table className="pre-alert-list__table">
-                    <thead>
-                      <tr>
-                        <th>Tracking</th>
-                        <th>Contenido</th>
-                        <th>Valor</th>
-                        <th>Estado</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {preAlertas.map((preAlerta) => {
-                        const status = getStatusInfo(preAlerta);
-                        return (
-                          <tr key={preAlerta.id} className="pre-alert-list__table-row">
-                            <td className="pre-alert-list__table-cell">
-                              <div className="pre-alert-list__tracking">
-                                <span className="pre-alert-list__tracking-number">
-                                  {formatTrackingNumber(preAlerta.trackings)}
+                  <div className="pre-alert-list__table-header">
+                    <span className="pre-alert-list__table-header-text">Tracking</span>
+                    <span className="pre-alert-list__table-header-text">Estatus</span>
+                    <span className="pre-alert-list__table-header-text pre-alert-list__table-header-text--actions">Acciones</span>
+                  </div>
+                  <div className="pre-alert-list__table-body">
+                    {preAlertas.map((preAlerta) => {
+                      const status = getStatusInfo(preAlerta);
+                      const trackings = Array.isArray(preAlerta.trackings) ? preAlerta.trackings : [preAlerta.tracking].filter(Boolean);
+                      const hasMultipleTrackings = trackings.length > 1;
+                      const displayTracking = formatTrackingNumber(trackings[0] || "");
+                      const contenidos = preAlerta.contenidos || [];
+                      let contenidosToShow = contenidos;
+                      if (contenidos.length === 0 && preAlerta.contenido) {
+                        contenidosToShow = [{ id: 0, contenido: preAlerta.contenido }];
+                      }
+
+                      return (
+                        <div key={preAlerta.id} className="pre-alert-list__table-row">
+                          <div className="pre-alert-list__tracking-cell">
+                            <div className="pre-alert-list__tracking-main">
+                              <span className="pre-alert-list__tracking-number">
+                                {displayTracking}
+                              </span>
+                              {hasMultipleTrackings && (
+                                <span className="pre-alert-list__tracking-count">
+                                  +{trackings.length - 1}
                                 </span>
-                                {Array.isArray(preAlerta.trackings) && preAlerta.trackings.length > 1 && (
-                                  <span className="pre-alert-list__tracking-count">
-                                    +{preAlerta.trackings.length - 1} más
-                                  </span>
-                                )}
+                              )}
+                            </div>
+                            {contenidosToShow.map((contenido, idx) => (
+                              <div key={idx} className="pre-alert-list__content-item">
+                                <span className="pre-alert-list__content-text">
+                                  {contenido.contenido}
+                                </span>
                               </div>
-                            </td>
-                            <td className="pre-alert-list__table-cell">
-                              <span className="pre-alert-list__content">
-                                {preAlerta.contenido || 'Sin especificar'}
-                              </span>
-                            </td>
-                            <td className="pre-alert-list__table-cell">
-                              <span className="pre-alert-list__value">
-                                ${preAlerta.valor || '0.00'}
-                              </span>
-                            </td>
-                            <td className="pre-alert-list__table-cell">
-                              <span className={`pre-alert-list__status pre-alert-list__status--${status.className}`}>
-                                {status.text}
-                              </span>
-                            </td>
-                            <td className="pre-alert-list__table-cell">
-                              <span className="pre-alert-list__date">
-                                {formatDate(preAlerta.fechaCreacion)}
-                              </span>
-                            </td>
-                            <td className="pre-alert-list__table-cell">
-                              <div className="pre-alert-list__actions">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleMenu(preAlerta.id);
-                                  }}
-                                  className="pre-alert-list__menu-btn"
-                                >
-                                  ⋮
-                                </button>
-                                
-                                {visibleMenus[preAlerta.id] && (
-                                  <div className="pre-alert-list__menu">
+                            ))}
+                          </div>
+                          <div className="pre-alert-list__status-cell">
+                            <span className={`pre-alert-list__status pre-alert-list__status--${status.className}`}>
+                              {status.text}
+                            </span>
+                            <span className="pre-alert-list__date">
+                              {formatDate(preAlerta.fechaCreacion)}
+                            </span>
+                          </div>
+                          <div className="pre-alert-list__actions-cell">
+                            <div className="pre-alert-list__actions">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleMenu(preAlerta.id);
+                                }}
+                                className="pre-alert-list__menu-btn"
+                              >
+                                ⋮
+                              </button>
+                              {visibleMenus[preAlerta.id] && (
+                                <div className="pre-alert-list__menu">
+                                  <button
+                                    onClick={() => handleViewDetail(preAlerta)}
+                                    className="pre-alert-list__menu-item"
+                                  >
+                                    👁️ Ver detalle
+                                  </button>
+                                  {!preAlerta.IdGuia && (
                                     <button
-                                      onClick={() => handleViewDetail(preAlerta)}
+                                      onClick={() => handleEdit(preAlerta)}
                                       className="pre-alert-list__menu-item"
                                     >
-                                      👁️ Ver detalle
+                                      ✏️ Editar
                                     </button>
-                                    {!preAlerta.IdGuia && (
-                                      <button
-                                        onClick={() => handleEdit(preAlerta)}
-                                        className="pre-alert-list__menu-item"
-                                      >
-                                        ✏️ Editar
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => handleDelete(preAlerta)}
-                                      className="pre-alert-list__menu-item pre-alert-list__menu-item--danger"
-                                    >
-                                      🗑️ Eliminar
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="pre-alert-list__cards">
-                  {preAlertas.map((preAlerta) => {
-                    const status = getStatusInfo(preAlerta);
-                    return (
-                      <div key={preAlerta.id} className="pre-alert-list__card">
-                        <div className="pre-alert-list__card-header">
-                          <div className="pre-alert-list__card-tracking">
-                            <span className="pre-alert-list__card-tracking-label">Tracking:</span>
-                            <span className="pre-alert-list__card-tracking-number">
-                              {formatTrackingNumber(preAlerta.trackings)}
-                            </span>
-                            {Array.isArray(preAlerta.trackings) && preAlerta.trackings.length > 1 && (
-                              <span className="pre-alert-list__card-tracking-count">
-                                +{preAlerta.trackings.length - 1}
-                              </span>
-                            )}
-                          </div>
-                          <span className={`pre-alert-list__card-status pre-alert-list__card-status--${status.className}`}>
-                            {status.text}
-                          </span>
-                        </div>
-                        
-                        <div className="pre-alert-list__card-body">
-                          <div className="pre-alert-list__card-info">
-                            <div className="pre-alert-list__card-item">
-                              <span className="pre-alert-list__card-label">Contenido:</span>
-                              <span className="pre-alert-list__card-value">
-                                {preAlerta.contenido || 'Sin especificar'}
-                              </span>
-                            </div>
-                            <div className="pre-alert-list__card-item">
-                              <span className="pre-alert-list__card-label">Valor:</span>
-                              <span className="pre-alert-list__card-value">
-                                ${preAlerta.valor || '0.00'}
-                              </span>
-                            </div>
-                            <div className="pre-alert-list__card-item">
-                              <span className="pre-alert-list__card-label">Fecha:</span>
-                              <span className="pre-alert-list__card-value">
-                                {formatDate(preAlerta.fechaCreacion)}
-                              </span>
+                                  )}
+                                  <button
+                                    onClick={() => handleDelete(preAlerta)}
+                                    className="pre-alert-list__menu-item pre-alert-list__menu-item--danger"
+                                  >
+                                    🗑️ Eliminar
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="pre-alert-list__card-actions">
-                          <Button
-                            variant="outline"
-                            size="small"
-                            onClick={() => handleViewDetail(preAlerta)}
-                          >
-                            Ver detalle
-                          </Button>
-                          {!preAlerta.IdGuia && (
-                            <Button
-                              variant="outline"
-                              size="small"
-                              onClick={() => handleEdit(preAlerta)}
-                            >
-                              Editar
-                            </Button>
-                          )}
-                          <Button
-                            variant="danger"
-                            size="small"
-                            onClick={() => handleDelete(preAlerta)}
-                          >
-                            Eliminar
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </>
             )}
+          </div>
+
+          {/* Footer */}
+          <div className="pre-alert-list__footer">
+            <Button
+              variant="secondary" // Usar secondary para el botón de cerrar
+              onClick={() => navigate('/dashboard')} // Asumiendo que cerrar lleva al dashboard
+              className="pre-alert-list__close-btn"
+            >
+              Cerrar
+            </Button>
           </div>
         </div>
 
         {/* Custom Alert */}
         <CustomAlert
-          show={alert.show}
-          type={alert.type}
-          title={alert.title}
-          message={alert.message}
-          onClose={hideAlert}
-          onConfirm={alert.onConfirm || hideAlert}
-          showCancel={!!alert.onConfirm}
+          {...alert.alertProps}
         />
-      </AppContainer>
-    </div>
+      </div>
   );
 };
 
