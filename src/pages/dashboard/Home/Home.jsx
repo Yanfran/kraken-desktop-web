@@ -1,6 +1,7 @@
 // src/pages/dashboard/Home/Home.jsx - ESTRUCTURA CORREGIDA SEGÚN IMAGEN
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import NewsCarousel from '../../../components/NewsCarousel/NewsCarousel';
 import { getLastShipment } from '../../../services/guiasService';
 import { getPreAlertasPendientes, deletePreAlerta } from '../../../services/preAlertService';
@@ -8,6 +9,7 @@ import { getNovedades } from '../../../services/novedadesService';
 import './Home.styles.scss';
 
 const Home = ({ onNavigateToShipments }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   
   // Loading states
@@ -224,7 +226,7 @@ const Home = ({ onNavigateToShipments }) => {
     console.log('Ver detalle:', alert);
     setVisibleMenus({});
     // Navigate to detail page
-    window.location.href = `/pre-alerts/${alert.id}`;
+    navigate(`/pre-alert/${alert.id}`);
   };
 
   const handleEdit = (alert) => {

@@ -25,6 +25,8 @@ const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 const Calculator = React.lazy(() => import('./pages/calculator/Calculator/Calculator'));
 const PreAlert = React.lazy(() => import('./pages/PreAlert/PreAlert'));
 const PreAlertList = React.lazy(() => import('./pages/PreAlert/PreAlertList'));
+const PreAlertDetail = React.lazy(() => import('./pages/PreAlert/PreAlertDetail'));
+const PreAlertEdit = React.lazy(() => import('./pages/PreAlert/PreAlertEdit'));
 
 // Hook simplificado para compatibilidad con tu código existente
 export const useAuth = () => {
@@ -149,6 +151,18 @@ function App() {
                 <Route path="/pre-alert/list" element={
                   <ProtectedRoute>
                     <PreAlertList />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/pre-alert/:id" element={
+                  <ProtectedRoute>
+                    <PreAlertDetail />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/pre-alert/edit/:id" element={
+                  <ProtectedRoute>
+                    <PreAlertEdit />
                   </ProtectedRoute>
                 } />
 

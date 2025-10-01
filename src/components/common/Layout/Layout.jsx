@@ -1,7 +1,7 @@
 // src/components/common/Layout/Layout.jsx - IMPORT CORREGIDO
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext'; // ✅ CORREGIDO
+import { useAuth } from '../../../contexts/AuthContext'; // ✅ CORREGIDO
 import './Layout.styles.scss';
 
 const Layout = ({ children }) => {
@@ -13,7 +13,7 @@ const Layout = ({ children }) => {
   const navigationItems = [
     {
       path: '/dashboard',
-      label: 'Dashboard',
+      label: 'Inicio',
       icon: '📊',
     },
     {
@@ -22,9 +22,19 @@ const Layout = ({ children }) => {
       icon: '🧮',
     },
     {
-      path: '/packages',
-      label: 'Paquetes',
+      path: '/dashboard/shipments',
+      label: 'Mis Envios',
       icon: '📦',
+    },
+    {
+      path: '/pre-alert',
+      label: 'Pre-Alertar',
+      icon: '➕',
+    },
+    {
+      path: '/pre-alert/list',
+      label: 'Mis Pre-Alertas',
+      icon: '📋',
     },
     {
       path: '/profile',

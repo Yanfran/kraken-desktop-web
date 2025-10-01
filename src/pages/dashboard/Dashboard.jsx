@@ -85,12 +85,12 @@ const Dashboard = () => {
   const navigateToTab = (tab) => {
     // Si es una pestaña de pre-alertas, navegar a las rutas correspondientes
     if (tab === 'mis-pre-alertas') {
-      navigate('/pre-alerts');
+      navigate('/pre-alert/list');
       return;
     }
     
     if (tab === 'pre-alertar') {
-      navigate('/pre-alerts/create');
+      navigate('/pre-alert');
       return;
     }
 

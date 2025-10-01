@@ -88,7 +88,7 @@ const PreAlertDetail = () => {
 
   // Navigation handlers
   const handleEdit = () => {
-    navigate(`/pre-alerts/edit/${id}`);
+    navigate(`/pre-alert/edit/${id}`);
   };
 
   const handleBack = () => {
