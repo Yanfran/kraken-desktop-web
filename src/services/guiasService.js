@@ -6,10 +6,11 @@ import axiosInstance from './axiosInstance';
 export const getGuias = async () => {
   try {
     const response = await axiosInstance.get('/PostPreAlert/getGuias');
+    const apiResponse = response.data;
     return {
-      success: true,
-      data: response.data.data || response.data,
-      message: 'Guías cargadas exitosamente'
+      success: apiResponse.success,
+      data: Array.isArray(apiResponse.data) ? apiResponse.data : [],
+      message: apiResponse.message || 'Guías cargadas exitosamente'
     };
   } catch (error) {
     console.error('Error fetching guias:', error);

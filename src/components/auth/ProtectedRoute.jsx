@@ -6,32 +6,10 @@ import Loading from '../common/Loading/Loading';
 
 // ===== RUTA PROTEGIDA =====
 export const ProtectedRoute = ({ children }) => {
-  const { isSignedIn, isLoading } = useAuth();
+  const { isSignedIn, isLoading, user } = useAuth();
   const location = useLocation();
-  const [localUser, setLocalUser] = useState(null);
-  const [checkingUser, setCheckingUser] = useState(true);
 
-  // Leer usuario desde localStorage (fuente de verdad)
-  useEffect(() => {
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-      try {
-        const parsed = JSON.parse(userData);
-        setLocalUser(parsed);
-        console.log('🔍 [ProtectedRoute] Usuario desde localStorage:', {
-          email: parsed.email,
-          emailVerified: parsed.emailVerified,
-          fromEmail: parsed.fromEmail,
-          profileComplete: parsed.profileComplete
-        });
-      } catch (error) {
-        console.error('Error parsing userData:', error);
-      }
-    }
-    setCheckingUser(false);
-  }, [location.pathname]);
-
-  if (isLoading || checkingUser) {
+  if (isLoading) {
     return <Loading />;
   }
 
@@ -39,14 +17,11 @@ export const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Usar localUser (localStorage) en lugar de user (contexto)
-  if (localUser && !localUser.emailVerified && !localUser.fromEmail) {
-    console.log('⚠️ [ProtectedRoute] Email no verificado, redirigiendo...');
+  if (user && !user.emailVerified && !user.fromEmail) {
     return <Navigate to="/email-confirmation" replace />;
   }
 
-  if (localUser && !localUser.profileComplete) {
-    console.log('⚠️ [ProtectedRoute] Perfil incompleto, redirigiendo...');
+  if (user && !user.profileComplete) {
     return <Navigate to="/complete-profile" replace />;
   }
 

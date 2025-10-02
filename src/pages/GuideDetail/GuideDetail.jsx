@@ -49,6 +49,7 @@ export default function GuideDetail() {
   }, [idGuia, alert.showError]);
 
   useEffect(() => {
+    console.log('GuideDetail useEffect: Running loadGuiaDetail');
     if (isSignedIn) {
       loadGuiaDetail();
     }

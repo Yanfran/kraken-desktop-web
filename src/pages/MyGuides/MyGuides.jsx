@@ -5,6 +5,8 @@ import styles from './MyGuides.module.scss';
 import GuiaCard from './GuiaCard';
 import clsx from 'clsx'; // Import clsx
 
+import Loading from '../../components/common/Loading/Loading';
+
 export default function MyGuides() {
   const [guias, setGuias] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +15,7 @@ export default function MyGuides() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   useEffect(() => {
+    console.log('MyGuides useEffect: Running loadGuias');
     const loadGuias = async () => {
       try {
         setLoading(true);
@@ -70,7 +73,7 @@ export default function MyGuides() {
       </header>
 
       <div className={styles.content}>
-        {loading && <p>Cargando guías...</p>}
+        {loading && <Loading />}
         {error && <p className={styles.error}>{error}</p>}
         {!loading && !error && (
           <div className={clsx(styles.guidesList, styles[viewMode])}>
