@@ -34,6 +34,8 @@ const Profile = React.lazy(() => import('./pages/profile/Profile/Profile'));
 const Billing = React.lazy(() => import('./pages/Billing/Billing'));
 const Security = React.lazy(() => import('./pages/Security/Security'));
 const Rastrear = React.lazy(() => import('./pages/Rastrear/Rastrear'));
+const MyGuides = React.lazy(() => import('./pages/MyGuides/MyGuides'));
+const GuideDetail = React.lazy(() => import('./pages/GuideDetail/GuideDetail'));
 
 // Hook simplificado para compatibilidad con tu código existente
 export const useAuth = () => {
@@ -221,6 +223,22 @@ function App() {
                   <ProtectedRoute>
                     <DashboardLayout>
                       <Rastrear />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/my-guides" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <MyGuides />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/guide/detail/:idGuia" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <GuideDetail />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />

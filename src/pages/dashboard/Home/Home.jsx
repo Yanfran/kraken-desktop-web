@@ -202,7 +202,7 @@ const Home = ({ onNavigateToShipments }) => {
   const handleViewDetailShipment = (shipment) => {
     console.log('Ver detalle shipment:', shipment);
     setVisibleMenus({});
-    // TODO: Navigate to detail page
+    navigate(`/guide/detail/${shipment.id}`);
   };
 
   const handlePayShipment = (shipment) => {

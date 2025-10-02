@@ -1,5 +1,5 @@
 // src/contexts/AuthContext.jsx - Adaptado completo de tu React Native
-import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useRef, useMemo, useCallback } from 'react';
 import { authService } from '../services/auth/authService';
 import { googleService } from '../services/auth/googleService';
 import Cookies from 'js-cookie';
@@ -128,21 +128,19 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  // ===== FUNCIÓN DE LOGIN =====
-  const signIn = async (email, password) => {
+  // ===== FUNCIONES MEMOIZADAS =====
+  const signIn = useCallback(async (email, password) => {
     try {
       dispatch({ type: 'LOADING' });
       const response = await authService.login({ email, password });
       
       if (response.success) {
-        // Guardar en storage
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userData', JSON.stringify(response.user));
-        Cookies.set('authToken', response.token, { expires: 7 }); // 7 días
+        Cookies.set('authToken', response.token, { expires: 7 });
         
         dispatch({ type: 'LOGIN_SUCCESS', payload: response.user });
         console.log('✅ [Auth] Login exitoso');
-        
         return { success: true };
       } else {
         dispatch({ type: 'ERROR', payload: response.message });
@@ -153,13 +151,11 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'ERROR', payload: errorMessage });
       return { success: false, message: errorMessage };
     }
-  };
+  }, []);
 
-  // ===== FUNCIÓN DE REGISTRO =====
-  const signUp = async (userData) => {
+  const signUp = useCallback(async (userData) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      
       const result = await authService.register({
         name: userData.name,
         lastName: userData.lastName,
@@ -181,39 +177,24 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('[AuthContext] Sign up error:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
-      return {
-        success: false,
-        message: 'Error de conexión. Intenta de nuevo.'
-      };
+      return { success: false, message: 'Error de conexión. Intenta de nuevo.' };
     }
-  };
+  }, []);
 
-  
-
-  // ===== FUNCIÓN DE GOOGLE SIGN IN =====
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     try {
       dispatch({ type: 'LOADING' });
-      
-      // Inicializar Google Auth si no está disponible
-      if (!window.google) {
-        await googleService.loadGoogleScript();
-      }
-
+      if (!window.google) await googleService.loadGoogleScript();
       const googleResponse = await googleService.signIn();
       
       if (googleResponse.success) {
         const authResponse = await authService.loginWithGoogle(googleResponse.token);
-        
         if (authResponse.success) {
-          // Guardar en storage
           localStorage.setItem('authToken', authResponse.token);
           localStorage.setItem('userData', JSON.stringify(authResponse.user));
           Cookies.set('authToken', authResponse.token, { expires: 7 });
-          
           dispatch({ type: 'LOGIN_SUCCESS', payload: authResponse.user });
           console.log('✅ [Auth] Google login exitoso');
-          
           return { success: true };
         }
       }
@@ -225,81 +206,55 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'ERROR', payload: 'Error con Google' });
       return { success: false, message: 'Error con Google' };
     }
-  };
+  }, []);
 
-  // ===== FUNCIÓN DE LOGOUT =====
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await authService.logout();
     } catch (error) {
       console.warn('⚠️ [Auth] Error en logout del servidor:', error);
     } finally {
-      // Limpiar storage siempre
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       Cookies.remove('authToken');
-      
       dispatch({ type: 'LOGOUT' });
       console.log('✅ [Auth] Logout exitoso');
     }
-  };
+  }, []);
 
-  const confirmEmail = () => {
-    console.log('✅ [AuthContext] Confirmando email...');
-    
+  const confirmEmail = useCallback(() => {
     if (state.user) {
-      const updatedUser = {
-        ...state.user,
-        emailVerified: true,
-        fromEmail: true
-      };
-      
+      const updatedUser = { ...state.user, emailVerified: true, fromEmail: true };
       localStorage.setItem('userData', JSON.stringify(updatedUser));
       dispatch({ type: 'UPDATE_USER', payload: { emailVerified: true, fromEmail: true } });
-      
       console.log('✅ [AuthContext] Email confirmado');
     }
-  };
+  }, [state.user]);
 
-
-  // ===== FUNCIÓN PARA ACTUALIZAR USUARIO =====
-  const setUserState = async (userData, token = null) => {
+  const setUserState = useCallback(async (userData, token = null) => {
     if (userData) {
-      console.log('🔄 [AuthContext] setUserState - Actualizando usuario:', userData);
-      
-      // Guardar en localStorage
       localStorage.setItem('userData', JSON.stringify(userData));
-      
       if (token) {
         localStorage.setItem('authToken', token);
         Cookies.set('authToken', token, { expires: 7 });
       }
-      
-      // ✅ SIEMPRE despachar al reducer para actualizar el contexto
       dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
-      
-      console.log('✅ [AuthContext] Usuario actualizado en el contexto');
     } else {
       await signOut();
     }
-  };
+  }, [signOut]);
 
-  // ===== REENVIAR EMAIL DE VERIFICACIÓN =====
-  const resendVerificationEmail = async (email) => {
+  const resendVerificationEmail = useCallback(async (email) => {
     try {
-      const response = await authService.resendVerificationEmail(email);
-      return response;
+      return await authService.resendVerificationEmail(email);
     } catch (error) {
       console.error('[AuthContext] Resend verification error:', error);
-      return {
-        success: false,
-        message: 'Error al reenviar email de verificación'
-      };
+      return { success: false, message: 'Error al reenviar email de verificación' };
     }
-  };
+  }, []);
 
-  // ===== VALOR DEL CONTEXTO =====
-  const value = {
+  // ===== VALOR DEL CONTEXTO MEMOIZADO =====
+  const value = useMemo(() => ({
     user: state.user,
     isLoading: state.isLoading,
     isSignedIn: state.isSignedIn,
@@ -309,8 +264,8 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     confirmEmail,
     setUserState,
-    resendVerificationEmail  
-  };
+    resendVerificationEmail
+  }), [state.user, state.isLoading, state.isSignedIn, signIn, signOut, signUp, signInWithGoogle, confirmEmail, setUserState, resendVerificationEmail]);
 
   return (
     <AuthContext.Provider value={value}>
