@@ -1,40 +1,21 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { getGuias } from '../../services/guiasService';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchGuias } from '../../services/guiasService';
 import styles from './MyGuides.module.scss';
 import GuiaCard from './GuiaCard';
-import clsx from 'clsx'; // Import clsx
+import clsx from 'clsx';
 
 import Loading from '../../components/common/Loading/Loading';
 
 export default function MyGuides() {
-  const [guias, setGuias] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
-  useEffect(() => {
-    console.log('MyGuides useEffect: Running loadGuias');
-    const loadGuias = async () => {
-      try {
-        setLoading(true);
-        const response = await getGuias();
-        if (response.success) {
-          setGuias(response.data || []);
-        } else {
-          setError(response.message || 'Error al cargar las guías.');
-        }
-      } catch (err) {
-        setError('Error de conexión al cargar las guías.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadGuias();
-  }, []);
+  const { data: guias = [], isLoading, isError, error } = useQuery({
+    queryKey: ['guias'],
+    queryFn: fetchGuias,
+  });
 
   const filteredGuias = useMemo(() => {
     if (!searchQuery) {
@@ -73,9 +54,9 @@ export default function MyGuides() {
       </header>
 
       <div className={styles.content}>
-        {loading && <Loading />}
-        {error && <p className={styles.error}>{error}</p>}
-        {!loading && !error && (
+        {isLoading && <Loading />}
+        {isError && <p className={styles.error}>{error.message}</p>}
+        {!isLoading && !isError && (
           <div className={clsx(styles.guidesList, styles[viewMode])}>
             {filteredGuias.length > 0 ? (
               filteredGuias.map(guia => (

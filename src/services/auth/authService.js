@@ -183,15 +183,19 @@ export const authService = {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      return {
-        id: response.data.user.id,
-        email: response.data.user.email,
-        name: response.data.user.nombres || response.data.user.firstName,
-        lastName: response.data.user.apellidos || response.data.user.lastName,
-        emailVerified: response.data.user.emailVerified || true,
-        profileComplete: response.data.user.profileComplete || false,
-        clienteActivo: response.data.user.clienteActivo || true
-      };
+      // Adaptado a la respuesta del nuevo endpoint de perfil
+      if (response.data.success) {
+        return {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          name: response.data.user.nombres || response.data.user.firstName,
+          lastName: response.data.user.apellidos || response.data.user.lastName,
+          emailVerified: response.data.user.emailVerified || true,
+          profileComplete: response.data.user.profileComplete || false,
+          clienteActivo: response.data.user.clienteActivo || true
+        };
+      }
+      throw new Error(response.data.message || 'Token validation failed');
     } catch (error) {
       console.error('❌ [AuthService] Token validation error:', error);
       throw new Error('Token inválido o expirado');

@@ -18,9 +18,19 @@ export const getGuias = async () => {
       success: false,
       message: error.response?.data?.message || 'Error al cargar guías',
       errors: error.response?.data?.errors || [error.message],
-      data: []
     };
   }
+};
+
+export const fetchGuias = async () => {
+  const response = await axiosInstance.get('/PostPreAlert/getGuias');
+  const apiResponse = response.data;
+
+  if (!apiResponse.success) {
+    throw new Error(apiResponse.message || 'Error al cargar las guías.');
+  }
+
+  return Array.isArray(apiResponse.data) ? apiResponse.data : [];
 };
 
 export const getGuiaById = async (id) => {
