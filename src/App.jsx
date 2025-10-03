@@ -25,10 +25,10 @@ const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
 // Protected pages - TUS COMPONENTES EXISTENTES
 const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 const Calculator = React.lazy(() => import('./pages/calculator/Calculator/Calculator'));
-const PreAlert = React.lazy(() => import('./pages/PreAlert/PreAlert'));
-const PreAlertList = React.lazy(() => import('./pages/PreAlert/PreAlertList'));
-const PreAlertDetail = React.lazy(() => import('./pages/PreAlert/PreAlertDetail'));
-const PreAlertEdit = React.lazy(() => import('./pages/PreAlert/PreAlertEdit'));
+const PreAlertCreate = React.lazy(() => import('./pages/PreAlert/Create/PreAlertCreate'));
+const PreAlertList = React.lazy(() => import('./pages/PreAlert/List/PreAlertList'));
+const PreAlertDetail = React.lazy(() => import('./pages/PreAlert/Detail/PreAlertDetail'));
+const PreAlertEdit = React.lazy(() => import('./pages/PreAlert/Edit/PreAlertEdit'));
 const ShipmentsList = React.lazy(() => import('./pages/dashboard/ShipmentsList/ShipmentsList'));
 const Profile = React.lazy(() => import('./pages/profile/Profile/Profile'));
 const Billing = React.lazy(() => import('./pages/Billing/Billing'));
@@ -155,10 +155,10 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                <Route path="/pre-alert" element={
+                <Route path="/pre-alert/create" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <PreAlert />
+                      <PreAlertCreate />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />

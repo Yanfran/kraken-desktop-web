@@ -1,7 +1,7 @@
 // src/pages/PreAlert/PreAlert.styles.scss
 @import '@styles/variables.scss';
-@import '@styles/mixins.scss';
 @import '@styles/breakpoints.scss';
+@import '@styles/mixins.scss';
 
 .pre-alert {
   min-height: 100vh;
@@ -16,12 +16,12 @@
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     padding: 2.5rem;
 
-    @include tablet {
+    @include respond-to(tablet) {
       padding: 2rem;
       margin: 0 1rem;
     }
 
-    @include mobile {
+    @include respond-to(mobile) {
       padding: 1.5rem;
       margin: 0 0.5rem;
       border-radius: 12px;
@@ -34,7 +34,7 @@
     padding-bottom: 2rem;
     border-bottom: 2px solid #f1f3f4;
 
-    @include mobile {
+    @include respond-to(mobile) {
       margin-bottom: 2rem;
       padding-bottom: 1.5rem;
     }
@@ -51,7 +51,7 @@
     justify-content: center;
     box-shadow: 0 8px 24px rgba(255, 69, 0, 0.3);
 
-    @include mobile {
+    @include respond-to(mobile) {
       width: 64px;
       height: 64px;
       margin-bottom: 1rem;
@@ -64,7 +64,7 @@
     object-fit: contain;
     filter: brightness(0) invert(1);
 
-    @include mobile {
+    @include respond-to(mobile) {
       width: 40px;
       height: 40px;
     }
@@ -77,11 +77,11 @@
     margin-bottom: 1rem;
     line-height: 1.2;
 
-    @include tablet {
+    @include respond-to(tablet) {
       font-size: 2.25rem;
     }
 
-    @include mobile {
+    @include respond-to(mobile) {
       font-size: 1.875rem;
     }
   }
@@ -93,7 +93,7 @@
     max-width: 600px;
     margin: 0 auto;
 
-    @include mobile {
+    @include respond-to(mobile) {
       font-size: 1rem;
     }
   }
@@ -103,7 +103,7 @@
     flex-direction: column;
     gap: 2rem;
 
-    @include mobile {
+    @include respond-to(mobile) {
       gap: 1.5rem;
     }
   }
@@ -205,7 +205,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
 
-    @include mobile {
+    @include respond-to(mobile) {
       grid-template-columns: 1fr;
       gap: 0.75rem;
     }
@@ -213,11 +213,11 @@
     &--three-cols {
       grid-template-columns: 1fr 1fr 1fr;
 
-      @include tablet {
+      @include respond-to(tablet) {
         grid-template-columns: 1fr 1fr;
       }
 
-      @include mobile {
+      @include respond-to(mobile) {
         grid-template-columns: 1fr;
       }
     }
@@ -285,7 +285,7 @@
     gap: 1rem;
     flex-wrap: wrap;
 
-    @include mobile {
+    @include respond-to(mobile) {
       flex-direction: column;
       gap: 0.5rem;
     }
@@ -404,7 +404,7 @@
     display: flex;
     justify-content: center;
 
-    @include mobile {
+    @include respond-to(mobile) {
       margin-top: 1.5rem;
       padding-top: 1.5rem;
     }
@@ -443,7 +443,7 @@
       box-shadow: 0 4px 16px rgba(255, 69, 0, 0.2);
     }
 
-    @include mobile {
+    @include respond-to(mobile) {
       width: 100%;
       min-width: auto;
     }
@@ -456,7 +456,7 @@
   }
 
   // Responsive improvements
-  @include mobile {
+  @include respond-to(mobile) {
     padding: 1rem 0;
 
     &__layout {

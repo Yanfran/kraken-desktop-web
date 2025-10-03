@@ -106,7 +106,7 @@ const PreAlertList = () => {
 
   const handleEdit = (preAlerta) => {
     closeAllMenus();
-    navigate(`/pre-alerts/edit/${preAlerta.id}`);
+    navigate(`/pre-alert/edit/${preAlerta.id}`);
   };
 
   // Delete pre-alert
@@ -165,8 +165,7 @@ const PreAlertList = () => {
       </p>
       <Button
         variant="primary"
-        onClick={() => navigate('/pre-alerts/create')}
-        className="pre-alert-list__empty-btn"
+                    onClick={() => navigate('/pre-alert/create')}        className="pre-alert-list__empty-btn"
       >
         Crear Pre-Alerta
       </Button>
@@ -207,7 +206,7 @@ const PreAlertList = () => {
           </Button>
           <Button
             variant="primary"
-            onClick={() => navigate('/pre-alerts/create')}
+          onClick={() => navigate('/pre-alert/create')}
             className="pre-alert-list__create-btn"
           >
             + Nueva Pre-Alerta
