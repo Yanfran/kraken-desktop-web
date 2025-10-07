@@ -1,3 +1,4 @@
+@use "sass:color";
 
 @import '../../styles/variables'; // Asumiendo que tienes variables globales de SCSS
 
@@ -66,7 +67,7 @@ $separator-color: #EEEEEE;
   font-size: 1rem;
   font-weight: 600;
   transition: background-color 0.3s;
-  &:hover { background-color: darken($primary-color, 10%); }
+  &:hover { background-color: color.scale($primary-color, $lightness: -10%); }
 }
 
 .alertContainer {
@@ -280,7 +281,7 @@ $separator-color: #EEEEEE;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s;
-  &:hover { background-color: darken($primary-color, 10%); }
+  &:hover { background-color: color.scale($primary-color, $lightness: -10%); }
 }
 
 .iconPlaceholder {
