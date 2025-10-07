@@ -741,3 +741,599 @@
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Agregar estos estilos a PreAlertCreate.styles.scss
+
+// ✅ ESTILOS PARA LA DIRECCIÓN PREDETERMINADA
+.prealert-create__address-display {
+  margin-bottom: 1rem;
+}
+
+.prealert-create__address-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  
+  svg {
+    flex-shrink: 0;
+    color: #6366f1;
+    stroke-width: 2;
+  }
+  
+  span {
+    font-size: 0.95rem;
+    color: #374151;
+    line-height: 1.5;
+  }
+}
+
+.prealert-create__checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  user-select: none;
+  
+  input[type="checkbox"] {
+    margin-top: 0.2rem;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #6366f1;
+    flex-shrink: 0;
+  }
+  
+  span {
+    font-size: 0.95rem;
+    color: #374151;
+    line-height: 1.5;
+  }
+  
+  &:hover span {
+    color: #1f2937;
+  }
+}
+
+// ✅ ESTILOS PARA EL ÁREA DE CAMBIO DE DIRECCIÓN
+.prealert-create__address-change {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.prealert-create__radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.prealert-create__radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  input[type="radio"] {
+    margin-top: 0.2rem;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    accent-color: #6366f1;
+    flex-shrink: 0;
+  }
+  
+  &:hover {
+    border-color: #d1d5db;
+    background: #fafafa;
+  }
+  
+  input[type="radio"]:checked + span,
+  input[type="radio"]:checked + .prealert-create__radio-content {
+    color: #6366f1;
+    font-weight: 500;
+  }
+  
+  &:has(input[type="radio"]:checked) {
+    border-color: #6366f1;
+    background: #eef2ff;
+  }
+}
+
+.prealert-create__radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.prealert-create__radio-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.prealert-create__radio-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+// ✅ ESTILOS PARA LOS FORMULARIOS DE DIRECCIÓN
+.prealert-create__address-form {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.prealert-create__form-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+// ✅ MEJORAR INPUT DE TRACKING CON MAYÚSCULAS
+.prealert-create__tracking-item {
+  input[type="text"] {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+    
+    &::placeholder {
+      text-transform: none;
+      font-family: inherit;
+      font-weight: normal;
+      letter-spacing: normal;
+    }
+  }
+}
+
+// ✅ RESPONSIVE
+@media (max-width: 768px) {
+  .prealert-create__address-card {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    svg {
+      margin-bottom: 0.5rem;
+    }
+  }
+  
+  .prealert-create__radio-option {
+    padding: 0.875rem;
+  }
+  
+  .prealert-create__address-form {
+    padding: 1rem;
+  }
+  
+  .prealert-create__form-title {
+    font-size: 1rem;
+  }
+}
+
+// ✅ ANIMACIONES SUAVES
+.prealert-create__address-change {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ✅ MEJORAS DE ACCESIBILIDAD
+.prealert-create__checkbox-label,
+.prealert-create__radio-option {
+  &:focus-within {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+  }
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  &:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+  }
+}
+
+
+
+
+
+
+
+// ═══════════════════════════════════════════════════════
+// MEJORAS IMPLEMENTADAS
+// ═══════════════════════════════════════════════════════
+
+// ✅ 1. TRACKING EN MAYÚSCULAS
+.prealert-create__tracking-item {
+  input[type="text"] {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+    
+    &::placeholder {
+      text-transform: none;
+      font-family: inherit;
+      font-weight: normal;
+      letter-spacing: normal;
+    }
+  }
+}
+
+// ✅ 2. CURRENCY INPUT
+.prealert-create__input--currency {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: right;
+  font-size: 1rem;
+}
+
+// ✅ 3. ORDEN DEL VALOR DECLARADO (Moneda primero, luego valor)
+.prealert-create__row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+
+  .prealert-create__col--small {
+    order: 1;
+    flex: 0 0 100px;
+  }
+
+  .prealert-create__col:not(.prealert-create__col--small) {
+    order: 2;
+    flex: 1;
+  }
+}
+
+// ✅ 4. FACTURAS
+.prealert-create__helper-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
+.prealert-create__file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.prealert-create__file-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.prealert-create__file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.prealert-create__file-size {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.prealert-create__file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #d1d5db;
+    background: #fafafa;
+  }
+}
+
+.prealert-create__file-remove {
+  padding: 0.375rem 0.625rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #fecaca;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// ✅ 5. DIRECCIÓN PREDETERMINADA
+.prealert-create__address-display {
+  margin-bottom: 1rem;
+}
+
+.prealert-create__address-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  
+  svg {
+    flex-shrink: 0;
+    color: #6366f1;
+    stroke-width: 2;
+  }
+  
+  span {
+    font-size: 0.95rem;
+    color: #374151;
+    line-height: 1.5;
+  }
+}
+
+.prealert-create__checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  user-select: none;
+  
+  input[type="checkbox"] {
+    margin-top: 0.2rem;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #6366f1;
+    flex-shrink: 0;
+  }
+  
+  span {
+    font-size: 0.95rem;
+    color: #374151;
+    line-height: 1.5;
+  }
+  
+  &:hover span {
+    color: #1f2937;
+  }
+}
+
+.prealert-create__address-change {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.prealert-create__radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.prealert-create__radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  input[type="radio"] {
+    margin-top: 0.2rem;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    accent-color: #6366f1;
+    flex-shrink: 0;
+  }
+  
+  &:hover {
+    border-color: #d1d5db;
+    background: #fafafa;
+  }
+  
+  input[type="radio"]:checked + span,
+  input[type="radio"]:checked + .prealert-create__radio-content {
+    color: #6366f1;
+    font-weight: 500;
+  }
+  
+  &:has(input[type="radio"]:checked) {
+    border-color: #6366f1;
+    background: #eef2ff;
+  }
+}
+
+.prealert-create__radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.prealert-create__radio-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.prealert-create__radio-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.prealert-create__address-form {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.prealert-create__form-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+// ✅ ANIMACIONES
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ✅ RESPONSIVE
+@media (max-width: 768px) {
+  .prealert-create__address-card {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    svg {
+      margin-bottom: 0.5rem;
+    }
+  }
+  
+  .prealert-create__radio-option {
+    padding: 0.875rem;
+  }
+  
+  .prealert-create__address-form {
+    padding: 1rem;
+  }
+  
+  .prealert-create__form-title {
+    font-size: 1rem;
+  }
+
+  .prealert-create__file-item {
+    padding: 0.75rem;
+  }
+
+  .prealert-create__file-name {
+    font-size: 0.85rem;
+  }
+
+  .prealert-create__row {
+    flex-direction: column;
+    
+    .prealert-create__col--small {
+      order: 1;
+      flex: 1;
+      width: 100%;
+    }
+
+    .prealert-create__col:not(.prealert-create__col--small) {
+      order: 2;
+      flex: 1;
+      width: 100%;
+    }
+  }
+}
+
+// ✅ ACCESIBILIDAD
+.prealert-create__checkbox-label,
+.prealert-create__radio-option {
+  &:focus-within {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+  }
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  &:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+  }
+}

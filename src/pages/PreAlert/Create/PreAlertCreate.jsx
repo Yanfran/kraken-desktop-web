@@ -1,4 +1,3 @@
-// src/pages/PreAlert/Create/PreAlertCreate.jsx
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -8,10 +7,15 @@ import toast from 'react-hot-toast';
 import { getPaquetesContenidos, createPreAlerta } from '../../../services/preAlertService';
 import { getStatesByCountry, getMunicipalitiesByState, getParishesByMunicipality, getDeliveryData, getUserAddresses } from '../../../services/address/addressService';
 
+// Utils
+import { formatValueForBackend, parseFormattedValue } from '../../../utils/currencyUtils';
+
+
 // Components
 import MultiSelectSearchable from '../../../components/common/MultiSelectSearchable/MultiSelectSearchable';
 import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect';
 import LoadingSpinner from '../../../components/common/Loading/Loading';
+import CurrencyInput from '../../../components/common/CurrencyInput/CurrencyInput';
 
 import './PreAlertCreate.styles.scss';
 
@@ -38,9 +42,11 @@ const PreAlertCreate = () => {
     address: '',
     reference: '',
     addressName: '',
-    selectedOption: 'new'
+    selectedOption: 'default', // 'default', 'store', 'new', o 'addr-{id}'
+    showChangeAddress: false // Nuevo: controla si se muestra el cambio de dirección
   });
 
+  const [defaultAddressText, setDefaultAddressText] = useState('Cargando dirección...');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -83,13 +89,13 @@ const PreAlertCreate = () => {
     select: (response) => response.data?.map(p => ({ label: p.name, value: p.id.toString() })),
   });
 
-  // ✅ Procesar ciudades (solo Caracas ID=50)
+  // Procesar ciudades (solo Caracas ID=50)
   const availableCities = useMemo(() => {
     if (!deliveryData?.ciudad) return [];
     return [{ label: deliveryData.ciudad.name, value: deliveryData.ciudad.id.toString() }];
   }, [deliveryData]);
 
-  // ✅ Filtrar tiendas tipo 2 (Lockers)
+  // Filtrar tiendas tipo 2 (Lockers)
   const filteredTiendas = useMemo(() => {
     if (!deliveryData?.tiendas) return [];
     return deliveryData.tiendas
@@ -102,14 +108,26 @@ const PreAlertCreate = () => {
     return contenidosData.map(c => ({ label: c.contenido, value: c.id.toString() }));
   }, [contenidosData]);
 
-  // ✅ Auto-cargar dirección predeterminada o ciudad por defecto
+  // ✅ MEJORADO: Cargar dirección predeterminada completa
   useEffect(() => {
     if (!userAddresses || userAddresses.length === 0) {
-      if (deliveryData?.ciudad && addressState.deliveryMethod === 'store') {
-        setAddressState(prev => ({
-          ...prev,
-          selectedCity: deliveryData.ciudad.id.toString()
-        }));
+      // No hay direcciones, cargar tienda por defecto
+      if (deliveryData?.ciudad && deliveryData?.tiendas) {
+        const defaultStore = deliveryData.tiendas.find(t => 
+          t.nombre.toLowerCase().includes('chacao') || 
+          t.nombre.toLowerCase().includes('kraken')
+        ) || deliveryData.tiendas[0];
+
+        if (defaultStore) {
+          setAddressState(prev => ({
+            ...prev,
+            deliveryMethod: 'store',
+            selectedCity: deliveryData.ciudad.id.toString(),
+            selectedLocker: defaultStore.id.toString(),
+            selectedOption: 'default'
+          }));
+          setDefaultAddressText(`Retiro en tienda: ${defaultStore.nombre}`);
+        }
       }
       return;
     }
@@ -122,8 +140,10 @@ const PreAlertCreate = () => {
           deliveryMethod: 'store',
           selectedCity: defaultAddr.idCiudad?.toString() ?? '',
           selectedLocker: defaultAddr.idLocker?.toString() ?? '',
-          selectedOption: 'store'
+          selectedOption: 'default'
         }));
+        const texto = `Retiro en tienda: ${defaultAddr.nombreLocker ?? 'Locker'}`;
+        setDefaultAddressText(defaultAddr.nombreDireccion || texto);
       } else {
         setAddressState(prev => ({
           ...prev,
@@ -134,21 +154,18 @@ const PreAlertCreate = () => {
           address: defaultAddr.direccionCompleta ?? '',
           reference: defaultAddr.referencia ?? '',
           addressName: defaultAddr.nombreDireccion ?? '',
-          selectedOption: `addr-${defaultAddr.id}`
+          selectedOption: 'default'
         }));
+        const parts = [
+          defaultAddr.direccionCompleta,
+          defaultAddr.nombreParroquia,
+          defaultAddr.nombreMunicipio,
+          defaultAddr.nombreEstado
+        ].filter(Boolean);
+        setDefaultAddressText(defaultAddr.nombreDireccion || parts.join(', '));
       }
     }
   }, [userAddresses, deliveryData]);
-
-  // ✅ Auto-seleccionar Caracas cuando cambia a "store"
-  useEffect(() => {
-    if (addressState.deliveryMethod === 'store' && availableCities.length > 0 && !addressState.selectedCity) {
-      setAddressState(prev => ({
-        ...prev,
-        selectedCity: availableCities[0].value
-      }));
-    }
-  }, [addressState.deliveryMethod, availableCities, addressState.selectedCity]);
 
   // Handlers
   const updateFormState = useCallback((key, value) => {
@@ -159,9 +176,15 @@ const PreAlertCreate = () => {
     setAddressState(prev => ({ ...prev, [key]: value }));
   }, []);
 
+  // ✅ NUEVO: Función para formatear tracking en mayúsculas
+  const formatTrackingText = (text) => {
+    return text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  };
+
   const handleUpdateTracking = useCallback((text, index) => {
+    const formattedText = formatTrackingText(text);
     const newTrackings = [...formState.trackings];
-    newTrackings[index] = text;
+    newTrackings[index] = formattedText;
     updateFormState('trackings', newTrackings);
   }, [formState.trackings, updateFormState]);
 
@@ -187,20 +210,33 @@ const PreAlertCreate = () => {
     updateFormState('tipoContenido', newTypes);
   }, [formState.tipoContenido, updateFormState]);
 
+  // ✅ ACTUALIZADO: Máximo 3 archivos
   const handleFileChange = useCallback(async (event) => {
     const files = Array.from(event.target.files);
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    const maxSize = 5 * 1024 * 1024;
-    const maxFiles = 5;
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxFiles = 3; // ✅ CAMBIO: Máximo 3 archivos
 
-    if (formState.facturas.length + files.length > maxFiles) {
-      toast.error(`Máximo ${maxFiles} archivos permitidos`);
+    // ✅ Verificar límite ANTES de procesar
+    if (formState.facturas.length >= maxFiles) {
+      toast.error(`Solo puedes seleccionar máximo ${maxFiles} archivos`);
+      return;
+    }
+
+    const currentFiles = formState.facturas;
+    const totalFiles = currentFiles.length + files.length;
+
+    if (totalFiles > maxFiles) {
+      const allowedCount = maxFiles - currentFiles.length;
+      toast.error(
+        `Solo puedes agregar ${allowedCount} archivo(s) más. Máximo ${maxFiles} archivos en total.`
+      );
       return;
     }
 
     const validFiles = files.filter(file => {
       if (!allowedTypes.includes(file.type)) {
-        toast.error(`${file.name}: Tipo no permitido`);
+        toast.error(`${file.name}: Tipo no permitido. Solo PDF e imágenes (JPG, PNG, GIF, WEBP)`);
         return false;
       }
       if (file.size > maxSize) {
@@ -210,12 +246,54 @@ const PreAlertCreate = () => {
       return true;
     });
 
-    updateFormState('facturas', [...formState.facturas, ...validFiles]);
+    if (validFiles.length > 0) {
+      const updatedFiles = [...formState.facturas, ...validFiles].slice(0, maxFiles);
+      updateFormState('facturas', updatedFiles);
+      
+      toast.success(
+        `Se ${validFiles.length === 1 
+          ? 'agregó 1 archivo' 
+          : `agregaron ${validFiles.length} archivos`
+        } correctamente.`
+      );
+    }
   }, [formState.facturas, updateFormState]);
 
   const handleRemoveFile = useCallback((fileName) => {
     updateFormState('facturas', formState.facturas.filter(f => f.name !== fileName));
   }, [formState.facturas, updateFormState]);
+
+  // ✅ NUEVO: Handlers para cambio de dirección
+  const handleChangeAddressToggle = useCallback(() => {
+    updateAddressState('showChangeAddress', !addressState.showChangeAddress);
+  }, [addressState.showChangeAddress, updateAddressState]);
+
+  const handleSelectSavedAddress = useCallback((addressId) => {
+    const addr = userAddresses.find(a => a.id === addressId);
+    if (!addr) return;
+
+    if (addr.tipoDireccion === 'store') {
+      setAddressState(prev => ({
+        ...prev,
+        deliveryMethod: 'store',
+        selectedCity: addr.idCiudad?.toString() ?? '',
+        selectedLocker: addr.idLocker?.toString() ?? '',
+        selectedOption: `addr-${addr.id}`
+      }));
+    } else {
+      setAddressState(prev => ({
+        ...prev,
+        deliveryMethod: 'home',
+        selectedState: addr.idEstado?.toString() ?? '',
+        selectedMunicipality: addr.idMunicipio?.toString() ?? '',
+        selectedParish: addr.idParroquia?.toString() ?? '',
+        address: addr.direccionCompleta ?? '',
+        reference: addr.referencia ?? '',
+        addressName: addr.nombreDireccion ?? '',
+        selectedOption: `addr-${addr.id}`
+      }));
+    }
+  }, [userAddresses]);
 
   const validateForm = useCallback(() => {
     const newErrors = {};
@@ -231,16 +309,15 @@ const PreAlertCreate = () => {
       newErrors.contenidos = 'Debe seleccionar al menos un contenido';
     }
 
-    if (addressState.deliveryMethod === 'store') {
+    // Validar dirección según el estado actual
+    if (addressState.selectedOption === 'store') {
       if (!addressState.selectedCity || !addressState.selectedLocker) {
         newErrors.address = 'Debe seleccionar ciudad y tienda';
       }
-    } else {
-      if (addressState.selectedOption === 'new') {
-        if (!addressState.selectedState || !addressState.selectedMunicipality || 
-            !addressState.selectedParish || !addressState.address) {
-          newErrors.address = 'Complete todos los campos de dirección';
-        }
+    } else if (addressState.selectedOption === 'new') {
+      if (!addressState.selectedState || !addressState.selectedMunicipality || 
+          !addressState.address) {
+        newErrors.address = 'Complete todos los campos de dirección';
       }
     }
 
@@ -270,25 +347,34 @@ const PreAlertCreate = () => {
     setIsSubmitting(true);
 
     try {
-      const direccion = {
-        tipo: addressState.deliveryMethod
-      };
+      const direccion = {};
 
-      if (addressState.deliveryMethod === 'store') {
+      // Determinar qué dirección usar
+      if (addressState.selectedOption === 'default') {
+        // Usar dirección predeterminada
+        const defaultAddr = userAddresses.find(a => a.esPredeterminada);
+        if (defaultAddr) {
+          direccion.idDireccion = defaultAddr.id;
+          direccion.tipo = defaultAddr.tipoDireccion;
+        }
+      } else if (addressState.selectedOption === 'store') {
+        // Retiro en tienda nueva
+        direccion.tipo = 'store';
         direccion.ciudad = addressState.selectedCity;
         direccion.tienda = addressState.selectedLocker;
-      } else {
-        if (addressState.selectedOption === 'new') {
-          direccion.estado = addressState.selectedState;
-          direccion.municipio = addressState.selectedMunicipality;
-          direccion.parroquia = addressState.selectedParish;
-          direccion.direccion = addressState.address;
-          direccion.referencia = addressState.reference;
-          direccion.nombreDireccion = addressState.addressName;
-        } else {
-          const addressId = parseInt(addressState.selectedOption.replace('addr-', ''));
-          direccion.idDireccion = addressId;
-        }
+      } else if (addressState.selectedOption === 'new') {
+        // Dirección a domicilio nueva
+        direccion.tipo = 'home';
+        direccion.estado = addressState.selectedState;
+        direccion.municipio = addressState.selectedMunicipality;
+        direccion.parroquia = addressState.selectedParish;
+        direccion.direccion = addressState.address;
+        direccion.referencia = addressState.reference;
+        direccion.nombreDireccion = addressState.addressName;
+      } else if (addressState.selectedOption.startsWith('addr-')) {
+        // Dirección guardada seleccionada
+        const addressId = parseInt(addressState.selectedOption.replace('addr-', ''));
+        direccion.idDireccion = addressId;
       }
 
       const formatValueForBackend = (value) => {
@@ -360,6 +446,7 @@ const PreAlertCreate = () => {
 
         <form className="prealert-create__form" onSubmit={handleSubmit}>
           
+          {/* SECCIÓN TRACKINGS */}
           <div className="prealert-create__section">
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
@@ -382,10 +469,11 @@ const PreAlertCreate = () => {
                 <input
                   type="text"
                   className="prealert-create__input"
-                  placeholder="Número de Tracking"
+                  placeholder="Ejemplo: 1ZE9889W04276202"
                   value={tracking}
                   onChange={(e) => handleUpdateTracking(e.target.value, index)}
                   maxLength={30}
+                  style={{ textTransform: 'uppercase' }}
                 />
                 {index > 0 && (
                   <button
@@ -411,6 +499,7 @@ const PreAlertCreate = () => {
             </button>
           </div>
 
+          {/* SECCIÓN CONTENIDOS */}
           <div className="prealert-create__section" style={{ zIndex: 100 }}>
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
@@ -446,6 +535,7 @@ const PreAlertCreate = () => {
             )}
           </div>
 
+          {/* SECCIÓN VALOR DECLARADO */}
           <div className="prealert-create__section">
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
@@ -457,24 +547,12 @@ const PreAlertCreate = () => {
                   <path d="M12 16v-4M12 8h.01"/>
                 </svg>
                 <span className="prealert-create__tooltip-text">
-                  Ingresa el valor total de tu compra según la factura
+                  Debes ingresar el monto total de los artículos contenidos en el paquete
                 </span>
               </div>
             </div>
 
             <div className="prealert-create__row">
-              <div className="prealert-create__col">
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="prealert-create__input"
-                  placeholder="0.00"
-                  value={formState.valorDeclarado}
-                  onChange={(e) => updateFormState('valorDeclarado', e.target.value)}
-                />
-              </div>
-
               <div className="prealert-create__col prealert-create__col--small">
                 <select
                   className="prealert-create__select"
@@ -484,9 +562,27 @@ const PreAlertCreate = () => {
                   <option value="USD">USD</option>
                 </select>
               </div>
+
+              <div className="prealert-create__col">
+                <CurrencyInput
+                  className="prealert-create__input prealert-create__input--currency"
+                  placeholder="0,00"
+                  value={formState.valorDeclarado}
+                  onChange={(formattedValue, numericValue) => {
+                    // ✅ Solo guardar valores reales, no enviar "0,01" por escribir "1"
+                    if (numericValue > 0) {
+                      updateFormState('valorDeclarado', formattedValue);
+                    } else {
+                      updateFormState('valorDeclarado', '');
+                    }
+                  }}
+                  maxLength={10}
+                />
+              </div>
             </div>
           </div>
 
+          {/* SECCIÓN TIPO DE CONTENIDO */}
           <div className="prealert-create__section">
             <label className="prealert-create__label">
               Tipo de Contenido (Opcional)
@@ -505,177 +601,231 @@ const PreAlertCreate = () => {
             </div>
           </div>
 
+          {/* ✅ NUEVA SECCIÓN: DIRECCIÓN PREDETERMINADA CON OPCIÓN A CAMBIAR */}
           <div className="prealert-create__section">
-            <label className="prealert-create__label">
-              Tipo de Entrega
-              <span className="prealert-create__required">*</span>
+            <div className="prealert-create__label-row">
+              <label className="prealert-create__label">
+                Dirección de Entrega Predeterminada
+              </label>
+              <div className="prealert-create__tooltip">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4M12 8h.01"/>
+                </svg>
+                <span className="prealert-create__tooltip-text">
+                  Esta es la dirección en la que recibirás todos tus paquetes. Si no la modificas ahora, 
+                  tu paquete será enviado allí y no podrás cambiarla después de que llegue a nuestro almacén.
+                </span>
+              </div>
+            </div>
+
+            <div className="prealert-create__address-display">
+              <div className="prealert-create__address-card">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>{defaultAddressText}</span>
+              </div>
+            </div>
+
+            <label className="prealert-create__checkbox-label">
+              <input
+                type="checkbox"
+                checked={addressState.showChangeAddress}
+                onChange={handleChangeAddressToggle}
+              />
+              <span>¿Deseas cambiar la dirección de entrega de este paquete?</span>
             </label>
 
-            <div className="prealert-create__radio-group">
-              <label className="prealert-create__radio-option">
-                <input
-                  type="radio"
-                  checked={addressState.deliveryMethod === 'home'}
-                  onChange={() => updateAddressState('deliveryMethod', 'home')}
-                />
-                <span>A Domicilio</span>
-              </label>
-
-              <label className="prealert-create__radio-option">
-                <input
-                  type="radio"
-                  checked={addressState.deliveryMethod === 'store'}
-                  onChange={() => updateAddressState('deliveryMethod', 'store')}
-                />
-                <span>Retiro en Tienda</span>
-              </label>
-            </div>
-          </div>
-
-          {addressState.deliveryMethod === 'home' && (
-            <div className="prealert-create__section prealert-create__address-section">
-              <h3 className="prealert-create__section-title">Dirección de Entrega</h3>
-
-              <div className="prealert-create__radio-group">
-                {userAddresses.map(addr => (
-                  <label key={addr.id} className="prealert-create__radio-option">
+            {/* FORMULARIO DE CAMBIO DE DIRECCIÓN */}
+            {addressState.showChangeAddress && (
+              <div className="prealert-create__address-change">
+                <div className="prealert-create__radio-group">
+                  {userAddresses && userAddresses.map(addr => (
+                    <label key={addr.id} className="prealert-create__radio-option">
+                      <input
+                        type="radio"
+                        checked={addressState.selectedOption === `addr-${addr.id}`}
+                        onChange={() => handleSelectSavedAddress(addr.id)}
+                      />
+                      <div className="prealert-create__radio-content">
+                        <span className="prealert-create__radio-title">
+                          {addr.nombreDireccion || `Dirección ${addr.id}`}
+                        </span>
+                        <span className="prealert-create__radio-subtitle">
+                          {addr.tipoDireccion === 'store' 
+                            ? `Retiro en tienda: ${addr.nombreLocker}` 
+                            : addr.direccionCompleta}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+                  
+                  <label className="prealert-create__radio-option">
                     <input
                       type="radio"
-                      checked={addressState.selectedOption === `addr-${addr.id}`}
-                      onChange={() => updateAddressState('selectedOption', `addr-${addr.id}`)}
+                      checked={addressState.selectedOption === 'store'}
+                      onChange={() => updateAddressState('selectedOption', 'store')}
                     />
-                    <span>{addr.nombreDireccion || `Dirección ${addr.id}`}</span>
+                    <span>Retiro en Tienda (Nueva)</span>
                   </label>
-                ))}
-                <label className="prealert-create__radio-option">
-                  <input
-                    type="radio"
-                    checked={addressState.selectedOption === 'new'}
-                    onChange={() => updateAddressState('selectedOption', 'new')}
-                  />
-                  <span>Nueva Dirección</span>
-                </label>
-              </div>
 
-              {addressState.selectedOption === 'new' && (
-                <>
-                  <div className="prealert-create__row prealert-create__row--three">
-                    <div className="prealert-create__col">
-                      <label className="prealert-create__label">
-                        Estado <span className="prealert-create__required">*</span>
-                      </label>
-                      <SearchableSelect
-                        options={statesData || []}
-                        value={addressState.selectedState}
-                        onChange={(value) => updateAddressState('selectedState', value)}
-                        placeholder="Seleccionar estado"
-                        disabled={isLoadingStates}
-                      />
-                    </div>
-
-                    <div className="prealert-create__col">
-                      <label className="prealert-create__label">
-                        Municipio <span className="prealert-create__required">*</span>
-                      </label>
-                      <SearchableSelect
-                        options={municipalitiesData || []}
-                        value={addressState.selectedMunicipality}
-                        onChange={(value) => updateAddressState('selectedMunicipality', value)}
-                        placeholder="Seleccionar municipio"
-                        disabled={!addressState.selectedState || isLoadingMunicipalities}
-                      />
-                    </div>
-
-                    <div className="prealert-create__col">
-                      <label className="prealert-create__label">
-                        Parroquia <span className="prealert-create__required">*</span>
-                      </label>
-                      <SearchableSelect
-                        options={parishesData || []}
-                        value={addressState.selectedParish}
-                        onChange={(value) => updateAddressState('selectedParish', value)}
-                        placeholder="Seleccionar parroquia"
-                        disabled={!addressState.selectedMunicipality || isLoadingParishes}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="prealert-create__col">
-                    <label className="prealert-create__label">
-                      Dirección <span className="prealert-create__required">*</span>
-                    </label>
-                    <textarea
-                      className="prealert-create__textarea"
-                      placeholder="Ej: Calle 1, Edificio X, Apto Y"
-                      rows={3}
-                      value={addressState.address}
-                      onChange={(e) => updateAddressState('address', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="prealert-create__col">
-                    <label className="prealert-create__label">Punto de Referencia</label>
+                  <label className="prealert-create__radio-option">
                     <input
-                      type="text"
-                      className="prealert-create__input"
-                      placeholder="Ej: Casa con portón azul"
-                      value={addressState.reference}
-                      onChange={(e) => updateAddressState('reference', e.target.value)}
+                      type="radio"
+                      checked={addressState.selectedOption === 'new'}
+                      onChange={() => updateAddressState('selectedOption', 'new')}
                     />
+                    <span>Entrega a Domicilio (Nueva)</span>
+                  </label>
+                </div>
+
+                {/* FORMULARIO RETIRO EN TIENDA */}
+                {addressState.selectedOption === 'store' && (
+                  <div className="prealert-create__address-form">
+                    <h4 className="prealert-create__form-title">Retiro en Tienda</h4>
+                    
+                    <div className="prealert-create__row">
+                      <div className="prealert-create__col">
+                        <label className="prealert-create__label">
+                          Ciudad <span className="prealert-create__required">*</span>
+                        </label>
+                        <SearchableSelect
+                          options={availableCities}
+                          value={addressState.selectedCity}
+                          onChange={(value) => {
+                            updateAddressState('selectedCity', value);
+                            updateAddressState('selectedLocker', '');
+                          }}
+                          placeholder="Seleccione una ciudad"
+                          disabled={isLoadingDelivery}
+                        />
+                      </div>
+
+                      <div className="prealert-create__col">
+                        <label className="prealert-create__label">
+                          Tienda/Locker <span className="prealert-create__required">*</span>
+                        </label>
+                        <SearchableSelect
+                          options={filteredTiendas}
+                          value={addressState.selectedLocker}
+                          onChange={(value) => updateAddressState('selectedLocker', value)}
+                          placeholder="Seleccione una tienda"
+                          disabled={!addressState.selectedCity || filteredTiendas.length === 0}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </>
-              )}
-            </div>
-          )}
+                )}
 
-          {addressState.deliveryMethod === 'store' && (
-            <div className="prealert-create__section prealert-create__address-section">
-              <h3 className="prealert-create__section-title">Selecciona una tienda</h3>
+                {/* FORMULARIO ENTREGA A DOMICILIO */}
+                {addressState.selectedOption === 'new' && (
+                  <div className="prealert-create__address-form">
+                    <h4 className="prealert-create__form-title">Entrega a Domicilio</h4>
+                    
+                    <div className="prealert-create__col">
+                      <label className="prealert-create__label">
+                        Nombre de la Dirección
+                      </label>
+                      <input
+                        type="text"
+                        className="prealert-create__input"
+                        placeholder="Ej: Casa, Oficina, etc."
+                        value={addressState.addressName}
+                        onChange={(e) => updateAddressState('addressName', e.target.value)}
+                      />
+                    </div>
 
-              <div className="prealert-create__row">
-                <div className="prealert-create__col">
-                  <label className="prealert-create__label">
-                    Ciudad
-                    <span className="prealert-create__required">*</span>
-                  </label>
-                  <SearchableSelect
-                    options={availableCities}
-                    value={addressState.selectedCity}
-                    onChange={(value) => {
-                      updateAddressState('selectedCity', value);
-                      updateAddressState('selectedLocker', '');
-                    }}
-                    placeholder="Seleccione una ciudad"
-                    disabled={isLoadingDelivery}
-                  />
-                </div>
+                    <div className="prealert-create__row prealert-create__row--three">
+                      <div className="prealert-create__col">
+                        <label className="prealert-create__label">
+                          Estado <span className="prealert-create__required">*</span>
+                        </label>
+                        <SearchableSelect
+                          options={statesData || []}
+                          value={addressState.selectedState}
+                          onChange={(value) => {
+                            updateAddressState('selectedState', value);
+                            updateAddressState('selectedMunicipality', '');
+                            updateAddressState('selectedParish', '');
+                          }}
+                          placeholder="Seleccionar estado"
+                          disabled={isLoadingStates}
+                        />
+                      </div>
 
-                <div className="prealert-create__col">
-                  <label className="prealert-create__label">
-                    Tienda/Locker
-                    <span className="prealert-create__required">*</span>
-                  </label>
-                  <SearchableSelect
-                    options={filteredTiendas}
-                    value={addressState.selectedLocker}
-                    onChange={(value) => updateAddressState('selectedLocker', value)}
-                    placeholder="Seleccione una tienda"
-                    disabled={!addressState.selectedCity || filteredTiendas.length === 0}
-                  />
-                </div>
+                      <div className="prealert-create__col">
+                        <label className="prealert-create__label">
+                          Municipio <span className="prealert-create__required">*</span>
+                        </label>
+                        <SearchableSelect
+                          options={municipalitiesData || []}
+                          value={addressState.selectedMunicipality}
+                          onChange={(value) => {
+                            updateAddressState('selectedMunicipality', value);
+                            updateAddressState('selectedParish', '');
+                          }}
+                          placeholder="Seleccionar municipio"
+                          disabled={!addressState.selectedState || isLoadingMunicipalities}
+                        />
+                      </div>
+
+                      <div className="prealert-create__col">
+                        <label className="prealert-create__label">
+                          Parroquia <span className="prealert-create__required">*</span>
+                        </label>
+                        <SearchableSelect
+                          options={parishesData || []}
+                          value={addressState.selectedParish}
+                          onChange={(value) => updateAddressState('selectedParish', value)}
+                          placeholder="Seleccionar parroquia"
+                          disabled={!addressState.selectedMunicipality || isLoadingParishes}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="prealert-create__col">
+                      <label className="prealert-create__label">
+                        Dirección Completa <span className="prealert-create__required">*</span>
+                      </label>
+                      <textarea
+                        className="prealert-create__textarea"
+                        placeholder="Ej: Calle 1, Edificio X, Apto Y"
+                        rows={3}
+                        value={addressState.address}
+                        onChange={(e) => updateAddressState('address', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="prealert-create__col">
+                      <label className="prealert-create__label">Punto de Referencia</label>
+                      <input
+                        type="text"
+                        className="prealert-create__input"
+                        placeholder="Ej: Casa con portón azul"
+                        value={addressState.reference}
+                        onChange={(e) => updateAddressState('reference', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
+          {/* SECCIÓN FACTURAS */}
           <div className="prealert-create__section">
-            <label className="prealert-create__label">Facturas (Opcional)</label>
+            <label className="prealert-create__label">
+              Facturas ({formState.facturas.length}/3)
+            </label>
             
             <input
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
               className="prealert-create__file-input"
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*"
               multiple
             />
             
@@ -683,15 +833,31 @@ const PreAlertCreate = () => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="prealert-create__file-btn"
+              disabled={formState.facturas.length >= 3}
+              style={formState.facturas.length >= 3 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
             >
-              📎 Seleccionar Archivos (Max 5)
+              📎 {formState.facturas.length === 0 
+                ? 'Seleccionar Archivos (Max 3)' 
+                : 'Agregar más archivos'}
             </button>
 
-            {formState.facturas.length > 0 && (
+            {formState.facturas.length === 0 ? (
+              <p className="prealert-create__helper-text">
+                Máximo 3 archivos (PDF, imágenes - JPG, PNG, GIF, WEBP)
+              </p>
+            ) : (
               <div className="prealert-create__files-list">
                 {formState.facturas.map((file, index) => (
                   <div key={index} className="prealert-create__file-item">
-                    <span className="prealert-create__file-name">{file.name}</span>
+                    <div className="prealert-create__file-info">
+                      <span className="prealert-create__file-icon">
+                        {file.type === 'application/pdf' ? '📄' : '🖼️'}
+                      </span>
+                      <span className="prealert-create__file-name">{file.name}</span>
+                      <span className="prealert-create__file-size">
+                        ({(file.size / 1024).toFixed(1)} KB)
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveFile(file.name)}
@@ -705,6 +871,7 @@ const PreAlertCreate = () => {
             )}
           </div>
 
+          {/* BOTÓN SUBMIT */}
           <div className="prealert-create__actions">
             <button
               type="submit"

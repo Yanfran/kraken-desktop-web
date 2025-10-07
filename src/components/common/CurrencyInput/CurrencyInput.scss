@@ -1,0 +1,45 @@
+.currency-input {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: right;
+  border: 1px solid #d1d5db;
+  border-radius: 25px;
+  background: white;
+  color: #1f2937;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: #9ca3af;
+    font-family: inherit;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: #9ca3af;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  &:disabled {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  // Estilo cuando tiene error
+  &.error {
+    border-color: #dc2626;
+    
+    &:focus {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+  }
+}
