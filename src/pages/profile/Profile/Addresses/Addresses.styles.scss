@@ -6,7 +6,6 @@
   padding: var(--spacing-8);
   position: relative;
 
-  /* Fondo de imagen */
   &::before {
     content: '';
     position: fixed;
@@ -33,7 +32,7 @@
   }
 
   &__container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
   }
 
@@ -133,6 +132,328 @@
     color: var(--color-text-secondary);
     margin: 0;
   }
+
+  // Formulario desplegable
+  &__form-card {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    animation: slideDown 0.3s ease;
+
+    [data-theme="dark"] & {
+      background-color: rgba(29, 27, 32, 0.95);
+    }
+  }
+
+  &__form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--color-border);
+
+    h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin: 0;
+    }
+  }
+
+  &__form-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      color: var(--color-text-primary);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__form-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 16px;
+
+    p {
+      color: var(--color-text-secondary);
+      font-size: 14px;
+    }
+  }
+
+  &__form-body {
+    .address-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .address-option {
+      display: flex;
+      align-items: center;
+      padding: 18px 24px;
+      border: 2px solid #E0E0E0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background-color: white;
+      position: relative;
+
+      [data-theme="dark"] & {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      input[type="radio"] {
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border: 2px solid #999;
+        border-radius: 50%;
+        margin-right: 16px;
+        cursor: pointer;
+        position: relative;
+        background-color: white;
+        transition: all 0.2s ease;
+
+        &:checked {
+          border-color: $primary;
+          border-width: 2px;
+          
+          &::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: $primary;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+          }
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      &__content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+      }
+
+      &__title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-text-primary);
+      }
+
+      &__subtitle {
+        font-size: 13px;
+        color: var(--color-text-secondary);
+      }
+
+      &__text {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+      }
+
+      &:hover {
+        border-color: $primary;
+        box-shadow: 0 2px 8px rgba($primary, 0.1);
+      }
+
+      &.selected {
+        border-color: $primary;
+        border-width: 3px;
+        background-color: rgba($primary, 0.05);
+
+        .address-option__text,
+        .address-option__title {
+          color: $primary;
+        }
+      }
+    }
+
+    .address-form-fields {
+      animation: fadeIn 0.3s ease;
+    }
+
+    .form-section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin: 24px 0 20px 0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      .required {
+        color: $error;
+        margin-left: 4px;
+      }
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #E0E0E0;
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--color-text-primary);
+      background-color: white;
+      transition: all 0.2s ease;
+
+      [data-theme="dark"] & {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      &::placeholder {
+        color: #999;
+        font-size: 13px;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+        box-shadow: 0 0 0 3px rgba($primary, 0.1);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: rgba(0, 0, 0, 0.03);
+      }
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 16px;
+      background-color: rgba(0, 0, 0, 0.02);
+      border-radius: 12px;
+      margin-top: 8px;
+
+      [data-theme="dark"] & {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      input[type="checkbox"] {
+        margin-right: 12px;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: $primary;
+      }
+
+      span {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+      }
+
+      &:hover {
+        background-color: rgba($primary, 0.05);
+
+        span {
+          color: $primary;
+        }
+      }
+    }
+  }
+
+  &__form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+
+    button {
+      flex: 1;
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Address Card */
@@ -161,6 +482,7 @@
     align-items: center;
     gap: 12px;
     margin-bottom: 8px;
+    flex-wrap: wrap;
   }
 
   &__alias {
@@ -178,6 +500,7 @@
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   &__type {
@@ -197,10 +520,21 @@
     line-height: 1.5;
   }
 
-  &__location {
+  &__reference {
     font-size: 13px;
     color: var(--color-text-secondary);
-    margin: 0;
+    margin: 8px 0 0 0;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+
+    [data-theme="dark"] & {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    strong {
+      color: var(--color-text-primary);
+    }
   }
 
   &__actions {
@@ -210,20 +544,31 @@
   }
 
   &__action-btn {
-    padding: 8px 16px;
+    padding: 10px 18px;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
     &--primary {
       background-color: $primary;
       color: white;
 
-      &:hover {
-        background-color: $primary-hover; 
+      &:hover:not(:disabled) {
+        background-color: $primary-hover;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba($primary, 0.3);
       }
     }
 
@@ -232,8 +577,13 @@
       border: 1px solid var(--color-border);
       color: var(--color-text-primary);
 
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: rgba(0, 0, 0, 0.05);
+        border-color: var(--color-text-secondary);
+
+        [data-theme="dark"] & {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
       }
     }
 
@@ -242,9 +592,11 @@
       border: 1px solid $error;
       color: $error;
 
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: $error;
         color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba($error, 0.3);
       }
     }
   }
@@ -254,10 +606,26 @@
 @media (max-width: 768px) {
   .addresses {
     padding: var(--spacing-4);
+
+    &__header {
+      padding: var(--spacing-6);
+    }
+
+    &__title {
+      font-size: 20px;
+    }
+
+    &__form-card {
+      padding: 20px;
+    }
   }
 
   .address-card {
     padding: 20px;
+
+    &__alias {
+      font-size: 16px;
+    }
 
     &__actions {
       flex-direction: column;
@@ -265,6 +633,7 @@
 
     &__action-btn {
       width: 100%;
+      justify-content: center;
     }
   }
 }
