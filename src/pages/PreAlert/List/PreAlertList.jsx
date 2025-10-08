@@ -266,11 +266,12 @@ const PreAlertList = () => {
                           ))}
                         </div>
                         <div className="pre-alert-list__status-cell">
-                          <span className={`pre-alert-list__status pre-alert-list__status--${status.className}`}>
-                            {status.text}
+                          {/* ✅ Eliminamos el badge y solo mostramos texto en negrita */}
+                          <span className="pre-alert-list__status-text">
+                            {preAlerta.estatus || 'Desconocido'}
                           </span>
                           <span className="pre-alert-list__date">
-                            {formatDate(preAlerta.fechaCreacion)}
+                            {preAlerta.fecha || 'Sin fecha'}
                           </span>
                         </div>
                         <div className="pre-alert-list__actions-cell">

@@ -58,9 +58,26 @@ export const getGuiaById = async (id) => {
 export const getLastShipment = async () => {
   try {
     const response = await getGuias();
+    console.log('Fetched guias for last shipment:', response);
+    
     if (response.success && response.data && response.data.length > 0) {
-      const sortedGuias = response.data.sort((a, b) => new Date(b.fechaRaw || b.fecha) - new Date(a.fechaRaw || a.fecha));
+      const sortedGuias = response.data.sort((a, b) => 
+        new Date(b.fechaRaw || b.fecha) - new Date(a.fechaRaw || a.fecha)
+      );
       const lastGuia = sortedGuias[0];
+      
+      console.log('📦 Last guia data:', lastGuia);
+      
+      // ✅ FIX: Extraer solo el string 'contenido' del primer objeto
+      const primerContenido = Array.isArray(lastGuia.contenidos) && lastGuia.contenidos.length > 0
+        ? lastGuia.contenidos[0].contenido  // ✅ Accede a la propiedad .contenido
+        : 'Sin descripción';
+      
+      // ✅ FIX: Usar valorFOB en lugar de costoEnvio
+      const costoEnvio = lastGuia.valorFOB 
+        ? `$${parseFloat(lastGuia.valorFOB).toFixed(2)}` 
+        : '$0.00';
+      
       return {
         success: true,
         data: {
@@ -69,18 +86,28 @@ export const getLastShipment = async () => {
           status: lastGuia.estatus || 'Desconocido',
           date: lastGuia.fecha || '',
           origin: lastGuia.origen || 'USA',
-          cost: lastGuia.costoEnvio ? `$${parseFloat(lastGuia.costoEnvio).toFixed(2)}` : '$0.00',
+          cost: costoEnvio,
           prealerted: lastGuia.prealertado || false,
           discount: lastGuia.prealertado ? null : '-10%',
-          trackingNumbers: lastGuia.trackings || []
+          trackingNumbers: lastGuia.trackings || [],
+          contenido: primerContenido // ✅ Ahora es un string
         },
         message: 'Último envío cargado'
       };
     }
-    return { success: false, message: 'No hay envíos disponibles', data: null };
+    
+    return { 
+      success: false, 
+      message: 'No hay envíos disponibles', 
+      data: null 
+    };
   } catch (error) {
     console.error('Error fetching last shipment:', error);
-    return { success: false, message: error.message || 'Error al cargar último envío', data: null };
+    return { 
+      success: false, 
+      message: error.message || 'Error al cargar último envío', 
+      data: null 
+    };
   }
 };
 

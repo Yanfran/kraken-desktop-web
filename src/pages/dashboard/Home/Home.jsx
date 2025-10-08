@@ -44,6 +44,7 @@ const Home = ({ onNavigateToShipments }) => {
       setErrors(prev => ({ ...prev, lastShipment: null }));
       
       const response = await getLastShipment();
+      console.log('Last shipment response:', response);
       
       if (response.success && response.data) {
         setLastShipment(response.data);

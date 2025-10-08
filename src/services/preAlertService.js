@@ -46,8 +46,11 @@ const fileToBase64 = (file) => {
  * @param {string} fileName - Nombre del archivo
  * @returns {string} MIME type
  */
-const getMimeTypeFromExtension = (fileName) => {
-  const extension = fileName.split('.').pop().toLowerCase();
+function getMimeTypeFromExtension(filename) {
+  if (!filename) return 'application/octet-stream';
+  
+  const extension = filename.split('.').pop()?.toLowerCase();
+  
   const mimeTypes = {
     'pdf': 'application/pdf',
     'jpg': 'image/jpeg',
@@ -55,9 +58,13 @@ const getMimeTypeFromExtension = (fileName) => {
     'png': 'image/png',
     'gif': 'image/gif',
     'webp': 'image/webp',
+    'txt': 'text/plain',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   };
-  return mimeTypes[extension] || 'application/octet-stream';
-};  
+  
+  return mimeTypes[extension || ''] || 'application/octet-stream';
+}
 
 /**
  * ✅ CORREGIDO: Convertir archivos File a formato esperado por el backend
@@ -143,36 +150,31 @@ const processPayloadForBackend = async (payload) => {
   const processedPayload = { ...payload };
   
   if (payload.facturas && payload.facturas.length > 0) {
-    console.log(`📁 Procesando ${payload.facturas.length} archivo(s) para backend...`);
+    console.log('📁 Procesando archivos...');
     
     const archivosExistentes = [];
     const archivosNuevos = [];
     
-    // Separar archivos existentes (ya subidos) de nuevos
-    payload.facturas.forEach((file, index) => {
-      console.log(`📄 Archivo ${index + 1}:`, {
-        isFile: file instanceof File,
-        name: file.name || file.nombre,
-        size: file.size || file.tamaño,
-        type: file.type || file.tipo
-      });
-
-      const isExistingFile = (
-        !(file instanceof File) && // No es un archivo File del navegador
-        (
-          !file.uri || 
-          file.uri === null || 
-          (file.tamaño === 0 || file.size === 0) ||
-          ((file.nombre || file.name) && (file.nombre || file.name).startsWith('arch_'))
-        )
+    payload.facturas.forEach((file) => {
+      // Detectar si es archivo existente
+      const isExistingFile = !(file instanceof File) && (
+        !file.uri || 
+        file.uri === null || 
+        (file.tamaño === 0 || file.size === 0) ||
+        ((file.nombre || file.name) && (file.nombre || file.name).startsWith('arch_'))
       );
       
       if (isExistingFile) {
         console.log(`📄 Archivo existente: ${file.nombre || file.name}`);
+        
+        // ✅ FIX: Obtener tipo de archivo de la extensión si no existe
+        const fileName = file.nombre || file.name;
+        const tipoArchivo = file.tipo || file.type || getMimeTypeFromExtension(fileName);
+        
         archivosExistentes.push({
-          nombre: file.nombre || file.name,
-          uri: null, // ✅ Archivos existentes tienen uri: null
-          tipo: file.tipo || file.type,
+          nombre: fileName,
+          uri: '',  // ✅ Cadena vacía en lugar de null
+          tipo: tipoArchivo,  // ✅ SIEMPRE enviar tipo válido
           tamaño: 0
         });
       } else {
@@ -186,18 +188,16 @@ const processPayloadForBackend = async (payload) => {
     if (archivosNuevos.length > 0) {
       console.log(`🔄 Convirtiendo ${archivosNuevos.length} archivo(s) nuevo(s)...`);
       
-      // Verificar que todos sean archivos File válidos
       const todosFile = archivosNuevos.every(f => f instanceof File);
       
       if (todosFile) {
         archivosNuevosConvertidos = await convertFilesToBase64(archivosNuevos);
       } else {
-        // Si ya tienen formato procesado (ej: en edición)
         console.log('⚠️ Archivos ya procesados, usando formato existente');
         archivosNuevosConvertidos = archivosNuevos.map(f => ({
           nombre: f.nombre || f.name,
           uri: f.uri,
-          tipo: f.tipo || f.type,
+          tipo: f.tipo || f.type || getMimeTypeFromExtension(f.nombre || f.name),
           tamaño: f.tamaño || f.size
         }));
       }
@@ -206,17 +206,11 @@ const processPayloadForBackend = async (payload) => {
     processedPayload.facturas = [...archivosExistentes, ...archivosNuevosConvertidos];
     
     console.log(`✅ Archivos procesados: ${archivosExistentes.length} existentes + ${archivosNuevosConvertidos.length} nuevos`);
-    console.log('📋 Facturas en payload final:', processedPayload.facturas.map(f => ({
-      nombre: f.nombre,
-      tipo: f.tipo,
-      tamaño: f.tamaño,
-      uriLength: f.uri ? f.uri.length : 0,
-      uriPreview: f.uri ? f.uri.substring(0, 50) : 'null'
-    })));
   }
   
   return processedPayload;
 };
+
 
 /**
  * Obtener todas las pre-alertas del usuario

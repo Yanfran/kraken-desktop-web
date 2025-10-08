@@ -255,24 +255,13 @@
     align-items: flex-start;
   }
 
-  &__status {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 12px;
-    display: inline-block;
-    width: fit-content;
-
-    &--success {
-      background-color: color.scale($success, $lightness: 45%);
-      color: $success;
-    }
-
-    &--pending {
-      background-color: color.scale($warning, $lightness: 35%);
-      color: color.scale($warning, $lightness: -10%);
-    }
-  }
+ // ✅ NUEVO: Texto simple en negrita (sin badge)
+&__status-text {
+  font-size: 13px;
+  font-weight: 700; // Negrita
+  color: var(--color-text-primary, $text-primary);
+  line-height: 1.4;
+}
 
   &__date {
     font-size: 10px;
