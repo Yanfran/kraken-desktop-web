@@ -133,22 +133,72 @@ export const getDeliveryData = async () => {
 };
 
 /**
- * Obtener direcciones guardadas del usuario
+ * Obtener direcciones guardadas del usuario (las que están en "Mis Direcciones")
  * @returns {Promise<Object>}
  */
 export const getUserAddresses = async () => {
   try {
-    // ✅ FIX: Cambiado a GET y al endpoint correcto (/Casilleros/list)
-    const response = await axiosInstance.get('/Casilleros/list');
+    // ✅ Obtener el userId del localStorage (debe estar guardado al hacer login)
+    const userId = localStorage.getItem('userId');
     
-    // La respuesta de este endpoint ya tiene el formato { success, data, message }
-    return response.data;
+    if (!userId) {
+      console.error('❌ No hay userId en localStorage');
+      return {
+        success: false,
+        message: 'Usuario no autenticado',
+        data: []
+      };
+    }
+    
 
-  } catch (error) {
-    console.error('Error en getUserAddresses:', error);
+    // ✅ ENDPOINT CORRECTO: /Addresses/user-addresses (POST)
+    const response = await axiosInstance.post('/Addresses/user-addresses', {
+      ClientId: parseInt(userId)
+    });
+        
+    
+    if (response.data.success) {
+      // Validar que haya dirección predeterminada
+      const addresses = response.data.data || [];
+      const defaultAddr = addresses.find(a => a.esPredeterminada === true);           
+      
+      return {
+        success: true,
+        data: addresses,
+        message: response.data.message
+      };
+    }
+    
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión al obtener direcciones',
+      message: response.data.message || 'Error al obtener direcciones',
+      data: []
+    };
+
+  } catch (error) {
+    console.error('❌ Error en getUserAddresses:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión',
+      data: []
+    };
+  }
+};
+
+// ✅ NUEVO: Función separada para obtener solo casilleros (USA/CHINA)
+export const getCasilleros = async () => {
+  try {
+    const response = await axiosInstance.get('/Casilleros/list');
+    return {
+      success: response.data.success || false,
+      data: response.data.data || [],
+      message: response.data.message
+    };
+  } catch (error) {
+    console.error('❌ Error en getCasilleros:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión',
       data: []
     };
   }

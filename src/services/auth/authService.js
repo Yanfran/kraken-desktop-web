@@ -43,8 +43,7 @@ export const authService = {
         email: credentials.email,
         password: credentials.password
       });
-
-      console.log('✅ [AuthService] Login response:', response.data);
+      
 
       // ✅ ADAPTADO A TU ESTRUCTURA DE RESPUESTA
       if (response.data.success) {
@@ -62,6 +61,8 @@ export const authService = {
           }
         };
       }
+
+      localStorage.setItem('userId', userData.id.toString());        
       
       return {
         success: false,
@@ -105,8 +106,7 @@ export const authService = {
         name: userData.name,
         last: userData.lastName
       });
-
-      console.log('✅ [AuthService] Register response:', response.data);
+      
 
       if (response.data.success) {
         return {
@@ -123,6 +123,9 @@ export const authService = {
           }
         };
       }
+
+       // ✅ NUEVO: Guardar también el userId por separado
+        localStorage.setItem('userId', user.id.toString());
       
       return {
         success: false,
@@ -184,8 +187,8 @@ export const authService = {
       });
       
       // Adaptado a la respuesta del nuevo endpoint de perfil
-      if (response.data.success) {
-        return {
+       if (response.data.success) {
+        const user = {
           id: response.data.user.id,
           email: response.data.user.email,
           name: response.data.user.nombres || response.data.user.firstName,
@@ -194,6 +197,11 @@ export const authService = {
           profileComplete: response.data.user.profileComplete || false,
           clienteActivo: response.data.user.clienteActivo || true
         };
+
+        // ✅ NUEVO: Guardar también el userId por separado
+        localStorage.setItem('userId', user.id.toString());        
+
+        return user;
       }
       throw new Error(response.data.message || 'Token validation failed');
     } catch (error) {
@@ -227,6 +235,10 @@ export const authService = {
           }
         };
       }
+
+      // ✅ NUEVO: Guardar también el userId por separado
+      localStorage.setItem('userId', user.id.toString());
+
       
       return {
         success: false,
@@ -264,7 +276,9 @@ export const authService = {
       await authAPI.post('/Users/logout');
     } catch (error) {
       console.warn('⚠️ [AuthService] Logout error:', error);
-      // No lanzamos error en logout, siempre debe funcionar localmente
+    } finally {
+      // ✅ NUEVO: Limpiar también el userId
+      localStorage.removeItem('userId');      
     }
-  }
+  },
 };
