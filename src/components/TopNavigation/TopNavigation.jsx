@@ -30,7 +30,7 @@ const TopNavigation = ({
       label: 'Pre-Alertar', 
       icon: '/src/assets/images/icon-kraken-web-parlante_1.png',
       iconAlt: '📦',
-      path: '/pre-alert'
+      path: '/pre-alert/list'
     },
     { 
       id: 'rastrear', 

@@ -101,7 +101,7 @@ const PreAlertList = () => {
   // Navigation handlers
   const handleViewDetail = (preAlerta) => {
     closeAllMenus();
-    navigate(`/pre-alerts/${preAlerta.id}`);
+    navigate(`/pre-alert/${preAlerta.id}`);
   };
 
   const handleEdit = (preAlerta) => {
