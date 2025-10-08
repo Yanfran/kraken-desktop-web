@@ -37,32 +37,36 @@ authAPI.interceptors.response.use(
 
 export const authService = {
   // ===== LOGIN - EXACTAMENTE COMO TU REACT NATIVE =====
-  async login(credentials) {
+   async login(credentials) {
     try {
-      const response = await authAPI.post('/Users/login', { // ✅ EXACTO: /Users/login
+      const response = await authAPI.post('/Users/login', {
         email: credentials.email,
         password: credentials.password
       });
-      
 
-      // ✅ ADAPTADO A TU ESTRUCTURA DE RESPUESTA
+      console.log('✅ [AuthService] Login response:', response.data);
+
       if (response.data.success) {
+        const userData = {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          name: response.data.user.nombres || response.data.user.firstName,
+          lastName: response.data.user.apellidos || response.data.user.lastName,
+          emailVerified: response.data.user.emailVerified || true,
+          profileComplete: response.data.user.profileComplete || false,
+          clienteActivo: response.data.user.clienteActivo || true
+        };
+
+        // ✅ NUEVO: Guardar también el userId por separado
+        localStorage.setItem('userId', userData.id.toString());
+        console.log('✅ userId guardado en localStorage:', userData.id);
+
         return {
           success: true,
           token: response.data.token,
-          user: {
-            id: response.data.user.id,
-            email: response.data.user.email,
-            name: response.data.user.nombres || response.data.user.firstName,
-            lastName: response.data.user.apellidos || response.data.user.lastName,
-            emailVerified: response.data.user.emailVerified || true,
-            profileComplete: response.data.user.profileComplete || false,
-            clienteActivo: response.data.user.clienteActivo || true
-          }
+          user: userData
         };
       }
-
-      localStorage.setItem('userId', userData.id.toString());        
       
       return {
         success: false,
@@ -71,7 +75,6 @@ export const authService = {
     } catch (error) {
       console.error('❌ [AuthService] Login error:', error);
       
-      // ✅ MANEJO DE ERRORES IGUAL QUE TU BACKEND
       if (error.response?.data?.code) {
         const errorCode = error.response.data.code;
         const errorField = error.response.data.field;
@@ -98,7 +101,7 @@ export const authService = {
   },
   
   // ===== REGISTER - NUEVO MÉTODO =====
-  async register(userData) {
+ async register(userData) {
     try {
       const response = await authAPI.post('/Users/register', {
         email: userData.email,
@@ -106,26 +109,30 @@ export const authService = {
         name: userData.name,
         last: userData.lastName
       });
-      
+
+      console.log('✅ [AuthService] Register response:', response.data);
 
       if (response.data.success) {
+        const user = {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          name: response.data.user.nombres || userData.name,
+          lastName: response.data.user.apellidos || userData.lastName,
+          emailVerified: false,
+          profileComplete: false,
+          clienteActivo: false
+        };
+
+        // ✅ NUEVO: Guardar también el userId por separado
+        localStorage.setItem('userId', user.id.toString());
+        console.log('✅ userId guardado en localStorage:', user.id);
+        
         return {
           success: true,
           token: response.data.token,
-          user: {
-            id: response.data.user.id,
-            email: response.data.user.email,
-            name: response.data.user.nombres || userData.name,
-            lastName: response.data.user.apellidos || userData.lastName,
-            emailVerified: false,
-            profileComplete: false,
-            clienteActivo: false
-          }
+          user: user
         };
       }
-
-       // ✅ NUEVO: Guardar también el userId por separado
-        localStorage.setItem('userId', user.id.toString());
       
       return {
         success: false,
@@ -186,8 +193,7 @@ export const authService = {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Adaptado a la respuesta del nuevo endpoint de perfil
-       if (response.data.success) {
+      if (response.data.success) {
         const user = {
           id: response.data.user.id,
           email: response.data.user.email,
@@ -199,7 +205,8 @@ export const authService = {
         };
 
         // ✅ NUEVO: Guardar también el userId por separado
-        localStorage.setItem('userId', user.id.toString());        
+        localStorage.setItem('userId', user.id.toString());
+        console.log('✅ userId guardado en localStorage:', user.id);
 
         return user;
       }
@@ -213,32 +220,34 @@ export const authService = {
   // ===== GOOGLE AUTH - COMO TU REACT NATIVE =====
   async loginWithGoogle(googleToken) {
     try {
-      const response = await authAPI.post('/Users/google', { // ✅ EXACTO: /Users/google
-        name: 'Usuario',     // Temporalmente hasta obtener datos de Google
+      const response = await authAPI.post('/Users/google', {
+        name: 'Usuario',
         email: 'google@temp.com',
         password: 'temp',
         last: 'Google'
       });
 
       if (response.data.success) {
+        const user = {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          name: response.data.user.nombres || response.data.user.firstName,
+          lastName: response.data.user.apellidos || response.data.user.lastName,
+          emailVerified: true,
+          profileComplete: response.data.user.profileComplete || false,
+          fromGoogle: true
+        };
+
+        // ✅ NUEVO: Guardar también el userId por separado
+        localStorage.setItem('userId', user.id.toString());
+        console.log('✅ userId guardado en localStorage:', user.id);
+        
         return {
           success: true,
           token: response.data.token,
-          user: {
-            id: response.data.user.id,
-            email: response.data.user.email,
-            name: response.data.user.nombres || response.data.user.firstName,
-            lastName: response.data.user.apellidos || response.data.user.lastName,
-            emailVerified: true,
-            profileComplete: response.data.user.profileComplete || false,
-            fromGoogle: true
-          }
+          user: user
         };
       }
-
-      // ✅ NUEVO: Guardar también el userId por separado
-      localStorage.setItem('userId', user.id.toString());
-
       
       return {
         success: false,
@@ -278,7 +287,8 @@ export const authService = {
       console.warn('⚠️ [AuthService] Logout error:', error);
     } finally {
       // ✅ NUEVO: Limpiar también el userId
-      localStorage.removeItem('userId');      
+      localStorage.removeItem('userId');
+      console.log('✅ userId eliminado del localStorage');
     }
   },
 };
