@@ -233,7 +233,7 @@ const Home = ({ onNavigateToShipments }) => {
     console.log('Editar:', alert);
     setVisibleMenus({});
     // Navigate to edit page
-    window.location.href = `/pre-alerts/edit/${alert.id}`;
+    navigate(`/pre-alert/edit/${alert.id}`);
   };
 
   const handleHelp = (alert) => {
