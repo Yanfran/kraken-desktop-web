@@ -1,8 +1,8 @@
-// src/App.jsx - ACTUALIZADO con autenticación completa
+// src/App.jsx - ACTUALIZADO con rutas de perfil
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext'; // ✅ NUEVO AuthContext
-import { ThemeProvider } from './contexts/ThemeContext'; // ✅ TU ThemeContext existente
+import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute, PublicRoute, SemiProtectedRoute } from './components/auth/ProtectedRoute';
 import Loading from './components/common/Loading/Loading';
 import { Toaster } from 'react-hot-toast';
@@ -11,7 +11,7 @@ import './App.styles.scss';
 import DashboardLayout from './components/common/Layout/DashboardLayout';
 
 // ===== LAZY LOADING DE COMPONENTES =====
-// Auth pages - TUS COMPONENTES EXISTENTES
+// Auth pages
 const Login = React.lazy(() => import('./pages/auth/Login/Login'));
 const Register = React.lazy(() => import('./pages/auth/Register/Register'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword/ForgotPassword'));
@@ -22,7 +22,7 @@ const DeliveryOption = React.lazy(() => import('./pages/auth/DeliveryOption/Deli
 const EmailVerify = React.lazy(() => import('./pages/auth/EmailVerify/EmailVerify'));
 const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
 
-// Protected pages - TUS COMPONENTES EXISTENTES
+// Protected pages
 const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 const Calculator = React.lazy(() => import('./pages/calculator/Calculator/Calculator'));
 const PreAlertCreate = React.lazy(() => import('./pages/PreAlert/Create/PreAlertCreate'));
@@ -37,7 +37,11 @@ const Rastrear = React.lazy(() => import('./pages/Rastrear/Rastrear'));
 const MyGuides = React.lazy(() => import('./pages/MyGuides/MyGuides'));
 const GuideDetail = React.lazy(() => import('./pages/GuideDetail/GuideDetail'));
 
-// Hook simplificado para compatibilidad con tu código existente
+// ✅ NUEVAS RUTAS DE PERFIL
+const PersonalDataProfile = React.lazy(() => import('./pages/profile/Profile/PersonalData/PersonalData'));
+const Addresses = React.lazy(() => import('./pages/profile/Profile/Addresses/Addresses'));
+
+// Hook simplificado para compatibilidad
 export const useAuth = () => {
   const { useAuth: useNewAuth } = require('./contexts/AuthContext');
   return useNewAuth();
@@ -46,8 +50,8 @@ export const useAuth = () => {
 function App() {
   return (
     <Router>
-      <ThemeProvider> {/* ✅ TU ThemeProvider existente */}
-        <AuthProvider> {/* ✅ NUEVO AuthProvider */}
+      <ThemeProvider>
+        <AuthProvider>
           <div className="app">
             {/* Toast notifications */}
             <Toaster
@@ -82,7 +86,7 @@ function App() {
                 {/* ===== RUTA RAÍZ ===== */}
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                {/* ===== RUTAS PÚBLICAS (solo para no autenticados) ===== */}
+                {/* ===== RUTAS PÚBLICAS ===== */}
                 <Route path="/login" element={
                   <PublicRoute>
                     <Login />
@@ -155,6 +159,7 @@ function App() {
                   </ProtectedRoute>
                 } />
 
+                {/* Pre-Alertas */}
                 <Route path="/pre-alert/create" element={
                   <ProtectedRoute>
                     <DashboardLayout>
@@ -187,6 +192,7 @@ function App() {
                   </ProtectedRoute>
                 } />
 
+                {/* Envíos */}
                 <Route path="/dashboard/mis-envios" element={
                   <ProtectedRoute>
                     <DashboardLayout>
@@ -195,6 +201,7 @@ function App() {
                   </ProtectedRoute>
                 } />
 
+                {/* Perfil - Ruta principal */}
                 <Route path="/profile" element={
                   <ProtectedRoute>
                     <DashboardLayout>
@@ -203,6 +210,24 @@ function App() {
                   </ProtectedRoute>
                 } />
 
+                {/* ✅ NUEVAS RUTAS DE PERFIL */}
+                <Route path="/profile/personal-data" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <PersonalDataProfile />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/profile/addresses" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Addresses />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                {/* Otras rutas protegidas */}
                 <Route path="/billing" element={
                   <ProtectedRoute>
                     <DashboardLayout>
