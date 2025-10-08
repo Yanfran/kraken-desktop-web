@@ -18,7 +18,7 @@ const CurrencyInput = ({
 
   // Sincronizar con el valor externo
   useEffect(() => {
-    if (value && value !== '' && value !== '0,00') {
+    if (value && value !== '') {
       setInternalValue(value);
     } else {
       setInternalValue('');

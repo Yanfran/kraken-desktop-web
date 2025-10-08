@@ -28,6 +28,7 @@ import {
 import {
   formatValueForBackend,
   parseFormattedValue,
+  formatDecimalFromDB,
 } from '../../../utils/currencyUtils';
 
 // Components
@@ -165,7 +166,7 @@ const PreAlertEdit = () => {
       setFormState({
         trackings: preAlertaData.trackings || [preAlertaData.tracking].filter(Boolean) || [''],
         contenidos: preAlertaData.contenidos?.map(c => c.id.toString()) || [],
-        valorDeclarado: parseFormattedValue(preAlertaData.valorDeclarado?.monto) || '',
+        valorDeclarado: formatDecimalFromDB(preAlertaData.valorDeclarado) || '',
         currency: preAlertaData.valorDeclarado?.moneda || 'USD',
         tipoContenido: preAlertaData.tipoContenido?.split(', ').filter(Boolean) || [],
         facturas: preAlertaData.archivosActuales?.map(file => ({
