@@ -2,54 +2,236 @@
 import axiosInstance from './axiosInstance';
 
 /**
- * Service for Pre-Alert operations
- * Adapted from React Native app-kraken for web compatibility
- * 
- * Backend endpoints:
- * - GET /PostPreAlert/getPreAlertasPendientes
- * - GET /PostPreAlert/{id}
- * - POST /PostPreAlert/create
- * - POST /PostPreAlert/update/{id}
- * - POST /PostPreAlert/delete
- * - GET /PaqueteContenidos/getContent
+ * ✅ CORREGIDO: Convertir archivo File a Base64 CON prefijo data:
+ * @param {File} file - Archivo del navegador
+ * @returns {Promise<string>} Base64 string con prefijo "data:tipo;base64,..."
  */
-
-/**
- * @typedef {Object} PreAlerta
- * @property {number} id
- * @property {string|string[]} trackings - Array de números de tracking
- * @property {string} tracking - Primer tracking (para mostrar)
- * @property {string} contenido - Contenido concatenado
- * @property {Object[]} contenidos - Array de objetos {id, contenido}
- * @property {number} valor - Valor declarado
- * @property {number} peso - Peso del paquete
- * @property {number} cantidad - Cantidad de items
- * @property {string} tipoEnvio - Tipo de envío
- * @property {number|null} idGuia - ID de guía asociada (null si es pre-alerta)
- * @property {string} estatus - Estado de la pre-alerta
- * @property {string} fecha - Fecha formateada
- * @property {string} fechaRaw - Fecha sin formatear
- * @property {string} fechaCreacion - Fecha de creación
- * @property {Object} direccion - Información de dirección
- */
-
-/**
- * @typedef {Object} ApiResponse
- * @property {boolean} success
- * @property {string} message
- * @property {any} data
- * @property {string[]} [errors]
- */
-
-/**
- * Get all pending pre-alerts for the current user
- * @returns {Promise<ApiResponse>}
- */
-export const getPreAlertasPendientes = async () => {
-  try {
-    console.log('📋 Obteniendo pre-alertas pendientes...');
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
     
-    const response = await axiosInstance.get('/PostPreAlert/getPreAlertasPendientes');
+    reader.onload = () => {
+      // ✅ IMPORTANTE: Retornar CON el prefijo "data:image/png;base64,..."
+      const result = reader.result;
+      
+      if (!result || typeof result !== 'string') {
+        reject(new Error('Error al leer el archivo'));
+        return;
+      }
+      
+      // Validar que el resultado sea válido
+      if (result.length < 50) {
+        reject(new Error('Archivo demasiado pequeño o corrupto'));
+        return;
+      }
+      
+      console.log(`✅ Archivo leído: ${file.name} (${result.length} caracteres)`);
+      console.log(`📋 Preview: ${result.substring(0, 50)}...`);
+      
+      resolve(result); // ✅ Incluye "data:image/png;base64,..." automáticamente
+    };
+    
+    reader.onerror = (error) => {
+      console.error('❌ Error en FileReader:', error);
+      reject(new Error(`Error al leer el archivo: ${error.message || 'Desconocido'}`));
+    };
+    
+    // ✅ readAsDataURL automáticamente agrega el prefijo "data:tipo;base64,"
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * Obtener MIME type desde extensión del archivo
+ * @param {string} fileName - Nombre del archivo
+ * @returns {string} MIME type
+ */
+const getMimeTypeFromExtension = (fileName) => {
+  const extension = fileName.split('.').pop().toLowerCase();
+  const mimeTypes = {
+    'pdf': 'application/pdf',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+  };
+  return mimeTypes[extension] || 'application/octet-stream';
+};  
+
+/**
+ * ✅ CORREGIDO: Convertir archivos File a formato esperado por el backend
+ * @param {File[]} files - Array de archivos del navegador
+ * @returns {Promise<Array>} Array de archivos procesados con base64
+ */
+const convertFilesToBase64 = async (files) => {
+  if (!files || files.length === 0) {
+    return [];
+  }
+
+  const convertedFiles = [];
+  
+  for (const file of files) {
+    try {
+      // ✅ Validar que el archivo sea válido
+      if (!(file instanceof File)) {
+        console.error('❌ No es un archivo File válido:', file);
+        throw new Error('Objeto no es un archivo válido');
+      }
+
+      const fileName = file.name;
+      const fileSize = file.size;
+      const fileMimeType = file.type;
+      
+      // Validaciones
+      if (!fileName) {
+        throw new Error('Archivo sin nombre');
+      }
+      
+      if (fileSize === 0) {
+        throw new Error(`${fileName}: Archivo vacío`);
+      }
+      
+      // Validar tamaño máximo (5MB)
+      if (fileSize > 5 * 1024 * 1024) {
+        throw new Error(`${fileName}: Máximo 5MB (tamaño: ${(fileSize / 1024 / 1024).toFixed(2)}MB)`);
+      }
+      
+      console.log(`🔄 Convirtiendo archivo: ${fileName} (${fileSize} bytes)`);
+      
+      // ✅ Convertir a Base64 CON prefijo
+      const base64String = await fileToBase64(file);
+      
+      // ✅ VALIDAR que el base64 no esté vacío
+      if (!base64String || base64String.length < 50) {
+        throw new Error(`${fileName}: Base64 resultante inválido o vacío`);
+      }
+      
+      // ✅ VALIDAR que empiece con "data:"
+      if (!base64String.startsWith('data:')) {
+        console.warn(`⚠️ Base64 sin prefijo "data:", agregándolo...`);
+        const mimeType = fileMimeType || getMimeTypeFromExtension(fileName);
+        // Este caso no debería ocurrir, pero por si acaso
+        throw new Error(`${fileName}: Base64 sin prefijo data:`);
+      }
+      
+      const mimeType = fileMimeType || getMimeTypeFromExtension(fileName);
+      
+      convertedFiles.push({
+        nombre: fileName,
+        uri: base64String, // ✅ Incluye "data:image/png;base64,..."
+        tipo: mimeType,
+        tamaño: fileSize,
+      });
+      
+      console.log(`✅ Archivo convertido: ${fileName} (${fileSize} bytes, base64: ${base64String.length} chars)`);
+    } catch (error) {
+      console.error(`❌ Error convirtiendo archivo ${file.name}:`, error);
+      throw new Error(`Error procesando ${file.name}: ${error.message}`);
+    }
+  }
+  
+  return convertedFiles;
+};
+
+/**
+ * Procesar payload para backend (convertir archivos a base64)
+ * @param {Object} payload - Payload original
+ * @returns {Promise<Object>} Payload procesado
+ */
+const processPayloadForBackend = async (payload) => {
+  const processedPayload = { ...payload };
+  
+  if (payload.facturas && payload.facturas.length > 0) {
+    console.log(`📁 Procesando ${payload.facturas.length} archivo(s) para backend...`);
+    
+    const archivosExistentes = [];
+    const archivosNuevos = [];
+    
+    // Separar archivos existentes (ya subidos) de nuevos
+    payload.facturas.forEach((file, index) => {
+      console.log(`📄 Archivo ${index + 1}:`, {
+        isFile: file instanceof File,
+        name: file.name || file.nombre,
+        size: file.size || file.tamaño,
+        type: file.type || file.tipo
+      });
+
+      const isExistingFile = (
+        !(file instanceof File) && // No es un archivo File del navegador
+        (
+          !file.uri || 
+          file.uri === null || 
+          (file.tamaño === 0 || file.size === 0) ||
+          ((file.nombre || file.name) && (file.nombre || file.name).startsWith('arch_'))
+        )
+      );
+      
+      if (isExistingFile) {
+        console.log(`📄 Archivo existente: ${file.nombre || file.name}`);
+        archivosExistentes.push({
+          nombre: file.nombre || file.name,
+          uri: null, // ✅ Archivos existentes tienen uri: null
+          tipo: file.tipo || file.type,
+          tamaño: 0
+        });
+      } else {
+        console.log(`📄 Archivo nuevo: ${file.name || file.nombre}`);
+        archivosNuevos.push(file);
+      }
+    });
+    
+    // ✅ Convertir solo archivos nuevos a base64
+    let archivosNuevosConvertidos = [];
+    if (archivosNuevos.length > 0) {
+      console.log(`🔄 Convirtiendo ${archivosNuevos.length} archivo(s) nuevo(s)...`);
+      
+      // Verificar que todos sean archivos File válidos
+      const todosFile = archivosNuevos.every(f => f instanceof File);
+      
+      if (todosFile) {
+        archivosNuevosConvertidos = await convertFilesToBase64(archivosNuevos);
+      } else {
+        // Si ya tienen formato procesado (ej: en edición)
+        console.log('⚠️ Archivos ya procesados, usando formato existente');
+        archivosNuevosConvertidos = archivosNuevos.map(f => ({
+          nombre: f.nombre || f.name,
+          uri: f.uri,
+          tipo: f.tipo || f.type,
+          tamaño: f.tamaño || f.size
+        }));
+      }
+    }
+    
+    processedPayload.facturas = [...archivosExistentes, ...archivosNuevosConvertidos];
+    
+    console.log(`✅ Archivos procesados: ${archivosExistentes.length} existentes + ${archivosNuevosConvertidos.length} nuevos`);
+    console.log('📋 Facturas en payload final:', processedPayload.facturas.map(f => ({
+      nombre: f.nombre,
+      tipo: f.tipo,
+      tamaño: f.tamaño,
+      uriLength: f.uri ? f.uri.length : 0,
+      uriPreview: f.uri ? f.uri.substring(0, 50) : 'null'
+    })));
+  }
+  
+  return processedPayload;
+};
+
+/**
+ * Obtener todas las pre-alertas del usuario
+ * @param {number} userId - ID del usuario
+ * @returns {Promise<Object>}
+ */
+export const getPreAlertas = async (userId) => {
+  try {
+    if (!userId || isNaN(userId)) {
+      throw new Error('ID de usuario inválido');
+    }
+
+    console.log(`📦 Obteniendo pre-alertas del usuario ${userId}...`);
+    
+    const response = await axiosInstance.get(`/PostPreAlert/getPreAlertas/${userId}`);
     
     console.log('✅ Pre-alertas obtenidas:', response.data);
     
@@ -59,7 +241,7 @@ export const getPreAlertasPendientes = async () => {
       message: response.data.message || 'Pre-alertas cargadas exitosamente'
     };
   } catch (error) {
-    console.error('❌ Error fetching pending pre-alerts:', error);
+    console.error('❌ Error fetching pre-alerts:', error);
     
     return {
       success: false,
@@ -71,9 +253,38 @@ export const getPreAlertasPendientes = async () => {
 };
 
 /**
- * Get pre-alert by ID
- * @param {number} id - Pre-alert ID
- * @returns {Promise<ApiResponse>}
+ * Obtener pre-alertas pendientes
+ * @returns {Promise<Object>}
+ */
+export const getPreAlertasPendientes = async () => {
+  try {
+    console.log('📦 Obteniendo pre-alertas pendientes...');
+    
+    const response = await axiosInstance.get('/PostPreAlert/getPreAlertasPendientes');
+    
+    console.log('✅ Pre-alertas pendientes obtenidas:', response.data);
+    
+    return {
+      success: true,
+      data: response.data.data || [],
+      message: response.data.message || 'Pre-alertas pendientes cargadas'
+    };
+  } catch (error) {
+    console.error('❌ Error fetching pending pre-alerts:', error);
+    
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al cargar pre-alertas pendientes',
+      errors: error.response?.data?.errors || [error.message],
+      data: []
+    };
+  }
+};
+
+/**
+ * Obtener pre-alerta por ID
+ * @param {number} id - ID de la pre-alerta
+ * @returns {Promise<Object>}
  */
 export const getPreAlertaById = async (id) => {
   try {
@@ -81,7 +292,7 @@ export const getPreAlertaById = async (id) => {
       throw new Error('ID de pre-alerta inválido');
     }
 
-    console.log(`📋 Obteniendo pre-alerta ID: ${id}`);
+    console.log(`📦 Obteniendo pre-alerta ID: ${id}...`);
     
     const response = await axiosInstance.get(`/PostPreAlert/${id}`);
     
@@ -90,10 +301,10 @@ export const getPreAlertaById = async (id) => {
     return {
       success: true,
       data: response.data.data || response.data,
-      message: 'Pre-alerta cargada exitosamente'
+      message: response.data.message || 'Pre-alerta cargada exitosamente'
     };
   } catch (error) {
-    console.error('❌ Error fetching pre-alert by ID:', error);
+    console.error('❌ Error fetching pre-alert detail:', error);
     
     return {
       success: false,
@@ -105,15 +316,15 @@ export const getPreAlertaById = async (id) => {
 };
 
 /**
- * Create a new pre-alert
- * @param {Object} payload - Pre-alert data
- * @returns {Promise<ApiResponse>}
+ * Crear nueva pre-alerta
+ * @param {Object} payload - Datos de la pre-alerta
+ * @returns {Promise<Object>}
  */
 export const createPreAlerta = async (payload) => {
   try {
     console.log('📤 Creando pre-alerta...', payload);
     
-    // Validate required fields
+    // Validar campos requeridos
     if (!payload.trackings || payload.trackings.length === 0) {
       throw new Error('Debe proporcionar al menos un número de tracking');
     }
@@ -122,47 +333,23 @@ export const createPreAlerta = async (payload) => {
       throw new Error('Debe seleccionar al menos un contenido');
     }
 
-    // Prepare FormData for file upload
-    const formData = new FormData();
+    // ✅ Procesar archivos a base64
+    const processedPayload = await processPayloadForBackend(payload);
     
-    // Add trackings array
-    payload.trackings.forEach((tracking, index) => {
-      formData.append(`trackings[${index}]`, tracking);
+    console.log('📋 Payload procesado:', {
+      ...processedPayload,
+      facturas: processedPayload.facturas?.map(f => ({
+        nombre: f.nombre,
+        tipo: f.tipo,
+        tamaño: f.tamaño,
+        base64Length: f.uri?.length || 0
+      }))
     });
-    
-    // Add contenidos array
-    payload.contenidos.forEach((contenido, index) => {
-      formData.append(`contenidos[${index}]`, contenido);
-    });
-    
-    // Add other fields
-    formData.append('valor', payload.valor?.toString() || '0');
-    formData.append('peso', payload.peso?.toString() || '0');
-    formData.append('cantidad', payload.cantidad?.toString() || '1');
-    formData.append('tipoEnvio', payload.tipoEnvio || 'maritimo');
-    formData.append('useNewAddress', payload.useNewAddress ? 'true' : 'false');
-    
-    // Address handling
-    if (payload.useNewAddress && payload.newAddress) {
-      Object.entries(payload.newAddress).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          formData.append(`newAddress.${key}`, value.toString());
-        }
-      });
-    } else if (payload.addressId) {
-      formData.append('addressId', payload.addressId.toString());
-    }
-    
-    // Add invoice files
-    if (payload.facturas && payload.facturas.length > 0) {
-      payload.facturas.forEach((file) => {
-        formData.append('facturas', file);
-      });
-    }
 
-    const response = await axiosInstance.post('/PostPreAlert/create', formData, {
+    // ✅ Enviar como JSON (NO FormData)
+    const response = await axiosInstance.post('/PostPreAlert/create', processedPayload, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json', // ✅ Backend acepta JSON
       },
     });
     
@@ -186,10 +373,10 @@ export const createPreAlerta = async (payload) => {
 };
 
 /**
- * Update an existing pre-alert
- * @param {number} id - Pre-alert ID
- * @param {Object} payload - Updated pre-alert data
- * @returns {Promise<ApiResponse>}
+ * Actualizar pre-alerta existente
+ * @param {number} id - ID de la pre-alerta
+ * @param {Object} payload - Datos actualizados
+ * @returns {Promise<Object>}
  */
 export const updatePreAlerta = async (id, payload) => {
   try {
@@ -199,42 +386,13 @@ export const updatePreAlerta = async (id, payload) => {
 
     console.log(`📤 Actualizando pre-alerta ID: ${id}`, payload);
 
-    // Prepare FormData
-    const formData = new FormData();
-    
-    payload.trackings.forEach((tracking, index) => {
-      formData.append(`trackings[${index}]`, tracking);
-    });
-    
-    payload.contenidos.forEach((contenido, index) => {
-      formData.append(`contenidos[${index}]`, contenido);
-    });
-    
-    formData.append('valor', payload.valor?.toString() || '0');
-    formData.append('peso', payload.peso?.toString() || '0');
-    formData.append('cantidad', payload.cantidad?.toString() || '1');
-    formData.append('tipoEnvio', payload.tipoEnvio || 'maritimo');
-    formData.append('useNewAddress', payload.useNewAddress ? 'true' : 'false');
-    
-    if (payload.useNewAddress && payload.newAddress) {
-      Object.entries(payload.newAddress).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          formData.append(`newAddress.${key}`, value.toString());
-        }
-      });
-    } else if (payload.addressId) {
-      formData.append('addressId', payload.addressId.toString());
-    }
-    
-    if (payload.facturas && payload.facturas.length > 0) {
-      payload.facturas.forEach((file) => {
-        formData.append('facturas', file);
-      });
-    }
+    // ✅ Procesar archivos a base64
+    const processedPayload = await processPayloadForBackend(payload);
 
-    const response = await axiosInstance.post(`/PostPreAlert/update/${id}`, formData, {
+    // ✅ Enviar como JSON (NO FormData)
+    const response = await axiosInstance.post(`/PostPreAlert/update/${id}`, processedPayload, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
       },
     });
     
@@ -258,9 +416,9 @@ export const updatePreAlerta = async (id, payload) => {
 };
 
 /**
- * Delete a pre-alert
- * @param {number} id - Pre-alert ID
- * @returns {Promise<ApiResponse>}
+ * Eliminar pre-alerta
+ * @param {number} id - ID de la pre-alerta
+ * @returns {Promise<Object>}
  */
 export const deletePreAlerta = async (id) => {
   try {
@@ -292,8 +450,8 @@ export const deletePreAlerta = async (id) => {
 };
 
 /**
- * Get package contents for dropdown (from PaqueteContenidos controller)
- * @returns {Promise<ApiResponse>}
+ * Obtener contenidos de paquetes
+ * @returns {Promise<Object>}
  */
 export const getPaquetesContenidos = async () => {
   try {
@@ -318,104 +476,4 @@ export const getPaquetesContenidos = async () => {
       data: []
     };
   }
-};
-
-/**
- * Upload invoice files for pre-alert
- * @param {number} preAlertId - Pre-alert ID
- * @param {File[]} files - Invoice files
- * @returns {Promise<ApiResponse>}
- */
-export const uploadInvoiceFiles = async (preAlertId, files) => {
-  try {
-    if (!preAlertId || isNaN(preAlertId)) {
-      throw new Error('ID de pre-alerta inválido');
-    }
-
-    if (!files || files.length === 0) {
-      throw new Error('No se proporcionaron archivos');
-    }
-
-    console.log(`📤 Subiendo ${files.length} archivo(s) para pre-alerta ${preAlertId}`);
-
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append('files', file);
-    });
-
-    const response = await axiosInstance.post(
-      `/PostPreAlert/uploadInvoices/${preAlertId}`, 
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    
-    console.log('✅ Archivos subidos:', response.data);
-    
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: response.data.message || 'Archivos subidos exitosamente'
-    };
-  } catch (error) {
-    console.error('❌ Error uploading invoice files:', error);
-    
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al subir archivos',
-      errors: error.response?.data?.errors || [error.message],
-      data: null
-    };
-  }
-};
-
-/**
- * Search pre-alerts by tracking number
- * @param {string} trackingNumber - Tracking number to search
- * @returns {Promise<ApiResponse>}
- */
-export const searchPreAlertByTracking = async (trackingNumber) => {
-  try {
-    if (!trackingNumber || trackingNumber.trim() === '') {
-      throw new Error('Número de tracking requerido');
-    }
-
-    console.log(`🔍 Buscando pre-alerta con tracking: ${trackingNumber}`);
-
-    const response = await axiosInstance.get('/PostPreAlert/searchByTracking', {
-      params: { tracking: trackingNumber.trim() }
-    });
-    
-    console.log('✅ Resultado de búsqueda:', response.data);
-    
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: 'Búsqueda completada exitosamente'
-    };
-  } catch (error) {
-    console.error('❌ Error searching pre-alert by tracking:', error);
-    
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error en la búsqueda',
-      errors: error.response?.data?.errors || [error.message],
-      data: []
-    };
-  }
-};
-
-// Export default object with all functions
-export default {
-  getPreAlertasPendientes,
-  getPreAlertaById,
-  createPreAlerta,
-  updatePreAlerta,
-  deletePreAlerta,
-  getPaquetesContenidos,
-  uploadInvoiceFiles,
-  searchPreAlertByTracking
 };

@@ -498,35 +498,31 @@ const PreAlertCreate = () => {
       }
 
       const formatValueForBackend = (value) => {
-        if (!value) return '0';
-        return value.toString().replace(/\./g, '').replace(',', '.');
-      };
+      if (!value) return '0';
+      return value.toString().replace(/\./g, '').replace(',', '.');
+    };
 
-      const valorParaBackend = formatValueForBackend(formState.valorDeclarado);
+    const valorParaBackend = formatValueForBackend(formState.valorDeclarado);
 
-      const payload = {
-        trackings: formState.trackings.filter((t) => t.trim().length > 0),
-        contenidos: formState.contenidos,
-        direccion,
-        tipoContenido: Array.isArray(formState.tipoContenido)
-          ? formState.tipoContenido.join(', ')
-          : formState.tipoContenido || '',
-        ...(valorParaBackend &&
-          valorParaBackend !== '0' && {
-            valorDeclarado: {
-              monto: valorParaBackend,
-              moneda: formState.currency,
-            },
-          }),
-        ...(formState.facturas.length > 0 && {
-          facturas: formState.facturas.map((f) => ({
-            nombre: f.name,
-            uri: URL.createObjectURL(f),
-            tipo: f.type,
-            tamaño: f.size,
-          })),
+    const payload = {
+      trackings: formState.trackings.filter((t) => t.trim().length > 0),
+      contenidos: formState.contenidos,
+      direccion,
+      tipoContenido: Array.isArray(formState.tipoContenido)
+        ? formState.tipoContenido.join(', ')
+        : formState.tipoContenido || '',
+      ...(valorParaBackend &&
+        valorParaBackend !== '0' && {
+          valorDeclarado: {
+            monto: valorParaBackend,
+            moneda: formState.currency,
+          },
         }),
-      };
+      // ✅ CAMBIO CRÍTICO: Enviar los archivos File directos (sin URL.createObjectURL)
+      ...(formState.facturas.length > 0 && {
+        facturas: formState.facturas // ✅ Array de objetos File nativos del navegador
+      }),
+    };
       
 
       await createMutation.mutateAsync(payload);
