@@ -32,15 +32,19 @@
 
 @mixin button-primary {
   @include button-base;
-  background: linear-gradient(135deg, var(--kraken-primary), var(--kraken-secondary));
-  color: var(--white);
-  box-shadow: var(--shadow-primary);
-  
+  background-color: transparent;
+  color: var(--kraken-primary);
+  border: 1px solid var(--kraken-primary);
+  box-shadow: none;
+
   &:hover:not(:disabled) {
+    background-color: white;
     transform: translateY(-1px);
-    box-shadow: var(--shadow-lg), var(--shadow-primary);
+    box-shadow: none !important;
+    outline: none !important;
+    border: 1px solid var(--kraken-primary);
   }
-  
+
   &:active:not(:disabled) {
     transform: translateY(0);
   }
