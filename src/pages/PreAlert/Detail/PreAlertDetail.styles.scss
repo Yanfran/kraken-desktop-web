@@ -1,18 +1,35 @@
 // src/pages/PreAlert/PreAlertDetail.styles.scss
 .pre-alert-detail {
-  // min-height: 100vh;
-  // background: #F5F5F7;
-  // padding: 24px;
-
   padding: 24px;
   max-width: 100%;
   margin: 0;
   background: transparent;
+  position: relative;
 
-  // &__container {
-  //   max-width: 900px;
-  //   margin: 0 auto;
-  // }
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    z-index: -1;
+    opacity: 0.95;
+
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+    }
+  }
+
+  &__container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
 
   /* Header */
   &__header {

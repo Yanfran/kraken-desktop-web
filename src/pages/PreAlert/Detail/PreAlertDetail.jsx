@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import './PreAlertDetail.styles.scss';
 
 // Services
-import { getPreAlertaById } from '../../services/preAlertService';
+import { getPreAlertaById } from '@services/preAlertService';
 
 const PreAlertDetail = () => {
   const { id } = useParams();
