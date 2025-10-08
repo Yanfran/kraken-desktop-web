@@ -184,142 +184,144 @@ const PreAlertList = () => {
 
   return (
     <div className="pre-alert-list" onClick={closeAllMenus}>
-      {/* Header Section */}
-      <div className="pre-alert-list__header">
-        <div className="pre-alert-list__header-left">
-          <h1 className="pre-alert-list__title">Mis Pre-Alertas</h1>
-          <p className="pre-alert-list__subtitle">
-            {preAlertas.length} pre-alerta{preAlertas.length !== 1 ? 's' : ''} • {' '}
-            {preAlertas.filter(p => !p.IdGuia).length} pendiente{preAlertas.filter(p => !p.IdGuia).length !== 1 ? 's' : ''} • {' '}
-            {preAlertas.filter(p => p.IdGuia).length} procesada{preAlertas.filter(p => p.IdGuia).length !== 1 ? 's' : ''}
-          </p>
+      <div className="pre-alert-list__content">
+        {/* Header Section */}
+        <div className="pre-alert-list__header">
+          <div className="pre-alert-list__header-left">
+            <h1 className="pre-alert-list__title">Mis Pre-Alertas</h1>
+            <p className="pre-alert-list__subtitle">
+              {preAlertas.length} pre-alerta{preAlertas.length !== 1 ? 's' : ''} • {' '}
+              {preAlertas.filter(p => !p.IdGuia).length} pendiente{preAlertas.filter(p => !p.IdGuia).length !== 1 ? 's' : ''} • {' '}
+              {preAlertas.filter(p => p.IdGuia).length} procesada{preAlertas.filter(p => p.IdGuia).length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="pre-alert-list__header-actions">
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="pre-alert-list__refresh-btn"
+            >
+              {refreshing ? <LoadingSpinner size="small" /> : '🔄'}
+              {refreshing ? 'Actualizando...' : 'Actualizar'}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => navigate('/pre-alert/create')}
+              className="pre-alert-list__create-btn"
+            >
+              + Nueva Pre-Alerta
+            </Button>
+          </div>
         </div>
-        <div className="pre-alert-list__header-actions">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="pre-alert-list__refresh-btn"
-          >
-            {refreshing ? <LoadingSpinner size="small" /> : '🔄'}
-            {refreshing ? 'Actualizando...' : 'Actualizar'}
-          </Button>
-          <Button
-            variant="primary"
-          onClick={() => navigate('/pre-alert/create')}
-            className="pre-alert-list__create-btn"
-          >
-            + Nueva Pre-Alerta
-          </Button>
-        </div>
-      </div>
 
-      {/* Content */}
-      {preAlertas.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <>
-          {/* Main Section - Table/Cards */}
-          <div className="pre-alert-list__section">
-            <div className="pre-alert-list__table-container">
-              <div className="pre-alert-list__table-header">
-                <span className="pre-alert-list__table-header-text">Tracking</span>
-                <span className="pre-alert-list__table-header-text">Estatus</span>
-                <span className="pre-alert-list__table-header-text pre-alert-list__table-header-text--actions">
-                  Acciones
-                </span>
-              </div>
-              <div className="pre-alert-list__table-body">
-                {preAlertas.map((preAlerta) => {
-                  const status = getStatusInfo(preAlerta);
-                  const trackings = Array.isArray(preAlerta.trackings) 
-                    ? preAlerta.trackings 
-                    : [preAlerta.tracking].filter(Boolean);
-                  const hasMultipleTrackings = trackings.length > 1;
-                  const displayTracking = formatTrackingNumber(trackings[0] || "");
-                  const contenidos = preAlerta.contenidos || [];
-                  let contenidosToShow = contenidos;
-                  if (contenidos.length === 0 && preAlerta.contenido) {
-                    contenidosToShow = [{ id: 0, contenido: preAlerta.contenido }];
-                  }
+        {/* Content */}
+        {preAlertas.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <>
+            {/* Main Section - Table/Cards */}
+            <div className="pre-alert-list__section">
+              <div className="pre-alert-list__table-container">
+                <div className="pre-alert-list__table-header">
+                  <span className="pre-alert-list__table-header-text">Tracking</span>
+                  <span className="pre-alert-list__table-header-text">Estatus</span>
+                  <span className="pre-alert-list__table-header-text pre-alert-list__table-header-text--actions">
+                    Acciones
+                  </span>
+                </div>
+                <div className="pre-alert-list__table-body">
+                  {preAlertas.map((preAlerta) => {
+                    const status = getStatusInfo(preAlerta);
+                    const trackings = Array.isArray(preAlerta.trackings)
+                      ? preAlerta.trackings
+                      : [preAlerta.tracking].filter(Boolean);
+                    const hasMultipleTrackings = trackings.length > 1;
+                    const displayTracking = formatTrackingNumber(trackings[0] || "");
+                    const contenidos = preAlerta.contenidos || [];
+                    let contenidosToShow = contenidos;
+                    if (contenidos.length === 0 && preAlerta.contenido) {
+                      contenidosToShow = [{ id: 0, contenido: preAlerta.contenido }];
+                    }
 
-                  return (
-                    <div key={preAlerta.id} className="pre-alert-list__table-row">
-                      <div className="pre-alert-list__tracking-cell">
-                        <div className="pre-alert-list__tracking-main">
-                          <span className="pre-alert-list__tracking-number">
-                            {displayTracking}
-                          </span>
-                          {hasMultipleTrackings && (
-                            <span className="pre-alert-list__tracking-count">
-                              +{trackings.length - 1}
+                    return (
+                      <div key={preAlerta.id} className="pre-alert-list__table-row">
+                        <div className="pre-alert-list__tracking-cell">
+                          <div className="pre-alert-list__tracking-main">
+                            <span className="pre-alert-list__tracking-number">
+                              {displayTracking}
                             </span>
-                          )}
-                        </div>
-                        {contenidosToShow.map((contenido, idx) => (
-                          <div key={idx} className="pre-alert-list__content-item">
-                            <span className="pre-alert-list__content-text">
-                              {contenido.contenido}
-                            </span>
+                            {hasMultipleTrackings && (
+                              <span className="pre-alert-list__tracking-count">
+                                +{trackings.length - 1}
+                              </span>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                      <div className="pre-alert-list__status-cell">
-                        <span className={`pre-alert-list__status pre-alert-list__status--${status.className}`}>
-                          {status.text}
-                        </span>
-                        <span className="pre-alert-list__date">
-                          {formatDate(preAlerta.fechaCreacion)}
-                        </span>
-                      </div>
-                      <div className="pre-alert-list__actions-cell">
-                        <div className="pre-alert-list__actions">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleMenu(preAlerta.id);
-                            }}
-                            className="pre-alert-list__menu-btn"
-                          >
-                            ⋮
-                          </button>
-                          {visibleMenus[preAlerta.id] && (
-                            <div className="pre-alert-list__menu">
-                              <button
-                                onClick={() => handleViewDetail(preAlerta)}
-                                className="pre-alert-list__menu-item"
-                              >
-                                👁️ Ver detalle
-                              </button>
-                              {!preAlerta.IdGuia && (
+                          {contenidosToShow.map((contenido, idx) => (
+                            <div key={idx} className="pre-alert-list__content-item">
+                              <span className="pre-alert-list__content-text">
+                                {contenido.contenido}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="pre-alert-list__status-cell">
+                          <span className={`pre-alert-list__status pre-alert-list__status--${status.className}`}>
+                            {status.text}
+                          </span>
+                          <span className="pre-alert-list__date">
+                            {formatDate(preAlerta.fechaCreacion)}
+                          </span>
+                        </div>
+                        <div className="pre-alert-list__actions-cell">
+                          <div className="pre-alert-list__actions">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleMenu(preAlerta.id);
+                              }}
+                              className="pre-alert-list__menu-btn"
+                            >
+                              ⋮
+                            </button>
+                            {visibleMenus[preAlerta.id] && (
+                              <div className="pre-alert-list__menu">
                                 <button
-                                  onClick={() => handleEdit(preAlerta)}
+                                  onClick={() => handleViewDetail(preAlerta)}
                                   className="pre-alert-list__menu-item"
                                 >
-                                  ✏️ Editar
+                                  👁️ Ver detalle
                                 </button>
-                              )}
-                              <button
-                                onClick={() => handleDelete(preAlerta)}
-                                className="pre-alert-list__menu-item pre-alert-list__menu-item--danger"
-                              >
-                                🗑️ Eliminar
-                              </button>
-                            </div>
-                          )}
+                                {!preAlerta.IdGuia && (
+                                  <button
+                                    onClick={() => handleEdit(preAlerta)}
+                                    className="pre-alert-list__menu-item"
+                                  >
+                                    ✏️ Editar
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDelete(preAlerta)}
+                                  className="pre-alert-list__menu-item pre-alert-list__menu-item--danger"
+                                >
+                                  🗑️ Eliminar
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
 
-      {/* Custom Alert */}
-      <CustomAlert {...alert} />
+        {/* Custom Alert */}
+        <CustomAlert {...alert} />
+      </div>
     </div>
   );
 };

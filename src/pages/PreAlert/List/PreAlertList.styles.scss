@@ -48,10 +48,16 @@
     background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
   }
 
+  &__content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--spacing-8) var(--spacing-8) 0;
+  }
+
   /* ===== HEADER ===== */
   &__header {
-    padding: 20px 20px 16px 20px; // Padding interno
-    margin-bottom: 0;
+    padding: 0; // Padding interno
+    margin-bottom: var(--spacing-8);
   }
 
   &__header-left {
@@ -124,12 +130,13 @@
   }
 
   &__create-btn {
-    background-color: var(--color-primary, $primary);
-    color: var(--color-button-text, $text-light);
-    border: 1px solid var(--color-primary, $primary);
+    background-color: transparent;
+    color: $primary;
+    border: 1px solid $primary;
 
     &:hover {
-      background-color: color.scale($primary, $lightness: -8%);
+      background-color: color.scale($primary, $lightness: 90%);
+      color: color.scale($primary, $lightness: -10%);
     }
   }
 
@@ -137,7 +144,7 @@
   &__section {
     // background-color: #e8f2ff; // Color exacto de la app
     border-radius: 0; // Sin border radius para ancho completo
-    padding: 0 20px 20px 20px; // Padding interno
+    padding: 0; // Padding interno
     margin-bottom: 0;
     border: none; // Sin bordes
     box-shadow: none; // Sin sombras
