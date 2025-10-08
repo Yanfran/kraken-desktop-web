@@ -138,27 +138,17 @@ export const getDeliveryData = async () => {
  */
 export const getUserAddresses = async () => {
   try {
-    const response = await axiosInstance.post('/Addresses/user-addresses', {});
+    // ✅ FIX: Cambiado a GET y al endpoint correcto (/Casilleros/list)
+    const response = await axiosInstance.get('/Casilleros/list');
     
-    if (response.data.success) {
-      return {
-        success: true,
-        data: response.data.data || [],
-        message: response.data.message || 'Direcciones obtenidas'
-      };
-    }
-    
-    return {
-      success: false,
-      message: response.data.message || 'Error al obtener direcciones',
-      data: []
-    };
+    // La respuesta de este endpoint ya tiene el formato { success, data, message }
+    return response.data;
+
   } catch (error) {
     console.error('Error en getUserAddresses:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
-      error: error.message,
+      message: error.response?.data?.message || 'Error de conexión al obtener direcciones',
       data: []
     };
   }

@@ -54,39 +54,39 @@ const PreAlertCreate = () => {
   const { data: contenidosData, isLoading: isLoadingContenidos } = useQuery({
     queryKey: ['paquetesContenidos'],
     queryFn: getPaquetesContenidos,
-    select: (response) => response.data,
+    select: (response) => response.data, // ✅ Este está bien
   });
 
   const { data: deliveryData, isLoading: isLoadingDelivery } = useQuery({
     queryKey: ['deliveryData'],
     queryFn: getDeliveryData,
-    select: (response) => response.data,
+    select: (response) => response.data, // ✅ Este está bien
   });
 
   const { data: userAddresses } = useQuery({
     queryKey: ['userAddresses'],
     queryFn: getUserAddresses,
-    select: (response) => response.data || [],
+    select: (response) => response.data || [], // ✅ Este está bien
   });
 
   const { data: statesData, isLoading: isLoadingStates } = useQuery({
     queryKey: ['states'],
     queryFn: () => getStatesByCountry(1),
-    select: (response) => response.data?.map(s => ({ label: s.name, value: s.id.toString() })),
+    select: (response) => response.data?.map(s => ({ label: s.name, value: s.id.toString() })) || [],
   });
 
   const { data: municipalitiesData, isLoading: isLoadingMunicipalities } = useQuery({
     queryKey: ['municipalities', addressState.selectedState],
     queryFn: () => getMunicipalitiesByState(addressState.selectedState),
     enabled: !!addressState.selectedState,
-    select: (response) => response.data?.map(m => ({ label: m.name, value: m.id.toString() })),
+    select: (response) => response.data?.map(m => ({ label: m.name, value: m.id.toString() })) || [],
   });
 
   const { data: parishesData, isLoading: isLoadingParishes } = useQuery({
     queryKey: ['parishes', addressState.selectedMunicipality],
     queryFn: () => getParishesByMunicipality(addressState.selectedMunicipality),
     enabled: !!addressState.selectedMunicipality,
-    select: (response) => response.data?.map(p => ({ label: p.name, value: p.id.toString() })),
+    select: (response) => response.data?.map(p => ({ label: p.name, value: p.id.toString() })) || [],
   });
 
   // Procesar ciudades (solo Caracas ID=50)
@@ -108,17 +108,25 @@ const PreAlertCreate = () => {
     return contenidosData.map(c => ({ label: c.contenido, value: c.id.toString() }));
   }, [contenidosData]);
 
-  // ✅ MEJORADO: Cargar dirección predeterminada completa
   useEffect(() => {
+    console.log('🔍 Verificando direcciones...', { 
+      userAddresses: userAddresses?.length, 
+      deliveryData: !!deliveryData 
+    });
+
+    // Si no hay direcciones de usuario
     if (!userAddresses || userAddresses.length === 0) {
-      // No hay direcciones, cargar tienda por defecto
-      if (deliveryData?.ciudad && deliveryData?.tiendas) {
+      console.log('⚠️ No hay direcciones de usuario');
+      
+      // Cargar tienda por defecto como fallback
+      if (deliveryData?.ciudad && deliveryData?.tiendas && deliveryData.tiendas.length > 0) {
         const defaultStore = deliveryData.tiendas.find(t => 
           t.nombre.toLowerCase().includes('chacao') || 
           t.nombre.toLowerCase().includes('kraken')
         ) || deliveryData.tiendas[0];
 
         if (defaultStore) {
+          console.log('🏪 Usando tienda por defecto:', defaultStore.nombre);
           setAddressState(prev => ({
             ...prev,
             deliveryMethod: 'store',
@@ -132,39 +140,77 @@ const PreAlertCreate = () => {
       return;
     }
 
-    const defaultAddr = userAddresses.find(a => a.esPredeterminada);
-    if (defaultAddr) {
-      if (defaultAddr.tipoDireccion === 'store') {
+    // ✅ BUSCAR LA DIRECCIÓN PREDETERMINADA (la que tiene esPredeterminada === true)
+    const defaultAddr = userAddresses.find(a => a.esPredeterminada === true || a.EsPredeterminada === true);
+    
+    if (!defaultAddr) {
+      console.log('⚠️ No hay dirección predeterminada marcada');
+      // Si no hay predeterminada, usar tienda por defecto
+      if (deliveryData?.ciudad && deliveryData?.tiendas && deliveryData.tiendas.length > 0) {
+        const defaultStore = deliveryData.tiendas[0];
         setAddressState(prev => ({
           ...prev,
           deliveryMethod: 'store',
-          selectedCity: defaultAddr.idCiudad?.toString() ?? '',
-          selectedLocker: defaultAddr.idLocker?.toString() ?? '',
+          selectedCity: deliveryData.ciudad.id.toString(),
+          selectedLocker: defaultStore.id.toString(),
           selectedOption: 'default'
         }));
-        const texto = `Retiro en tienda: ${defaultAddr.nombreLocker ?? 'Locker'}`;
-        setDefaultAddressText(defaultAddr.nombreDireccion || texto);
-      } else {
-        setAddressState(prev => ({
-          ...prev,
-          deliveryMethod: 'home',
-          selectedState: defaultAddr.idEstado?.toString() ?? '',
-          selectedMunicipality: defaultAddr.idMunicipio?.toString() ?? '',
-          selectedParish: defaultAddr.idParroquia?.toString() ?? '',
-          address: defaultAddr.direccionCompleta ?? '',
-          reference: defaultAddr.referencia ?? '',
-          addressName: defaultAddr.nombreDireccion ?? '',
-          selectedOption: 'default'
-        }));
-        const parts = [
-          defaultAddr.direccionCompleta,
-          defaultAddr.nombreParroquia,
-          defaultAddr.nombreMunicipio,
-          defaultAddr.nombreEstado
-        ].filter(Boolean);
-        setDefaultAddressText(defaultAddr.nombreDireccion || parts.join(', '));
+        setDefaultAddressText(`Retiro en tienda: ${defaultStore.nombre}`);
       }
+      return;
     }
+
+    console.log('✅ Dirección predeterminada encontrada:', {
+      id: defaultAddr.id,
+      tipo: defaultAddr.tipoDireccion,
+      nombre: defaultAddr.nombreDireccion,
+      esPredeterminada: defaultAddr.esPredeterminada
+    });
+
+    // ✅ CONFIGURAR LA DIRECCIÓN PREDETERMINADA SEGÚN SU TIPO
+    if (defaultAddr.tipoDireccion === 'store') {
+      // Es retiro en tienda
+      console.log('🏪 Configurando tienda predeterminada');
+      setAddressState(prev => ({
+        ...prev,
+        deliveryMethod: 'store',
+        selectedCity: defaultAddr.idCiudad?.toString() ?? '',
+        selectedLocker: defaultAddr.idLocker?.toString() ?? '',
+        selectedOption: 'default'
+      }));
+      
+      const textoTienda = `Retiro en tienda: ${defaultAddr.nombreLocker ?? 'Locker'}`;
+      setDefaultAddressText(defaultAddr.nombreDireccion || textoTienda);
+      
+    } else {
+      // Es entrega a domicilio
+      console.log('🏠 Configurando domicilio predeterminado');
+      setAddressState(prev => ({
+        ...prev,
+        deliveryMethod: 'home',
+        selectedState: defaultAddr.idEstado?.toString() ?? '',
+        selectedMunicipality: defaultAddr.idMunicipio?.toString() ?? '',
+        selectedParish: defaultAddr.idParroquia?.toString() ?? '',
+        address: defaultAddr.direccionCompleta ?? '',
+        reference: defaultAddr.referencia ?? '',
+        addressName: defaultAddr.nombreDireccion ?? '',
+        selectedOption: 'default'
+      }));
+      
+      // Construir texto de dirección completa
+      const parts = [
+        defaultAddr.direccionCompleta,
+        defaultAddr.nombreParroquia,
+        defaultAddr.nombreMunicipio,
+        defaultAddr.nombreEstado
+      ].filter(Boolean); // Filtrar valores null/undefined
+      
+      const textoDomicilio = parts.join(', ');
+      setDefaultAddressText(defaultAddr.nombreDireccion || textoDomicilio);
+    }
+
+    console.log('✅ Dirección predeterminada configurada correctamente');
+    
   }, [userAddresses, deliveryData]);
 
   // Handlers
@@ -349,21 +395,43 @@ const PreAlertCreate = () => {
     try {
       const direccion = {};
 
-      // Determinar qué dirección usar
+      // ✅ CASO 1: Usar dirección predeterminada (selectedOption === 'default')
       if (addressState.selectedOption === 'default') {
-        // Usar dirección predeterminada
-        const defaultAddr = userAddresses.find(a => a.esPredeterminada);
+        const defaultAddr = userAddresses?.find(a => a.esPredeterminada === true);
+        
         if (defaultAddr) {
+          console.log('✅ Usando dirección predeterminada:', defaultAddr.id);
           direccion.idDireccion = defaultAddr.id;
           direccion.tipo = defaultAddr.tipoDireccion;
+        } else {
+          // Fallback: si no hay predeterminada pero está en modo 'default', 
+          // crear nueva dirección con los datos actuales
+          console.log('⚠️ No hay predeterminada, creando nueva dirección');
+          if (addressState.deliveryMethod === 'store') {
+            direccion.tipo = 'store';
+            direccion.ciudad = addressState.selectedCity;
+            direccion.tienda = addressState.selectedLocker;
+          } else {
+            direccion.tipo = 'home';
+            direccion.estado = addressState.selectedState;
+            direccion.municipio = addressState.selectedMunicipality;
+            direccion.parroquia = addressState.selectedParish;
+            direccion.direccion = addressState.address;
+            direccion.referencia = addressState.reference;
+            direccion.nombreDireccion = addressState.addressName;
+          }
         }
-      } else if (addressState.selectedOption === 'store') {
-        // Retiro en tienda nueva
+      } 
+      // ✅ CASO 2: Nueva tienda
+      else if (addressState.selectedOption === 'store') {
+        console.log('🏪 Creando nueva dirección de tienda');
         direccion.tipo = 'store';
         direccion.ciudad = addressState.selectedCity;
         direccion.tienda = addressState.selectedLocker;
-      } else if (addressState.selectedOption === 'new') {
-        // Dirección a domicilio nueva
+      } 
+      // ✅ CASO 3: Nuevo domicilio
+      else if (addressState.selectedOption === 'new') {
+        console.log('🏠 Creando nuevo domicilio');
         direccion.tipo = 'home';
         direccion.estado = addressState.selectedState;
         direccion.municipio = addressState.selectedMunicipality;
@@ -371,11 +439,20 @@ const PreAlertCreate = () => {
         direccion.direccion = addressState.address;
         direccion.referencia = addressState.reference;
         direccion.nombreDireccion = addressState.addressName;
-      } else if (addressState.selectedOption.startsWith('addr-')) {
-        // Dirección guardada seleccionada
+      } 
+      // ✅ CASO 4: Dirección guardada seleccionada (addr-{id})
+      else if (addressState.selectedOption?.startsWith('addr-')) {
         const addressId = parseInt(addressState.selectedOption.replace('addr-', ''));
+        console.log('📍 Usando dirección guardada ID:', addressId);
         direccion.idDireccion = addressId;
+        
+        // Buscar el tipo de dirección
+        const selectedAddr = userAddresses?.find(a => a.id === addressId);
+        if (selectedAddr) {
+          direccion.tipo = selectedAddr.tipoDireccion;
+        }
       }
+
 
       const formatValueForBackend = (value) => {
         if (!value) return '0';
