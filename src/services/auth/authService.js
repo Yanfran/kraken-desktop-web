@@ -199,7 +199,7 @@ export const authService = {
   // ===== VALIDAR TOKEN =====
   async validateToken(token) {
     try {
-      const response = await authAPI.get('/Users/validate-token', {
+      const response = await authAPI.get('/Users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       

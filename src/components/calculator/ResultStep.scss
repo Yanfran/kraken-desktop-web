@@ -1,10 +1,11 @@
 // src/components/calculator/ResultStep.scss
+// ✅ DISEÑO EXACTO DE LA APP MÓVIL
+
 @import '../../styles/variables';
-@import '../../styles/_colors.scss';
 
 .result-step {
   flex: 1;
-  padding-bottom: 20px;
+  padding: 0 20px 20px; // Padding igual a la app
 
   &__container {
     padding-bottom: 20px;
@@ -12,14 +13,14 @@
 
   &__title {
     font-size: 16px;
-    color: $primary;
+    color: $text-primary;
     line-height: 22px;
     margin-bottom: 20px;
     text-align: center;
   }
 
   &__package-info {
-    background-color: $primary;
+    background-color: $secondary; // ✅ Azul como en la app
     border-radius: 12px;
     padding: 12px 15px;
     margin-bottom: 20px;
@@ -48,11 +49,11 @@
   &__currency-label {
     font-size: 16px;
     font-weight: 500;
-    color: $primary;
+    color: $text-primary;
   }
 
   &__rate-info {
-    background-color: $card-background;
+    background-color: $input-background;
     border-radius: 8px;
     padding: 8px 12px;
     display: flex;
@@ -63,7 +64,7 @@
   &__rate-text {
     font-size: 14px;
     font-weight: 600;
-    color: $primary;
+    color: $text-primary;
   }
 
   &__rate-details {
@@ -74,10 +75,10 @@
 
   &__currency-toggle {
     display: flex;
-    background-color: $card-background;
+    background-color: $input-background;
     border-radius: 25px;
     padding: 2px;
-    border: 1px solid $separator;
+    border: 1px solid $border-color;
   }
 
   &__currency-button {
@@ -90,12 +91,12 @@
     transition: all 0.3s ease;
 
     &:hover:not(.result-step__active-currency) {
-      background-color: rgba($primary, 0.1);
+      background-color: rgba($secondary, 0.1);
     }
   }
 
   &__active-currency {
-    background-color: $primary;
+    background-color: $secondary; // ✅ Azul como en la app
   }
 
   &__currency-option {
@@ -125,7 +126,7 @@
     transition: all 0.3s ease;
 
     &:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: none; // ❌ SIN box-shadow en la app
     }
   }
 
@@ -139,7 +140,7 @@
     transition: background-color 0.2s ease;
 
     &:hover {
-      background-color: rgba($primary, 0.02);
+      background-color: rgba($secondary, 0.02);
     }
   }
 
@@ -184,8 +185,8 @@
     justify-content: center;
 
     &:hover {
-      background-color: rgba($primary, 0.1);
-      color: $primary;
+      background-color: rgba($secondary, 0.1);
+      color: $secondary;
     }
 
     svg {
@@ -299,7 +300,7 @@
 
   &__new-calculation-button {
     width: 100%;
-    background-color: $primary;
+    background-color: $secondary; // ✅ Azul como en la app
     color: white;
     border: none;
     border-radius: 25px;
@@ -310,13 +311,13 @@
     transition: all 0.3s ease;
 
     &:hover {
-      background-color: darken($primary, 10%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba($primary, 0.3);
+      background-color: darken($secondary, 10%);
+      transform: none; // ❌ SIN transform
+      box-shadow: none; // ❌ SIN box-shadow
     }
 
     &:active {
-      transform: translateY(0);
+      transform: none;
     }
   }
 }

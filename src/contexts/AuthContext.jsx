@@ -1,36 +1,18 @@
-// src/contexts/AuthContext.jsx - Adaptado completo de tu React Native
+// src/contexts/AuthContext.jsx - CORREGIDO con persistencia de sesión
 import React, { createContext, useContext, useEffect, useReducer, useRef, useMemo, useCallback } from 'react';
 import { authService } from '../services/auth/authService';
 import { googleService } from '../services/auth/googleService';
 import Cookies from 'js-cookie';
 
-// ===== TIPOS (adaptados de tu TypeScript) =====
-const UserType = {
-  id: '',
-  email: '',
-  name: '',
-  lastName: '',
-  emailVerified: false,
-  fromGoogle: false,
-  profileComplete: false,
-  clienteActivo: false,
-  phone: '',
-  nro: '',
-  codCliente: '',
-  birthday: null,
-  phoneSecondary: '',
-  avatarId: ''
-};
-
 // ===== ESTADO INICIAL =====
 const initialState = {
   user: null,
-  isLoading: true,
+  isLoading: true, // ✅ Comienza en true para verificar sesión
   isSignedIn: false,
   error: null
 };
 
-// ===== REDUCER (igual que React Native) =====
+// ===== REDUCER =====
 function authReducer(state, action) {
   switch (action.type) {
     case 'LOADING':
@@ -68,6 +50,12 @@ function authReducer(state, action) {
         isLoading: false
       };
     
+    case 'SET_LOADING':
+      return {
+        ...state,
+        isLoading: action.payload
+      };
+    
     default:
       return state;
   }
@@ -83,6 +71,7 @@ export const AuthContext = createContext({
   signUp: async () => ({ success: false, message: 'Not implemented' }),
   signInWithGoogle: async () => ({ success: false, message: 'Not implemented' }),
   setUserState: async () => {},
+  confirmEmail: () => {},
   resendVerificationEmail: async () => ({ success: false, message: 'Not implemented' })
 });
 
@@ -90,33 +79,42 @@ export const AuthContext = createContext({
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   
-  // REF para manejo de Google Auth (como en React Native)
   const googleAuthState = useRef({
     isProcessing: false,
     resolver: null,
     userInfo: null
   });
 
-  // ===== VERIFICAR TOKEN AL CARGAR =====
+  // ===== 🔥 VERIFICAR TOKEN AL CARGAR - CRÍTICO =====
   useEffect(() => {
     const initAuth = async () => {
       try {
+        console.log('🔍 [Auth] Verificando sesión...');
         dispatch({ type: 'LOADING' });
         
+        // Buscar token en localStorage Y cookies
         const token = localStorage.getItem('authToken') || Cookies.get('authToken');
-        const userData = localStorage.getItem('userData');
+        const userDataStr = localStorage.getItem('userData');
 
-        if (token && userData) {
-          // Validar token con el servidor
+        if (token && userDataStr) {
           try {
+            const userData = JSON.parse(userDataStr);
+            
+            // ✅ VALIDAR TOKEN CON EL SERVIDOR
             const validatedUser = await authService.validateToken(token);
+            
+            console.log('✅ [Auth] Sesión válida restaurada:', validatedUser.email);
             dispatch({ type: 'LOGIN_SUCCESS', payload: validatedUser });
-            console.log('✅ [Auth] Usuario autenticado desde storage');
           } catch (error) {
             console.warn('⚠️ [Auth] Token inválido, limpiando storage');
-            await signOut();
+            // Limpiar storage si el token es inválido
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            Cookies.remove('authToken');
+            dispatch({ type: 'LOGOUT' });
           }
         } else {
+          console.log('ℹ️ [Auth] No hay sesión previa');
           dispatch({ type: 'LOGOUT' });
         }
       } catch (error) {
@@ -126,7 +124,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
+  }, []); // ✅ Solo ejecutar una vez al montar
 
   // ===== FUNCIONES MEMOIZADAS =====
   const signIn = useCallback(async (email, password) => {
@@ -135,6 +133,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login({ email, password });
       
       if (response.success) {
+        // Guardar en localStorage Y cookies
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userData', JSON.stringify(response.user));
         Cookies.set('authToken', response.token, { expires: 7 });
