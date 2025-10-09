@@ -1,95 +1,104 @@
 // src/components/calculator/LocationStep.jsx
-import React from 'react';
-import { Loader } from 'lucide-react';
+// ✅ ACTUALIZADO con SearchableSelect y diseño correcto
+import React, { useState } from 'react';
+import SearchableSelect from '../../components/common/SearchableSelect/SearchableSelect';
 import './LocationStep.scss';
 
 const LocationStep = ({
-  statesList = [],
-  municipalitiesList = [],
+  statesList,
+  municipalitiesList,
+  parishesList,
   selectedState,
   selectedMunicipality,
+  selectedParish,
   onStateChange,
   onMunicipalityChange,
+  onParishChange,
   onNext,
-  isLoading = false,
-  validationError = ''
+  isLoading
 }) => {
+  const [validationError, setValidationError] = useState('');
 
   const handleNext = () => {
+    setValidationError('');
+
+    if (!selectedState || selectedState.trim() === '') {
+      setValidationError('Por favor selecciona un estado');
+      return;
+    }
+
+    if (!selectedMunicipality || selectedMunicipality.trim() === '') {
+      setValidationError('Por favor selecciona un municipio');
+      return;
+    }
+
     onNext();
+  };
+
+  const handleStateChange = (value) => {
+    setValidationError('');
+    onStateChange(value);
+  };
+
+  const handleMunicipalityChange = (value) => {
+    setValidationError('');
+    onMunicipalityChange(value);
   };
 
   return (
     <div className="location-step">
       <div className="location-step__form">
         {/* Países fijos */}
-        <div className="location-step__field">
-          <label className="location-step__label">País de Origen</label>
-          <div className="location-step__fixed-box">
-            <span>🇺🇸</span> Estados Unidos
-          </div>
+        <label className="location-step__label">País de Origen</label>
+        <div className="location-step__fixed-country">
+          <span className="location-step__flag">🇺🇸</span>
+          <span className="location-step__fixed-country-text">Estados Unidos</span>
         </div>
 
-        <div className="location-step__field">
-          <label className="location-step__label">País de Destino</label>
-          <div className="location-step__fixed-box">
-            <span>🇻🇪</span> Venezuela
-          </div>
+        <label className="location-step__label">País de Destino</label>
+        <div className="location-step__fixed-country">
+          <span className="location-step__flag">🇻🇪</span>
+          <span className="location-step__fixed-country-text">Venezuela</span>
         </div>
 
-        {/* Dropdown de estados */}
-        <div className="location-step__field">
-          <label className="location-step__label">Estado *</label>
-          <select
-            className={`location-step__dropdown ${validationError && !selectedState ? 'error' : ''}`}
-            value={selectedState}
-            onChange={(e) => onStateChange(e.target.value)}
-            disabled={isLoading || statesList.length === 0}
-          >
-            <option value="">{isLoading ? 'Cargando estados...' : 'Seleccione un estado'}</option>
-            {statesList.map(state => (
-              <option key={state.value} value={state.value}>
-                {state.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* SearchableSelect de estados */}
+        <label className="location-step__label">Estado *</label>
+        <SearchableSelect
+          options={statesList}
+          value={selectedState}
+          onChange={handleStateChange}
+          placeholder="Seleccione un estado"
+          disabled={isLoading}
+          className={validationError && !selectedState ? 'location-step__select--error' : ''}
+        />
 
-        {/* Dropdown de municipios */}
-        <div className="location-step__field">
-          <label className="location-step__label">Municipio *</label>
-          <select
-            className={`location-step__dropdown ${validationError && !selectedMunicipality ? 'error' : ''}`}
-            value={selectedMunicipality}
-            onChange={(e) => onMunicipalityChange(e.target.value)}
-            disabled={isLoading || !selectedState || municipalitiesList.length === 0}
-          >
-            <option value="">{selectedState ? 'Seleccione un municipio' : 'Seleccione un estado primero'}</option>
-            {municipalitiesList.map(mun => (
-              <option key={mun.value} value={mun.value}>
-                {mun.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* SearchableSelect de municipios */}
+        <label className="location-step__label">Municipio *</label>
+        <SearchableSelect
+          options={municipalitiesList}
+          value={selectedMunicipality}
+          onChange={handleMunicipalityChange}
+          placeholder="Seleccione un estado primero"
+          disabled={!selectedState || isLoading}
+          className={validationError && !selectedMunicipality ? 'location-step__select--error' : ''}
+        />
 
+        {/* Mensaje de error */}
         {validationError && (
-          <div className="location-step__error-box">
-            <p>{validationError}</p>
+          <div className="location-step__error">
+            <span className="location-step__error-text">{validationError}</span>
           </div>
         )}
       </div>
 
       <button 
-        className="location-step__next-button"
+        className={`location-step__next-button ${isLoading ? 'location-step__next-button--disabled' : ''}`}
         onClick={handleNext}
         disabled={isLoading}
+        type="button"
       >
         {isLoading ? (
-          <>
-            <Loader className="spinner" size={20} />
-            <span>Cargando...</span>
-          </>
+          <span className="location-step__spinner"></span>
         ) : (
           'Siguiente'
         )}

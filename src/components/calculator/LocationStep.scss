@@ -1,111 +1,115 @@
 // src/components/calculator/LocationStep.scss
+// ✅ DISEÑO EXACTO: inputs redondeados como en las imágenes
 
 @import '../../styles/variables';
-@import '../../styles/mixins';
 
 .location-step {
-  width: 100%;
-  // max-width: 600px; // Eliminado
-  margin: 0 auto;
-  background-color: var(--color-card-background);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  padding: 2rem;
   display: flex;
   flex-direction: column;
+  min-height: 400px;
+  padding: 0 20px;
 
   &__form {
-    flex-grow: 1;
-  }
-
-  &__field {
-    margin-bottom: 1.5rem;
+    flex: 1;
   }
 
   &__label {
     display: block;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: 0.5rem;
+    font-size: 16px;
+    font-weight: 500;
+    color: $text-primary;
+    margin-bottom: 8px;
+    margin-top: 16px;
+
+    &:first-child {
+      margin-top: 0;
+    }
   }
 
-  &__fixed-box {
-    padding: 0.75rem 1rem;
-    background-color: var(--color-input-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text-secondary);
-    font-weight: 500;
+  &__fixed-country {
+    background-color: #fff; // ✅ Fondo blanco como en la app
+    border: 1px solid $primary; // ✅ Borde NARANJA como en la app
+    border-radius: 25px;
+    padding: 9px 16px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
+    justify-content: center; // ✅ Centrado como en la app
+    gap: 8px;
+  }
 
-    span {
-      margin-right: 0.5rem;
-      font-size: 1.2rem;
+  &__flag {
+    font-size: 18px;
+  }
+
+  &__fixed-country-text {
+    font-size: 15px;
+    color: $text-primary;
+  }
+
+  // ✅ Ajustes para SearchableSelect (ya tiene border-radius: 25px)
+  &__select--error {
+    // El SearchableSelect maneja su propio estilo de error
+    .searchable-select__field {
+      border-color: $error !important;
     }
   }
 
-  &__dropdown {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    background-color: var(--color-input-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text-primary);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
-    background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
-
-    &:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
-    }
-
-    &:disabled {
-      background-color: var(--color-background-light);
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-
-    &.error {
-      border-color: var(--color-error);
-    }
+  &__error {
+    margin-top: 10px;
+    padding: 10px 15px;
+    background-color: #fee;
+    border-radius: 8px;
+    border-left: 4px solid $error;
   }
 
-  &__error-box {
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
-    background-color: var(--color-error-light);
-    border: 1px solid var(--color-error);
-    border-radius: var(--radius-md);
-    color: var(--color-error);
-    font-size: 0.9rem;
-    text-align: center;
+  &__error-text {
+    font-size: 14px;
+    color: $error;
+    font-weight: 500;
+    line-height: 20px;
   }
 
   &__next-button {
-    @include button-base;
-    @include button-primary;
     width: 100%;
-    padding: 0.9rem;
-    font-size: 1rem;
-    margin-top: 1rem;
+    background-color: transparent; // ✅ Fondo transparente
+    color: $primary; // ✅ Texto naranja
+    border: 1px solid $primary; // ✅ Borde naranja
+    border-radius: 25px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s ease;
 
-    .spinner {
-      animation: spin 1s linear infinite;
+    &:hover:not(&--disabled) {
+      background-color: rgba($primary, 0.05); // ✅ Hover sutil
     }
+
+    &:active:not(&--disabled) {
+      transform: none;
+    }
+
+    &--disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  &__spinner {
+    border: 3px solid rgba($primary, 0.3); // ✅ Naranja
+    border-radius: 50%;
+    border-top-color: $primary; // ✅ Naranja
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
   }
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }

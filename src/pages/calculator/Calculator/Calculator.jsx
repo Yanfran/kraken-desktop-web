@@ -8,13 +8,13 @@ import PackageStep from '../../../components/calculator/PackageStep';
 import ResultStep from '../../../components/calculator/ResultStep';
 import axiosInstance from '../../../services/axiosInstance';
 import { API_URL } from '../../../utils/config';
-// ✅ IMPORTAR LOS SERVICIOS CORRECTOS
 import { 
   getStatesByCountry, 
   getMunicipalitiesByState, 
   getParishesByMunicipality 
 } from '../../../services/address/addressService';
 import './Calculator.scss';
+import './calculator-fixes.scss'; // ✅ Importar correcciones específicas
 
 const KG_TO_LB = 2.20462;
 const LB_TO_KG = 0.453592;

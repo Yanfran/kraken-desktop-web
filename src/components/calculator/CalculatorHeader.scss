@@ -1,5 +1,5 @@
 // src/components/calculator/CalculatorHeader.scss
-// ✅ DISEÑO EXACTO DE LA APP MÓVIL
+// ✅ DISEÑO EXACTO: tabs sin hover azul, sin bordes redondeados
 
 @import '../../styles/variables';
 
@@ -17,7 +17,6 @@
   &__icon {
     width: 30px;
     height: 30px;
-    // Aplicar color primary al SVG/PNG
     filter: brightness(0) saturate(100%) invert(25%) sepia(98%) saturate(3654%) hue-rotate(353deg) brightness(97%) contrast(104%);
   }
 
@@ -50,28 +49,29 @@
     background: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: border-color 0.3s ease; // ✅ Solo animar el borde
 
     &:disabled {
       cursor: default;
     }
 
     &--active {
-      border-bottom-color: $primary;
+      border-bottom-color: $primary; // ✅ Naranja (primary) no azul
     }
 
+    // ❌ REMOVER hover con fondo
     &:hover:not(:disabled):not(&--active) {
-      background-color: transparent;
+      background-color: transparent; // ✅ Sin fondo en hover
     }
   }
 
   &__tab-text {
     font-size: 14px;
     color: $text-secondary;
-    transition: all 0.3s ease;
+    transition: color 0.3s ease;
 
     &--active {
-      color: $primary;
+      color: $primary; // ✅ Naranja (primary) no azul
       font-weight: 600;
     }
   }

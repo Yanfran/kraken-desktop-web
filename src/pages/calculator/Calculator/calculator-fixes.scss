@@ -1,0 +1,33 @@
+
+// src/pages/calculator/Calculator/calculator-fixes.scss
+// ✅ CORRECCIONES ESPECÍFICAS para eliminar estilos no deseados
+
+// Eliminar border-radius de los tabs
+.calculator-header__tab {
+  border-radius: 0 !important;
+  
+  &:hover {
+    background-color: transparent !important;
+    background: none !important;
+  }
+}
+
+// Asegurar que el contenedor principal no tenga borde
+.calculator-page__container {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+// Asegurar estilos de país de origen/destino
+.location-step__fixed-country {
+  background-color: #fff !important;
+  border: 1px solid #FF4500 !important;
+  border-radius: 25px !important;
+}
+
+// Eliminar cualquier hover azul
+button:hover,
+.calculator-header__tab:hover {
+  background-color: transparent !important;
+}

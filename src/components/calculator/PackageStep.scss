@@ -1,12 +1,13 @@
 // src/components/calculator/PackageStep.scss
-@import '../../styles/variables';
-@import '../../styles/_colors.scss';
+// ✅ DISEÑO EXACTO DE LA APP MÓVIL
 
+@import '../../styles/variables';
 
 .package-step {
   display: flex;
   flex-direction: column;
   min-height: 500px;
+  padding: 0 20px; // Padding igual a la app
 
   &__scroll {
     flex: 1;
@@ -22,7 +23,7 @@
     display: block;
     font-size: 16px;
     font-weight: 500;
-    color: $primary;
+    color: $text-primary;
     margin-bottom: 8px;
     margin-top: 16px;
 
@@ -60,16 +61,16 @@
     flex: 1;
     padding: 14px 16px;
     font-size: 15px;
-    color: $primary;
+    color: $text-primary;
     border: 1px solid $separator;
-    border-radius: 12px;
+    border-radius: 25px; // ✅ Redondeado como en la imagen
     background-color: #fff;
     transition: all 0.3s ease;
 
     &:focus {
       outline: none;
       border-color: $primary;
-      box-shadow: 0 0 0 3px rgba($primary, 0.1);
+      box-shadow: none;
     }
 
     &--disabled {
@@ -100,7 +101,7 @@
     width: 100%;
     padding: 14px 16px;
     font-size: 15px;
-    color: $primary;
+    color: $text-primary;
     border: 1px solid $separator;
     border-radius: 12px;
     background-color: #fff;
@@ -114,7 +115,7 @@
     &:focus {
       outline: none;
       border-color: $primary;
-      box-shadow: 0 0 0 3px rgba($primary, 0.1);
+      box-shadow: none; // ❌ SIN box-shadow
     }
 
     &--disabled {
@@ -183,7 +184,7 @@
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
-    color: $primary;
+    color: $text-primary;
     cursor: pointer;
     transition: all 0.3s ease;
     min-width: 60px;
@@ -229,7 +230,7 @@
   &__dimension-label {
     font-size: 14px;
     font-weight: 500;
-    color: $primary;
+    color: $text-primary;
     margin-bottom: 6px;
   }
 
@@ -243,7 +244,7 @@
 
   &__calculate-button {
     width: 100%;
-    background-color: $primary;
+    background-color: $secondary; // ✅ Azul como en la app
     color: white;
     border: none;
     border-radius: 25px;
@@ -254,21 +255,21 @@
     transition: all 0.3s ease;
 
     &:hover:not(.package-step__button--disabled) {
-      background-color: darken($primary, 10%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba($primary, 0.3);
+      background-color: darken($secondary, 10%);
+      transform: none; // ❌ SIN transform
+      box-shadow: none; // ❌ SIN box-shadow
     }
 
     &:active:not(.package-step__button--disabled) {
-      transform: translateY(0);
+      transform: none;
     }
   }
 
   &__back-button {
     width: 100%;
-    background-color: transparent;
-    color: $primary;
-    border: 1px solid $separator;
+    background-color: $input-background;
+    color: $secondary;
+    border: 1px solid $border-color;
     border-radius: 25px;
     padding: 14px;
     font-size: 16px;
@@ -277,8 +278,7 @@
     transition: all 0.3s ease;
 
     &:hover:not(:disabled) {
-      background-color: $card-background;
-      border-color: $primary;
+      background-color: darken($input-background, 5%);
     }
 
     &:disabled {
