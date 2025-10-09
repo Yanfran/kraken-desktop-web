@@ -133,12 +133,11 @@ export const getDeliveryData = async () => {
 };
 
 /**
- * Obtener direcciones guardadas del usuario (las que están en "Mis Direcciones")
+ * Obtener direcciones guardadas del usuario
  * @returns {Promise<Object>}
  */
 export const getUserAddresses = async () => {
   try {
-    // ✅ Obtener el userId del localStorage (debe estar guardado al hacer login)
     const userId = localStorage.getItem('userId');
     
     if (!userId) {
@@ -149,18 +148,13 @@ export const getUserAddresses = async () => {
         data: []
       };
     }
-    
 
-    // ✅ ENDPOINT CORRECTO: /Addresses/user-addresses (POST)
     const response = await axiosInstance.post('/Addresses/user-addresses', {
       ClientId: parseInt(userId)
     });
-        
     
     if (response.data.success) {
-      // Validar que haya dirección predeterminada
       const addresses = response.data.data || [];
-      const defaultAddr = addresses.find(a => a.esPredeterminada === true);           
       
       return {
         success: true,
@@ -185,7 +179,35 @@ export const getUserAddresses = async () => {
   }
 };
 
-// ✅ NUEVO: Función separada para obtener solo casilleros (USA/CHINA)
+/**
+ * ✅ NUEVA: Registrar una nueva dirección
+ * @param {Object} payload - Datos de la dirección
+ * @returns {Promise<Object>}
+ */
+export const registerAddress = async (payload) => {
+  try {
+    const response = await axiosInstance.post('/Addresses/register-address', payload);
+    
+    return {
+      success: response.data.success || false,
+      message: response.data.message || 'Dirección registrada',
+      requiresDefaultSelection: response.data.requiresDefaultSelection || false,
+      data: response.data
+    };
+  } catch (error) {
+    console.error('❌ Error en registerAddress:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al registrar dirección',
+      requiresDefaultSelection: false
+    };
+  }
+};
+
+/**
+ * Obtener casilleros (USA/CHINA)
+ * @returns {Promise<Object>}
+ */
 export const getCasilleros = async () => {
   try {
     const response = await axiosInstance.get('/Casilleros/list');
@@ -243,8 +265,16 @@ export const registerPersonalData = async (data) => {
  */
 export const setDefaultAddress = async (addressId) => {
   try {
-    const response = await axiosInstance.post('/Addresses/set-default', {
-      AddressId: addressId
+    const userId = localStorage.getItem('userId');
+    const userDataString = localStorage.getItem('userData');
+    const userData = JSON.parse(userDataString);
+    const userEmail = userData.email;
+
+    // ✅ ENDPOINT CORRECTO: /set-default-address (no /set-default)
+    const response = await axiosInstance.post('/Addresses/set-default-address', {
+      ClientId: parseInt(userId),
+      AddressId: parseInt(addressId),
+      Email: userEmail
     });
     
     return {
@@ -269,7 +299,16 @@ export const setDefaultAddress = async (addressId) => {
  */
 export const deleteAddress = async (addressId) => {
   try {
-    const response = await axiosInstance.delete(`/Addresses/${addressId}`);
+    const userId = localStorage.getItem('userId');
+    const userDataString = localStorage.getItem('userData');
+    const userData = JSON.parse(userDataString);
+    const userEmail = userData.email;
+
+    const response = await axiosInstance.post('/Addresses/delete-address', {
+      ClientId: parseInt(userId),
+      AddressId: parseInt(addressId),
+      Email: userEmail
+    });
     
     return {
       success: response.data.success,
@@ -293,7 +332,9 @@ export default {
   getParishesByMunicipality,
   getDeliveryData,
   getUserAddresses,
+  registerAddress, // ✅ NUEVO
   registerPersonalData,
   setDefaultAddress,
   deleteAddress,
+  getCasilleros,
 };

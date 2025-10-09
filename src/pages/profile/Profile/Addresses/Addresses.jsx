@@ -15,12 +15,12 @@ import {
   getUserAddresses, 
   setDefaultAddress, 
   deleteAddress,
+  registerAddress, // ✅ IMPORTAR
   getDeliveryData,
   getStatesByCountry,
   getMunicipalitiesByState,
   getParishesByMunicipality
 } from '@services/address/addressService';
-import axiosInstance from '@services/axiosInstance';
 
 const Addresses = () => {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ const Addresses = () => {
   const { data: deliveryData, isLoading: isLoadingDelivery } = useQuery({
     queryKey: ['deliveryData'],
     queryFn: getDeliveryData,
-    enabled: showForm, // Solo cargar cuando se abre el formulario
+    enabled: showForm,
     select: (response) => response.data,
   });
 
@@ -112,7 +112,7 @@ const Addresses = () => {
     });
   }, [userAddresses]);
 
-  // Limpiar campos de municipio y parroquia cuando cambia el estado
+  // Limpiar campos cuando cambia el estado
   useEffect(() => {
     if (selectedOption === 'home') {
       setSelectedMunicipality('');
@@ -120,7 +120,6 @@ const Addresses = () => {
     }
   }, [selectedState, selectedOption]);
 
-  // Limpiar parroquia cuando cambia el municipio
   useEffect(() => {
     if (selectedOption === 'home') {
       setSelectedParish('');
@@ -209,9 +208,10 @@ const Addresses = () => {
         SetAsDefault: setAsDefault
       };
 
-      const response = await axiosInstance.post('/Addresses/register-address', payload);
+      // ✅ USAR EL SERVICIO
+      const response = await registerAddress(payload);
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success(
           setAsDefault 
             ? '¡Dirección agregada y establecida como predeterminada!' 
@@ -221,11 +221,11 @@ const Addresses = () => {
         setShowForm(false);
         await refetchAddresses();
       } else {
-        toast.error(response.data.message || 'Error al agregar la dirección');
+        toast.error(response.message || 'Error al agregar la dirección');
       }
     } catch (error) {
       console.error('Error adding address:', error);
-      toast.error(error.response?.data?.message || 'Error al agregar la dirección');
+      toast.error(error.message || 'Error al agregar la dirección');
     } finally {
       setSubmitting(false);
     }
@@ -309,7 +309,6 @@ const Addresses = () => {
     );
   }
 
-  // ✅ Estado de carga del formulario
   const isFormLoading = isLoadingDelivery || (selectedOption === 'home' && isLoadingStates);
 
   return (
@@ -366,7 +365,6 @@ const Addresses = () => {
               <div className="addresses__form-body">
                 {/* Selector de tipo de dirección */}
                 <div className="address-selector">
-                  {/* Retiro en Tienda */}
                   <label className={`address-option ${selectedOption === 'store' ? 'selected' : ''}`}>
                     <input
                       type="radio"
@@ -379,7 +377,6 @@ const Addresses = () => {
                     <span className="address-option__text">Retiro en Tienda</span>
                   </label>
 
-                  {/* Enviar a otra dirección */}
                   <label className={`address-option ${selectedOption === 'home' ? 'selected' : ''}`}>
                     <input
                       type="radio"
@@ -395,8 +392,8 @@ const Addresses = () => {
 
                 {/* Formulario según selección */}
                 {selectedOption && (
-                  <div className="address-form-fields">                    
-
+                  <div className="address-form-fields">
+                    
                     {/* Formulario para TIENDA */}
                     {selectedOption === 'store' && (
                       <>
@@ -435,20 +432,20 @@ const Addresses = () => {
                     {/* Formulario para DOMICILIO */}
                     {selectedOption === 'home' && (
                       <>
-                        {/* Alias */}
-                        <div className="form-group">
-                          <label className="form-label">
-                            NOMBRE DE LA DIRECCIÓN <span className="required">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            className="form-input"
-                            placeholder="Ej: Casa, Oficina, etc."
-                            value={alias}
-                            onChange={e => setAlias(e.target.value)}
-                            disabled={submitting}
-                          />
-                        </div>
+                      {/* Alias */}
+                      <div className="form-group">
+                        <label className="form-label">
+                          NOMBRE DE LA DIRECCIÓN <span className="required">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Ej: Casa, Oficina, etc."
+                          value={alias}
+                          onChange={e => setAlias(e.target.value)}
+                          disabled={submitting}
+                        />
+                      </div>
 
                         <h4 className="form-section-title">Entrega a Domicilio</h4>
 
@@ -578,21 +575,27 @@ const Addresses = () => {
         ) : (
           <div className="addresses__list">
             {sortedAddresses.map((address) => (
-              <div key={address.id} className="address-card">
+              <div 
+                key={address.id} 
+                className={`address-card ${address.esPredeterminada ? 'is-default' : ''}`}
+              >
                 <div className="address-card__header">
-                  <div className="address-card__title-row">
-                    <h3 className="address-card__alias">
-                      {address.nombreDireccion || 'Dirección'}
-                    </h3>
-                    {address.esPredeterminada && (
-                      <span className="address-card__default-badge">
-                        Predeterminada
-                      </span>
-                    )}
+                  <div className="address-card__icon">📍</div>
+                  <div className="address-card__content-wrapper">
+                    <div className="address-card__title-row">
+                      <h3 className="address-card__alias">
+                        {address.tipoDireccion === 'store' ? 'Retiro en Tienda' : 'Domicilio'}: {address.nombreDireccion || 'Sin nombre'}
+                      </h3>
+                      {address.esPredeterminada && (
+                        <span className="address-card__default-badge">
+                          Predeterminada
+                        </span>
+                      )}
+                    </div>
+                    <span className="address-card__type">
+                      {address.tipoDireccion === 'store' ? '🏢 Tienda' : '🏠 Domicilio'}
+                    </span>
                   </div>
-                  <span className="address-card__type">
-                    {address.tipoDireccion === 'store' ? '🏢 Retiro en Tienda' : '🏠 Domicilio'}
-                  </span>
                 </div>
 
                 <div className="address-card__content">
@@ -619,16 +622,10 @@ const Addresses = () => {
                           <span>Estableciendo...</span>
                         </>
                       ) : (
-                        '⭐ Predeterminar'
+                        'Predeterminada'
                       )}
                     </button>
                   )}
-                  <button
-                    className="address-card__action-btn address-card__action-btn--secondary"
-                    onClick={() => toast.info('Función de editar próximamente')}
-                  >
-                    ✏️ Editar
-                  </button>
                   <button
                     className="address-card__action-btn address-card__action-btn--danger"
                     onClick={() => handleDelete(address.id, address.nombreDireccion)}
@@ -640,7 +637,7 @@ const Addresses = () => {
                         <span>Eliminando...</span>
                       </>
                     ) : (
-                      '🗑️ Eliminar'
+                      'Eliminar'
                     )}
                   </button>
                 </div>
