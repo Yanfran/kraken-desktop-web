@@ -1,0 +1,87 @@
+// src/components/calculator/CalculatorHeader.scss
+
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+.calculator-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 2rem 1rem;
+  background-color: var(--color-card-background);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  text-align: center;
+  margin-bottom: 2rem;
+
+  &__icon-container {
+    @include flex-center;
+    width: 80px;
+    height: 80px;
+    background-color: var(--color-background);
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-border);
+  }
+
+  &__icon {
+    width: 45px;
+    height: 45px;
+  }
+
+  &__title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  &__subtitle {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.25rem;
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+  }
+
+  &__tabs {
+    display: flex;
+    justify-content: center;
+    background-color: var(--color-background-light);
+    border-radius: var(--radius-md);
+    padding: 0.3rem;
+    border: 1px solid var(--color-border-light);
+  }
+
+  &__tab {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    position: relative;
+
+    &--active {
+      background-color: var(--color-card-background);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--color-border);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__tab-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    transition: color 0.2s ease;
+
+    &--active {
+      color: var(--color-primary);
+    }
+  }
+}
