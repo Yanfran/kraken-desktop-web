@@ -325,6 +325,28 @@ export const deleteAddress = async (addressId) => {
   }
 };
 
+/**
+ * ✅ NUEVA: Obtener lista de direcciones (casilleros) para la página de direcciones
+ * @returns {Promise<Object>}
+ */
+export const getAddresses = async () => {
+  try {
+    const response = await axiosInstance.get('/Casilleros/list');
+    return {
+      success: response.data.success || false,
+      data: response.data.data || [],
+      message: response.data.message
+    };
+  } catch (error) {
+    console.error('❌ Error en getAddresses:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error de conexión',
+      data: []
+    };
+  }
+};
+
 // Export default para compatibilidad
 export default {
   getStatesByCountry,
@@ -337,4 +359,5 @@ export default {
   setDefaultAddress,
   deleteAddress,
   getCasilleros,
+  getAddresses, // ✅ NUEVO
 };

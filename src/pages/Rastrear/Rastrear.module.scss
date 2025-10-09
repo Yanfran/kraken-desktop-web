@@ -1,0 +1,379 @@
+/* Rastrear.module.scss */
+
+/* Define CSS variables for colors based on kraken/constants/Colors.ts */
+:root {
+  --color-input-background: #F5F5F5;
+  --color-border-color: #D0D0D0;
+  --color-primary: #FF4500;
+  --color-secondary: #0175c8;
+  --color-primary-light: #FF7F50;
+  --color-background: #FFFFFF;
+  --color-card-background: #F8F8F8;
+  --color-text-primary: #000000;
+  --color-text-secondary: #757575;
+  --color-text-light: #FFFFFF;
+  --color-text-placeholder: #AAAAAA;
+  --color-success: #4CAF50;
+  --color-error: #F44336;
+  --color-warning: #FF9800;
+  --color-info: #2196F3;
+  --color-disabled: #BDBDBD;
+  --color-tab-background: #FFFFFF;
+  --color-tab-active: #FF4500;
+  --color-tab-inactive: #757575;
+  --color-drawer-background: #FFFFFF;
+  --color-drawer-active-background: #FFE0D5;
+  --color-border: #E0E0E0;
+  --color-separator: #EEEEEE;
+  --color-shadow: #000000;
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-transparent: transparent;
+  --color-background-light: #F8F9FA;
+  --color-border-light: #F3F4F6;
+  --color-success-light: #ECFDF5;
+}
+
+.container {
+  background-color: var(--color-background);
+  min-height: 100%; /* Equivalent to flex: 1 in RN for full height */
+  display: flex;
+  flex-direction: column;
+}
+
+.scrollContainer {
+  flex-grow: 1;
+  padding-bottom: 100px;
+  overflow-y: auto; /* For web scrollability */
+}
+
+.content {
+  flex: 1;
+  padding: 0 16px;
+  max-width: 420px; /* Mimic AppContainer's max-width for mobile-like experience */
+  margin: 0 auto; /* Center the content */
+  width: 100%;
+}
+
+.trackingSection {
+  padding-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.titleContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.iconContainer {
+  margin-bottom: 16px;
+}
+
+.calculatorIcon {
+  width: 40px;
+  height: 40px;
+  /* tintColor is React Native specific, use filter for web */
+  filter: brightness(0) saturate(100%) invert(29%) sepia(99%) saturate(7480%) hue-rotate(359deg) brightness(101%) contrast(103%); /* This filter approximates primary color */
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 22px;
+  margin-bottom: 32px;
+  padding: 0 20px;
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  margin-bottom: 24px;
+  gap: 12px;
+}
+
+.trackingInput {
+  flex: 1;
+  background-color: var(--color-input-background);
+  border-radius: 30px;
+  padding: 14px 16px;
+  font-size: 16px;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  outline: none; /* Remove default focus outline */
+
+  &::placeholder {
+    color: var(--color-text-placeholder);
+  }
+}
+
+.trackButton {
+  background-color: var(--color-secondary);
+  border-radius: 25px;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light); /* For icon color */
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.resultSection {
+  background-color: var(--color-background);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 32px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(var(--color-shadow), 0.1); /* shadowOpacity 0.1 */
+  border: 1px solid var(--color-border);
+}
+
+.resultHeader {
+  margin-bottom: 24px;
+}
+
+.resultSubtitle {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.trackingInfo {
+  margin-bottom: 20px;
+}
+
+.labelContainer {
+  margin-bottom: 8px;
+}
+
+.labelWithTooltip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.trackingLabel {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.trackingNumberContainer {
+  background-color: var(--color-input-background);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid var(--color-border);
+}
+
+.trackingNumberText {
+  font-size: 16px;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  text-align: center;
+}
+
+.trackingHelper {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 16px;
+  text-align: center;
+}
+
+.originContainer {
+  display: flex;
+  flex-direction: column; /* Changed to column for flex-end alignment */
+  align-items: flex-end;
+}
+
+.originLabel {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.originText {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.timelineContainer {
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+.stepRow {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.stepIndicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 16px;
+  position: relative;
+}
+
+.stepCircle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.stepCompleted {
+  background-color: var(--color-success);
+}
+
+.stepPending {
+  background-color: var(--color-input-background);
+  border: 2px solid var(--color-border);
+}
+
+.stepLine {
+  position: absolute;
+  top: 20px;
+  width: 2px;
+  height: 40px;
+  background-color: var(--color-border);
+  z-index: 1;
+}
+
+.stepContent {
+  flex: 1;
+  padding-top: 2px;
+}
+
+.stepTitle {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+  line-height: 20px;
+}
+
+.stepTitleCompleted {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.stepTitleCurrent {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.stepDate {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 18px;
+}
+
+.packageDetailsLink {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end; /* Align text to the right */
+  margin-right: 15px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin-top: 30px;
+  border-top: 1px solid #e0dddd; /* Specific color from RN style */
+  cursor: pointer;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  width: auto; /* Allow button to size to content */
+  align-self: flex-end; /* Align button to the right */
+}
+
+.packageDetailsText {
+  color: var(--color-warning);
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 10px;
+  text-decoration: none; /* Ensure no underline by default */
+}
+
+.newTrackingButton {
+  background-color: var(--color-secondary);
+  border-radius: 25px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 16px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.newTrackingButtonText {
+  color: var(--color-text-light);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Tooltip styles */
+.tooltipContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltipButton {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-left: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-text-secondary); /* Default icon color */
+}
+
+.tooltipContent {
+  position: absolute;
+  background-color: #333;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  z-index: 1000;
+  bottom: 100%; /* Position above the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  max-width: 250px; /* Default max-width */
+  white-space: normal; /* Allow text to wrap */
+}

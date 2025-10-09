@@ -1,0 +1,111 @@
+// src/components/calculator/LocationStep.scss
+
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+.location-step {
+  width: 100%;
+  // max-width: 600px; // Eliminado
+  margin: 0 auto;
+  background-color: var(--color-card-background);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+
+  &__form {
+    flex-grow: 1;
+  }
+
+  &__field {
+    margin-bottom: 1.5rem;
+  }
+
+  &__label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  &__fixed-box {
+    padding: 0.75rem 1rem;
+    background-color: var(--color-input-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+
+    span {
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+  }
+
+  &__dropdown {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background-color: var(--color-input-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+    }
+
+    &:disabled {
+      background-color: var(--color-background-light);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    &.error {
+      border-color: var(--color-error);
+    }
+  }
+
+  &__error-box {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-error-light);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-md);
+    color: var(--color-error);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  &__next-button {
+    @include button-base;
+    @include button-primary;
+    width: 100%;
+    padding: 0.9rem;
+    font-size: 1rem;
+    margin-top: 1rem;
+
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

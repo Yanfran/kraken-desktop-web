@@ -5,8 +5,8 @@
 
 .calculator-page {
   width: 100%;
-  max-width: 800px; // Ancho máximo para la página de la calculadora
-  margin: 2rem auto;
+  // max-width: 800px; // Eliminado para ancho completo
+  margin: 0 auto; // Centrar el contenido si el contenedor es más ancho
   padding: 0 1rem;
 
   &__content {

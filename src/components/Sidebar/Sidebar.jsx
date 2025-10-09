@@ -75,7 +75,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Casillero Info */}
         <div className="dashboard-sidebar__casillero-info">
           <p className="dashboard-sidebar__casillero-label">Casillero USA / Casillero CHINA</p>
-          <button className="dashboard-sidebar__directions-btn">Ver direcciones</button>
+          <Link to="/addresses" className="dashboard-sidebar__directions-btn">
+            Ver direcciones
+          </Link>
         </div>
 
         {/* Sidebar Menu */}

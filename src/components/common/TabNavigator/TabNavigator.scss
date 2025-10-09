@@ -1,0 +1,75 @@
+// src/components/common/TabNavigator/TabNavigator.scss
+@import '../../../styles/variables';
+
+.tab-navigator {
+  display: flex;
+  align-items: flex-start; // Alinea los items al inicio para que el conector quede bien
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 2.5rem auto;
+  position: relative;
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: color 0.3s ease;
+    z-index: 1; // Para que esté por encima del conector
+    text-align: center;
+
+    &.active {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+    
+    &.completed {
+      color: var(--color-success);
+      font-weight: 600;
+    }
+  }
+
+  &__step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    background-color: var(--color-background);
+    transition: all 0.3s ease;
+
+    .active & {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-light, #ffeadd);
+      color: var(--color-primary);
+      transform: scale(1.1);
+    }
+    
+    .completed & {
+      border-color: var(--color-success);
+      background-color: var(--color-success-light, #e6f7ec);
+      color: var(--color-success);
+    }
+  }
+
+  &__label {
+    font-size: 0.9rem;
+    max-width: 80px; // Evita que el texto se desborde
+  }
+
+  &__connector {
+    position: absolute;
+    top: 18px; // Mitad de la altura del círculo
+    left: 15%; // Empezar después del primer círculo
+    right: 15%; // Terminar antes del último círculo
+    height: 2px;
+    background-color: var(--color-border);
+    z-index: 0; // Detrás de los círculos
+  }
+}
