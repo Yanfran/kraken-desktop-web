@@ -2,16 +2,52 @@
 @import '../../../../styles/_colors.scss';
 
 .personal-data {
-  width: 100%;
   min-height: 100vh;
-  background-color: var(--color-background, #FFFFFF);
+  padding: var(--spacing-8);
+  position: relative;
 
-  // Header section igual que Mis Direcciones
+  // ✅ FONDO DE IMAGEN IGUAL QUE ADDRESSES
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    z-index: -1;
+    opacity: 0.95;
+    
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+    }
+  }
+
+  [data-theme="dark"] &::before {
+    background-image: none;
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+  }
+
+  &__container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  // Header section - IGUAL QUE MIS DIRECCIONES
   &__header-section {
-    background: white;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--color-separator, #EEEEEE);
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: var(--spacing-8);
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+    [data-theme="dark"] & {
+      background-color: rgba(29, 27, 32, 0.95);
+    }
   }
 
   &__back-btn {
@@ -60,23 +96,40 @@
     margin: 0;
   }
 
-  // Container del formulario - ancho completo
+  // Container del card
   &__container {
     width: 100%;
-    padding: 0 20px 40px 20px;
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
+    padding: 0 0px 40px 0px;
   }
 
+  // Card del formulario - CON BORDE GRIS
+  &__card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #E0E0E0;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    [data-theme="dark"] & {
+      background-color: rgba(29, 27, 32, 0.95);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  // Formulario dentro del card
   &__form {
-    background: white;
-    border-radius: 12px;
     padding: 32px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
     @media (max-width: 768px) {
-      padding: 20px;
-      border-radius: 8px;
+      padding: 24px 20px;
     }
   }
 
@@ -261,12 +314,7 @@
   .personal-data {
     background-color: var(--color-background);
 
-    &__header-section {
-      background: rgba(255, 255, 255, 0.05);
-      border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
-
-    &__form {
+    &__card {
       background: rgba(255, 255, 255, 0.05);
     }
 

@@ -255,7 +255,7 @@ const PersonalData = () => {
 
   return (
     <div className="personal-data">
-      {/* Header igual que Mis Direcciones */}
+      {/* Header con botón volver, título y subtítulo - TODO FUERA DEL CARD */}
       <div className="personal-data__header-section">
         <button 
           className="personal-data__back-btn"
@@ -269,9 +269,10 @@ const PersonalData = () => {
         <p className="personal-data__subtitle">Gestiona tu información personal</p>
       </div>
 
-      {/* Formulario a ancho completo */}
+      {/* Card con el formulario */}
       <div className="personal-data__container">
-        <form className="personal-data__form" onSubmit={handleSubmit}>
+        <div className="personal-data__card">
+          <form className="personal-data__form" onSubmit={handleSubmit}>
           {/* Nombres */}
           <div className="personal-data__section">
             <div className="personal-data__field">
@@ -444,6 +445,7 @@ const PersonalData = () => {
             </button>
           </div>
         </form>
+      </div>
       </div>
 
       {/* Modales */}
