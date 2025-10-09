@@ -1,4 +1,4 @@
-// src/hooks/useAuth.js - Hook personalizado con funcionalidades extras
+// src/hooks/useAuth.js
 import { useContext, useCallback } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -42,8 +42,6 @@ export const useAuth = () => {
     const { user } = context;
     if (!user) return false;
     
-    // Aquí puedes implementar tu lógica de permisos
-    // Por ejemplo, verificar roles o permisos específicos
     switch (permission) {
       case 'admin':
         return user.role === 'admin';
@@ -71,19 +69,24 @@ export const useAuth = () => {
   }, [context]);
 
   // ===== ACTUALIZAR PERFIL DEL USUARIO =====
-  const updateProfile = useCallback(async (profileData) => {
+  const updateProfile = useCallback(async (updatedData) => {
     try {
-      const { authService } = await import('../services/auth/authService');
-      const updatedUser = await authService.updateProfile(profileData);
+      console.log('🔄 Actualizando usuario en contexto...', updatedData);
       
-      // Actualizar el usuario en el contexto
-      await context.setUserState(updatedUser);
-      toast.success('Perfil actualizado correctamente');
+      // Actualizar el usuario en localStorage
+      const currentUser = JSON.parse(localStorage.getItem('userData') || '{}');
+      const mergedUser = { ...currentUser, ...updatedData };
+      localStorage.setItem('userData', JSON.stringify(mergedUser));
       
-      return { success: true, user: updatedUser };
+      // Actualizar el estado del contexto
+      if (context.setUserState) {
+        await context.setUserState(mergedUser);
+      }
+      
+      console.log('✅ Usuario actualizado en contexto');
+      return { success: true, user: mergedUser };
     } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Error al actualizar perfil');
+      console.error('❌ Error updating profile in context:', error);
       return { success: false, message: error.message };
     }
   }, [context]);

@@ -4,75 +4,59 @@ import { IoClose, IoCalendarOutline } from 'react-icons/io5';
 import './BirthdayModal.styles.scss';
 
 const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [error, setError] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
+
+  const months = [
+    { value: '01', label: 'Enero' },
+    { value: '02', label: 'Febrero' },
+    { value: '03', label: 'Marzo' },
+    { value: '04', label: 'Abril' },
+    { value: '05', label: 'Mayo' },
+    { value: '06', label: 'Junio' },
+    { value: '07', label: 'Julio' },
+    { value: '08', label: 'Agosto' },
+    { value: '09', label: 'Septiembre' },
+    { value: '10', label: 'Octubre' },
+    { value: '11', label: 'Noviembre' },
+    { value: '12', label: 'Diciembre' }
+  ];
+
+  // Generar días del 1 al 31
+  const days = Array.from({ length: 31 }, (_, i) => {
+    const day = String(i + 1).padStart(2, '0');
+    return { value: day, label: day };
+  });
 
   useEffect(() => {
     if (show && initialDate) {
-      setSelectedDate(initialDate);
-      setError('');
+      // Extraer día y mes de la fecha inicial (formato: YYYY-MM-DD o DD/MM)
+      const date = new Date(initialDate);
+      if (!isNaN(date.getTime())) {
+        setSelectedDay(String(date.getDate()).padStart(2, '0'));
+        setSelectedMonth(String(date.getMonth() + 1).padStart(2, '0'));
+      }
     }
   }, [show, initialDate]);
 
-  const validateAge = (dateString) => {
-    if (!dateString) {
-      return 'Selecciona una fecha';
-    }
-
-    const birthDate = new Date(dateString);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())
-      ? age - 1
-      : age;
-
-    if (adjustedAge < 18) {
-      return 'Debes ser mayor de 18 años';
-    }
-
-    if (adjustedAge > 120) {
-      return 'Fecha de nacimiento inválida';
-    }
-
-    return '';
-  };
-
-  const handleDateChange = (e) => {
-    const date = e.target.value;
-    setSelectedDate(date);
-    const validationError = validateAge(date);
-    setError(validationError);
-  };
-
   const handleSave = () => {
-    const validationError = validateAge(selectedDate);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    if (!selectedDay || !selectedMonth) return;
 
-    onSave(selectedDate);
+    // Crear fecha completa con el año actual para guardar
+    const currentYear = new Date().getFullYear();
+    const fullDate = `${currentYear}-${selectedMonth}-${selectedDay}`;
+    
+    onSave(fullDate);
     handleClose();
   };
 
   const handleClose = () => {
-    setError('');
     onClose();
   };
 
   if (!show) return null;
 
-  // Calcular fecha máxima (18 años atrás desde hoy)
-  const maxDate = new Date();
-  maxDate.setFullYear(maxDate.getFullYear() - 18);
-  const maxDateStr = maxDate.toISOString().split('T')[0];
-
-  // Calcular fecha mínima (120 años atrás desde hoy)
-  const minDate = new Date();
-  minDate.setFullYear(minDate.getFullYear() - 120);
-  const minDateStr = minDate.toISOString().split('T')[0];
+  const isValid = selectedDay && selectedMonth;
 
   return (
     <div className="birthday-modal-overlay" onClick={handleClose}>
@@ -80,7 +64,7 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
         <div className="birthday-modal__header">
           <h2>
             <IoCalendarOutline size={24} />
-            Fecha de Nacimiento
+            Seleccionar Cumpleaños
           </h2>
           <button className="birthday-modal__close" onClick={handleClose}>
             <IoClose size={24} />
@@ -88,23 +72,48 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
         </div>
 
         <div className="birthday-modal__body">
-          <div className="birthday-modal__field">
-            <label>Selecciona tu fecha de nacimiento</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={handleDateChange}
-              max={maxDateStr}
-              min={minDateStr}
-              className={`birthday-modal__input ${error ? 'error' : ''}`}
-            />
-            {error && (
-              <span className="birthday-modal__error">{error}</span>
-            )}
-            <span className="birthday-modal__hint">
-              Debes ser mayor de 18 años para registrarte
-            </span>
+          <p className="birthday-modal__subtitle">Selecciona tu día y mes de nacimiento</p>
+          
+          <div className="birthday-modal__selectors">
+            <div className="birthday-modal__field">
+              <label>Mes</label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="birthday-modal__select"
+              >
+                <option value="">Seleccionar mes</option>
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="birthday-modal__field">
+              <label>Día</label>
+              <select
+                value={selectedDay}
+                onChange={(e) => setSelectedDay(e.target.value)}
+                className="birthday-modal__select"
+                disabled={!selectedMonth}
+              >
+                <option value="">Seleccionar día</option>
+                {days.map((day) => (
+                  <option key={day.value} value={day.value}>
+                    {day.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          {isValid && (
+            <div className="birthday-modal__preview">
+              Cumpleaños seleccionado: <strong>{selectedDay}/{selectedMonth}</strong>
+            </div>
+          )}
         </div>
 
         <div className="birthday-modal__footer">
@@ -119,7 +128,7 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
             type="button"
             className="birthday-modal__btn birthday-modal__btn--save"
             onClick={handleSave}
-            disabled={!selectedDate || !!error}
+            disabled={!isValid}
           >
             Guardar
           </button>

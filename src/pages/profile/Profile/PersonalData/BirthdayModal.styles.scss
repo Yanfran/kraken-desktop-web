@@ -13,13 +13,19 @@
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  animation: fadeIn 0.2s ease;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 }
 
 .birthday-modal {
   background: var(--color-background, #FFFFFF);
   border-radius: 16px;
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.3s ease;
@@ -27,7 +33,7 @@
   @keyframes slideUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(30px);
     }
     to {
       opacity: 1;
@@ -41,11 +47,12 @@
     justify-content: space-between;
     padding: 20px 24px;
     border-bottom: 1px solid var(--color-separator, #EEEEEE);
+    background: var(--color-card-background, #FFFFFF);
 
     h2 {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
       font-size: 20px;
       font-weight: 600;
       color: var(--color-text-primary, #000000);
@@ -62,15 +69,16 @@
     border: none;
     color: var(--color-text-secondary, #757575);
     cursor: pointer;
-    padding: 4px;
+    padding: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
     transition: all 0.2s ease;
 
     &:hover {
+      background: rgba(0, 0, 0, 0.05);
       color: var(--color-primary, #FF4500);
-      transform: rotate(90deg);
     }
   }
 
@@ -78,17 +86,33 @@
     padding: 24px;
   }
 
+  &__subtitle {
+    font-size: 14px;
+    color: var(--color-text-secondary, #757575);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  &__selectors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
   &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
     label {
-      display: block;
       font-size: 14px;
       font-weight: 600;
       color: var(--color-text-primary, #000000);
-      margin-bottom: 8px;
     }
   }
 
-  &__input {
+  &__select {
     width: 100%;
     padding: 12px 16px;
     border: 1px solid var(--color-border, #D0D0D0);
@@ -96,9 +120,9 @@
     font-size: 14px;
     color: var(--color-text-primary, #000000);
     background-color: var(--color-background, #FFFFFF);
-    transition: all 0.2s ease;
     font-family: inherit;
     cursor: pointer;
+    transition: all 0.2s ease;
 
     &:focus {
       outline: none;
@@ -106,81 +130,96 @@
       box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
     }
 
-    &.error {
-      border-color: var(--color-error, #F44336);
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: var(--color-disabled-background, #F5F5F5);
     }
 
-    // Estilos para el calendario nativo
-    &::-webkit-calendar-picker-indicator {
-      cursor: pointer;
-      filter: invert(0.5);
-    }
-
-    [data-theme="dark"] & {
-      &::-webkit-calendar-picker-indicator {
-        filter: invert(1);
-      }
+    option {
+      padding: 8px;
     }
   }
 
-  &__error {
-    font-size: 12px;
-    color: var(--color-error, #F44336);
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+  &__preview {
+    text-align: center;
+    padding: 12px;
+    background: rgba(255, 69, 0, 0.05);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--color-text-primary, #000000);
 
-    &::before {
-      content: '⚠';
+    strong {
+      color: var(--color-primary, #FF4500);
+      font-weight: 600;
     }
-  }
-
-  &__hint {
-    font-size: 12px;
-    color: var(--color-text-secondary, #757575);
-    margin-top: 6px;
-    font-style: italic;
   }
 
   &__footer {
     display: flex;
     gap: 12px;
-    padding: 20px 24px;
+    padding: 16px 24px;
     border-top: 1px solid var(--color-separator, #EEEEEE);
+    background: var(--color-card-background, #FAFAFA);
   }
 
   &__btn {
     flex: 1;
     padding: 12px 24px;
+    border: none;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: none;
+    font-family: inherit;
 
     &--cancel {
       background: transparent;
+      color: var(--color-text-secondary, #757575);
       border: 1px solid var(--color-border, #D0D0D0);
-      color: var(--color-text-primary, #000000);
 
       &:hover {
-        background-color: var(--color-card-background, #F8F8F8);
+        background: var(--color-hover-background, #F5F5F5);
       }
     }
 
     &--save {
-      background-color: var(--color-primary, #FF4500);
-      color: white;
+      background: var(--color-primary, #FF4500);
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(255, 69, 0, 0.2);
 
       &:hover:not(:disabled) {
-        background-color: var(--color-primary-light, #FF7F50);
+        background: var(--color-primary-dark, #E63E00);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
       }
 
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 480px) {
+  .birthday-modal {
+    max-width: 100%;
+    margin: 0 16px;
+
+    &__selectors {
+      grid-template-columns: 1fr;
+    }
+
+    &__footer {
+      flex-direction: column-reverse;
+
+      .birthday-modal__btn {
+        width: 100%;
       }
     }
   }
@@ -189,12 +228,22 @@
 // Tema oscuro
 [data-theme="dark"] {
   .birthday-modal {
-    background: #1E1E1E;
+    background: var(--color-dark-card, #1E1E1E);
 
-    &__input {
-      background-color: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
-      color: var(--color-text-primary);
+    &__header,
+    &__footer {
+      background: var(--color-dark-background, #121212);
+      border-color: var(--color-dark-border, #333333);
+    }
+
+    &__select {
+      background: var(--color-dark-input, #2C2C2C);
+      border-color: var(--color-dark-border, #444444);
+      color: var(--color-dark-text, #FFFFFF);
+    }
+
+    &__preview {
+      background: rgba(255, 69, 0, 0.1);
     }
   }
 }

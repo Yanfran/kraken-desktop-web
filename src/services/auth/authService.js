@@ -1,10 +1,10 @@
-// src/services/auth/authService.js - ADAPTADO A TU BACKEND REAL
+// src/services/auth/authService.js - SERVICIO DE AUTENTICACIÓN COMPLETO
 import axios from 'axios';
 import { API_URL } from '../../utils/config';
 
 // Configurar axios instance
 const authAPI = axios.create({
-  baseURL: API_URL, // ✅ USA tu API_URL directamente
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -36,30 +36,60 @@ authAPI.interceptors.response.use(
 );
 
 export const authService = {
-  // ===== LOGIN - EXACTAMENTE COMO TU REACT NATIVE =====
-   async login(credentials) {
+  // ===== LOGIN - CON TODOS LOS CAMPOS DEL USUARIO =====
+  async login(credentials) {
     try {
       const response = await authAPI.post('/Users/login', {
         email: credentials.email,
         password: credentials.password
       });
 
-      console.log('✅ [AuthService] Login response:', response.data);
+      console.log('✅ [AuthService] Login response completa:', response.data);
 
       if (response.data.success) {
+        // ✅ GUARDAR TODOS LOS CAMPOS DEL USUARIO
         const userData = {
           id: response.data.user.id,
           email: response.data.user.email,
-          name: response.data.user.nombres || response.data.user.firstName,
+          
+          // Nombres (mapear ambos formatos)
+          name: response.data.user.nombres || response.data.user.name,
           lastName: response.data.user.apellidos || response.data.user.lastName,
-          emailVerified: response.data.user.emailVerified || true,
-          profileComplete: response.data.user.profileComplete || false,
-          clienteActivo: response.data.user.clienteActivo || true
+          nombres: response.data.user.nombres,
+          apellidos: response.data.user.apellidos,
+          
+          // Teléfonos
+          phone: response.data.user.telefonoCelular,
+          phoneSecondary: response.data.user.telefonoCelularSecundario,
+          telefonoCelular: response.data.user.telefonoCelular,
+          telefonoCelularSecundario: response.data.user.telefonoCelularSecundario,
+          
+          // Documento de identidad
+          idNumber: response.data.user.nroIdentificacionCliente,
+          nroIdentificacionCliente: response.data.user.nroIdentificacionCliente,
+          nro: response.data.user.nroIdentificacionCliente,
+          idClienteTipoIdentificacion: response.data.user.idClienteTipoIdentificacion,
+          
+          // Fecha de nacimiento
+          birthday: response.data.user.fechaNacimiento,
+          fechaNacimiento: response.data.user.fechaNacimiento,
+          
+          // Avatar
+          avatarId: response.data.user.avatarId,
+          
+          // Estados
+          emailVerified: response.data.user.emailVerified ?? true,
+          profileComplete: response.data.user.profileComplete ?? false,
+          clienteActivo: response.data.user.clienteActivo ?? true,
+          fromGoogle: response.data.user.fromGoogle ?? false,
+          
+          // Código de cliente
+          codCliente: response.data.user.codCliente,
+          idClienteTipo: response.data.user.idClienteTipo
         };
 
-        // ✅ NUEVO: Guardar también el userId por separado
         localStorage.setItem('userId', userData.id.toString());
-        console.log('✅ userId guardado en localStorage:', userData.id);
+        console.log('✅ [AuthService] Usuario completo guardado:', userData);
 
         return {
           success: true,
@@ -100,8 +130,8 @@ export const authService = {
     }
   },
   
-  // ===== REGISTER - NUEVO MÉTODO =====
- async register(userData) {
+  // ===== REGISTER =====
+  async register(userData) {
     try {
       const response = await authAPI.post('/Users/register', {
         email: userData.email,
@@ -118,14 +148,14 @@ export const authService = {
           email: response.data.user.email,
           name: response.data.user.nombres || userData.name,
           lastName: response.data.user.apellidos || userData.lastName,
+          nombres: response.data.user.nombres,
+          apellidos: response.data.user.apellidos,
           emailVerified: false,
           profileComplete: false,
           clienteActivo: false
         };
 
-        // ✅ NUEVO: Guardar también el userId por separado
         localStorage.setItem('userId', user.id.toString());
-        console.log('✅ userId guardado en localStorage:', user.id);
         
         return {
           success: true,
@@ -166,16 +196,144 @@ export const authService = {
     }
   },
 
-  // En authService.js, agregar este método:
-  async resendVerificationEmail(email) {
+  // ===== VALIDAR TOKEN =====
+  async validateToken(token) {
     try {
-      const response = await authAPI.post('/Users/resend-verification-email', {
-        email
+      const response = await authAPI.get('/Users/validate-token', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.success && response.data.user) {
+        // Retornar todos los campos del usuario
+        return {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          name: response.data.user.nombres || response.data.user.name,
+          lastName: response.data.user.apellidos || response.data.user.lastName,
+          nombres: response.data.user.nombres,
+          apellidos: response.data.user.apellidos,
+          phone: response.data.user.telefonoCelular,
+          phoneSecondary: response.data.user.telefonoCelularSecundario,
+          telefonoCelular: response.data.user.telefonoCelular,
+          telefonoCelularSecundario: response.data.user.telefonoCelularSecundario,
+          idNumber: response.data.user.nroIdentificacionCliente,
+          nroIdentificacionCliente: response.data.user.nroIdentificacionCliente,
+          idClienteTipoIdentificacion: response.data.user.idClienteTipoIdentificacion,
+          birthday: response.data.user.fechaNacimiento,
+          fechaNacimiento: response.data.user.fechaNacimiento,
+          avatarId: response.data.user.avatarId,
+          emailVerified: response.data.user.emailVerified ?? true,
+          profileComplete: response.data.user.profileComplete ?? false,
+          clienteActivo: response.data.user.clienteActivo ?? true,
+          fromGoogle: response.data.user.fromGoogle ?? false,
+          codCliente: response.data.user.codCliente,
+          idClienteTipo: response.data.user.idClienteTipo
+        };
+      }
+      
+      throw new Error('Token inválido');
+    } catch (error) {
+      console.error('❌ [AuthService] Token validation error:', error);
+      throw new Error('Token inválido o expirado');
+    }
+  },
+
+  // ===== GOOGLE AUTH =====
+  async loginWithGoogle(googleToken) {
+    try {
+      const response = await authAPI.post('/Users/google-auth', {
+        googleToken: googleToken
+      });
+
+      if (response.data.success) {
+        const userData = {
+          id: response.data.user.id,
+          email: response.data.user.email,
+          name: response.data.user.nombres || response.data.user.name,
+          lastName: response.data.user.apellidos || response.data.user.lastName,
+          nombres: response.data.user.nombres,
+          apellidos: response.data.user.apellidos,
+          phone: response.data.user.telefonoCelular,
+          phoneSecondary: response.data.user.telefonoCelularSecundario,
+          emailVerified: true,
+          profileComplete: response.data.user.profileComplete ?? false,
+          clienteActivo: true,
+          fromGoogle: true,
+          avatarId: response.data.user.avatarId,
+          codCliente: response.data.user.codCliente
+        };
+
+        return {
+          success: true,
+          token: response.data.token,
+          user: userData
+        };
+      }
+
+      return {
+        success: false,
+        message: response.data.message || 'Error con Google Auth'
+      };
+    } catch (error) {
+      console.error('❌ [AuthService] Google auth error:', error);
+      return {
+        success: false,
+        message: 'Error de conexión con Google'
+      };
+    }
+  },
+
+  // ===== FORGOT PASSWORD =====
+  async forgotPassword(email) {
+    try {
+      const response = await authAPI.post('/Users/forgot-password', {
+        email: email
       });
 
       return {
         success: response.data.success,
-        message: response.data.message || 'Email de verificación enviado'
+        message: response.data.message
+      };
+    } catch (error) {
+      console.error('❌ [AuthService] Forgot password error:', error);
+      return {
+        success: false,
+        message: 'Error al enviar email de recuperación'
+      };
+    }
+  },
+
+  // ===== RESET PASSWORD =====
+  async resetPassword(token, newPassword) {
+    try {
+      const response = await authAPI.post('/Users/reset-password', {
+        token: token,
+        newPassword: newPassword
+      });
+
+      return {
+        success: response.data.success,
+        message: response.data.message
+      };
+    } catch (error) {
+      console.error('❌ [AuthService] Reset password error:', error);
+      return {
+        success: false,
+        message: 'Error al restablecer contraseña'
+      };
+    }
+  },
+
+  // ===== RESEND VERIFICATION EMAIL =====
+  async resendVerificationEmail(email) {
+    try {
+      const response = await authAPI.post('/Users/resend-verification', {
+        email: email
+      });
+
+      return {
+        success: response.data.success,
+        message: response.data.message
       };
     } catch (error) {
       console.error('❌ [AuthService] Resend verification error:', error);
@@ -186,109 +344,25 @@ export const authService = {
     }
   },
 
-  // ===== VALIDAR TOKEN (si tienes este endpoint) =====
-  async validateToken(token) {
-    try {
-      const response = await authAPI.get('/Users/profile', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data.success) {
-        const user = {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          name: response.data.user.nombres || response.data.user.firstName,
-          lastName: response.data.user.apellidos || response.data.user.lastName,
-          emailVerified: response.data.user.emailVerified || true,
-          profileComplete: response.data.user.profileComplete || false,
-          clienteActivo: response.data.user.clienteActivo || true
-        };
-
-        // ✅ NUEVO: Guardar también el userId por separado
-        localStorage.setItem('userId', user.id.toString());
-        console.log('✅ userId guardado en localStorage:', user.id);
-
-        return user;
-      }
-      throw new Error(response.data.message || 'Token validation failed');
-    } catch (error) {
-      console.error('❌ [AuthService] Token validation error:', error);
-      throw new Error('Token inválido o expirado');
-    }
-  },
-
-  // ===== GOOGLE AUTH - COMO TU REACT NATIVE =====
-  async loginWithGoogle(googleToken) {
-    try {
-      const response = await authAPI.post('/Users/google', {
-        name: 'Usuario',
-        email: 'google@temp.com',
-        password: 'temp',
-        last: 'Google'
-      });
-
-      if (response.data.success) {
-        const user = {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          name: response.data.user.nombres || response.data.user.firstName,
-          lastName: response.data.user.apellidos || response.data.user.lastName,
-          emailVerified: true,
-          profileComplete: response.data.user.profileComplete || false,
-          fromGoogle: true
-        };
-
-        // ✅ NUEVO: Guardar también el userId por separado
-        localStorage.setItem('userId', user.id.toString());
-        console.log('✅ userId guardado en localStorage:', user.id);
-        
-        return {
-          success: true,
-          token: response.data.token,
-          user: user
-        };
-      }
-      
-      return {
-        success: false,
-        message: response.data.message || 'Error con Google Auth'
-      };
-    } catch (error) {
-      console.error('❌ [AuthService] Google auth error:', error);
-      return {
-        success: false,
-        message: 'Error de autenticación con Google'
-      };
-    }
-  },
-
-  // ===== RECUPERAR CONTRASEÑA =====
-  async forgotPassword(email) {
-    try {
-      const response = await authAPI.post('/Users/forgot-password', { email });
-      return {
-        success: true,
-        message: 'Revisa tu email para resetear la contraseña'
-      };
-    } catch (error) {
-      console.error('❌ [AuthService] Forgot password error:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Error al enviar email'
-      };
-    }
-  },
-
   // ===== LOGOUT =====
   async logout() {
     try {
-      await authAPI.post('/Users/logout');
-    } catch (error) {
-      console.warn('⚠️ [AuthService] Logout error:', error);
-    } finally {
-      // ✅ NUEVO: Limpiar también el userId
+      // Si tu backend tiene endpoint de logout, úsalo aquí
+      // await authAPI.post('/Users/logout');
+      
+      // Limpiar storage local
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
       localStorage.removeItem('userId');
-      console.log('✅ userId eliminado del localStorage');
+      
+      return { success: true };
+    } catch (error) {
+      console.error('❌ [AuthService] Logout error:', error);
+      // Igualmente limpiar storage aunque falle el servidor
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('userId');
+      return { success: true };
     }
-  },
+  }
 };

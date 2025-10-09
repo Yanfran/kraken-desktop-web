@@ -42,44 +42,73 @@ const PersonalData = () => {
 
   const [errors, setErrors] = useState({});
 
-  // Cargar datos del usuario
+  // ✅ Cargar datos del usuario desde el contexto
   useEffect(() => {
     if (user) {
+      console.log('👤 Usuario en contexto:', user);
+      
+      // Mapear los campos del backend a tu formulario
       const detectedIdType = detectDocumentType(user);
       
       setFormData({
-        name: user.name || '',
-        lastName: user.lastName || '',
+        name: user.name || user.nombres || '',
+        lastName: user.lastName || user.apellidos || '',
         email: user.email || '',
-        phone: user.phone || '',
-        phoneSecondary: user.phoneSecondary || '',
+        phone: user.phone || user.telefonoCelular || '',
+        phoneSecondary: user.phoneSecondary || user.telefonoCelularSecundario || '',
         idType: detectedIdType,
-        idNumber: user.nro || user.nroIdentificacionCliente || user.idNumber || '',
-        birthday: user.birthday ? formatDateForInput(user.birthday) : ''
+        idNumber: user.idNumber || user.nroIdentificacionCliente || user.nro || '',
+        birthday: user.birthday || user.fechaNacimiento ? formatDateForInput(user.birthday || user.fechaNacimiento) : ''
       });
     }
   }, [user]);
 
   const detectDocumentType = (userData) => {
     if (!userData) return 'cedula';
+    
+    // ✅ MAPEO CORRECTO según tu base de datos:
+    // 1 = Pasaporte, 2 = RIF, 3 = Cédula, 4+ = Otro
     const docId = userData.idClienteTipoIdentificacion;
-    const docMap = { 1: 'cedula', 2: 'pasaporte', 3: 'rif', 4: 'otro' };
+    const docMap = { 
+      1: 'pasaporte',  // ✅ Pasaporte
+      2: 'rif',        // ✅ RIF
+      3: 'cedula',     // ✅ Cédula
+      4: 'otro',       // ✅ Driver's license
+      5: 'otro',       // ✅ EIN
+      6: 'otro'        // ✅ Tarjeta de Identidad de Residencia
+    };
+    
     return docMap[docId] || 'cedula';
+  };
+
+  const mapIdTypeToBackend = (idType) => {
+    // ✅ MAPEO INVERSO CORRECTO
+    const typeMap = { 
+      'pasaporte': 1,  // ✅ Pasaporte
+      'rif': 2,        // ✅ RIF
+      'cedula': 3,     // ✅ Cédula
+      'otro': 4        // ✅ Otros documentos
+    };
+    return typeMap[idType] || 3; // Default: Cédula
   };
 
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
     return date.toISOString().split('T')[0];
   };
 
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return 'Seleccionar fecha';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Seleccionar fecha';
+    
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    
+    // ✅ Solo mostrar día y mes (sin año)
+    return `${day}/${month}`;
   };
 
   const formatPhoneForDisplay = (phone) => {
@@ -148,17 +177,18 @@ const PersonalData = () => {
 
     if (!formData.birthday) {
       newErrors.birthday = 'La fecha de nacimiento es obligatoria';
-    } else {
-      const birthDate = new Date(formData.birthday);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
+    } 
+    // else {
+    //   const birthDate = new Date(formData.birthday);
+    //   const today = new Date();
+    //   const age = today.getFullYear() - birthDate.getFullYear();
       
-      if (age < 18) {
-        newErrors.birthday = 'Debes ser mayor de 18 años';
-      } else if (age > 120) {
-        newErrors.birthday = 'Fecha de nacimiento inválida';
-      }
-    }
+    //   if (age < 18) {
+    //     newErrors.birthday = 'Debes ser mayor de 18 años';
+    //   } else if (age > 120) {
+    //     newErrors.birthday = 'Fecha de nacimiento inválida';
+    //   }
+    // }
 
     if (!formData.phone.trim()) {
       newErrors.phone = 'El teléfono principal es obligatorio';
@@ -201,44 +231,63 @@ const PersonalData = () => {
     setLoading(true);
 
     try {
+      // ✅ Construir el payload según tu backend
+      const payload = {
+        email: formData.email,
+        name: formData.name,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        phoneSecondary: formData.phoneSecondary || null,
+        idType: formData.idType, // ⚠️ Backend espera el string, no el número
+        idNumber: formData.idNumber,
+        birthday: new Date(formData.birthday).toISOString()
+      };
+
+      console.log('📤 Enviando datos al backend:', payload);
+      console.log('📋 Tipo de documento seleccionado:', formData.idType);
+
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Users/update-profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify({
-          email: formData.email,
-          name: formData.name,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          phoneSecondary: formData.phoneSecondary || null,
-          idType: formData.idType,
-          idNumber: formData.idNumber,
-          birthday: new Date(formData.birthday)
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
+      console.log('📥 Respuesta del backend:', data);
 
       if (data.success) {
+        // ✅ Actualizar el usuario en el contexto con los datos retornados
         const updatedUser = {
           ...user,
-          name: formData.name,
-          lastName: formData.lastName,
-          phone: formData.phone,
-          phoneSecondary: formData.phoneSecondary,
+          name: data.user.nombres || formData.name,
+          lastName: data.user.apellidos || formData.lastName,
+          nombres: data.user.nombres || formData.name,
+          apellidos: data.user.apellidos || formData.lastName,
+          phone: data.user.telefonoCelular || formData.phone,
+          phoneSecondary: data.user.telefonoCelularSecundario || formData.phoneSecondary,
+          telefonoCelular: data.user.telefonoCelular || formData.phone,
+          telefonoCelularSecundario: data.user.telefonoCelularSecundario || formData.phoneSecondary,
           idType: formData.idType,
-          idNumber: formData.idNumber,
+          idNumber: data.user.nroIdentificacionCliente || formData.idNumber,
+          nroIdentificacionCliente: data.user.nroIdentificacionCliente || formData.idNumber,
+          idClienteTipoIdentificacion: data.user.idClienteTipoIdentificacion,
           birthday: formData.birthday,
+          fechaNacimiento: data.user.fechaNacimiento,
           profileComplete: true
         };
         
+        // Actualizar localStorage
+        localStorage.setItem('userData', JSON.stringify(updatedUser));
+        
+        // Actualizar contexto si existe la función
         if (updateUserContext) {
           await updateUserContext(updatedUser);
         }
 
-        toast.success('Datos actualizados exitosamente');
+        toast.success(data.message || 'Datos actualizados exitosamente');
       } else {
         if (data.field) {
           setErrors({ [data.field]: data.message });
@@ -246,7 +295,7 @@ const PersonalData = () => {
         toast.error(data.message || 'Error al actualizar los datos');
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('❌ Error updating profile:', error);
       toast.error('Error de conexión. Verifica tu conexión e intenta nuevamente.');
     } finally {
       setLoading(false);
@@ -255,7 +304,7 @@ const PersonalData = () => {
 
   return (
     <div className="personal-data">
-      {/* Header con botón volver, título y subtítulo - TODO FUERA DEL CARD */}
+      {/* Header con botón volver, título y subtítulo */}
       <div className="personal-data__header-section">
         <button 
           className="personal-data__back-btn"
@@ -273,179 +322,179 @@ const PersonalData = () => {
       <div className="personal-data__container">
         <div className="personal-data__card">
           <form className="personal-data__form" onSubmit={handleSubmit}>
-          {/* Nombres */}
-          <div className="personal-data__section">
-            <div className="personal-data__field">
-              <label className="personal-data__label">
-                <IoPersonOutline size={18} />
-                Nombre <span className="personal-data__required">*</span>
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className={`personal-data__input ${errors.name ? 'error' : ''}`}
-                placeholder="Juan"
-                disabled={loading}
-              />
-              {errors.name && (
-                <span className="personal-data__error">{errors.name}</span>
-              )}
-            </div>
-
-            <div className="personal-data__field">
-              <label className="personal-data__label">
-                <IoPersonOutline size={18} />
-                Apellido <span className="personal-data__required">*</span>
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`personal-data__input ${errors.lastName ? 'error' : ''}`}
-                placeholder="Pérez"
-                disabled={loading}
-              />
-              {errors.lastName && (
-                <span className="personal-data__error">{errors.lastName}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Email (solo lectura) */}
-          <div className="personal-data__section">
-            <div className="personal-data__field full-width">
-              <label className="personal-data__label">
-                Correo Electrónico
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                className="personal-data__input readonly"
-                readOnly
-                disabled
-              />
-              <span className="personal-data__hint">
-                El correo no se puede modificar
-              </span>
-            </div>
-          </div>
-
-          {/* Teléfono (con modal) */}
-          <div className="personal-data__section">
-            <div className="personal-data__field full-width">
-              <label className="personal-data__label">
-                <IoCallOutline size={18} />
-                Teléfono Principal <span className="personal-data__required">*</span>
-              </label>
-              <div 
-                className="personal-data__clickable-field"
-                onClick={() => setShowPhoneModal(true)}
-              >
-                <span>{formatPhoneForDisplay(formData.phone)}</span>
-                <IoCallOutline size={20} />
+            {/* Nombres */}
+            <div className="personal-data__section">
+              <div className="personal-data__field">
+                <label className="personal-data__label">
+                  <IoPersonOutline size={18} />
+                  Nombre <span className="personal-data__required">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={`personal-data__input ${errors.name ? 'error' : ''}`}
+                  placeholder="Juan"
+                  disabled={loading}
+                />
+                {errors.name && (
+                  <span className="personal-data__error">{errors.name}</span>
+                )}
               </div>
-              {formData.phoneSecondary && (
-                <div className="personal-data__secondary-phone">
-                  Teléfono secundario: {formData.phoneSecondary}
+
+              <div className="personal-data__field">
+                <label className="personal-data__label">
+                  <IoPersonOutline size={18} />
+                  Apellido <span className="personal-data__required">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className={`personal-data__input ${errors.lastName ? 'error' : ''}`}
+                  placeholder="Pérez"
+                  disabled={loading}
+                />
+                {errors.lastName && (
+                  <span className="personal-data__error">{errors.lastName}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Email (solo lectura) */}
+            <div className="personal-data__section">
+              <div className="personal-data__field full-width">
+                <label className="personal-data__label">
+                  Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  className="personal-data__input readonly"
+                  readOnly
+                  disabled
+                />
+                <span className="personal-data__hint">
+                  El correo no se puede modificar
+                </span>
+              </div>
+            </div>
+
+            {/* Teléfono (con modal) */}
+            <div className="personal-data__section">
+              <div className="personal-data__field full-width">
+                <label className="personal-data__label">
+                  <IoCallOutline size={18} />
+                  Teléfono Principal <span className="personal-data__required">*</span>
+                </label>
+                <div 
+                  className="personal-data__clickable-field"
+                  onClick={() => setShowPhoneModal(true)}
+                >
+                  <span>{formatPhoneForDisplay(formData.phone)}</span>
+                  <IoCallOutline size={20} />
                 </div>
-              )}
-              {errors.phone && (
-                <span className="personal-data__error">{errors.phone}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Documento de identidad */}
-          <div className="personal-data__section">
-            <div className="personal-data__field">
-              <label className="personal-data__label">
-                <IoCardOutline size={18} />
-                Tipo de Documento <span className="personal-data__required">*</span>
-              </label>
-              <select
-                name="idType"
-                value={formData.idType}
-                onChange={handleChange}
-                className={`personal-data__select ${errors.idType ? 'error' : ''}`}
-                disabled={loading}
-              >
-                <option value="cedula">Cédula</option>
-                <option value="pasaporte">Pasaporte</option>
-                <option value="rif">RIF</option>
-                <option value="otro">Otro</option>
-              </select>
-              {errors.idType && (
-                <span className="personal-data__error">{errors.idType}</span>
-              )}
-            </div>
-
-            <div className="personal-data__field">
-              <label className="personal-data__label">
-                <IoCardOutline size={18} />
-                Número de Documento <span className="personal-data__required">*</span>
-              </label>
-              <input
-                type="text"
-                name="idNumber"
-                value={formData.idNumber}
-                onChange={handleChange}
-                className={`personal-data__input ${errors.idNumber ? 'error' : ''}`}
-                placeholder={
-                  formData.idType === 'cedula' ? '12345678' :
-                  formData.idType === 'pasaporte' ? 'AB123456' :
-                  formData.idType === 'rif' ? 'V-12345678-9' :
-                  'Número de documento'
-                }
-                disabled={loading}
-              />
-              {errors.idNumber && (
-                <span className="personal-data__error">{errors.idNumber}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Fecha de nacimiento (con modal) */}
-          <div className="personal-data__section">
-            <div className="personal-data__field full-width">
-              <label className="personal-data__label">
-                <IoCalendarOutline size={18} />
-                Fecha de Nacimiento <span className="personal-data__required">*</span>
-              </label>
-              <div 
-                className="personal-data__clickable-field"
-                onClick={() => setShowBirthdayModal(true)}
-              >
-                <span>{formatDateForDisplay(formData.birthday)}</span>
-                <IoCalendarOutline size={20} />
+                {formData.phoneSecondary && (
+                  <div className="personal-data__secondary-phone">
+                    Teléfono secundario: {formData.phoneSecondary}
+                  </div>
+                )}
+                {errors.phone && (
+                  <span className="personal-data__error">{errors.phone}</span>
+                )}
               </div>
-              {errors.birthday && (
-                <span className="personal-data__error">{errors.birthday}</span>
-              )}
             </div>
-          </div>
 
-          {/* Botón de guardar */}
-          <div className="personal-data__actions">
-            <button
-              type="submit"
-              className="personal-data__save-btn"
-              disabled={loading}
-            >
-              {loading ? (
-                <LoadingSpinner size="small" />
-              ) : (
-                <>
-                  <IoSaveOutline size={20} />
-                  <span>Guardar Cambios</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+            {/* Documento de identidad */}
+            <div className="personal-data__section">
+              <div className="personal-data__field">
+                <label className="personal-data__label">
+                  <IoCardOutline size={18} />
+                  Tipo de Documento <span className="personal-data__required">*</span>
+                </label>
+                <select
+                  name="idType"
+                  value={formData.idType}
+                  onChange={handleChange}
+                  className={`personal-data__select ${errors.idType ? 'error' : ''}`}
+                  disabled={loading}
+                >
+                  <option value="cedula">Cédula</option>
+                  <option value="pasaporte">Pasaporte</option>
+                  <option value="rif">RIF</option>
+                  <option value="otro">Otro</option>
+                </select>
+                {errors.idType && (
+                  <span className="personal-data__error">{errors.idType}</span>
+                )}
+              </div>
+
+              <div className="personal-data__field">
+                <label className="personal-data__label">
+                  <IoCardOutline size={18} />
+                  Número de Documento <span className="personal-data__required">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="idNumber"
+                  value={formData.idNumber}
+                  onChange={handleChange}
+                  className={`personal-data__input ${errors.idNumber ? 'error' : ''}`}
+                  placeholder={
+                    formData.idType === 'cedula' ? '12345678' :
+                    formData.idType === 'pasaporte' ? 'AB123456' :
+                    formData.idType === 'rif' ? 'V-12345678-9' :
+                    'Número de documento'
+                  }
+                  disabled={loading}
+                />
+                {errors.idNumber && (
+                  <span className="personal-data__error">{errors.idNumber}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Fecha de nacimiento (con modal) */}
+            <div className="personal-data__section">
+              <div className="personal-data__field full-width">
+                <label className="personal-data__label">
+                  <IoCalendarOutline size={18} />
+                  Fecha de Nacimiento <span className="personal-data__required">*</span>
+                </label>
+                <div 
+                  className="personal-data__clickable-field"
+                  onClick={() => setShowBirthdayModal(true)}
+                >
+                  <span>{formatDateForDisplay(formData.birthday)}</span>
+                  <IoCalendarOutline size={20} />
+                </div>
+                {errors.birthday && (
+                  <span className="personal-data__error">{errors.birthday}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Botón de guardar */}
+            <div className="personal-data__actions">
+              <button
+                type="submit"
+                className="personal-data__save-btn"
+                disabled={loading}
+              >
+                {loading ? (
+                  <LoadingSpinner size="small" />
+                ) : (
+                  <>
+                    <IoSaveOutline size={20} />
+                    <span>Guardar Cambios</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
       {/* Modales */}
