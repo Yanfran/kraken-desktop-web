@@ -1,6 +1,7 @@
 // src/pages/Profile/Addresses/Addresses.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import './Addresses.styles.scss';
 
@@ -24,14 +25,12 @@ import axiosInstance from '@services/axiosInstance';
 const Addresses = () => {
   const navigate = useNavigate();
   
-  const [loading, setLoading] = useState(true);
-  const [addresses, setAddresses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [settingDefault, setSettingDefault] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
   // Estado de selección de dirección
-  const [selectedOption, setSelectedOption] = useState(null); // 'store', 'home', 'addr-{id}'
+  const [selectedOption, setSelectedOption] = useState(null);
 
   // Estados del formulario
   const [alias, setAlias] = useState('');
@@ -40,154 +39,93 @@ const Addresses = () => {
   const [submitting, setSubmitting] = useState(false);
   
   // Estados para tienda
-  const [cities, setCities] = useState([]);
-  const [lockers, setLockers] = useState([]);
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedLocker, setSelectedLocker] = useState('');
   
   // Estados para domicilio
-  const [states, setStates] = useState([]);
-  const [municipalities, setMunicipalities] = useState([]);
-  const [parishes, setParishes] = useState([]);
   const [selectedState, setSelectedState] = useState('');
   const [selectedMunicipality, setSelectedMunicipality] = useState('');
   const [selectedParish, setSelectedParish] = useState('');
   const [address, setAddress] = useState('');
-  
-  // Estados de carga del formulario
-  const [loadingForm, setLoadingForm] = useState(false);
-  const [loadingMunicipalities, setLoadingMunicipalities] = useState(false);
-  const [loadingParishes, setLoadingParishes] = useState(false);
 
-  useEffect(() => {
-    loadAddresses();
-  }, []);
+  // ✅ QUERIES para cargar datos
+  const { data: userAddresses, isLoading: isLoadingAddresses, refetch: refetchAddresses } = useQuery({
+    queryKey: ['userAddresses'],
+    queryFn: getUserAddresses,
+    select: (response) => response.data || [],
+  });
 
-  useEffect(() => {
-    if (showForm && cities.length === 0) {
-      loadFormData();
-    }
-  }, [showForm]);
+  const { data: deliveryData, isLoading: isLoadingDelivery } = useQuery({
+    queryKey: ['deliveryData'],
+    queryFn: getDeliveryData,
+    enabled: showForm, // Solo cargar cuando se abre el formulario
+    select: (response) => response.data,
+  });
 
+  const { data: statesData, isLoading: isLoadingStates } = useQuery({
+    queryKey: ['states'],
+    queryFn: () => getStatesByCountry(1),
+    enabled: showForm && selectedOption === 'home',
+    select: (response) =>
+      response.data?.map((s) => ({ label: s.name, value: s.id.toString() })) || [],
+  });
+
+  const { data: municipalitiesData, isLoading: isLoadingMunicipalities } = useQuery({
+    queryKey: ['municipalities', selectedState],
+    queryFn: () => getMunicipalitiesByState(selectedState),
+    enabled: !!selectedState && selectedOption === 'home',
+    select: (response) =>
+      response.data?.map((m) => ({ label: m.name, value: m.id.toString() })) || [],
+  });
+
+  const { data: parishesData, isLoading: isLoadingParishes } = useQuery({
+    queryKey: ['parishes', selectedMunicipality],
+    queryFn: () => getParishesByMunicipality(selectedMunicipality),
+    enabled: !!selectedMunicipality && selectedOption === 'home',
+    select: (response) =>
+      response.data?.map((p) => ({ label: p.name, value: p.id.toString() })) || [],
+  });
+
+  // ✅ Procesar ciudades y tiendas
+  const availableCities = useMemo(() => {
+    if (!deliveryData?.ciudad) return [];
+    return [{
+      label: deliveryData.ciudad.name,
+      value: deliveryData.ciudad.id.toString(),
+    }];
+  }, [deliveryData]);
+
+  const filteredTiendas = useMemo(() => {
+    if (!deliveryData?.tiendas) return [];
+    return deliveryData.tiendas
+      .filter((t) => t.idTiendaTipo === 2)
+      .map((t) => ({ label: t.nombre, value: t.id.toString() }));
+  }, [deliveryData]);
+
+  // Ordenar direcciones
+  const sortedAddresses = useMemo(() => {
+    if (!userAddresses) return [];
+    return [...userAddresses].sort((a, b) => {
+      if (a.esPredeterminada && !b.esPredeterminada) return -1;
+      if (!a.esPredeterminada && b.esPredeterminada) return 1;
+      return 0;
+    });
+  }, [userAddresses]);
+
+  // Limpiar campos de municipio y parroquia cuando cambia el estado
   useEffect(() => {
-    if (selectedState && selectedOption === 'home') {
-      loadMunicipalities(selectedState);
-    } else {
-      setMunicipalities([]);
+    if (selectedOption === 'home') {
       setSelectedMunicipality('');
-      setParishes([]);
       setSelectedParish('');
     }
   }, [selectedState, selectedOption]);
 
+  // Limpiar parroquia cuando cambia el municipio
   useEffect(() => {
-    if (selectedMunicipality && selectedOption === 'home') {
-      loadParishes(selectedMunicipality);
-    } else {
-      setParishes([]);
+    if (selectedOption === 'home') {
       setSelectedParish('');
     }
   }, [selectedMunicipality, selectedOption]);
-
-  const loadAddresses = async () => {
-    try {
-      setLoading(true);
-      const response = await getUserAddresses();
-      
-      if (response.success) {
-        const sortedAddresses = (response.data || []).sort((a, b) => {
-          if (a.esPredeterminada && !b.esPredeterminada) return -1;
-          if (!a.esPredeterminada && b.esPredeterminada) return 1;
-          return 0;
-        });
-        setAddresses(sortedAddresses);
-      } else {
-        toast.error(response.message || 'Error al cargar las direcciones');
-      }
-    } catch (error) {
-      console.error('Error loading addresses:', error);
-      toast.error('Error al cargar las direcciones');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadFormData = async () => {
-    try {
-      setLoadingForm(true);
-      
-      const deliveryData = await getDeliveryData();
-      if (deliveryData.success && deliveryData.data) {
-        const cityOptions = (deliveryData.data.cities || []).map(city => ({
-          label: city.nombreCiudad,
-          value: city.id.toString()
-        }));
-        setCities(cityOptions);
-        setLockers(deliveryData.data.lockers || []);
-      }
-      
-      const statesData = await getStatesByCountry('242');
-      if (statesData.success && statesData.data) {
-        const stateOptions = (statesData.data || []).map(state => ({
-          label: state.nombreEstado,
-          value: state.id.toString()
-        }));
-        setStates(stateOptions);
-      }
-    } catch (error) {
-      console.error('Error loading form data:', error);
-      toast.error('Error al cargar los datos del formulario');
-    } finally {
-      setLoadingForm(false);
-    }
-  };
-
-  const loadMunicipalities = async (stateId) => {
-    try {
-      setLoadingMunicipalities(true);
-      const data = await getMunicipalitiesByState(stateId);
-      if (data.success && data.data) {
-        const municipalityOptions = (data.data || []).map(mun => ({
-          label: mun.nombreMunicipio,
-          value: mun.id.toString()
-        }));
-        setMunicipalities(municipalityOptions);
-      }
-    } catch (error) {
-      console.error('Error loading municipalities:', error);
-      toast.error('Error al cargar municipios');
-    } finally {
-      setLoadingMunicipalities(false);
-    }
-  };
-
-  const loadParishes = async (municipalityId) => {
-    try {
-      setLoadingParishes(true);
-      const data = await getParishesByMunicipality(municipalityId);
-      if (data.success && data.data) {
-        const parishOptions = (data.data || []).map(par => ({
-          label: par.nombreParroquia,
-          value: par.id.toString()
-        }));
-        setParishes(parishOptions);
-      }
-    } catch (error) {
-      console.error('Error loading parishes:', error);
-      toast.error('Error al cargar parroquias');
-    } finally {
-      setLoadingParishes(false);
-    }
-  };
-
-  const filteredLockers = selectedCity
-    ? lockers
-        .filter(l => l.idCiudad?.toString() === selectedCity)
-        .map(l => ({
-          label: l.nombreLocker,
-          value: l.id.toString()
-        }))
-    : [];
 
   const validateForm = () => {
     if (!selectedOption) {
@@ -281,7 +219,7 @@ const Addresses = () => {
         );
         resetForm();
         setShowForm(false);
-        await loadAddresses();
+        await refetchAddresses();
       } else {
         toast.error(response.data.message || 'Error al agregar la dirección');
       }
@@ -317,7 +255,7 @@ const Addresses = () => {
       
       if (response.success) {
         toast.success('Dirección eliminada exitosamente');
-        await loadAddresses();
+        await refetchAddresses();
       } else {
         toast.error(response.message || 'Error al eliminar la dirección');
       }
@@ -336,7 +274,7 @@ const Addresses = () => {
       
       if (response.success) {
         toast.success(`"${addressName}" establecida como predeterminada`);
-        await loadAddresses();
+        await refetchAddresses();
       } else {
         toast.error(response.message || 'Error al establecer dirección predeterminada');
       }
@@ -362,7 +300,7 @@ const Addresses = () => {
     return parts.join(', ');
   };
 
-  if (loading) {
+  if (isLoadingAddresses) {
     return (
       <div className="addresses__loading">
         <LoadingSpinner size="large" />
@@ -370,6 +308,9 @@ const Addresses = () => {
       </div>
     );
   }
+
+  // ✅ Estado de carga del formulario
+  const isFormLoading = isLoadingDelivery || (selectedOption === 'home' && isLoadingStates);
 
   return (
     <div className="addresses">
@@ -410,13 +351,13 @@ const Addresses = () => {
                   setShowForm(false);
                   resetForm();
                 }}
-                disabled={submitting}
+                disabled={submitting || isFormLoading}
               >
                 ✕
               </button>
             </div>
 
-            {loadingForm ? (
+            {isFormLoading ? (
               <div className="addresses__form-loading">
                 <LoadingSpinner size="medium" />
                 <p>Cargando formulario...</p>
@@ -454,21 +395,7 @@ const Addresses = () => {
 
                 {/* Formulario según selección */}
                 {selectedOption && (
-                  <div className="address-form-fields">
-                    {/* Alias */}
-                    <div className="form-group">
-                      <label className="form-label">
-                        NOMBRE DE LA DIRECCIÓN <span className="required">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Ej: Casa, Oficina, etc."
-                        value={alias}
-                        onChange={e => setAlias(e.target.value)}
-                        disabled={submitting}
-                      />
-                    </div>
+                  <div className="address-form-fields">                    
 
                     {/* Formulario para TIENDA */}
                     {selectedOption === 'store' && (
@@ -481,7 +408,7 @@ const Addresses = () => {
                               CIUDAD <span className="required">*</span>
                             </label>
                             <SearchableSelect
-                              options={cities}
+                              options={availableCities}
                               value={selectedCity}
                               onChange={setSelectedCity}
                               placeholder="Seleccione una ciudad"
@@ -494,7 +421,7 @@ const Addresses = () => {
                               TIENDA/LOCKER <span className="required">*</span>
                             </label>
                             <SearchableSelect
-                              options={filteredLockers}
+                              options={filteredTiendas}
                               value={selectedLocker}
                               onChange={setSelectedLocker}
                               placeholder="Seleccione una tienda"
@@ -508,6 +435,21 @@ const Addresses = () => {
                     {/* Formulario para DOMICILIO */}
                     {selectedOption === 'home' && (
                       <>
+                        {/* Alias */}
+                        <div className="form-group">
+                          <label className="form-label">
+                            NOMBRE DE LA DIRECCIÓN <span className="required">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Ej: Casa, Oficina, etc."
+                            value={alias}
+                            onChange={e => setAlias(e.target.value)}
+                            disabled={submitting}
+                          />
+                        </div>
+
                         <h4 className="form-section-title">Entrega a Domicilio</h4>
 
                         <div className="form-row">
@@ -516,11 +458,11 @@ const Addresses = () => {
                               ESTADO <span className="required">*</span>
                             </label>
                             <SearchableSelect
-                              options={states}
+                              options={statesData || []}
                               value={selectedState}
                               onChange={setSelectedState}
                               placeholder="Seleccione un estado"
-                              disabled={submitting}
+                              disabled={submitting || isLoadingStates}
                             />
                           </div>
 
@@ -529,22 +471,22 @@ const Addresses = () => {
                               MUNICIPIO <span className="required">*</span>
                             </label>
                             <SearchableSelect
-                              options={municipalities}
+                              options={municipalitiesData || []}
                               value={selectedMunicipality}
                               onChange={setSelectedMunicipality}
                               placeholder="Seleccione un municipio"
-                              disabled={!selectedState || loadingMunicipalities || submitting}
+                              disabled={!selectedState || isLoadingMunicipalities || submitting}
                             />
                           </div>
 
                           <div className="form-group">
                             <label className="form-label">PARROQUIA</label>
                             <SearchableSelect
-                              options={parishes}
+                              options={parishesData || []}
                               value={selectedParish}
                               onChange={setSelectedParish}
                               placeholder="Seleccione una parroquia (opcional)"
-                              disabled={!selectedMunicipality || loadingParishes || submitting}
+                              disabled={!selectedMunicipality || isLoadingParishes || submitting}
                             />
                           </div>
                         </div>
@@ -625,7 +567,7 @@ const Addresses = () => {
         )}
 
         {/* Addresses list */}
-        {addresses.length === 0 && !showForm ? (
+        {sortedAddresses.length === 0 && !showForm ? (
           <div className="addresses__empty">
             <span className="addresses__empty-icon">📍</span>
             <h3 className="addresses__empty-title">No tienes direcciones guardadas</h3>
@@ -635,7 +577,7 @@ const Addresses = () => {
           </div>
         ) : (
           <div className="addresses__list">
-            {addresses.map((address) => (
+            {sortedAddresses.map((address) => (
               <div key={address.id} className="address-card">
                 <div className="address-card__header">
                   <div className="address-card__title-row">
