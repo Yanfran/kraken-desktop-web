@@ -1,0 +1,391 @@
+// src/components/calculator/ResultStep.scss
+@import '../../styles/variables';
+@import '../../styles/_colors.scss';
+
+.result-step {
+  flex: 1;
+  padding-bottom: 20px;
+
+  &__container {
+    padding-bottom: 20px;
+  }
+
+  &__title {
+    font-size: 16px;
+    color: $primary;
+    line-height: 22px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  &__package-info {
+    background-color: $primary;
+    border-radius: 12px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+  }
+
+  &__package-text {
+    color: white;
+    font-size: 16px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  &__currency-selector {
+    margin-bottom: 20px;
+  }
+
+  &__currency-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__currency-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: $primary;
+  }
+
+  &__rate-info {
+    background-color: $card-background;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  &__rate-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: $primary;
+  }
+
+  &__rate-details {
+    font-size: 11px;
+    color: $text-secondary;
+    margin-top: 2px;
+  }
+
+  &__currency-toggle {
+    display: flex;
+    background-color: $card-background;
+    border-radius: 25px;
+    padding: 2px;
+    border: 1px solid $separator;
+  }
+
+  &__currency-button {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 23px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover:not(.result-step__active-currency) {
+      background-color: rgba($primary, 0.1);
+    }
+  }
+
+  &__active-currency {
+    background-color: $primary;
+  }
+
+  &__currency-option {
+    font-size: 14px;
+    color: $text-secondary;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  &__active-currency-text {
+    color: white;
+    font-weight: 500;
+  }
+
+  &__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  &__card {
+    background-color: white;
+    border: 1px solid $separator;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  &__card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    cursor: pointer;
+    background-color: white;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: rgba($primary, 0.02);
+    }
+  }
+
+  &__header-left {
+    flex: 2.5;
+  }
+
+  &__delivery-type {
+    display: inline-block;
+  }
+
+  &__delivery-type-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333333;
+    line-height: 18px;
+  }
+
+  &__header-center {
+    flex: 2.5;
+    display: flex;
+    justify-content: center;
+  }
+
+  &__price-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333333;
+    text-align: center;
+  }
+
+  &__eye-button {
+    padding: 8px;
+    border-radius: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: $text-secondary;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background-color: rgba($primary, 0.1);
+      color: $primary;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &__expanded-content {
+    background-color: #FFFFFF;
+    border-top: 1px solid $separator;
+    padding-top: 8px;
+  }
+
+  &__header-container {
+    margin-bottom: 0;
+    padding: 0 12px;
+  }
+
+  &__header-row {
+    display: flex;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #E0E0E0;
+  }
+
+  &__delivery-type-cell {
+    flex: 2.5;
+  }
+
+  &__empty-header-cell {
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  &__full-price-cell,
+  &__discount-price-cell {
+    flex: 2.5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__header-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #666666;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__discount-badge {
+    background-color: #4CAF50;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  &__columns-breakdown {
+    background-color: #FFFFFF;
+    padding: 0 12px 16px;
+  }
+
+  &__breakdown-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #F0F0F0;
+  }
+
+  &__concept-label {
+    font-size: 14px;
+    color: #333333;
+    font-weight: 400;
+    flex: 2.5;
+    padding-left: 12px;
+    padding-right: 8px;
+  }
+
+  &__full-price-value,
+  &__discount-price-value {
+    font-size: 14px;
+    color: #333333;
+    font-weight: 600;
+    flex: 2.5;
+    text-align: center;
+  }
+
+  &__total-row {
+    border-bottom: none;
+    border-top: 2px solid #000000;
+    padding-top: 10px;
+    margin-top: 6px;
+  }
+
+  &__total-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #000000;
+  }
+
+  &__total-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #000000;
+  }
+
+  &__new-calculation-button {
+    width: 100%;
+    background-color: $primary;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: darken($primary, 10%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba($primary, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .result-step {
+    &__currency-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    &__rate-info {
+      width: 100%;
+      align-items: center;
+    }
+
+    &__header-row {
+      font-size: 11px;
+    }
+
+    &__delivery-type-text,
+    &__price-text {
+      font-size: 13px;
+    }
+
+    &__concept-label,
+    &__full-price-value,
+    &__discount-price-value {
+      font-size: 13px;
+    }
+
+    &__header-title {
+      font-size: 11px;
+    }
+
+    &__discount-badge {
+      font-size: 9px;
+      padding: 2px 6px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .result-step {
+    &__card-header {
+      padding: 12px;
+    }
+
+    &__delivery-type-text {
+      font-size: 12px;
+    }
+
+    &__price-text {
+      font-size: 12px;
+    }
+
+    &__concept-label,
+    &__full-price-value,
+    &__discount-price-value {
+      font-size: 12px;
+    }
+
+    &__columns-breakdown {
+      padding: 0 8px 12px;
+    }
+
+    &__header-container {
+      padding: 0 8px;
+    }
+  }
+}

@@ -1,210 +1,224 @@
 // src/components/calculator/PackageStep.scss
-
 @import '../../styles/variables';
-@import '../../styles/mixins';
+@import '../../styles/_colors.scss';
+
 
 .package-step {
-  width: 100%;
-  // max-width: 600px; // Eliminado
-  margin: 0 auto;
-  background-color: var(--color-card-background);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  padding: 2rem;
   display: flex;
   flex-direction: column;
+  min-height: 500px;
 
-  &__form {
-    flex-grow: 1;
+  &__scroll {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
   }
 
-  &__field {
-    margin-bottom: 1.5rem;
+  &__form {
+    padding-bottom: 10px;
   }
 
   &__label {
     display: block;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: 0.5rem;
+    font-size: 16px;
+    font-weight: 500;
+    color: $primary;
+    margin-bottom: 8px;
+    margin-top: 16px;
+
+    &:first-child {
+      margin-top: 0;
+    }
   }
 
   &__input-container {
     position: relative;
     display: flex;
     align-items: center;
+    gap: 8px;
   }
 
   &__currency-badge {
-    position: absolute;
-    left: 1px;
-    top: 1px;
-    bottom: 1px;
-    @include flex-center;
-    padding: 0 0.75rem;
-    background-color: var(--color-background-light);
-    border-right: 1px solid var(--color-border);
-    border-top-left-radius: var(--radius-md);
-    border-bottom-left-radius: var(--radius-md);
-    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background-color: $card-background;
+    border: 1px solid $separator;
+    border-radius: 8px;
+    font-size: 14px;
+    color: $text-secondary;
     font-weight: 500;
-    color: var(--color-text-secondary);
 
-    span {
-      margin-right: 0.25rem;
+    svg {
+      width: 16px;
+      height: 16px;
     }
   }
 
-  .currency-input.package-step__input {
-    padding-left: 75px; // Space for the currency badge
-  }
-
-  &__input, &__select {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    background-color: var(--color-input-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-text-primary);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  &__input {
+    flex: 1;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: $primary;
+    border: 1px solid $separator;
+    border-radius: 12px;
+    background-color: #fff;
+    transition: all 0.3s ease;
 
     &:focus {
       outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba($primary, 0.1);
     }
 
-    &:disabled {
-      background-color: var(--color-background-light);
+    &--disabled {
+      background-color: $card-background;
+      color: $text-secondary;
       cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    &::placeholder {
+      color: $text-secondary;
     }
   }
 
+  &__field {
+    margin-bottom: 16px;
+  }
+
+  &__label-container {
+    margin-bottom: 8px;
+  }
+
+  &__dropdown-container {
+    position: relative;
+  }
+
   &__select {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: $primary;
+    border: 1px solid $separator;
+    border-radius: 12px;
+    background-color: #fff;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
+    background-position: right 16px center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba($primary, 0.1);
+    }
+
+    &--disabled {
+      background-color: $card-background;
+      color: $text-secondary;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
   }
 
   &__selected-contents {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
+    gap: 8px;
+    margin-top: 12px;
   }
 
   &__content-chip {
-    @include flex-center;
-    background-color: var(--color-primary-light);
-    color: var(--color-primary);
-    padding: 0.3rem 0.7rem;
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background-color: rgba($primary, 0.1);
+    border: 1px solid rgba($primary, 0.3);
+    border-radius: 20px;
+    font-size: 14px;
+    color: $primary;
     font-weight: 500;
-
-    span {
-      margin-right: 0.4rem;
-    }
   }
 
   &__content-chip-remove {
-    @include flex-center;
-    background: rgba(0,0,0,0.1);
+    background: none;
     border: none;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
+    color: $primary;
+    font-size: 16px;
     cursor: pointer;
-    color: var(--color-primary);
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
 
-    &:hover {
-      background: rgba(0,0,0,0.2);
+    &:hover:not(:disabled) {
+      background-color: rgba($primary, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 
-  // Units Toggle
-  &__units-section {
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background-color: var(--color-background-light);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border-light);
+  &__weight-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
 
-  &__units-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    text-align: center;
-  }
-
-  &__units-toggle {
-    @include flex-center;
-  }
-
-  &__units-label {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-  }
-
-  &__toggle-switch {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    background-color: var(--color-border);
+  &__unit-toggle {
+    padding: 14px 20px;
+    background-color: $card-background;
+    border: 1px solid $separator;
     border-radius: 12px;
-    margin: 0 1rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: $primary;
     cursor: pointer;
-    border: none;
-    transition: background-color 0.2s ease;
+    transition: all 0.3s ease;
+    min-width: 60px;
 
-    &.active {
-      background-color: var(--color-primary);
+    &:hover:not(:disabled) {
+      background-color: $primary;
+      color: white;
+      border-color: $primary;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
 
-  &__toggle-thumb {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    background-color: white;
-    border-radius: 50%;
-    transition: transform 0.2s ease;
-
-    .active & {
-      transform: translateX(20px);;
-    }
-  }
-
-  // High Value Dimensions
   &__dimensions {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--color-border);
+    margin-top: 20px;
+    padding: 16px;
+    background-color: rgba($primary, 0.05);
+    border: 1px solid rgba($primary, 0.2);
+    border-radius: 12px;
   }
 
   &__high-value-note {
-    font-size: 0.9rem;
-    color: var(--color-warning);
-    background-color: var(--color-warning-light);
-    padding: 0.75rem;
-    border-radius: var(--radius-md);
-    margin-bottom: 1rem;
-    text-align: center;
+    font-size: 12px;
+    color: $text-secondary;
+    margin-bottom: 12px;
+    font-style: italic;
   }
 
   &__dimensions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: 12px;
   }
 
   &__dimension-input {
@@ -213,51 +227,97 @@
   }
 
   &__dimension-label {
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 0.25rem;
-    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: $primary;
+    margin-bottom: 6px;
   }
 
-  // Buttons
   &__buttons {
-    margin-top: 2rem;
+    padding-top: 15px;
+    border-top: 1px solid $separator;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  &__calculate-button, &__back-button {
-    @include button-base;
-    padding: 0.9rem;
-    font-size: 1rem;
+    gap: 10px;
   }
 
   &__calculate-button {
-    @include button-primary;
+    width: 100%;
+    background-color: $primary;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover:not(.package-step__button--disabled) {
+      background-color: darken($primary, 10%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba($primary, 0.3);
+    }
+
+    &:active:not(.package-step__button--disabled) {
+      transform: translateY(0);
+    }
   }
 
   &__back-button {
-    @include button-secondary;
+    width: 100%;
+    background-color: transparent;
+    color: $primary;
+    border: 1px solid $separator;
+    border-radius: 25px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      background-color: $card-background;
+      border-color: $primary;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__button--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   &__loading {
-    @include flex-center;
-    gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
   }
 
   &__spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    border-top-color: white;
+    border: 3px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    border-top-color: white;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
   }
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
+  to { transform: rotate(360deg); }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .package-step {
+    &__dimensions-grid {
+      grid-template-columns: 1fr;
+    }
   }
 }
