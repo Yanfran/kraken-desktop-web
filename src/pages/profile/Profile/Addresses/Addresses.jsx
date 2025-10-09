@@ -15,7 +15,8 @@ import {
   IoStar,                 // ⭐ Estrella rellena
   IoChevronBack,          // ← Para volver
   IoAdd,                  // + Para agregar
-  IoClose                 // ✕ Para cerrar
+  IoClose,                // ✕ Para cerrar
+  IoAlertCircleOutline    // ⚠️ Para aviso de límite
 } from 'react-icons/io5';
 
 // Components
@@ -125,6 +126,11 @@ const Addresses = () => {
     });
   }, [userAddresses]);
 
+  // ✅ VERIFICAR SI YA TIENE 3 DIRECCIONES (LÍMITE MÁXIMO)
+  const hasReachedMaxAddresses = useMemo(() => {
+    return userAddresses && userAddresses.length >= 3;
+  }, [userAddresses]);
+
   // Limpiar campos cuando cambia el estado
   useEffect(() => {
     if (selectedOption === 'home') {
@@ -140,118 +146,115 @@ const Addresses = () => {
   }, [selectedMunicipality, selectedOption]);
 
   const validateForm = () => {
-  if (!selectedOption) {
-    toast.error('Seleccione un tipo de dirección');
-    return false;
-  }
+    if (!selectedOption) {
+      toast.error('Seleccione un tipo de dirección');
+      return false;
+    }
 
-  if (selectedOption === 'store') {
-    // ✅ Para TIENDA: solo validar ciudad y locker
-    if (!selectedCity) {
-      toast.error('Seleccione una ciudad');
-      return false;
+    if (selectedOption === 'store') {
+      // ✅ Para TIENDA: solo validar ciudad y locker
+      if (!selectedCity) {
+        toast.error('Seleccione una ciudad');
+        return false;
+      }
+      if (!selectedLocker) {
+        toast.error('Seleccione una tienda/locker');
+        return false;
+      }
+    } else if (selectedOption === 'home') {
+      // ✅ Para DOMICILIO: validar alias, estado, municipio y dirección
+      if (!alias.trim()) {
+        toast.error('Ingrese un nombre para la dirección');
+        return false;
+      }
+      if (!selectedState) {
+        toast.error('Seleccione un estado');
+        return false;
+      }
+      if (!selectedMunicipality) {
+        toast.error('Seleccione un municipio');
+        return false;
+      }
+      if (!address.trim()) {
+        toast.error('Ingrese una dirección');
+        return false;
+      }
     }
-    if (!selectedLocker) {
-      toast.error('Seleccione una tienda/locker');
-      return false;
-    }
-  } else if (selectedOption === 'home') {
-    // ✅ Para DOMICILIO: validar alias, estado, municipio y dirección
-    if (!alias.trim()) {
-      toast.error('Ingrese un nombre para la dirección');
-      return false;
-    }
-    if (!selectedState) {
-      toast.error('Seleccione un estado');
-      return false;
-    }
-    if (!selectedMunicipality) {
-      toast.error('Seleccione un municipio');
-      return false;
-    }
-    if (!address.trim()) {
-      toast.error('Ingrese una dirección');
-      return false;
-    }
-  }
 
-  return true;
-};
+    return true;
+  };
 
   const handleSubmit = async () => {
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  setSubmitting(true);
+    setSubmitting(true);
 
-  try {
-    const userId = localStorage.getItem('userId');
-    const userDataString = localStorage.getItem('userData');
+    try {
+      const userId = localStorage.getItem('userId');
+      const userDataString = localStorage.getItem('userData');
 
-
-       // 1. Convertir la cadena JSON a un objeto JavaScript
-        const userData = JSON.parse(userDataString); 
-        
-        // 2. Acceder al campo 'email' del objeto
-        const userEmail = userData.email; 
-
+      // 1. Convertir la cadena JSON a un objeto JavaScript
+      const userData = JSON.parse(userDataString); 
       
+      // 2. Acceder al campo 'email' del objeto
+      const userEmail = userData.email; 
 
-    if (!userId) {
-      toast.error('Usuario no autenticado');
+      if (!userId) {
+        toast.error('Usuario no autenticado');
+        setSubmitting(false);
+        return;
+      }
+
+      const delivery = selectedOption === 'store'
+        ? {
+            City: selectedCity,
+            Locker: selectedLocker,
+            State: null,
+            Municipality: null,
+            Parish: null,
+            Address: null,
+            Reference: null, // ✅ Sin referencia para tienda
+          }
+        : {
+            City: null,
+            Locker: null,
+            State: selectedState,
+            Municipality: selectedMunicipality,
+            Parish: selectedParish || null,
+            Address: address,
+            Reference: reference || null,
+          };
+
+      const payload = {
+        ID: userId,
+        Email: userEmail,
+        Method: selectedOption === 'store' ? 'store' : 'home',
+        Delivery: delivery,
+        Alias: selectedOption === 'store' ? '' : alias, // ✅ Alias vacío para tienda
+        SetAsDefault: setAsDefault
+      };
+
+      const response = await registerAddress(payload);
+
+      if (response.success) {
+        toast.success(
+          setAsDefault 
+            ? '¡Dirección agregada y establecida como predeterminada!' 
+            : '¡Dirección agregada exitosamente!'
+        );
+        resetForm();
+        setShowForm(false);
+        await refetchAddresses();
+      } else {
+        toast.error(response.message || 'Error al agregar la dirección');
+      }
+    } catch (error) {
+      console.error('Error adding address:', error);
+      toast.error(error.message || 'Error al agregar la dirección');
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    const delivery = selectedOption === 'store'
-      ? {
-          City: selectedCity,
-          Locker: selectedLocker,
-          State: null,
-          Municipality: null,
-          Parish: null,
-          Address: null,
-          Reference: null, // ✅ Sin referencia para tienda
-        }
-      : {
-          City: null,
-          Locker: null,
-          State: selectedState,
-          Municipality: selectedMunicipality,
-          Parish: selectedParish || null,
-          Address: address,
-          Reference: reference || null,
-        };
-
-    const payload = {
-      ID: userId,
-      Email: userEmail,
-      Method: selectedOption === 'store' ? 'store' : 'home',
-      Delivery: delivery,
-      Alias: selectedOption === 'store' ? '' : alias, // ✅ Alias vacío para tienda
-      SetAsDefault: setAsDefault
-    };
-
-    const response = await registerAddress(payload);
-
-    if (response.success) {
-      toast.success(
-        setAsDefault 
-          ? '¡Dirección agregada y establecida como predeterminada!' 
-          : '¡Dirección agregada exitosamente!'
-      );
-      resetForm();
-      setShowForm(false);
-      await refetchAddresses();
-    } else {
-      toast.error(response.message || 'Error al agregar la dirección');
-    }
-  } catch (error) {
-    console.error('Error adding address:', error);
-    toast.error(error.message || 'Error al agregar la dirección');
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   const resetForm = () => {
     setSelectedOption(null);
@@ -351,8 +354,8 @@ const Addresses = () => {
           </p>
         </div>
 
-        {/* Add new address button */}
-        {!showForm && (
+        {/* ✅ BOTÓN NUEVA DIRECCIÓN - SOLO SI NO HA LLEGADO AL LÍMITE */}
+        {!showForm && !hasReachedMaxAddresses && (
           <Button
             variant="primary"
             onClick={() => setShowForm(true)}
@@ -361,6 +364,19 @@ const Addresses = () => {
             <IoAdd size={20} />
             <span>Nueva Dirección</span>
           </Button>
+        )}
+
+        {/* ✅ MENSAJE CUANDO HA LLEGADO AL LÍMITE DE 3 DIRECCIONES */}
+        {!showForm && hasReachedMaxAddresses && (
+          <div className="addresses__max-limit">
+            <IoAlertCircleOutline size={24} />
+            <div className="addresses__max-limit-text">
+              <p className="addresses__max-limit-title">Límite de direcciones alcanzado</p>
+              <p className="addresses__max-limit-message">
+                Has alcanzado el máximo de 3 direcciones guardadas. Elimina una dirección existente para agregar una nueva.
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Formulario de nueva dirección */}
@@ -452,7 +468,6 @@ const Addresses = () => {
                             />
                           </div>
                         </div>
-                       
                       </>
                     )}
 

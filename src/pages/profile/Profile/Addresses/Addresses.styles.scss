@@ -121,6 +121,46 @@
     }
   }
 
+  // ✅ MENSAJE DE LÍMITE MÁXIMO DE DIRECCIONES
+  &__max-limit {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 2px solid rgba(255, 193, 7, 0.3);
+    border-radius: 12px;
+    margin-bottom: 24px;
+
+    [data-theme="dark"] & {
+      background-color: rgba(255, 193, 7, 0.15);
+    }
+
+    svg {
+      color: #f59e0b;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+  }
+
+  &__max-limit-text {
+    flex: 1;
+  }
+
+  &__max-limit-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 8px 0;
+  }
+
+  &__max-limit-message {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
   &__list {
     display: flex;
     flex-direction: column;
@@ -783,3 +823,7 @@
     }
   }
 }
+
+
+
+
