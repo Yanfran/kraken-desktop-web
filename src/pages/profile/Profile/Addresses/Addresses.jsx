@@ -1,9 +1,22 @@
 // src/pages/Profile/Addresses/Addresses.jsx
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import './Addresses.styles.scss';
+
+// ✅ ICONOS DE IONICONS (mismo estilo que la app)
+import { 
+  IoLocationOutline,      // 📍 Para ubicaciones
+  IoHomeOutline,          // 🏠 Para domicilio  
+  IoStorefrontOutline,    // 🏢 Para tienda
+  IoTrashOutline,         // 🗑️ Para eliminar
+  IoStarOutline,          // ⭐ Para predeterminada
+  IoStar,                 // ⭐ Estrella rellena
+  IoChevronBack,          // ← Para volver
+  IoAdd,                  // + Para agregar
+  IoClose                 // ✕ Para cerrar
+} from 'react-icons/io5';
 
 // Components
 import Button from '@components/common/Button/Button';
@@ -15,7 +28,7 @@ import {
   getUserAddresses, 
   setDefaultAddress, 
   deleteAddress,
-  registerAddress, // ✅ IMPORTAR
+  registerAddress,
   getDeliveryData,
   getStatesByCountry,
   getMunicipalitiesByState,
@@ -127,109 +140,118 @@ const Addresses = () => {
   }, [selectedMunicipality, selectedOption]);
 
   const validateForm = () => {
-    if (!selectedOption) {
-      toast.error('Seleccione un tipo de dirección');
+  if (!selectedOption) {
+    toast.error('Seleccione un tipo de dirección');
+    return false;
+  }
+
+  if (selectedOption === 'store') {
+    // ✅ Para TIENDA: solo validar ciudad y locker
+    if (!selectedCity) {
+      toast.error('Seleccione una ciudad');
       return false;
     }
-
+    if (!selectedLocker) {
+      toast.error('Seleccione una tienda/locker');
+      return false;
+    }
+  } else if (selectedOption === 'home') {
+    // ✅ Para DOMICILIO: validar alias, estado, municipio y dirección
     if (!alias.trim()) {
-      toast.error('Ingrese un alias para la dirección');
+      toast.error('Ingrese un nombre para la dirección');
       return false;
     }
-
-    if (selectedOption === 'store') {
-      if (!selectedCity) {
-        toast.error('Seleccione una ciudad');
-        return false;
-      }
-      if (!selectedLocker) {
-        toast.error('Seleccione una tienda/locker');
-        return false;
-      }
-    } else if (selectedOption === 'home') {
-      if (!selectedState) {
-        toast.error('Seleccione un estado');
-        return false;
-      }
-      if (!selectedMunicipality) {
-        toast.error('Seleccione un municipio');
-        return false;
-      }
-      if (!address.trim()) {
-        toast.error('Ingrese una dirección');
-        return false;
-      }
+    if (!selectedState) {
+      toast.error('Seleccione un estado');
+      return false;
     }
+    if (!selectedMunicipality) {
+      toast.error('Seleccione un municipio');
+      return false;
+    }
+    if (!address.trim()) {
+      toast.error('Ingrese una dirección');
+      return false;
+    }
+  }
 
-    return true;
-  };
+  return true;
+};
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    setSubmitting(true);
+  setSubmitting(true);
 
-    try {
-      const userId = localStorage.getItem('userId');
-      const userEmail = localStorage.getItem('userEmail');
+  try {
+    const userId = localStorage.getItem('userId');
+    const userDataString = localStorage.getItem('userData');
 
-      if (!userId) {
-        toast.error('Usuario no autenticado');
-        setSubmitting(false);
-        return;
-      }
 
-      const delivery = selectedOption === 'store'
-        ? {
-            City: selectedCity,
-            Locker: selectedLocker,
-            State: null,
-            Municipality: null,
-            Parish: null,
-            Address: null,
-            Reference: reference || null,
-          }
-        : {
-            City: null,
-            Locker: null,
-            State: selectedState,
-            Municipality: selectedMunicipality,
-            Parish: selectedParish || null,
-            Address: address,
-            Reference: reference || null,
-          };
+       // 1. Convertir la cadena JSON a un objeto JavaScript
+        const userData = JSON.parse(userDataString); 
+        
+        // 2. Acceder al campo 'email' del objeto
+        const userEmail = userData.email; 
 
-      const payload = {
-        ID: userId,
-        Email: userEmail,
-        Method: selectedOption === 'store' ? 'store' : 'home',
-        Delivery: delivery,
-        Alias: alias,
-        SetAsDefault: setAsDefault
-      };
+      
 
-      // ✅ USAR EL SERVICIO
-      const response = await registerAddress(payload);
-
-      if (response.success) {
-        toast.success(
-          setAsDefault 
-            ? '¡Dirección agregada y establecida como predeterminada!' 
-            : '¡Dirección agregada exitosamente!'
-        );
-        resetForm();
-        setShowForm(false);
-        await refetchAddresses();
-      } else {
-        toast.error(response.message || 'Error al agregar la dirección');
-      }
-    } catch (error) {
-      console.error('Error adding address:', error);
-      toast.error(error.message || 'Error al agregar la dirección');
-    } finally {
+    if (!userId) {
+      toast.error('Usuario no autenticado');
       setSubmitting(false);
+      return;
     }
-  };
+
+    const delivery = selectedOption === 'store'
+      ? {
+          City: selectedCity,
+          Locker: selectedLocker,
+          State: null,
+          Municipality: null,
+          Parish: null,
+          Address: null,
+          Reference: null, // ✅ Sin referencia para tienda
+        }
+      : {
+          City: null,
+          Locker: null,
+          State: selectedState,
+          Municipality: selectedMunicipality,
+          Parish: selectedParish || null,
+          Address: address,
+          Reference: reference || null,
+        };
+
+    const payload = {
+      ID: userId,
+      Email: userEmail,
+      Method: selectedOption === 'store' ? 'store' : 'home',
+      Delivery: delivery,
+      Alias: selectedOption === 'store' ? '' : alias, // ✅ Alias vacío para tienda
+      SetAsDefault: setAsDefault
+    };
+
+    const response = await registerAddress(payload);
+
+    if (response.success) {
+      toast.success(
+        setAsDefault 
+          ? '¡Dirección agregada y establecida como predeterminada!' 
+          : '¡Dirección agregada exitosamente!'
+      );
+      resetForm();
+      setShowForm(false);
+      await refetchAddresses();
+    } else {
+      toast.error(response.message || 'Error al agregar la dirección');
+    }
+  } catch (error) {
+    console.error('Error adding address:', error);
+    toast.error(error.message || 'Error al agregar la dirección');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const resetForm = () => {
     setSelectedOption(null);
@@ -320,7 +342,8 @@ const Addresses = () => {
             className="addresses__back-btn"
             onClick={() => navigate(-1)}
           >
-            ← Volver
+            <IoChevronBack size={20} />
+            <span>Volver</span>
           </button>
           <h1 className="addresses__title">Mis Direcciones</h1>
           <p className="addresses__subtitle">
@@ -335,7 +358,8 @@ const Addresses = () => {
             onClick={() => setShowForm(true)}
             className="addresses__add-btn"
           >
-            + Nueva Dirección
+            <IoAdd size={20} />
+            <span>Nueva Dirección</span>
           </Button>
         )}
 
@@ -352,7 +376,7 @@ const Addresses = () => {
                 }}
                 disabled={submitting || isFormLoading}
               >
-                ✕
+                <IoClose size={20} />
               </button>
             </div>
 
@@ -374,6 +398,7 @@ const Addresses = () => {
                       onChange={(e) => setSelectedOption(e.target.value)}
                       disabled={submitting}
                     />
+                    <IoStorefrontOutline size={20} />
                     <span className="address-option__text">Retiro en Tienda</span>
                   </label>
 
@@ -386,6 +411,7 @@ const Addresses = () => {
                       onChange={(e) => setSelectedOption(e.target.value)}
                       disabled={submitting}
                     />
+                    <IoHomeOutline size={20} />
                     <span className="address-option__text">Enviar a otra dirección</span>
                   </label>
                 </div>
@@ -397,8 +423,8 @@ const Addresses = () => {
                     {/* Formulario para TIENDA */}
                     {selectedOption === 'store' && (
                       <>
-                        <h4 className="form-section-title">Retiro en Tienda</h4>
-                        
+                        <h4 className="form-section-title">Retiro en Tienda</h4>                                                
+
                         <div className="form-row">
                           <div className="form-group">
                             <label className="form-label">
@@ -426,26 +452,27 @@ const Addresses = () => {
                             />
                           </div>
                         </div>
+                       
                       </>
                     )}
 
                     {/* Formulario para DOMICILIO */}
                     {selectedOption === 'home' && (
                       <>
-                      {/* Alias */}
-                      <div className="form-group">
-                        <label className="form-label">
-                          NOMBRE DE LA DIRECCIÓN <span className="required">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="Ej: Casa, Oficina, etc."
-                          value={alias}
-                          onChange={e => setAlias(e.target.value)}
-                          disabled={submitting}
-                        />
-                      </div>
+                        {/* Alias */}
+                        <div className="form-group">
+                          <label className="form-label">
+                            NOMBRE DE LA DIRECCIÓN <span className="required">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Ej: Casa, Oficina, etc."
+                            value={alias}
+                            onChange={e => setAlias(e.target.value)}
+                            disabled={submitting}
+                          />
+                        </div>
 
                         <h4 className="form-section-title">Entrega a Domicilio</h4>
 
@@ -566,7 +593,7 @@ const Addresses = () => {
         {/* Addresses list */}
         {sortedAddresses.length === 0 && !showForm ? (
           <div className="addresses__empty">
-            <span className="addresses__empty-icon">📍</span>
+            <IoLocationOutline size={48} className="addresses__empty-icon" />
             <h3 className="addresses__empty-title">No tienes direcciones guardadas</h3>
             <p className="addresses__empty-message">
               Agrega tu primera dirección para facilitar tus entregas
@@ -580,7 +607,13 @@ const Addresses = () => {
                 className={`address-card ${address.esPredeterminada ? 'is-default' : ''}`}
               >
                 <div className="address-card__header">
-                  <div className="address-card__icon">📍</div>
+                  <div className="address-card__icon">
+                    {address.tipoDireccion === 'store' ? (
+                      <IoStorefrontOutline size={24} />
+                    ) : (
+                      <IoHomeOutline size={24} />
+                    )}
+                  </div>
                   <div className="address-card__content-wrapper">
                     <div className="address-card__title-row">
                       <h3 className="address-card__alias">
@@ -588,12 +621,23 @@ const Addresses = () => {
                       </h3>
                       {address.esPredeterminada && (
                         <span className="address-card__default-badge">
-                          Predeterminada
+                          <IoStar size={14} />
+                          <span>Predeterminada</span>
                         </span>
                       )}
                     </div>
                     <span className="address-card__type">
-                      {address.tipoDireccion === 'store' ? '🏢 Tienda' : '🏠 Domicilio'}
+                      {address.tipoDireccion === 'store' ? (
+                        <>
+                          <IoStorefrontOutline size={16} />
+                          <span>Tienda</span>
+                        </>
+                      ) : (
+                        <>
+                          <IoHomeOutline size={16} />
+                          <span>Domicilio</span>
+                        </>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -622,7 +666,10 @@ const Addresses = () => {
                           <span>Estableciendo...</span>
                         </>
                       ) : (
-                        'Predeterminada'
+                        <>
+                          <IoStarOutline size={16} />
+                          <span>Predeterminada</span>
+                        </>
                       )}
                     </button>
                   )}
@@ -637,7 +684,10 @@ const Addresses = () => {
                         <span>Eliminando...</span>
                       </>
                     ) : (
-                      'Eliminar'
+                      <>
+                        <IoTrashOutline size={16} />
+                        <span>Eliminar</span>
+                      </>
                     )}
                   </button>
                 </div>
