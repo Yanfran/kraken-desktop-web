@@ -1,4 +1,5 @@
 // src/pages/calculator/Calculator/Calculator.jsx
+// ✅ CORREGIDO - Usando los servicios correctos
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import CalculatorHeader from '../../../components/calculator/CalculatorHeader';
@@ -7,6 +8,12 @@ import PackageStep from '../../../components/calculator/PackageStep';
 import ResultStep from '../../../components/calculator/ResultStep';
 import axiosInstance from '../../../services/axiosInstance';
 import { API_URL } from '../../../utils/config';
+// ✅ IMPORTAR LOS SERVICIOS CORRECTOS
+import { 
+  getStatesByCountry, 
+  getMunicipalitiesByState, 
+  getParishesByMunicipality 
+} from '../../../services/address/addressService';
 import './Calculator.scss';
 
 const KG_TO_LB = 2.20462;
@@ -88,15 +95,19 @@ const Calculator = () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       
+      // ✅ USAR EL SERVICIO CORRECTO
       const [estadosResp, contentResp] = await Promise.all([
-        axiosInstance.get(`${API_URL}/Addresses/states/1`),
-        axiosInstance.get(`${API_URL}/PaquetesContenidos`)
+        getStatesByCountry(1), // Venezuela = 1
+        axiosInstance.get(`${API_URL}/PaqueteContenidos/getContent`) // ✅ Endpoint correcto
       ]);
       
-      const formattedStates = estadosResp.data.map(e => ({
-        label: e.name,
-        value: e.id.toString(),
-      }));
+      // ✅ MANEJAR RESPUESTA CORRECTA DEL SERVICIO
+      const formattedStates = estadosResp.success && estadosResp.data 
+        ? estadosResp.data.map(e => ({
+            label: e.name,
+            value: e.id.toString(),
+          }))
+        : [];
       
       setLocationData(prev => ({ ...prev, statesList: formattedStates }));
       
@@ -118,11 +129,17 @@ const Calculator = () => {
   const loadMunicipalities = async (stateId) => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
-      const response = await axiosInstance.get(`${API_URL}/Addresses/municipalities/${stateId}`);
-      const formatted = response.data.map(m => ({
-        label: m.name,
-        value: m.id.toString(),
-      }));
+      
+      // ✅ USAR EL SERVICIO CORRECTO
+      const response = await getMunicipalitiesByState(stateId);
+      
+      const formatted = response.success && response.data
+        ? response.data.map(m => ({
+            label: m.name,
+            value: m.id.toString(),
+          }))
+        : [];
+      
       setLocationData(prev => ({ ...prev, municipalitiesList: formatted }));
       
       setState(prev => ({
@@ -144,11 +161,17 @@ const Calculator = () => {
   const loadParishes = async (municipalityId) => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
-      const response = await axiosInstance.get(`${API_URL}/Addresses/parishes/${municipalityId}`);
-      const formatted = response.data.map(p => ({
-        label: p.name,
-        value: p.id.toString(),
-      }));
+      
+      // ✅ USAR EL SERVICIO CORRECTO
+      const response = await getParishesByMunicipality(municipalityId);
+      
+      const formatted = response.success && response.data
+        ? response.data.map(p => ({
+            label: p.name,
+            value: p.id.toString(),
+          }))
+        : [];
+      
       setLocationData(prev => ({ ...prev, parishesList: formatted }));
       
       setState(prev => ({
@@ -206,15 +229,11 @@ const Calculator = () => {
       const contentString = state.calculation.contenidos.join(', ');
       
       const calculationForAPI = {
-        state: state.calculation.state,
-        municipality: state.calculation.municipality,
-        parish: state.calculation.parish,
-        originCountry: state.calculation.originCountry,
-        destinationCountry: 'Venezuela',
-        currency: state.calculation.currency,
+        stateId: parseInt(state.calculation.state),
+        municipalityId: state.calculation.municipality ? parseInt(state.calculation.municipality) : undefined,
         declaredValue: declaredValueNum,
+        currency: state.calculation.currency,
         content: contentString,
-        contenidos: state.calculation.contenidos,
         weight: weightNum,
         weightUnit: state.calculation.weightUnit,
         dimensionUnit: state.calculation.dimensionUnit,
@@ -225,7 +244,7 @@ const Calculator = () => {
         },
       };
       
-      const response = await axiosInstance.post(`${API_URL}/Cotizaciones/calcular`, calculationForAPI);
+      const response = await axiosInstance.post(`${API_URL}/Calculator/calculate`, calculationForAPI);
       
       if (response.data?.success) {
         setState(prev => ({ 
