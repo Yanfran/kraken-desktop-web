@@ -128,7 +128,7 @@ const Addresses = () => {
 
   // ✅ VERIFICAR SI YA TIENE 3 DIRECCIONES (LÍMITE MÁXIMO)
   const hasReachedMaxAddresses = useMemo(() => {
-    return userAddresses && userAddresses.length >= 3;
+    return userAddresses && userAddresses.length >= 4;
   }, [userAddresses]);
 
   // Limpiar campos cuando cambia el estado
