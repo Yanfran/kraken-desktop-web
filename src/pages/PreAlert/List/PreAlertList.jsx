@@ -17,6 +17,20 @@ import Button from '@components/common/Button/Button';
 import LoadingSpinner from '@components/common/Loading/Loading';
 import CustomAlert from '@components/alert/CustomAlert/CustomAlert';
 
+// Icons
+import { 
+  IoChevronBack,
+  IoCallOutline,
+  IoCalendarOutline,
+  IoPersonOutline,  
+  IoSaveOutline,
+  IoEyeOutline,
+  IoCreateOutline,
+  IoHelpOutline,
+  IoTrashOutline,
+  IoRefreshOutline
+} from 'react-icons/io5';
+
 // Hooks
 import { useAuth } from '@hooks/useAuth';
 
@@ -186,14 +200,26 @@ const PreAlertList = () => {
     <div className="pre-alert-list" onClick={closeAllMenus}>
       <div className="pre-alert-list__content">
         {/* Header Section */}
+    
         <div className="pre-alert-list__header">
+          <div className="pre-alert-list__icon">
+            <img
+              src="/src/assets/images/icon-kraken-web-parlante_1.png"
+              style={{
+                width: 50,
+                filter: 'invert(41%) sepia(99%) saturate(7496%) hue-rotate(358deg) brightness(99%) contrast(101%)'
+              }}
+              alt=""
+            />
+          </div>
+
           <div className="pre-alert-list__header-left">
-            <h1 className="pre-alert-list__title">Mis Pre-Alertas</h1>
-            <p className="pre-alert-list__subtitle">
+            <h1 className="pre-alert-list__title">Pre-Alertas</h1>
+            {/* <p className="pre-alert-list__subtitle">
               {preAlertas.length} pre-alerta{preAlertas.length !== 1 ? 's' : ''} • {' '}
               {preAlertas.filter(p => !p.IdGuia).length} pendiente{preAlertas.filter(p => !p.IdGuia).length !== 1 ? 's' : ''} • {' '}
               {preAlertas.filter(p => p.IdGuia).length} procesada{preAlertas.filter(p => p.IdGuia).length !== 1 ? 's' : ''}
-            </p>
+            </p> */}
           </div>
           <div className="pre-alert-list__header-actions">
             <Button
@@ -202,7 +228,7 @@ const PreAlertList = () => {
               disabled={refreshing}
               className="pre-alert-list__refresh-btn"
             >
-              {refreshing ? <LoadingSpinner size="small" /> : '🔄'}
+              {refreshing ? <LoadingSpinner size="small" /> : <IoRefreshOutline size={18} style={{ marginBottom: -4 }} />}
               {refreshing ? 'Actualizando...' : 'Actualizar'}
             </Button>
             <Button
@@ -291,21 +317,21 @@ const PreAlertList = () => {
                                   onClick={() => handleViewDetail(preAlerta)}
                                   className="pre-alert-list__menu-item"
                                 >
-                                  👁️ Ver detalle
+                                  <IoEyeOutline size={18}/> Ver detalle
                                 </button>
                                 {!preAlerta.IdGuia && (
                                   <button
                                     onClick={() => handleEdit(preAlerta)}
                                     className="pre-alert-list__menu-item"
                                   >
-                                    ✏️ Editar
+                                    <IoCreateOutline size={18}/> Editar
                                   </button>
                                 )}
                                 <button
                                   onClick={() => handleDelete(preAlerta)}
                                   className="pre-alert-list__menu-item pre-alert-list__menu-item--danger"
                                 >
-                                  🗑️ Eliminar
+                                  <IoTrashOutline size={18}/> Eliminar
                                 </button>
                               </div>
                             )}

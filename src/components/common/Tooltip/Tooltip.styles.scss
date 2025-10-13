@@ -1,0 +1,124 @@
+/* src/components/common/Tooltip/Tooltip.styles.css */
+
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.tooltip-trigger:hover {
+  color: #007AFF;
+}
+
+.tooltip-trigger svg {
+  display: block;
+}
+
+.tooltip-content {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  animation: tooltipFadeIn 0.2s ease;
+}
+
+.tooltip-text {
+  background: #1f2937;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  max-width: 280px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+@media (max-width: 768px) {
+  .tooltip-text {
+    max-width: 220px;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+  }
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+
+/* POSICIÓN: TOP (por defecto) */
+.tooltip-content--top .tooltip-text {
+  margin-bottom: 8px;
+}
+
+.tooltip-content--top .tooltip-arrow {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: #1f2937;
+  border-bottom: 0;
+}
+
+/* POSICIÓN: BOTTOM */
+.tooltip-content--bottom .tooltip-text {
+  margin-top: 8px;
+}
+
+.tooltip-content--bottom .tooltip-arrow {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-color: #1f2937;
+  border-top: 0;
+}
+
+/* POSICIÓN: LEFT */
+.tooltip-content--left .tooltip-text {
+  margin-right: 8px;
+}
+
+.tooltip-content--left .tooltip-arrow {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: #1f2937;
+  border-right: 0;
+}
+
+/* POSICIÓN: RIGHT */
+.tooltip-content--right .tooltip-text {
+  margin-left: 8px;
+}
+
+.tooltip-content--right .tooltip-arrow {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: #1f2937;
+  border-left: 0;
+}
+
+/* ANIMACIÓN */
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

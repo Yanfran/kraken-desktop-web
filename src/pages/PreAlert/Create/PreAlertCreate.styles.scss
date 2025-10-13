@@ -14,7 +14,7 @@
   }
 
   &__content {
-    max-width: 900px;
+    max-width: 100%;
     margin: 0 auto;
     background: #FFFFFF !important;
     border-radius: 16px;
@@ -31,25 +31,25 @@
   }
 
   &__icon {
-    width: 80px;
-    height: 80px;
+    // width: 80px;
+    // height: 80px;
     margin: 0 auto var(--spacing-4);
-    background: linear-gradient(135deg, #ff4500 0%, #ff7f50 100%);
-    border-radius: 50%;
+    // background: linear-gradient(135deg, #ff4500 0%, #ff7f50 100%);
+    // border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px rgba(255, 69, 0, 0.3);
+    // box-shadow: 0 8px 24px rgba(255, 69, 0, 0.3);
 
-    svg {
-      stroke: white;
-      stroke-width: 2;
-    }
+    // svg {
+    //   stroke: white;
+    //   stroke-width: 2;
+    // }
 
-    @include respond-to(mobile) {
-      width: 64px;
-      height: 64px;
-    }
+    // @include respond-to(mobile) {
+    //   width: 64px;
+    //   height: 64px;
+    // }
   }
 
   &__title {
@@ -137,58 +137,7 @@
     margin-left: 2px;
   }
 
-  &__tooltip {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    cursor: help;
-
-    svg {
-      stroke: #9ca3af;
-      stroke-width: 2;
-    }
-
-    &:hover &-text {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-  }
-
-  &__tooltip-text {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%) translateY(4px);
-    background: #1f2937;
-    color: white;
-    padding: var(--spacing-2) var(--spacing-3);
-    border-radius: 8px;
-    font-size: 0.75rem;
-    line-height: 1.4;
-    white-space: nowrap;
-    max-width: 280px;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s ease;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 6px solid transparent;
-      border-top-color: #1f2937;
-    }
-
-    @include respond-to(mobile) {
-      white-space: normal;
-      max-width: 200px;
-    }
-  }
+ 
 
   &__input,
   &__select,

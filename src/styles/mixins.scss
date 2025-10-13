@@ -34,6 +34,7 @@
   @include button-base;
   background-color: transparent;
   color: var(--kraken-primary);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--kraken-primary);
   box-shadow: none;
 

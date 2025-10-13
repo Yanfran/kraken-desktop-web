@@ -1,16 +1,40 @@
 // src/components/NewsCarousel/NewsCarousel.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+import * as IoIcons from 'react-icons/io5'; // Importar TODOS los iconos de Ionicons
 import './NewsCarousel.styles.scss';
+
+/**
+ * Convierte nombres de iconos de Ionicons (formato React Native)
+ * al formato de react-icons/io5
+ * Ejemplos:
+ * - 'information-circle' → 'IoInformationCircle'
+ * - 'newspaper-outline' → 'IoNewspaperOutline'
+ * - 'checkmark-circle-outline' → 'IoCheckmarkCircleOutline'
+ */
+const getIconComponent = (iconName) => {
+  if (!iconName) return IoIcons.IoInformationCircle;
+
+  // Convertir de kebab-case a PascalCase
+  const pascalCase = iconName
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
+  
+  // Agregar prefijo 'Io'
+  const iconKey = `Io${pascalCase}`;
+  
+  // Retornar el componente o un fallback
+  return IoIcons[iconKey] || IoIcons.IoInformationCircle;
+};
 
 const NewsCarousel = ({ newsItems = null, cardWidth = 320, cardMargin = 10 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef(null);
 
-  // Validación como en React Native
   if (!newsItems || !Array.isArray(newsItems) || newsItems.length === 0) {
     return (
       <div className="news-carousel-empty">
-        <div className="news-carousel-empty__icon">📰</div>
+        <IoIcons.IoNewspaperOutline size={24} color="#666" />
         <p className="news-carousel-empty__text">
           {!newsItems ? 'Cargando novedades...' : 'No hay novedades disponibles'}
         </p>
@@ -36,6 +60,9 @@ const NewsCarousel = ({ newsItems = null, cardWidth = 320, cardMargin = 10 }) =>
   };
 
   const renderNewsCard = (item, index) => {
+    // Obtener el componente de icono dinámicamente
+    const IconComponent = getIconComponent(item.iconName);
+
     return (
       <div
         key={item.id}
@@ -68,7 +95,10 @@ const NewsCarousel = ({ newsItems = null, cardWidth = 320, cardMargin = 10 }) =>
               className="news-card-carousel__icon"
               style={{ backgroundColor: `${(item.textColor || '#007AFF')}22` }}
             >
-              {item.iconName === 'information-circle' ? '🛈' : '🏔️'}
+              <IconComponent 
+                size={22} 
+                color={item.textColor || '#007AFF'} 
+              />
             </div>
           </div>
         </div>

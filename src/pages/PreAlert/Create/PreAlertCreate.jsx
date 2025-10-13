@@ -8,6 +8,7 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import Tooltip from '../../../components/common/Tooltip/Tooltip';
 
 // Services
 import {
@@ -547,22 +548,18 @@ const PreAlertCreate = () => {
       <div className="prealert-create__content">
         <div className="prealert-create__header">
           <div className="prealert-create__icon">
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-            >
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-              <line x1="12" y1="22.08" x2="12" y2="12" />
-            </svg>
+            <img
+              src="/src/assets/images/icon-kraken-web-parlante_1.png"
+              style={{
+                width: 50,
+                filter: 'invert(41%) sepia(99%) saturate(7496%) hue-rotate(358deg) brightness(99%) contrast(101%)'
+              }}
+              alt=""
+            />
           </div>
           <h1 className="prealert-create__title">Pre-Alerta tu compra</h1>
           <p className="prealert-create__subtitle">
-            Ayúdanos a gestionar tu envío más rápido, avísanos tan pronto
-            recibas el tracking de tu compra
+            Ayúdanos a gestionar tu envío más rápido, avísanos tan pronto recibas el tracking de tu compra
           </p>
         </div>
 
@@ -573,23 +570,11 @@ const PreAlertCreate = () => {
               <label className="prealert-create__label">
                 Números de Tracking
                 <span className="prealert-create__required">*</span>
-              </label>
-              <div className="prealert-create__tooltip">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span className="prealert-create__tooltip-text">
-                  Ingresa el o los números de tracking que te proporcionó la
-                  tienda
-                </span>
-              </div>
+              </label>              
+              <Tooltip 
+                content="El tracking es el número de seguimiento de tu paquete. La tienda online te lo enviará cuando procese y despache tu pedido. Si aún no lo tienes, espera la confirmación en tu email."
+                position="auto"
+              />              
             </div>
 
             {formState.trackings.map((tracking, index) => (
@@ -634,23 +619,11 @@ const PreAlertCreate = () => {
                 Contenido ({formState.contenidos.length} seleccionado
                 {formState.contenidos.length !== 1 ? 's' : ''})
                 <span className="prealert-create__required">*</span>
-              </label>
-              <div className="prealert-create__tooltip">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span className="prealert-create__tooltip-text">
-                  Selecciona uno o más productos o categorías del contenido de
-                  tu paquete
-                </span>
-              </div>
+              </label>              
+              <Tooltip 
+                content="Selecciona uno o más productos o categorías del contenido de tu paquete. Puedes elegir múltiples opciones."
+                position="auto"
+              />              
             </div>
 
             <MultiSelectSearchable
@@ -676,23 +649,11 @@ const PreAlertCreate = () => {
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
                 Valor Declarado (Opcional)
-              </label>
-              <div className="prealert-create__tooltip">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span className="prealert-create__tooltip-text">
-                  Debes ingresar el monto total de los artículos contenidos en
-                  el paquete
-                </span>
-              </div>
+              </label>              
+              <Tooltip 
+                content="El FOB (Free On Board) es el costo de la mercancía en la factura de compra. Debes ingresar el monto total de los artículos contenidos en el paquete."
+                position="auto"
+              />              
             </div>
 
             <div className="prealert-create__row">
@@ -752,24 +713,11 @@ const PreAlertCreate = () => {
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
                 Dirección de Entrega Predeterminada
-              </label>
-              <div className="prealert-create__tooltip">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span className="prealert-create__tooltip-text">
-                  Esta es la dirección en la que recibirás todos tus paquetes.
-                  Si no la modificas ahora, tu paquete será enviado allí y no
-                  podrás cambiarla después de que llegue a nuestro almacén.
-                </span>
-              </div>
+              </label>              
+              <Tooltip 
+                content="Esta es la dirección en la que recibirás todos tus paquetes. Si no la modificas ahora, tu paquete será enviado allí y no podrás cambiarla después de que llegue a nuestro almacén."
+                position="auto"
+              />              
             </div>
 
             <div className="prealert-create__address-display">
