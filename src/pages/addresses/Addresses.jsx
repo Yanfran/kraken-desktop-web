@@ -162,6 +162,8 @@ export default function AddressesPage() {
           </p>
         </div>
 
+        {/* ✅ NUEVA SECCIÓN DE COLUMNAS */}
+      <div className="addresses-page__addresses-grid"> 
         {/* USA Address */}
         <div className="addresses-page__section">
           <div className="addresses-page__row">
@@ -203,6 +205,8 @@ export default function AddressesPage() {
             phone={`${chinaAddress.phoneNumber}`}
           />
         </div>
+      </div>
+      {/* FIN NUEVA SECCIÓN DE COLUMNAS */}
 
         {/* Help */}
         <button className="addresses-page__help-row">

@@ -1,33 +1,157 @@
-
 // src/pages/calculator/Calculator/calculator-fixes.scss
-// ✅ CORRECCIONES ESPECÍFICAS para eliminar estilos no deseados
+// ✅ CORRECCIONES ESPECÍFICAS para eliminar estilos azules no deseados
 
-// Eliminar border-radius de los tabs
+// ==========================================
+// 1. ELIMINAR HOVER AZUL DE TODOS LOS BOTONES
+// ==========================================
+.package-step__calculate-button,
+.package-step__back-button {
+  &:hover:not(:disabled) {
+    // ❌ Eliminar cualquier color azul
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  &:focus,
+  &:focus-visible {
+    // ❌ Eliminar outline azul del navegador
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// Botón "Calcular" específico
+.package-step__calculate-button {
+  &:hover:not(.package-step__button--disabled) {
+    background-color: darken(#0175c8, 10%) !important; // Azul más oscuro, no otro color
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+// Botón "Volver" específico  
+.package-step__back-button {
+  &:hover:not(:disabled) {
+    background-color: darken(#F5F5F5, 5%) !important;
+    border-color: #D0D0D0 !important; // Mantener borde gris
+    box-shadow: none !important;
+  }
+}
+
+// ==========================================
+// 2. BORDES REDONDEADOS PARA TODOS LOS INPUTS
+// ==========================================
+.package-step__input,
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  border-radius: 25px !important; // ✅ Todos los inputs redondeados
+  
+  &:focus {
+    outline: none !important;
+    border-color: #FF4500 !important; // Color naranja de tu marca
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1) !important;
+  }
+  
+  &:hover:not(:disabled) {
+    border-color: #FF4500 !important;
+  }
+}
+
+// Selector de contenidos (si usas un select custom)
+.package-step__content-select,
+.searchable-select__field {
+  border-radius: 25px !important;
+}
+
+// ==========================================
+// 3. ELIMINAR ESTILOS AZULES DE TABS
+// ==========================================
 .calculator-header__tab {
   border-radius: 0 !important;
   
   &:hover {
     background-color: transparent !important;
     background: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+  }
+  
+  &:focus,
+  &:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
   }
 }
 
-// Asegurar que el contenedor principal no tenga borde
-.calculator-page__container {
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
-// Asegurar estilos de país de origen/destino
+// ==========================================
+// 4. PAÍS DE ORIGEN/DESTINO
+// ==========================================
 .location-step__fixed-country {
   background-color: #fff !important;
   border: 1px solid #FF4500 !important;
   border-radius: 25px !important;
+  
+  &:hover {
+    border-color: #FF4500 !important;
+    background-color: #fff !important;
+  }
 }
 
-// Eliminar cualquier hover azul
-button:hover,
-.calculator-header__tab:hover {
-  background-color: transparent !important;
+// ==========================================
+// 5. ELIMINAR ESTILOS AZULES GLOBALES
+// ==========================================
+
+// Remover estilos azules del index.css que puedan estar afectando
+button,
+a,
+input,
+select,
+textarea {
+  &:hover {
+    border-color: inherit !important;
+  }
+  
+  &:focus,
+  &:focus-visible {
+    outline-color: #FF4500 !important;
+  }
+}
+
+// Específicamente para elementos de la calculadora
+.calculator-page {
+  button:hover {
+    border-color: transparent !important;
+  }
+  
+  input:hover,
+  select:hover,
+  textarea:hover {
+    border-color: #FF4500 !important;
+  }
+}
+
+// ==========================================
+// 6. ASEGURAR QUE NO HAYA SOMBRAS AZULES
+// ==========================================
+* {
+  &:focus {
+    outline-color: #FF4500 !important;
+  }
+  
+  &:focus-visible {
+    outline-color: #FF4500 !important;
+  }
+}
+
+// Remover -webkit-focus-ring-color
+button:focus,
+button:focus-visible,
+input:focus,
+input:focus-visible {
+  outline: 2px solid #FF4500 !important;
+  outline-offset: 2px !important;
 }

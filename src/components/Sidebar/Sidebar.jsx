@@ -15,7 +15,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [profileSubMenuOpen, setProfileSubMenuOpen] = useState(false);
 
   const sidebarMenuItems = [
-    { id: 'mis-envios', label: 'Mis Envíos', path: '/dashboard/mis-envios' },
+    { id: 'mis-envios', label: 'Mis Envíos', path: '/my-guides' },
     { id: 'mis-pre-alertas', label: 'Mis Pre-Alertas', path: '/pre-alert/list' },
     { 
       id: 'perfil', 
@@ -26,8 +26,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         { id: 'direcciones', label: 'Direcciones', path: '/profile/addresses' }
       ]
     },
-    { id: 'facturacion', label: 'Facturación', path: '/billing', hasArrow: true },
-    { id: 'seguridad', label: 'Seguridad', path: '/security', hasArrow: true }
+    // { id: 'facturacion', label: 'Facturación', path: '/billing', hasArrow: true },
+    // { id: 'seguridad', label: 'Seguridad', path: '/security', hasArrow: true }
   ];
 
   const handleLogout = async () => {
@@ -132,13 +132,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* Idioma */}
-        <div className="dashboard-sidebar__language-selector">
+        {/* <div className="dashboard-sidebar__language-selector">
           <p className="dashboard-sidebar__language-label">Idioma</p>
           <div className="dashboard-sidebar__language-buttons">
             <button className="dashboard-sidebar__language-btn active">ES</button>
             <button className="dashboard-sidebar__language-btn">EN</button>
           </div>
-        </div>
+        </div> */}
 
         {/* Logout Button */}
         <button className="dashboard-sidebar__logout-btn" onClick={handleLogout}>

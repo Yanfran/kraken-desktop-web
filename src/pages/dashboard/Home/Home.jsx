@@ -472,7 +472,7 @@ const Home = ({ onNavigateToShipments }) => {
             </div>
 
             {preAlerts.length > 3 && (
-              <button className="pre-alerts-card__view-all" onClick={() => navigate('/pre-alert/list')}>
+              <button className="pre-alerts-card__view-all" onClick={() => navigate('/my-guides')}>
                 Ver todos
               </button>
             )}

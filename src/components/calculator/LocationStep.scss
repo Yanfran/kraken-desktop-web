@@ -6,11 +6,37 @@
 .location-step {
   display: flex;
   flex-direction: column;
-  min-height: 400px;
+  min-height: 300px;
   padding: 0 20px;
 
   &__form {
     flex: 1;
+  }
+
+  // ✅ NUEVOS ESTILOS PARA LA ESTRUCTURA DE COLUMNAS
+  &__grid {
+    display: flex;
+    flex-direction: column; /* Predeterminado: apilado en móviles */
+    gap: 16px; /* Espacio entre los grupos (vertical) */
+    width: 100%;
+    margin-top: 16px; /* Separación entre el grid de países y el grid de estados */
+
+    &:first-of-type {
+        margin-top: 0;
+    }
+
+    @media (min-width: 600px) {
+        flex-direction: row; /* En pantallas más grandes, se convierte en fila */
+        gap: 20px; /* Espacio horizontal */
+    }
+  }
+
+  &__col {
+    width: 100%; /* Ocupa todo el ancho en móvil */
+    
+    @media (min-width: 600px) {
+        flex: 1; /* Distribuye el espacio equitativamente en 2 columnas */
+    }
   }
 
   &__label {

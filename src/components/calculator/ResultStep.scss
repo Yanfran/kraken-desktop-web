@@ -1,11 +1,11 @@
 // src/components/calculator/ResultStep.scss
-// ✅ DISEÑO EXACTO DE LA APP MÓVIL
+// ✅ DISEÑO EXACTO DE LA APP MÓVIL CON TARIFA FULL
 
 @import '../../styles/variables';
 
 .result-step {
   flex: 1;
-  padding: 0 20px 20px; // Padding igual a la app
+  padding: 0 20px 20px;
 
   &__container {
     padding-bottom: 20px;
@@ -20,7 +20,7 @@
   }
 
   &__package-info {
-    background-color: $secondary; // ✅ Azul como en la app
+    background-color: $secondary;
     border-radius: 12px;
     padding: 12px 15px;
     margin-bottom: 20px;
@@ -96,7 +96,7 @@
   }
 
   &__active-currency {
-    background-color: $secondary; // ✅ Azul como en la app
+    background-color: $secondary;
   }
 
   &__currency-option {
@@ -124,10 +124,6 @@
     border-radius: 10px;
     overflow: hidden;
     transition: all 0.3s ease;
-
-    &:hover {
-      box-shadow: none; // ❌ SIN box-shadow en la app
-    }
   }
 
   &__card-header {
@@ -138,6 +134,7 @@
     cursor: pointer;
     background-color: white;
     transition: background-color 0.2s ease;
+    gap: 12px;
 
     &:hover {
       background-color: rgba($secondary, 0.02);
@@ -145,11 +142,8 @@
   }
 
   &__header-left {
-    flex: 2.5;
-  }
-
-  &__delivery-type {
-    display: inline-block;
+    flex: 2;
+    min-width: 0;
   }
 
   &__delivery-type-text {
@@ -159,17 +153,38 @@
     line-height: 18px;
   }
 
-  &__header-center {
-    flex: 2.5;
+  // ✅ CONTENEDOR DE PRECIOS (2 COLUMNAS)
+  &__prices-container {
     display: flex;
-    justify-content: center;
+    gap: 8px;
+    flex: 3;
+    align-items: center;
   }
 
-  &__price-text {
+  &__price-column {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    min-width: 0;
+
+    &--full {
+      background-color: #E8E8E8; // Gris para Tarifa Full
+    }
+
+    &--discount {
+      background-color: #A3D5FF; // Azul para Con Prealerta
+    }
+  }
+
+  &__price-value {
     font-size: 14px;
     font-weight: 600;
     color: #333333;
     text-align: center;
+    white-space: nowrap;
   }
 
   &__eye-button {
@@ -183,6 +198,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 
     &:hover {
       background-color: rgba($secondary, 0.1);
@@ -195,70 +211,96 @@
     }
   }
 
+  // ==========================================
+  // ✅ CONTENIDO EXPANDIDO CON HEADERS (DISEÑO LIMPIO)
+  // ==========================================
   &__expanded-content {
     background-color: #FFFFFF;
     border-top: 1px solid $separator;
-    padding-top: 8px;
+    padding-top: 0;
+    animation: slideDown 0.3s ease-out;
   }
 
   &__header-container {
     margin-bottom: 0;
-    padding: 0 12px;
+    padding: 12px 12px 8px;
+    background-color: #F5F5F5;
+    border-bottom: 1px solid #E0E0E0;
   }
 
   &__header-row {
     display: flex;
     align-items: center;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #E0E0E0;
+    gap: 8px;
   }
 
   &__delivery-type-cell {
-    flex: 2.5;
+    flex: 2;
+    min-width: 0;
   }
 
   &__empty-header-cell {
-    width: 32px;
+    width: 40px;
     flex-shrink: 0;
   }
 
   &__full-price-cell,
   &__discount-price-cell {
-    flex: 2.5;
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    min-height: 42px;
+  }
+
+  &__full-price-cell {
+    background-color: #E8E8E8;
+  }
+
+  &__discount-price-cell {
+    background-color: #A3D5FF;
   }
 
   &__header-title {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    color: #666666;
+    color: #333333;
     text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    line-height: 1.3;
   }
 
   &__discount-badge {
-    background-color: #4CAF50;
-    color: white;
+    background-color: transparent;
+    color: #333333;
     font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
+    font-weight: 600;
+    padding: 0;
+    text-transform: lowercase;
+    line-height: 1.2;
   }
 
+  // ==========================================
+  // ✅ FILAS DEL DESGLOSE (3 COLUMNAS)
+  // ==========================================
   &__columns-breakdown {
     background-color: #FFFFFF;
-    padding: 0 12px 16px;
+    padding: 12px;
   }
 
   &__breakdown-row {
     display: flex;
     align-items: center;
-    padding: 6px 0;
+    padding: 10px 0;
     border-bottom: 1px solid #F0F0F0;
+    gap: 8px;
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 
   &__concept-label {
@@ -267,7 +309,6 @@
     font-weight: 400;
     flex: 2.5;
     padding-left: 12px;
-    padding-right: 8px;
   }
 
   &__full-price-value,
@@ -279,28 +320,28 @@
     text-align: center;
   }
 
+  // ✅ Fila TOTAL resaltada
   &__total-row {
     border-bottom: none;
     border-top: 2px solid #000000;
-    padding-top: 10px;
-    margin-top: 6px;
+    padding-top: 12px;
+    margin-top: 8px;
   }
 
   &__total-label {
-    font-size: 14px;
     font-weight: 700;
     color: #000000;
   }
 
   &__total-value {
-    font-size: 14px;
     font-weight: 700;
     color: #000000;
+    font-size: 15px;
   }
 
   &__new-calculation-button {
     width: 100%;
-    background-color: $secondary; // ✅ Azul como en la app
+    background-color: $secondary;
     color: white;
     border: none;
     border-radius: 25px;
@@ -312,8 +353,8 @@
 
     &:hover {
       background-color: darken($secondary, 10%);
-      transform: none; // ❌ SIN transform
-      box-shadow: none; // ❌ SIN box-shadow
+      transform: none;
+      box-shadow: none;
     }
 
     &:active {
@@ -322,7 +363,23 @@
   }
 }
 
-// Responsive
+// ==========================================
+// ANIMACIÓN
+// ==========================================
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+// ==========================================
+// RESPONSIVE
+// ==========================================
 @media (max-width: 768px) {
   .result-step {
     &__currency-header {
@@ -333,10 +390,6 @@
     &__rate-info {
       width: 100%;
       align-items: center;
-    }
-
-    &__header-row {
-      font-size: 11px;
     }
 
     &__delivery-type-text,
@@ -382,11 +435,11 @@
     }
 
     &__columns-breakdown {
-      padding: 0 8px 12px;
+      padding: 8px;
     }
 
     &__header-container {
-      padding: 0 8px;
+      padding: 12px 8px 8px;
     }
   }
 }

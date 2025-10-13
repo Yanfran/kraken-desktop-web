@@ -64,14 +64,17 @@ const ResultStep = ({
     }));
   };
 
+  // ✅ NUEVA FUNCIÓN: Renderizar desglose con 2 columnas (Tarifa Full vs Con Prealerta)
   const renderBreakdownColumns = (breakdown) => {
-    const subtotalConDescuento = breakdown?.subtotal || 0;
-    const subtotalSinDescuento = breakdown?.subtotalSinDescuento || subtotalConDescuento / 0.9;
-    const franqueoPostal = breakdown?.franqueoPostal || 0;
-    const ivaConDescuento = breakdown?.iva || 0;
-    const ivaSinDescuento = breakdown?.ivaSinDescuento || (subtotalSinDescuento * 0.16);
-    const totalConDescuento = breakdown?.totalConDescuento || breakdown?.total || 0;
-    const totalSinDescuento = breakdown?.totalSinDescuento || (subtotalSinDescuento + franqueoPostal + ivaSinDescuento);
+    if (!breakdown) return null;
+
+    const subtotalConDescuento = breakdown.subtotal || 0;
+    const subtotalSinDescuento = breakdown.subtotalSinDescuento || subtotalConDescuento / 0.9;
+    const franqueoPostal = breakdown.franqueoPostal || 0;
+    const ivaConDescuento = breakdown.iva || 0;
+    const ivaSinDescuento = breakdown.ivaSinDescuento || (subtotalSinDescuento * 0.16);
+    const totalConDescuento = breakdown.totalConDescuento || breakdown.total || 0;
+    const totalSinDescuento = breakdown.totalSinDescuento || (subtotalSinDescuento + franqueoPostal + ivaSinDescuento);
 
     return (
       <div className="result-step__columns-breakdown">
@@ -91,7 +94,7 @@ const ResultStep = ({
         
         {/* Fila IVA */}
         <div className="result-step__breakdown-row">
-          <span className="result-step__concept-label">IVA</span>
+          <span className="result-step__concept-label">IVA (16%)</span>
           <span className="result-step__full-price-value">{formatPrice(ivaSinDescuento)}</span>
           <span className="result-step__discount-price-value">{formatPrice(ivaConDescuento)}</span>
         </div>
@@ -112,11 +115,12 @@ const ResultStep = ({
 
   const renderCard = (title, breakdown, key) => {
     const isExpanded = expandedCards[key];
-    const total = breakdown?.totalConDescuento || breakdown?.total || 0;
+    const totalConDescuento = breakdown?.totalConDescuento || breakdown?.total || 0;
+    const totalSinDescuento = breakdown?.totalSinDescuento || (totalConDescuento / 0.9);
 
     return (
       <div className="result-step__card" key={key}>
-        {/* Header de la card */}
+        {/* Header de la card - SIEMPRE MUESTRA AMBOS PRECIOS */}
         <div className="result-step__card-header" onClick={() => toggleCard(key)}>
           <div className="result-step__header-left">
             <div className="result-step__delivery-type">
@@ -124,8 +128,14 @@ const ResultStep = ({
             </div>
           </div>
           
-          <div className="result-step__header-center">
-            <span className="result-step__price-text">{formatPrice(total)}</span>
+          {/* ✅ DOS COLUMNAS DE PRECIOS */}
+          <div className="result-step__prices-container">
+            <div className="result-step__price-column result-step__price-column--full">
+              <span className="result-step__price-value">{formatPrice(totalSinDescuento)}</span>
+            </div>
+            <div className="result-step__price-column result-step__price-column--discount">
+              <span className="result-step__price-value">{formatPrice(totalConDescuento)}</span>
+            </div>
           </div>
           
           <button 
@@ -145,7 +155,7 @@ const ResultStep = ({
           </button>
         </div>
 
-        {/* Contenido expandido */}
+        {/* ✅ CONTENIDO EXPANDIDO CON HEADERS Y COLUMNAS */}
         {isExpanded && (
           <div className="result-step__expanded-content">
             {/* Headers de columnas */}
@@ -158,12 +168,12 @@ const ResultStep = ({
                 </div>
                 <div className="result-step__discount-price-cell">
                   <span className="result-step__header-title">Con Prealerta</span>
-                  <span className="result-step__discount-badge">-10%</span>
+                  <span className="result-step__discount-badge">ahorra 10%</span>
                 </div>
               </div>
             </div>
 
-            {/* Desglose */}
+            {/* Desglose en columnas */}
             {renderBreakdownColumns(breakdown)}
           </div>
         )}

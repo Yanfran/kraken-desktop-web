@@ -19,6 +19,29 @@
     padding-bottom: 10px;
   }
 
+  // ✅ NUEVOS ESTILOS DE GRID PARA VALOR Y PESO
+  &__top-grid {
+    display: flex;
+    flex-direction: column; /* Móvil: apilado */
+    gap: 16px; 
+    margin-bottom: 16px;
+    
+    @media (min-width: 600px) {
+      flex-direction: row;
+      gap: 20px;
+    }
+  }
+
+  
+  &__col {
+    width: 100%;
+    
+    @media (min-width: 600px) {
+        flex: 1; /* Ocupan el mismo ancho */
+    }
+  }
+  // FIN NUEVOS ESTILOS
+
   &__label {
     display: block;
     font-size: 16px;
@@ -32,28 +55,49 @@
     }
   }
 
+  // ✅ NUEVO GRUPO PARA VALOR DECLARADO (USD + INPUT)
+  &__value-input-group {
+    display: flex;
+    align-items: stretch; /* Asegura que los hijos ocupen toda la altura */
+    width: 100%;
+    // Utiliza el borde naranja del input principal en el grupo
+    border: 1px solid $primary; 
+    border-radius: 25px;
+    background-color: #fff;
+    overflow: hidden;
+    height: 53px; /* Fija la altura del grupo para precisión */
+  }
+
   &__input-container {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
+    // gap: 8px;
   }
 
-  &__currency-badge {
+   &__currency-badge {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 8px 12px;
-    background-color: $card-background;
-    border: 1px solid $separator;
-    border-radius: 8px;
-    font-size: 14px;
-    color: $text-secondary;
+    
+    // Estilos visuales para el lado izquierdo del campo
+    background-color: #fff; // Fondo blanco
+    padding: 14px 0 14px 16px; // Espacio a la izquierda
+    // height: 53px; // La altura la define el padre (__value-input-group)
+    
+    // ✅ CORRECCIÓN: Usar el separador del tema para la línea divisoria
+    border-right: 1px solid $separator; 
+    
+    font-size: 15px; 
+    color: $text-secondary; // Color grisáceo para el USD
     font-weight: 500;
-
+    flex-shrink: 0; /* Evita que se encoja */
+    
     svg {
       width: 16px;
       height: 16px;
+      color: $text-secondary;
+      margin-right: 16px; /* Espacio antes del separador */
     }
   }
 
@@ -62,16 +106,33 @@
     padding: 14px 16px;
     font-size: 15px;
     color: $text-primary;
-    border: 1px solid $separator;
-    border-radius: 25px; // ✅ Redondeado como en la imagen
+    
+    // ✅ Eliminamos todos los bordes para que el input-group los maneje
+    border: none; 
+    border-radius: 0;
+    
     background-color: #fff;
     transition: all 0.3s ease;
 
+
     &:focus {
       outline: none;
-      border-color: $primary;
-      box-shadow: none;
+      // border-color: $primary;
+      // box-shadow: none;
+      // z-index: 20;
     }
+
+     // Solo el campo de valor declarado necesita esta clase para el estilo integrado
+    &--value-field {
+      // Asegura que no haya padding extra si el badge está presente
+      padding-left: 0; 
+    }
+
+    // Ajuste para el CurrencyInput, haciendo que se superponga 1px al badge
+    &--full {
+      margin-left: -1px; 
+    }
+    
 
     &--disabled {
       background-color: $card-background;
@@ -175,6 +236,18 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    width: 100%; 
+  }
+
+   .package-step__weight-container {
+      .package-step__input {
+        border: 1px solid $separator; /* Borde normal para el input de peso */
+        border-radius: 25px; /* Fully rounded */
+      }
+      
+      .package-step__unit-toggle {
+          border-radius: 25px; /* Botón KG/LB también redondeado */
+      }
   }
 
   &__unit-toggle {
@@ -203,6 +276,7 @@
 
   &__dimensions {
     margin-top: 20px;
+    margin-bottom: 20px;
     padding: 16px;
     background-color: rgba($primary, 0.05);
     border: 1px solid rgba($primary, 0.2);

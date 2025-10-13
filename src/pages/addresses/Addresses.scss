@@ -20,6 +20,24 @@
     align-items: center;
   }
 
+  // ✅ ESTE ES EL NUEVO ESTILO DE COLUMNAS
+  &__addresses-grid {
+    width: 100%;
+    display: flex; /* Usamos Flexbox para el layout */
+    flex-direction: column; /* Por defecto (móviles) es una columna */
+    gap: 1.5rem; /* Espacio entre las secciones */
+    margin-bottom: 0.5rem; /* Ajuste el margen inferior */
+
+    @media (min-width: 768px) { /* Se activa a partir de 768px (tablets y escritorio) */
+      flex-direction: row; /* En pantallas grandes, se convierte en fila */
+      
+      .addresses-page__section {
+        flex: 1; /* Hace que cada dirección ocupe el mismo ancho */
+        margin-bottom: 0; /* Quitamos el margin-bottom de las secciones internas */
+      }
+    }
+  }
+
   &__loading {
     @include flex-center;
     flex-direction: column;

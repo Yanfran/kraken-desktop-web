@@ -48,41 +48,57 @@ const LocationStep = ({
   return (
     <div className="location-step">
       <div className="location-step__form">
-        {/* Países fijos */}
-        <label className="location-step__label">País de Origen</label>
-        <div className="location-step__fixed-country">
-          <span className="location-step__flag">🇺🇸</span>
-          <span className="location-step__fixed-country-text">Estados Unidos</span>
+        
+        {/* ✅ CONTENEDOR 1: PAÍSES EN 2 COLUMNAS */}
+        <div className="location-step__grid"> 
+          {/* País de Origen */}
+          <div className="location-step__col">
+            <label className="location-step__label">País de Origen</label>
+            <div className="location-step__fixed-country">
+              <span className="location-step__flag">🇺🇸</span>
+              <span className="location-step__fixed-country-text">Estados Unidos</span>
+            </div>
+          </div>
+
+          {/* País de Destino */}
+          <div className="location-step__col">
+            <label className="location-step__label">País de Destino</label>
+            <div className="location-step__fixed-country">
+              <span className="location-step__flag">🇻🇪</span>
+              <span className="location-step__fixed-country-text">Venezuela</span>
+            </div>
+          </div>
         </div>
 
-        <label className="location-step__label">País de Destino</label>
-        <div className="location-step__fixed-country">
-          <span className="location-step__flag">🇻🇪</span>
-          <span className="location-step__fixed-country-text">Venezuela</span>
+        {/* ✅ CONTENEDOR 2: ESTADO Y MUNICIPIO EN 2 COLUMNAS */}
+        <div className="location-step__grid"> 
+          {/* SearchableSelect de estados */}
+          <div className="location-step__col">
+            <label className="location-step__label">Estado *</label>
+            <SearchableSelect
+              options={statesList}
+              value={selectedState}
+              onChange={handleStateChange}
+              placeholder="Seleccione un estado"
+              disabled={isLoading}
+              className={validationError && !selectedState ? 'location-step__select--error' : ''}
+            />
+          </div>
+
+          {/* SearchableSelect de municipios */}
+          <div className="location-step__col">
+            <label className="location-step__label">Municipio *</label>
+            <SearchableSelect
+              options={municipalitiesList}
+              value={selectedMunicipality}
+              onChange={handleMunicipalityChange}
+              placeholder="Seleccione un estado primero"
+              disabled={!selectedState || isLoading}
+              className={validationError && !selectedMunicipality ? 'location-step__select--error' : ''}
+            />
+          </div>
         </div>
-
-        {/* SearchableSelect de estados */}
-        <label className="location-step__label">Estado *</label>
-        <SearchableSelect
-          options={statesList}
-          value={selectedState}
-          onChange={handleStateChange}
-          placeholder="Seleccione un estado"
-          disabled={isLoading}
-          className={validationError && !selectedState ? 'location-step__select--error' : ''}
-        />
-
-        {/* SearchableSelect de municipios */}
-        <label className="location-step__label">Municipio *</label>
-        <SearchableSelect
-          options={municipalitiesList}
-          value={selectedMunicipality}
-          onChange={handleMunicipalityChange}
-          placeholder="Seleccione un estado primero"
-          disabled={!selectedState || isLoading}
-          className={validationError && !selectedMunicipality ? 'location-step__select--error' : ''}
-        />
-
+        
         {/* Mensaje de error */}
         {validationError && (
           <div className="location-step__error">
