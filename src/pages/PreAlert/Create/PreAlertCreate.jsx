@@ -666,14 +666,12 @@ const PreAlertCreate = () => {
                   <option value="USD">USD</option>
                 </select>
               </div>
-
               <div className="prealert-create__col">
                 <CurrencyInput
                   className="prealert-create__input prealert-create__input--currency"
                   placeholder="0,00"
                   value={formState.valorDeclarado}
                   onChange={(formattedValue, numericValue) => {
-                    // ✅ Solo guardar valores reales, no enviar "0,01" por escribir "1"
                     if (numericValue > 0) {
                       updateFormState('valorDeclarado', formattedValue);
                     } else {
