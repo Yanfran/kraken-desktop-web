@@ -8,6 +8,20 @@ import { getPreAlertasPendientes, deletePreAlerta } from '../../../services/preA
 import { getNovedades } from '../../../services/novedadesService';
 import './Home.styles.scss';
 
+// Icons
+import { 
+  IoChevronBack,
+  IoCallOutline,
+  IoCalendarOutline,
+  IoPersonOutline,  
+  IoSaveOutline,
+  IoEyeOutline,
+  IoCreateOutline,
+  IoHelpOutline,
+  IoTrashOutline,
+  IoCardOutline
+} from 'react-icons/io5';
+
 const Home = ({ onNavigateToShipments }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -364,15 +378,15 @@ const Home = ({ onNavigateToShipments }) => {
                 {visibleMenus['lastShipment'] && (
                   <div className="menu-dropdown">
                     <button onClick={() => handleViewDetailShipment(lastShipment)} className="menu-dropdown__item">
-                      <span className="menu-dropdown__icon">👁️</span>
+                      <span className="menu-dropdown__icon"><IoEyeOutline size={18}/></span>
                       Ver detalle
                     </button>
                     <button onClick={() => handlePayShipment(lastShipment)} className="menu-dropdown__item">
-                      <span className="menu-dropdown__icon">💳</span>
+                      <span className="menu-dropdown__icon"><IoCardOutline size={18}/></span>
                       Pagar
                     </button>
                     <button onClick={() => handleHelpShipment(lastShipment)} className="menu-dropdown__item">
-                      <span className="menu-dropdown__icon">❓</span>
+                      <span className="menu-dropdown__icon"><IoHelpOutline size={18}/></span>
                       Ayuda
                     </button>
                   </div>
@@ -449,19 +463,19 @@ const Home = ({ onNavigateToShipments }) => {
                     {visibleMenus[alert.id] && (
                       <div className="menu-dropdown">
                         <button onClick={() => handleViewDetail(alert)} className="menu-dropdown__item">
-                          <span className="menu-dropdown__icon">👁️</span>
+                          <span className="menu-dropdown__icon"><IoEyeOutline size={18}/></span>
                           Ver detalle
                         </button>
                         <button onClick={() => handleEdit(alert)} className="menu-dropdown__item">
-                          <span className="menu-dropdown__icon">✏️</span>
+                          <span className="menu-dropdown__icon"><IoCreateOutline size={18}/></span>
                           Editar
                         </button>
                         <button onClick={() => handleHelp(alert)} className="menu-dropdown__item">
-                          <span className="menu-dropdown__icon">❓</span>
+                          <span className="menu-dropdown__icon"><IoHelpOutline size={18}/></span>
                           Ayuda
                         </button>
                         <button onClick={() => handleDelete(alert)} className="menu-dropdown__item menu-dropdown__item--danger">
-                          <span className="menu-dropdown__icon">🗑️</span>
+                          <span className="menu-dropdown__icon"><IoTrashOutline size={18}/></span>
                           Eliminar
                         </button>
                       </div>
