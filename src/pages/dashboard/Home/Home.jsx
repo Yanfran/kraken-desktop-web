@@ -220,10 +220,11 @@ const Home = ({ onNavigateToShipments }) => {
     navigate(`/guide/detail/${shipment.id}`);
   };
 
+ // ✅ ACTUALIZADO: Navegar a página de pago
   const handlePayShipment = (shipment) => {
     console.log('Pagar shipment:', shipment);
     setVisibleMenus({});
-    // TODO: Navigate to payment page
+    navigate(`/payment/${shipment.id}`); // ← CAMBIO AQUÍ
   };
 
   const handleHelpShipment = (shipment) => {

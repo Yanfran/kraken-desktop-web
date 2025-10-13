@@ -37,6 +37,7 @@ const Rastrear = React.lazy(() => import('./pages/Rastrear/Rastrear'));
 const MyGuides = React.lazy(() => import('./pages/MyGuides/MyGuides'));
 const GuideDetail = React.lazy(() => import('./pages/GuideDetail/GuideDetail'));
 const AddressesPage = React.lazy(() => import('./pages/addresses/Addresses'));
+const PaymentPage  = React.lazy(() => import('./pages/payment/PaymentPage'));
 
 // ✅ NUEVAS RUTAS DE PERFIL
 const PersonalDataProfile = React.lazy(() => import('./pages/profile/Profile/PersonalData/PersonalData'));
@@ -274,6 +275,14 @@ function App() {
                   <ProtectedRoute>
                     <DashboardLayout>
                       <GuideDetail />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/payment/:id" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <PaymentPage />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />
