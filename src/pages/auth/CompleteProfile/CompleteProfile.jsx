@@ -79,7 +79,7 @@ const CompleteProfile = () => {
   return (
     <div className="kraken-complete-profile" data-theme={actualTheme}>
       {/* Toggle de tema */}
-      <ThemeToggle />
+      {/* <ThemeToggle /> */}
       
       {/* Logo - Mismas medidas que otras pantallas */}
       <div className="kraken-complete-profile__logo">

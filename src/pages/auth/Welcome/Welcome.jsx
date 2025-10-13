@@ -107,7 +107,7 @@ const Welcome = () => {
     <div className="kraken-welcome" data-theme={actualTheme}>
 
       {/* Toggle de tema */}
-      <ThemeToggle />
+      {/* <ThemeToggle /> */}
 
       <div className="kraken-welcome__content">
         

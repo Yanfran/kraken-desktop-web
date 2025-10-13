@@ -1,4 +1,16 @@
 // src/pages/PreAlert/PreAlertDetail.styles.scss
+.pre-alert-detail-padre{
+  &__header {
+    text-align: center;
+    // margin-bottom: var(--spacing-8);
+  }
+  &__icon {
+    margin: 0 auto var(--spacing-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
 .pre-alert-detail {
   padding: 24px;
   max-width: 100%;
@@ -27,7 +39,7 @@
   }
 
   &__container {
-    max-width: 900px;
+    max-width: 100%;
     margin: 0 auto;
   }
 
@@ -36,16 +48,18 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-top: 20px;
     margin-bottom: 24px;
     gap: 16px;
     flex-wrap: wrap;
   }
 
+
   &__back-btn {
-    padding: 8px 16px;
+    padding: 8px 26px;
     background: #FFFFFF;
     border: 1px solid #E5E7EB;
-    border-radius: 8px;
+    border-radius: 25px;
     color: #1F2937;
     font-size: 14px;
     font-weight: 500;
@@ -102,6 +116,7 @@
     color: #6B7280;
     font-size: 14px;
   }
+  
 
   /* Content */
   &__content {
@@ -275,8 +290,8 @@
 
   /* Buttons */
   .btn {
-    padding: 10px 20px;
-    border-radius: 8px;
+    padding: 7px 40px;
+    border-radius: 25px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -284,11 +299,13 @@
     border: none;
 
     &--primary {
-      background: #2563EB;
-      color: #FFFFFF;
+      // background: #ff4500;
+      border: solid 1px #ff4500;
+      color: #ff4500;
 
       &:hover {
-        background: #1D4ED8;
+        background: #ff4500;
+        color: white;
       }
     }
 
@@ -338,4 +355,9 @@
       grid-template-columns: 1fr;
     }
   }
+
+
+
+
+  
 }

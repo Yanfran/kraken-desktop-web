@@ -212,7 +212,7 @@ const Register = () => {
   return (
     <div className="kraken-register" data-theme={actualTheme}>
       {/* Theme Toggle */}
-      <ThemeToggle />
+      {/* <ThemeToggle /> */}
 
       {/* Logo */}
       <div className="kraken-register__logo">

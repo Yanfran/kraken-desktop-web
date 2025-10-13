@@ -14,7 +14,7 @@
   }
 
   &__content {
-    max-width: 900px;
+    max-width: 100%;
     margin: 0 auto;
     background: #FFFFFF !important;
     border-radius: 16px;
@@ -626,7 +626,7 @@
     flex-wrap: wrap;
   }
 
-  &__checkbox-option {
+ &__checkbox-option {
     display: flex;
     align-items: center;
     gap: var(--spacing-2);
@@ -638,17 +638,38 @@
     background: white !important;
 
     input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      accent-color: #ff4500;
+      width: 20px !important;
+      height: 20px !important;
       cursor: pointer;
       margin: 0;
-      background: white !important;
+      flex-shrink: 0;
+      background-color: white !important;
       border: 2px solid #d1d5db !important;
+      border-radius: 4px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      position: relative;
       
       &:checked {
-        background: #ff4500 !important;
+        background-color: #ff4500 !important;
         border-color: #ff4500 !important;
+        
+        &::after {
+          content: '✓';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: white;
+          font-size: 14px;
+          font-weight: bold;
+        }
+      }
+      
+      &:focus {
+        outline: 2px solid #ff4500;
+        outline-offset: 2px;
       }
     }
 
@@ -656,6 +677,7 @@
       font-size: 0.875rem;
       font-weight: 500;
       color: #374151 !important;
+      user-select: none;
     }
 
     &:hover {
@@ -786,7 +808,7 @@
   
   svg {
     flex-shrink: 0;
-    color: #6366f1;
+    color: #ff4500;
     stroke-width: 2;
   }
   
@@ -799,31 +821,65 @@
 
 .prealert-edit__checkbox-label {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  cursor: pointer;
-  user-select: none;
-  
-  input[type="checkbox"] {
-    margin-top: 0.2rem;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-top: 1rem;
     cursor: pointer;
-    width: 18px;
-    height: 18px;
-    accent-color: #6366f1;
-    flex-shrink: 0;
+    user-select: none;
+    padding: var(--spacing-2);
+    transition: all 0.2s ease;
+    // border-radius: 8px;    
+    
+    &:hover {
+      background: #f9fafb;
+    }
+    
+    input[type="checkbox"] {
+      margin-top: 0.2rem;
+      cursor: pointer;
+      width: 18px !important;
+      height: 18px !important;
+      flex-shrink: 0;
+      background-color: white !important;
+      border: 2px solid #d1d5db !important;
+      border-radius: 4px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      position: relative;
+      
+      &:checked {
+        background-color: #ff4500 !important;
+        border-color: #ff4500 !important;
+        
+        &::after {
+          content: '✓';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: white;
+          font-size: 12px;
+          font-weight: bold;
+        }
+      }
+      
+      &:focus {
+        outline: 2px solid #ff4500;
+        outline-offset: 2px;
+      }
+    }
+    
+    span {
+      font-size: 0.95rem;
+      color: #374151 !important;
+      line-height: 1.5;
+    }
+    
+    &:hover span {
+      color: #1f2937 !important;
+    }
   }
-  
-  span {
-    font-size: 0.95rem;
-    color: #374151;
-    line-height: 1.5;
-  }
-  
-  &:hover span {
-    color: #1f2937;
-  }
-}
 
 // ✅ ESTILOS PARA EL ÁREA DE CAMBIO DE DIRECCIÓN
 .prealert-edit__address-change {
@@ -1050,7 +1106,7 @@
   
   svg {
     flex-shrink: 0;
-    color: #6366f1;
+    color: #ff4500;
     stroke-width: 2;
   }
   
@@ -1107,40 +1163,76 @@
 
 .prealert-edit__radio-option {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  input[type="radio"] {
-    margin-top: 0.2rem;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 8px;
     cursor: pointer;
-    width: 20px;
-    height: 20px;
-    accent-color: #6366f1;
-    flex-shrink: 0;
+    transition: all 0.2s ease;
+    
+    input[type="radio"] {
+      margin-top: 0.2rem;
+      cursor: pointer;
+      width: 20px !important;
+      height: 20px !important;
+      flex-shrink: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-color: white !important;
+      border: 2px solid #d1d5db !important;
+      border-radius: 50%;
+      position: relative;
+      
+      &:checked {
+        background-color: white !important;
+        border-color: #ff4500 !important;
+        border-width: 2px;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background-color: #ff4500;
+        }
+      }
+      
+      &:focus {
+        outline: 2px solid #ff4500;
+        outline-offset: 2px;
+      }
+    }
+
+    > span {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #374151 !important;
+      line-height: 1.4;
+    }
+    
+    &:hover {
+      border-color: #d1d5db !important;
+      background: #fafafa !important;
+    }
+    
+    &:has(input[type="radio"]:checked) {
+      border-color: #ff4500 !important;
+      background: #fff7ed !important;
+      
+      > span,
+      .prealert-create__radio-content .prealert-create__radio-title {
+        color: #ff4500 !important;
+        font-weight: 600;
+      }
+    }
   }
-  
-  &:hover {
-    border-color: #d1d5db;
-    background: #fafafa;
-  }
-  
-  input[type="radio"]:checked + span,
-  input[type="radio"]:checked + .prealert-edit__radio-content {
-    color: #6366f1;
-    font-weight: 500;
-  }
-  
-  &:has(input[type="radio"]:checked) {
-    border-color: #6366f1;
-    background: #eef2ff;
-  }
-}
 
 .prealert-edit__radio-content {
   display: flex;
@@ -1243,7 +1335,7 @@
 .prealert-edit__checkbox-label,
 .prealert-edit__radio-option {
   &:focus-within {
-    outline: 2px solid #6366f1;
+    // outline: 2px solid #6366f1;
     outline-offset: 2px;
   }
 }
@@ -1251,7 +1343,7 @@
 input[type="checkbox"],
 input[type="radio"] {
   &:focus-visible {
-    outline: 2px solid #6366f1;
+    // outline: 2px solid #6366f1;
     outline-offset: 2px;
   }
 }

@@ -130,7 +130,7 @@ const Login = () => {
   return (
     <div className="kraken-login" data-theme={actualTheme}>
       {/* Theme Toggle */}
-      <ThemeToggle />
+      {/* <ThemeToggle /> */}
 
       {/* Logo */}
       <div className="kraken-login__logo">

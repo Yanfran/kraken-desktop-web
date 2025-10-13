@@ -658,6 +658,7 @@ const PreAlertCreate = () => {
 
             <div className="prealert-create__row">
               <div className="prealert-create__col prealert-create__col--small">
+                <label className="prealert-create__label">Moneda</label>
                 <select
                   className="prealert-create__select"
                   value={formState.currency}
@@ -666,7 +667,9 @@ const PreAlertCreate = () => {
                   <option value="USD">USD</option>
                 </select>
               </div>
+
               <div className="prealert-create__col">
+                <label className="prealert-create__label">Monto</label>
                 <CurrencyInput
                   className="prealert-create__input prealert-create__input--currency"
                   placeholder="0,00"
@@ -682,7 +685,7 @@ const PreAlertCreate = () => {
                 />
               </div>
             </div>
-          </div>
+            </div>
 
           {/* SECCIÓN TIPO DE CONTENIDO */}
           <div className="prealert-create__section">

@@ -469,7 +469,7 @@ const PersonalData = () => {
 
   return (
     <div className="kraken-personal-data" data-theme={actualTheme}>
-      <ThemeToggle />
+      {/* <ThemeToggle /> */}
 
       {/* Logo */}
       <div className="kraken-personal-data__logo">

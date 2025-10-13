@@ -23,6 +23,7 @@ import {
   getDeliveryData,
   getUserAddresses,
 } from '../../../services/address/addressService';
+import Tooltip from '../../../components/common/Tooltip/Tooltip';
 
 // Utils
 import {
@@ -680,22 +681,10 @@ const PreAlertEdit = () => {
                 Números de Tracking
                 <span className="prealert-edit__required">*</span>
               </label>
-              <div className="prealert-edit__tooltip">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span className="prealert-edit__tooltip-text">
-                  Ingresa el o los números de tracking que te proporcionó la
-                  tienda
-                </span>
-              </div>
+             <Tooltip 
+                content="El tracking es el número de seguimiento de tu paquete. La tienda online te lo enviará cuando procese y despache tu pedido. Si aún no lo tienes, espera la confirmación en tu email."
+                position="auto"
+              />   
             </div>
 
             {formState.trackings.map((tracking, index) => (
@@ -741,22 +730,10 @@ const PreAlertEdit = () => {
                 {formState.contenidos.length !== 1 ? 's' : ''})
                 <span className="prealert-edit__required">*</span>
               </label>
-              <div className="prealert-edit__tooltip">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span className="prealert-edit__tooltip-text">
-                  Selecciona uno o más productos o categorías del contenido de
-                  tu paquete
-                </span>
-              </div>
+              <Tooltip 
+                content="Selecciona uno o más productos o categorías del contenido de tu paquete. Puedes elegir múltiples opciones."
+                position="auto"
+              />   
             </div>
 
             <MultiSelectSearchable
@@ -783,22 +760,10 @@ const PreAlertEdit = () => {
               <label className="prealert-edit__label">
                 Valor Declarado (Opcional)
               </label>
-              <div className="prealert-edit__tooltip">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span className="prealert-edit__tooltip-text">
-                  Debes ingresar el monto total de los artículos contenidos en
-                  el paquete
-                </span>
-              </div>
+              <Tooltip 
+                content="El FOB (Free On Board) es el costo de la mercancía en la factura de compra. Debes ingresar el monto total de los artículos contenidos en el paquete."
+                position="auto"
+              />  
             </div>
 
             <div className="prealert-edit__row">
@@ -859,23 +824,10 @@ const PreAlertEdit = () => {
               <label className="prealert-edit__label">
                 Dirección de Entrega Predeterminada
               </label>
-              <div className="prealert-edit__tooltip">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" />
-                </svg>
-                <span className="prealert-edit__tooltip-text">
-                  Esta es la dirección en la que recibirás todos tus paquetes.
-                  Si no la modificas ahora, tu paquete será enviado allí y no
-                  podrás cambiarla después de que llegue a nuestro almacén.
-                </span>
-              </div>
+              <Tooltip 
+                content="Esta es la dirección en la que recibirás todos tus paquetes. Si no la modificas ahora, tu paquete será enviado allí y no podrás cambiarla después de que llegue a nuestro almacén."
+                position="auto"
+              /> 
             </div>
 
             <div className="prealert-edit__address-display">
@@ -1176,10 +1128,7 @@ const PreAlertEdit = () => {
                       </span>
                       <span className="prealert-edit__file-name">
                         {file.name}
-                      </span>
-                      <span className="prealert-edit__file-size">
-                        ({(file.size / 1024).toFixed(1)} KB)
-                      </span>
+                      </span>                      
                     </div>
                     <button
                       type="button"

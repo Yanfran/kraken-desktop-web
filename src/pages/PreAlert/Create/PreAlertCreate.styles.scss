@@ -247,17 +247,19 @@
     }
   }
 
- &__row {
-  display: flex;  // ✅ FLEX por defecto (para valor declarado)
+&__row {
+  display: flex !important;  // ✅ Forzar flex
+  flex-direction: row !important;  // ✅ Forzar horizontal
   gap: 0.75rem;
-  align-items: flex-start;
+  align-items: flex-end;  // ✅ Alinear los inputs al fondo
 
   @include respond-to(mobile) {
-    flex-direction: column;
+    flex-direction: row !important;  // ✅ Mantener horizontal incluso en móvil
+    align-items: flex-end;
   }
 
   &--three {
-    display: grid;  // ✅ GRID solo para el row con clase --three
+    display: grid !important;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-3);
 
@@ -277,19 +279,14 @@
   gap: var(--spacing-2);
 
   &--small {
-    order: 1;
-    flex: 0 0 100px;
-
-    @include respond-to(mobile) {
-      order: 1;
-      flex: 1;
-      width: 100%;
-    }
+    flex: 0 0 90px;
+    min-width: 90px;
+    max-width: 90px;  // ✅ Asegurar que no crezca
   }
 
   &:not(.prealert-create__col--small) {
-    order: 2;
     flex: 1;
+    min-width: 0;
   }
 }
 

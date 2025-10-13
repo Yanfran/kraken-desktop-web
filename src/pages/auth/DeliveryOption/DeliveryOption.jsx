@@ -384,7 +384,7 @@ const DeliveryOption = () => {
   return (
     <div className="kraken-delivery-option" data-theme={actualTheme}>
 
-      <ThemeToggle />
+      {/* <ThemeToggle /> */}
 
       <div className="kraken-delivery-option__logo">
         <img

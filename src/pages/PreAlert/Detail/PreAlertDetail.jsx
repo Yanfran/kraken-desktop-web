@@ -1,8 +1,20 @@
-// src/pages/PreAlert/PreAlertDetail.jsx - ACTUALIZADO CON NAVEGACIÓN
+// src/pages/PreAlert/PreAlertDetail.jsx - CON ICONOS ACTUALIZADOS
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import './PreAlertDetail.styles.scss';
+
+// Icons actualizados
+import { 
+  IoCreateOutline,
+  IoCubeOutline,        // Para paquetes 📦
+  IoCarOutline,         // Para delivery 🚚
+  IoLocationOutline,    // Para ubicación 📍
+  IoClipboardOutline,   // Para información 📋
+  IoInformationCircleOutline, // Para el status box ℹ️
+  IoArrowBack,         // Para el botón de volver
+  IoDocumentTextOutline // Para facturas 📄
+} from 'react-icons/io5';
 
 // Services
 import { getPreAlertaById } from '@services/preAlertService';
@@ -136,28 +148,37 @@ const PreAlertDetail = () => {
       <div className="pre-alert-detail__container">
         
         {/* Header */}
-        <div className="pre-alert-detail__header">
-          <button onClick={handleBack} className="pre-alert-detail__back-btn">
-            ← Volver
-          </button>
-          <div className="pre-alert-detail__header-info">
-            <h1 className="pre-alert-detail__title">
-              Pre-Alerta #{preAlerta?.id}
-            </h1>
-            <div className="pre-alert-detail__meta">
-              <span className={`pre-alert-detail__status pre-alert-detail__status--${status.className}`}>
-                {status.text}
-              </span>
-              <span className="pre-alert-detail__date">
-                {formatDate(preAlerta?.fechaCreacion)}
-              </span>
-            </div>
+        <div className="pre-alert-detail-padre__header">
+          <div className="prealert-detail__icon">
+            <img
+              src="/src/assets/images/icon-kraken-web-parlante_1.png"
+              style={{
+                width: 50,
+                filter: 'invert(41%) sepia(99%) saturate(7496%) hue-rotate(358deg) brightness(99%) contrast(101%)'
+              }}
+              alt=""
+            />
           </div>
-          {!preAlerta?.idGuia && !preAlerta?.IdGuia && (
-            <button onClick={handleEdit} className="btn btn--primary">
-              ✏️ Editar
+
+          <div className="pre-alert-detail__header">
+            
+            <button onClick={handleBack} className="pre-alert-detail__back-btn">
+              <IoArrowBack size={18} style={{ marginBottom: -3, marginRight: 8 }} />
+              Volver
             </button>
-          )}
+            
+            <div className="pre-alert-detail__header-info">
+              <h1 className="pre-alert-detail__title">
+                Pre-Alerta #{preAlerta?.id}
+              </h1>
+            </div>
+            
+            {!preAlerta?.idGuia && !preAlerta?.IdGuia && (
+              <button onClick={handleEdit} className="btn btn--primary">
+                <IoCreateOutline size={18} style={{ marginBottom: -3}} /> Editar
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -166,7 +187,8 @@ const PreAlertDetail = () => {
           {/* Trackings Section */}
           <div className="pre-alert-detail__section">
             <h2 className="pre-alert-detail__section-title">
-              📦 Números de Tracking
+              <IoCubeOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              Números de Tracking
             </h2>
             <div className="pre-alert-detail__trackings">
               {trackings.length > 0 ? (
@@ -185,10 +207,30 @@ const PreAlertDetail = () => {
             </div>
           </div>
 
+          {/* Delivery Info Section */}
+          <div className="pre-alert-detail__section">
+            <h2 className="pre-alert-detail__section-title">
+              <IoCarOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              Dirección de Entrega
+            </h2>
+            <div className="pre-alert-detail__delivery-info">
+              <p className="pre-alert-detail__delivery-text">
+                {preAlerta?.direccionResumen || 'Sin dirección especificada'}
+              </p>
+              {preAlerta?.nombreLocker && (
+                <p className="pre-alert-detail__delivery-locker">
+                  <IoLocationOutline size={18} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                  Locker: {preAlerta.nombreLocker}
+                </p>
+              )}
+            </div>
+          </div>
+
           {/* Package Info Section */}
           <div className="pre-alert-detail__section">
             <h2 className="pre-alert-detail__section-title">
-              📋 Información del Paquete
+              <IoClipboardOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+              Información del Paquete
             </h2>
             <div className="pre-alert-detail__info-grid">
               
@@ -200,25 +242,26 @@ const PreAlertDetail = () => {
               </div>
 
               <div className="pre-alert-detail__info-item">
+                <label className="pre-alert-detail__label">Tipo de Contenido</label>
+                <span className="pre-alert-detail__value">
+                  {preAlerta?.tipoContenido || 'Sin especificar'}
+                </span>
+              </div>
+
+              <div className="pre-alert-detail__info-item">
                 <label className="pre-alert-detail__label">Valor Declarado</label>
                 <span className="pre-alert-detail__value">
-                  ${preAlerta?.valorDeclarado || preAlerta?.valor || '0.00'}
+                  ${preAlerta?.valorDeclarado?.parsedValue || preAlerta?.valorDeclarado || preAlerta?.valor || '0.00'}
                 </span>
-              </div>
+              </div>      
 
               <div className="pre-alert-detail__info-item">
-                <label className="pre-alert-detail__label">Peso</label>
-                <span className="pre-alert-detail__value">
-                  {preAlerta?.peso || '0'} {preAlerta?.unidadPeso || 'Lb'}
+                <label className="pre-alert-detail__label">Facturas</label>
+                <span className="pre-alert-detail__value pre-alert-detail__value--invoices">
+                  <IoDocumentTextOutline size={18} />
+                  {preAlerta?.archivosActuales?.length || 0} archivo(s) adjunto(s)
                 </span>
-              </div>
-
-              <div className="pre-alert-detail__info-item">
-                <label className="pre-alert-detail__label">Cantidad</label>
-                <span className="pre-alert-detail__value">
-                  {preAlerta?.cantidad || '1'} item(s)
-                </span>
-              </div>
+              </div>                  
 
               {preAlerta?.tipoEnvio && (
                 <div className="pre-alert-detail__info-item">
@@ -231,32 +274,17 @@ const PreAlertDetail = () => {
             </div>
           </div>
 
-          {/* Delivery Info Section */}
-          <div className="pre-alert-detail__section">
-            <h2 className="pre-alert-detail__section-title">
-              🚚 Dirección de Entrega
-            </h2>
-            <div className="pre-alert-detail__delivery-info">
-              <p className="pre-alert-detail__delivery-text">
-                {preAlerta?.direccionResumen || 'Sin dirección especificada'}
-              </p>
-              {preAlerta?.nombreLocker && (
-                <p className="pre-alert-detail__delivery-locker">
-                  📍 Locker: {preAlerta.nombreLocker}
-                </p>
-              )}
-            </div>
-          </div>
-
           {/* Status Description */}
-          {status.description && (
+          {/* {status.description && (
             <div className="pre-alert-detail__status-box">
-              <div className="pre-alert-detail__status-icon">ℹ️</div>
+              <div className="pre-alert-detail__status-icon">
+                <IoInformationCircleOutline size={24} />
+              </div>
               <div className="pre-alert-detail__status-description">
                 <strong>Estado:</strong> {status.description}
               </div>
             </div>
-          )}
+          )} */}
 
         </div>
       </div>

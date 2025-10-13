@@ -119,7 +119,7 @@ const EmailConfirmation = () => {
   if (!email) {
     return (
       <div className="kraken-email-confirmation" data-theme={actualTheme}>
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
         <div className="kraken-email-confirmation__content">
           <p>Cargando...</p>
         </div>
@@ -128,7 +128,7 @@ const EmailConfirmation = () => {
   }
   return (
     <div className="kraken-email-confirmation" data-theme={actualTheme}>
-      <ThemeToggle />
+      {/* <ThemeToggle /> */}
       
       <div className="kraken-email-confirmation__logo">
         <img
