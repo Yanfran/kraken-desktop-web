@@ -1,7 +1,6 @@
 // src/App.jsx - ACTUALIZADO con rutas de perfil
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute, PublicRoute, SemiProtectedRoute } from './components/auth/ProtectedRoute';
 import Loading from './components/common/Loading/Loading';
@@ -44,16 +43,11 @@ const PersonalDataProfile = React.lazy(() => import('./pages/profile/Profile/Per
 const Addresses = React.lazy(() => import('./pages/profile/Profile/Addresses/Addresses'));
 
 // Hook simplificado para compatibilidad
-export const useAuth = () => {
-  const { useAuth: useNewAuth } = require('./contexts/AuthContext');
-  return useNewAuth();
-};
+export { useAuth } from './contexts/AuthContext';
 
 function App() {
   return (
-    <Router>
       <ThemeProvider>
-        <AuthProvider>
           <div className="app">
             {/* Toast notifications */}
             <Toaster
@@ -300,9 +294,7 @@ function App() {
               </Routes>
             </Suspense>
           </div>
-        </AuthProvider>
       </ThemeProvider>
-    </Router>
   );
 }
 

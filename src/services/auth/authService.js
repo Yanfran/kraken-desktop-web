@@ -1,8 +1,7 @@
-// src/services/auth/authService.js - SERVICIO DE AUTENTICACIÓN COMPLETO
+// src/services/auth/authService.js - CORREGIDO
 import axios from 'axios';
 import { API_URL } from '../../utils/config';
 
-// Configurar axios instance
 const authAPI = axios.create({
   baseURL: API_URL,
   headers: {
@@ -10,7 +9,6 @@ const authAPI = axios.create({
   }
 });
 
-// Interceptor para incluir token en requests
 authAPI.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -22,7 +20,6 @@ authAPI.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor para manejar errores de autenticación
 authAPI.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -36,7 +33,7 @@ authAPI.interceptors.response.use(
 );
 
 export const authService = {
-  // ===== LOGIN - CON TODOS LOS CAMPOS DEL USUARIO =====
+  // ===== LOGIN =====
   async login(credentials) {
     try {
       const response = await authAPI.post('/Users/login', {
@@ -47,43 +44,28 @@ export const authService = {
       console.log('✅ [AuthService] Login response completa:', response.data);
 
       if (response.data.success) {
-        // ✅ GUARDAR TODOS LOS CAMPOS DEL USUARIO
         const userData = {
           id: response.data.user.id,
           email: response.data.user.email,
-          
-          // Nombres (mapear ambos formatos)
           name: response.data.user.nombres || response.data.user.name,
           lastName: response.data.user.apellidos || response.data.user.lastName,
           nombres: response.data.user.nombres,
           apellidos: response.data.user.apellidos,
-          
-          // Teléfonos
           phone: response.data.user.telefonoCelular,
           phoneSecondary: response.data.user.telefonoCelularSecundario,
           telefonoCelular: response.data.user.telefonoCelular,
           telefonoCelularSecundario: response.data.user.telefonoCelularSecundario,
-          
-          // Documento de identidad
           idNumber: response.data.user.nroIdentificacionCliente,
           nroIdentificacionCliente: response.data.user.nroIdentificacionCliente,
           nro: response.data.user.nroIdentificacionCliente,
           idClienteTipoIdentificacion: response.data.user.idClienteTipoIdentificacion,
-          
-          // Fecha de nacimiento
           birthday: response.data.user.fechaNacimiento,
           fechaNacimiento: response.data.user.fechaNacimiento,
-          
-          // Avatar
-          avatarId: response.data.user.avatarId,
-          
-          // Estados
+          avatarId: response.data.user.avatarId || '1',
           emailVerified: response.data.user.emailVerified ?? true,
           profileComplete: response.data.user.profileComplete ?? false,
           clienteActivo: response.data.user.clienteActivo ?? true,
           fromGoogle: response.data.user.fromGoogle ?? false,
-          
-          // Código de cliente
           codCliente: response.data.user.codCliente,
           idClienteTipo: response.data.user.idClienteTipo
         };
@@ -150,6 +132,7 @@ export const authService = {
           lastName: response.data.user.apellidos || userData.lastName,
           nombres: response.data.user.nombres,
           apellidos: response.data.user.apellidos,
+          avatarId: response.data.user.avatarId || '1',
           emailVerified: false,
           profileComplete: false,
           clienteActivo: false
@@ -204,7 +187,6 @@ export const authService = {
       });
       
       if (response.data.success && response.data.user) {
-        // Retornar todos los campos del usuario
         return {
           id: response.data.user.id,
           email: response.data.user.email,
@@ -221,7 +203,7 @@ export const authService = {
           idClienteTipoIdentificacion: response.data.user.idClienteTipoIdentificacion,
           birthday: response.data.user.fechaNacimiento,
           fechaNacimiento: response.data.user.fechaNacimiento,
-          avatarId: response.data.user.avatarId,
+          avatarId: response.data.user.avatarId || '1',
           emailVerified: response.data.user.emailVerified ?? true,
           profileComplete: response.data.user.profileComplete ?? false,
           clienteActivo: response.data.user.clienteActivo ?? true,
@@ -238,21 +220,18 @@ export const authService = {
     }
   },
 
-  // ===== 🔥 GOOGLE AUTH - ACTUALIZADO PARA COINCIDIR CON TU BACKEND =====
+  // ===== 🔥 GOOGLE AUTH =====
   async loginWithGoogle(idToken) {
     try {
       console.log('🔵 [AuthService] Enviando ID Token a backend...');
       
-      // 🔥 PASO 1: Decodificar el JWT de Google para obtener info del usuario
-      const decoded = this.decodeJWT(idToken);
+      const decoded = authService.decodeJWT(idToken);
       console.log('👤 [AuthService] Usuario de Google decodificado:', decoded.email);
 
-      // 🔥 PASO 2: Crear password falso basado en el ID de Google
       const fakePassword = decoded.sub + '_google';
       const firstName = decoded.given_name || decoded.name?.split(' ')[0] || decoded.name;
       const lastName = decoded.family_name || decoded.name?.split(' ').slice(1).join(' ') || '';
 
-      // 🔥 PASO 3: Intentar REGISTRO primero (igual que en tu app móvil)
       try {
         console.log('🔵 [AuthService] Intentando REGISTRO con Google...');
         const registerResponse = await authAPI.post('/Users/google', {
@@ -265,7 +244,7 @@ export const authService = {
         if (registerResponse.data.success && registerResponse.data.token && registerResponse.data.user) {
           console.log('✅ [AuthService] Usuario REGISTRADO con Google');
           
-          const userData = this.mapUserData(registerResponse.data.user);
+          const userData = authService.mapUserData(registerResponse.data.user);
           localStorage.setItem('userId', userData.id.toString());
           
           return {
@@ -275,10 +254,9 @@ export const authService = {
           };
         }
       } catch (registerError) {
-        console.log('⚠️ [AuthService] Registro falló (probablemente usuario ya existe), intentando LOGIN...');
+        console.log('⚠️ [AuthService] Registro falló, intentando LOGIN...');
       }
 
-      // 🔥 PASO 4: Si el registro falla, intentar LOGIN (igual que en tu app)
       console.log('🔵 [AuthService] Intentando LOGIN con Google...');
       const loginResponse = await authAPI.post('/Users/google', {
         name: firstName,
@@ -290,7 +268,7 @@ export const authService = {
       if (loginResponse.data.success && loginResponse.data.token && loginResponse.data.user) {
         console.log('✅ [AuthService] Usuario LOGUEADO con Google');
         
-        const userData = this.mapUserData(loginResponse.data.user);
+        const userData = authService.mapUserData(loginResponse.data.user);
         localStorage.setItem('userId', userData.id.toString());
         
         return {
@@ -322,13 +300,56 @@ export const authService = {
     }
   },
 
-  // ===== FORGOT PASSWORD =====
+  // ===== 🔥 HELPER: Decodificar JWT de Google (ARROW FUNCTION) =====
+  decodeJWT: (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('❌ [AuthService] Error decodificando JWT:', error);
+      throw new Error('Token de Google inválido');
+    }
+  },
+
+  // ===== 🔥 HELPER: Mapear datos del usuario (ARROW FUNCTION) =====
+  mapUserData: (serverUser) => {
+    return {
+      id: serverUser.id,
+      email: serverUser.email,
+      name: serverUser.nombres || serverUser.name,
+      lastName: serverUser.apellidos || serverUser.lastName,
+      nombres: serverUser.nombres,
+      apellidos: serverUser.apellidos,
+      phone: serverUser.telefonoCelular,
+      phoneSecondary: serverUser.telefonoCelularSecundario,
+      telefonoCelular: serverUser.telefonoCelular,
+      telefonoCelularSecundario: serverUser.telefonoCelularSecundario,
+      idNumber: serverUser.nroIdentificacionCliente,
+      nroIdentificacionCliente: serverUser.nroIdentificacionCliente,
+      idClienteTipoIdentificacion: serverUser.idClienteTipoIdentificacion,
+      birthday: serverUser.fechaNacimiento,
+      fechaNacimiento: serverUser.fechaNacimiento,
+      avatarId: serverUser.avatarId || '1',
+      emailVerified: serverUser.emailVerified ?? serverUser.fromEmail ?? true,
+      profileComplete: serverUser.profileComplete ?? false,
+      clienteActivo: serverUser.clienteActivo ?? true,
+      fromGoogle: serverUser.fromGoogle ?? true,
+      codCliente: serverUser.codCliente,
+      idClienteTipo: serverUser.idClienteTipo
+    };
+  },
+
+  // ===== OTROS MÉTODOS =====
   async forgotPassword(email) {
     try {
-      const response = await authAPI.post('/Users/forgot-password', {
-        email: email
-      });
-
+      const response = await authAPI.post('/Users/forgot-password', { email });
       return {
         success: response.data.success,
         message: response.data.message
@@ -342,14 +363,12 @@ export const authService = {
     }
   },
 
-  // ===== RESET PASSWORD =====
   async resetPassword(token, newPassword) {
     try {
       const response = await authAPI.post('/Users/reset-password', {
-        token: token,
-        newPassword: newPassword
+        token,
+        newPassword
       });
-
       return {
         success: response.data.success,
         message: response.data.message
@@ -363,13 +382,9 @@ export const authService = {
     }
   },
 
-  // ===== RESEND VERIFICATION EMAIL =====
   async resendVerificationEmail(email) {
     try {
-      const response = await authAPI.post('/Users/resend-verification', {
-        email: email
-      });
-
+      const response = await authAPI.post('/Users/resend-verification', { email });
       return {
         success: response.data.success,
         message: response.data.message
@@ -383,21 +398,14 @@ export const authService = {
     }
   },
 
-  // ===== LOGOUT =====
   async logout() {
     try {
-      // Si tu backend tiene endpoint de logout, úsalo aquí
-      // await authAPI.post('/Users/logout');
-      
-      // Limpiar storage local
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       localStorage.removeItem('userId');
-      
       return { success: true };
     } catch (error) {
       console.error('❌ [AuthService] Logout error:', error);
-      // Igualmente limpiar storage aunque falle el servidor
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       localStorage.removeItem('userId');

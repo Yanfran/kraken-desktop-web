@@ -5,6 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Usar el 
 import { useTheme } from '../../../contexts/ThemeContext';
 import toast from 'react-hot-toast'; // ✅ AGREGADO: Para notificaciones
 import './Login.styles.scss';
+import { GoogleLogin } from '@react-oauth/google';
 
 // Componente toggle para cambio de tema (mantener igual)
 const ThemeToggle = () => {
@@ -65,11 +66,9 @@ const Login = () => {
   };
 
   // 🔥 Login con Google
-  const handleGoogleLogin = async () => {
-    // isLoading(true);
-    
+  const handleGoogleLogin = async (credentialResponse) => {
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle(credentialResponse);
       
       if (result.success) {
         toast.success('¡Bienvenido!');
@@ -79,8 +78,6 @@ const Login = () => {
       }
     } catch (error) {
       toast.error('Error al conectar con Google');
-    } finally {
-      // isLoading(false);
     }
   };  
   
@@ -150,19 +147,14 @@ const Login = () => {
       <h1 className="kraken-login__title">Iniciar Sesión</h1>
 
       {/* Botón Google */}
-      <button
-        type="button"
-        className="kraken-login__google-button"
-        onClick={handleGoogleLogin}
-        disabled={isLoading}
-      >
-        <img 
-          src="/src/assets/images/google-icon.png" 
-          alt="Google" 
-          className="kraken-login__google-icon"
-        />
-        Continuar con Google
-      </button>
+      <GoogleLogin
+        onSuccess={handleGoogleLogin}
+        onError={() => {
+          toast.error('Error con Google');
+        }}
+        width="100%"
+        use_fedcm_for_prompt={true}
+      />
 
       {/* Separador */}
       <div className="kraken-login__separator">
