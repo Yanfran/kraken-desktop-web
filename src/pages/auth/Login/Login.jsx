@@ -64,6 +64,27 @@ const Login = () => {
     }
   };
 
+  // 🔥 Login con Google
+  const handleGoogleLogin = async () => {
+    // isLoading(true);
+    
+    try {
+      const result = await signInWithGoogle();
+      
+      if (result.success) {
+        toast.success('¡Bienvenido!');
+        navigate('/dashboard');
+      } else {
+        toast.error(result.message || 'Error con Google');
+      }
+    } catch (error) {
+      toast.error('Error al conectar con Google');
+    } finally {
+      // isLoading(false);
+    }
+  };  
+  
+
   // ✅ VALIDACIÓN DEL FORMULARIO
   const validateForm = () => {
     const newErrors = {};
@@ -109,23 +130,7 @@ const Login = () => {
       toast.error('Error de conexión. Intenta de nuevo.');
     }
   };
-
-  // ✅ MANEJAR GOOGLE SIGN IN
-  const handleGoogleSignIn = async () => {
-    try {
-      const result = await signInWithGoogle();
-      
-      if (result.success) {
-        toast.success('¡Bienvenido!');
-        navigate('/dashboard');
-      } else {
-        toast.error(result.message || 'Error con Google Auth');
-      }
-    } catch (error) {
-      console.error('Error en Google sign in:', error);
-      toast.error('Error con autenticación de Google');
-    }
-  };
+  
 
   return (
     <div className="kraken-login" data-theme={actualTheme}>
@@ -148,7 +153,7 @@ const Login = () => {
       <button
         type="button"
         className="kraken-login__google-button"
-        onClick={handleGoogleSignIn}
+        onClick={handleGoogleLogin}
         disabled={isLoading}
       >
         <img 

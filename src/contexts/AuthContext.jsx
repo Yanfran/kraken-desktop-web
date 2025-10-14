@@ -180,30 +180,46 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // ===== 🔥 SIGN IN CON GOOGLE =====
   const signInWithGoogle = useCallback(async () => {
     try {
       dispatch({ type: 'LOADING' });
-      if (!window.google) await googleService.loadGoogleScript();
+      console.log('🔵 [Auth] Iniciando Google Sign-In...');
+      
+      // Paso 1: Obtener credencial de Google
       const googleResponse = await googleService.signIn();
       
-      if (googleResponse.success) {
-        const authResponse = await authService.loginWithGoogle(googleResponse.token);
-        if (authResponse.success) {
-          localStorage.setItem('authToken', authResponse.token);
-          localStorage.setItem('userData', JSON.stringify(authResponse.user));
-          Cookies.set('authToken', authResponse.token, { expires: 7 });
-          dispatch({ type: 'LOGIN_SUCCESS', payload: authResponse.user });
-          console.log('✅ [Auth] Google login exitoso');
-          return { success: true };
-        }
+      if (!googleResponse.success || !googleResponse.credential) {
+        dispatch({ type: 'ERROR' });
+        return { success: false, message: 'Error con autenticación de Google' };
       }
+
+      console.log('✅ [Auth] Credencial de Google obtenida');
+
+      // Paso 2: Decodificar el JWT para obtener info del usuario
+      const decoded = googleService.decodeJWT(googleResponse.credential);
+      console.log('👤 [Auth] Usuario de Google:', decoded.email);
+
+      // Paso 3: Enviar el token al backend
+      const authResponse = await authService.loginWithGoogle(googleResponse.credential);
       
-      dispatch({ type: 'ERROR', payload: 'Error con autenticación de Google' });
-      return { success: false, message: 'Error con autenticación de Google' };
+      if (authResponse.success) {
+        localStorage.setItem('authToken', authResponse.token);
+        localStorage.setItem('userData', JSON.stringify(authResponse.user));
+        Cookies.set('authToken', authResponse.token, { expires: 7 });
+        
+        dispatch({ type: 'LOGIN_SUCCESS', payload: authResponse.user });
+        console.log('✅ [Auth] Google login exitoso');
+        
+        return { success: true, user: authResponse.user };
+      } else {
+        dispatch({ type: 'ERROR' });
+        return { success: false, message: authResponse.message };
+      }
     } catch (error) {
       console.error('❌ [Auth] Google sign in error:', error);
-      dispatch({ type: 'ERROR', payload: 'Error con Google' });
-      return { success: false, message: 'Error con Google' };
+      dispatch({ type: 'ERROR' });
+      return { success: false, message: 'Error con Google. Intenta nuevamente.' };
     }
   }, []);
 
@@ -263,6 +279,7 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     confirmEmail,
     setUserState,
+    setUser: setUserState,
     resendVerificationEmail
   }), [state.user, state.isLoading, state.isSignedIn, signIn, signOut, signUp, signInWithGoogle, confirmEmail, setUserState, resendVerificationEmail]);
 

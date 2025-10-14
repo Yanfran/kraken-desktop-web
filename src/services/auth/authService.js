@@ -238,44 +238,83 @@ export const authService = {
     }
   },
 
-  // ===== GOOGLE AUTH =====
-  async loginWithGoogle(googleToken) {
+  // ===== 🔥 GOOGLE AUTH - ACTUALIZADO PARA COINCIDIR CON TU BACKEND =====
+  async loginWithGoogle(idToken) {
     try {
-      const response = await authAPI.post('/Users/google-auth', {
-        googleToken: googleToken
+      console.log('🔵 [AuthService] Enviando ID Token a backend...');
+      
+      // 🔥 PASO 1: Decodificar el JWT de Google para obtener info del usuario
+      const decoded = this.decodeJWT(idToken);
+      console.log('👤 [AuthService] Usuario de Google decodificado:', decoded.email);
+
+      // 🔥 PASO 2: Crear password falso basado en el ID de Google
+      const fakePassword = decoded.sub + '_google';
+      const firstName = decoded.given_name || decoded.name?.split(' ')[0] || decoded.name;
+      const lastName = decoded.family_name || decoded.name?.split(' ').slice(1).join(' ') || '';
+
+      // 🔥 PASO 3: Intentar REGISTRO primero (igual que en tu app móvil)
+      try {
+        console.log('🔵 [AuthService] Intentando REGISTRO con Google...');
+        const registerResponse = await authAPI.post('/Users/google', {
+          name: firstName,
+          email: decoded.email,
+          password: fakePassword,
+          last: lastName
+        });
+
+        if (registerResponse.data.success && registerResponse.data.token && registerResponse.data.user) {
+          console.log('✅ [AuthService] Usuario REGISTRADO con Google');
+          
+          const userData = this.mapUserData(registerResponse.data.user);
+          localStorage.setItem('userId', userData.id.toString());
+          
+          return {
+            success: true,
+            token: registerResponse.data.token,
+            user: userData
+          };
+        }
+      } catch (registerError) {
+        console.log('⚠️ [AuthService] Registro falló (probablemente usuario ya existe), intentando LOGIN...');
+      }
+
+      // 🔥 PASO 4: Si el registro falla, intentar LOGIN (igual que en tu app)
+      console.log('🔵 [AuthService] Intentando LOGIN con Google...');
+      const loginResponse = await authAPI.post('/Users/google', {
+        name: firstName,
+        email: decoded.email,
+        password: fakePassword,
+        last: lastName
       });
 
-      if (response.data.success) {
-        const userData = {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          name: response.data.user.nombres || response.data.user.name,
-          lastName: response.data.user.apellidos || response.data.user.lastName,
-          nombres: response.data.user.nombres,
-          apellidos: response.data.user.apellidos,
-          phone: response.data.user.telefonoCelular,
-          phoneSecondary: response.data.user.telefonoCelularSecundario,
-          emailVerified: true,
-          profileComplete: response.data.user.profileComplete ?? false,
-          clienteActivo: true,
-          fromGoogle: true,
-          avatarId: response.data.user.avatarId,
-          codCliente: response.data.user.codCliente
-        };
-
+      if (loginResponse.data.success && loginResponse.data.token && loginResponse.data.user) {
+        console.log('✅ [AuthService] Usuario LOGUEADO con Google');
+        
+        const userData = this.mapUserData(loginResponse.data.user);
+        localStorage.setItem('userId', userData.id.toString());
+        
         return {
           success: true,
-          token: response.data.token,
+          token: loginResponse.data.token,
           user: userData
         };
       }
 
       return {
         success: false,
-        message: response.data.message || 'Error con Google Auth'
+        message: loginResponse.data.message || 'Error con Google Auth'
       };
+
     } catch (error) {
       console.error('❌ [AuthService] Google auth error:', error);
+      
+      if (error.response?.data) {
+        return {
+          success: false,
+          message: error.response.data.message || 'Error de autenticación con Google'
+        };
+      }
+      
       return {
         success: false,
         message: 'Error de conexión con Google'
