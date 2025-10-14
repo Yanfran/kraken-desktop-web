@@ -4,10 +4,25 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Usar el nuevo AuthContext
 import { useTheme } from '../../../contexts/ThemeContext';
 import toast from 'react-hot-toast'; // ✅ AGREGADO: Para notificaciones
+import { useGoogleLogin } from '@react-oauth/google';
 import './Register.styles.scss';
 // AGREGAR después de tus imports existentes:
 import PasswordValidator, { validatePassword } from '../../../components/auth/PasswordValidator/PasswordValidator';
 import logoImage from '../../../assets/images/logo.jpg'; 
+
+// Icons actualizados
+import { 
+  IoEyeOutline,        // Para el ojo 👁️
+  IoEyeOffOutline,     // Para el ojo cerrado 🙈
+  IoCreateOutline,
+  IoCubeOutline,        // Para paquetes 📦
+  IoCarOutline,         // Para delivery 🚚
+  IoLocationOutline,    // Para ubicación 📍
+  IoClipboardOutline,   // Para información 📋
+  IoInformationCircleOutline, // Para el status box ℹ️
+  IoArrowBack,         // Para el botón de volver
+  IoDocumentTextOutline // Para facturas 📄
+} from 'react-icons/io5';
 
 // Componente toggle para cambio de tema (mantener igual)
 const ThemeToggle = () => {
@@ -62,6 +77,7 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordValidator, setShowPasswordValidator] = useState(false); // ← AGREGAR
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // ✅ MANEJAR CAMBIOS EN INPUTS
   const handleInputChange = (field, value) => {
@@ -92,6 +108,40 @@ const Register = () => {
       }
     }
   };
+
+  // 🔥 CONFIGURAR GOOGLE LOGIN CON HOOK
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
+      try {
+        console.log('🔵 Token recibido de Google');
+        
+        // Crear credential response
+        const credentialResponse = {
+          credential: tokenResponse.access_token
+        };
+        
+        const result = await signInWithGoogle(credentialResponse);
+        
+        if (result.success) {
+          toast.success('¡Bienvenido!');
+          navigate('/dashboard');
+        } else {
+          toast.error(result.message || 'Error con Google');
+        }
+      } catch (error) {
+        console.error('❌ Error en Google login:', error);
+        toast.error('Error al conectar con Google');
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error('❌ Error de Google:', error);
+      toast.error('Error con Google');
+      setGoogleLoading(false);
+    },
+  });
 
   // ✅ VALIDACIÓN DEL FORMULARIO
   const validateForm = () => {
@@ -193,22 +243,7 @@ const Register = () => {
     }
   };
 
-  // ✅ MANEJAR GOOGLE SIGN UP
-  const handleGoogleSignUp = async () => {
-    try {
-      const result = await signInWithGoogle();
-      
-      if (result.success) {
-        toast.success('¡Registro exitoso con Google!');
-        navigate('/dashboard');
-      } else {
-        toast.error(result.message || 'Error con Google Auth');
-      }
-    } catch (error) {
-      console.error('Error en Google sign up:', error);
-      toast.error('Error con autenticación de Google');
-    }
-  };
+ 
 
   return (
     <div className="kraken-register" data-theme={actualTheme}>
@@ -227,19 +262,21 @@ const Register = () => {
       {/* Título */}
       <h1 className="kraken-register__title">Crear cuenta</h1>
 
-      {/* Botón Google */}
+  
+
+      {/* 🔥 BOTÓN GOOGLE PERSONALIZADO */}
       <button
         type="button"
         className="kraken-register__google-button"
-        onClick={handleGoogleSignUp}
-        disabled={isLoading}
+        onClick={() => googleLogin()}
+        disabled={isLoading || googleLoading}
       >
-        <img 
-          src="/src/assets/images/google-icon.png" 
-          alt="Google" 
+        <img
+          src="https://www.google.com/favicon.ico"
+          alt="Google"
           className="kraken-register__google-icon"
         />
-        Continuar con Google
+        <span>Continuar con Google</span>
       </button>
 
       {/* Separador */}
@@ -321,7 +358,7 @@ const Register = () => {
               onClick={() => setShowPassword(!showPassword)}
               tabIndex="-1"
             >
-              {showPassword ? '🙈' : '👁️'}
+              {showPassword ? <IoEyeOffOutline size={18} /> : <IoEyeOutline size={18}/>}
             </button>
           </div>
           {errors.password && (

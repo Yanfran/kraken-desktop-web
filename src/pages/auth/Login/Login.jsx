@@ -7,6 +7,19 @@ import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import './Login.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg'; 
+// Icons actualizados
+import { 
+  IoEyeOutline,        // Para el ojo 👁️
+  IoEyeOffOutline,     // Para el ojo cerrado 🙈
+  IoCreateOutline,
+  IoCubeOutline,        // Para paquetes 📦
+  IoCarOutline,         // Para delivery 🚚
+  IoLocationOutline,    // Para ubicación 📍
+  IoClipboardOutline,   // Para información 📋
+  IoInformationCircleOutline, // Para el status box ℹ️
+  IoArrowBack,         // Para el botón de volver
+  IoDocumentTextOutline // Para facturas 📄
+} from 'react-icons/io5';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -179,7 +192,7 @@ const Login = () => {
               onClick={() => setShowPassword(!showPassword)}
               tabIndex="-1"
             >
-              {showPassword ? '🙈' : '👁️'}
+              {showPassword ? <IoEyeOffOutline size={18} /> : <IoEyeOutline size={18}/>}
             </button>
           </div>
           {errors.password && (
