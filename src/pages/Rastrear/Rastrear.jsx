@@ -1,37 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Rastrear.module.scss';
+import { 
+  searchTrackingNumber, 
+  searchTrackingInGuias, 
+  validateTrackingNumber,
+  generateStepsFromStatus 
+} from '../../services/trackingService';
 
-// You will need to install react-icons: npm install react-icons
-// Then import the icons you need, for example:
-// import { FaSearch, FaInfoCircle } from 'react-icons/fa';
-// For now, using simple placeholders.
-const SearchIcon = () => <i className="fa fa-search"></i>; // Replace with actual icon component
-const InfoIcon = ({ size, color }) => <i className="fa fa-info-circle" style={{ fontSize: size, color: color }}></i>; // Replace with actual icon component
-
-// Web equivalent for Tooltip
-const Tooltip = ({ content, iconSize = 16, iconColor = 'var(--color-text-secondary)', maxWidth = 250 }) => {
-  const [visible, setVisible] = useState(false);
-
-  return (
-    <div className={styles.tooltipContainer}>
-      <button
-        onMouseEnter={() => setVisible(true)}
-        onMouseLeave={() => setVisible(false)}
-        onClick={() => setVisible(!visible)} // For touch devices
-        className={styles.tooltipButton}
-        style={{ color: iconColor }} // Apply icon color
-      >
-        <InfoIcon size={iconSize} color={iconColor} />
-      </button>
-      {visible && (
-        <div className={styles.tooltipContent} style={{ maxWidth: maxWidth }}>
-          {content}
-        </div>
-      )}
-    </div>
-  );
-};
+import Tooltip from '../../components/common/Tooltip/Tooltip';
 
 export default function Rastrear() {
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -39,26 +16,7 @@ export default function Rastrear() {
   const [trackingResult, setTrackingResult] = useState(null);
   const navigate = useNavigate();
 
-  // Placeholder for tracking services. You'll need to implement these for web.
-  const searchTrackingNumber = async (num) => {
-    console.log('Searching tracking number (web placeholder):', num);
-    // Simulate API call
-    return new Promise(resolve => setTimeout(() => resolve({ success: false, data: null }), 1000));
-  };
-
-  const searchTrackingInGuias = async (num) => {
-    console.log('Searching tracking in guias (web placeholder):', num);
-    // Simulate API call
-    return new Promise(resolve => setTimeout(() => resolve({ success: false, data: null }), 1000));
-  };
-
-  const validateTrackingNumber = (num) => {
-    if (!num || num.trim() === '') {
-      return { isValid: false, message: 'Por favor, ingresa un número de rastreo.' };
-    }
-    return { isValid: true };
-  };
-
+  // Función principal de búsqueda con validación
   const handleTrackPackage = async () => {
     const validation = validateTrackingNumber(trackingNumber);
     if (!validation.isValid) {
@@ -69,14 +27,17 @@ export default function Rastrear() {
     setIsLoading(true);
 
     try {
+      // Primero intentar con el endpoint específico de tracking
       let response = await searchTrackingNumber(trackingNumber.trim());
 
+      // Si falla, intentar buscar en las guías existentes como fallback
       if (!response.success) {
         console.log('Intentando búsqueda en guías existentes...');
         response = await searchTrackingInGuias(trackingNumber.trim());
       }
 
       if (response.success && response.data) {
+        // Convertir datos del backend al formato de la interfaz
         const result = {
           trackingNumber: response.data.nGuia || trackingNumber.toUpperCase(),
           origin: response.data.origen || 'USA',
@@ -92,98 +53,45 @@ export default function Rastrear() {
         window.alert(
           'Paquete no encontrado: No se encontró información para este número de rastreo. Verifica que sea correcto.'
         );
-        showMockResult(); // Show mock result if not found
+        showMockResult(); // Mostrar resultado mock si no se encuentra
       }
     } catch (error) {
       console.error('Error buscando tracking:', error);
       window.alert(
         'Error de conexión: No se pudo conectar al servidor. Intenta nuevamente.'
       );
-      showMockResult(); // Show mock result on error
+      showMockResult(); // Mostrar resultado mock en caso de error
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Función para mostrar un resultado de ejemplo
   const showMockResult = () => {
     const mockResult = {
-      trackingNumber: trackingNumber.toUpperCase() || 'SDSFGASDAFSF',
+      trackingNumber: trackingNumber.toUpperCase() || 'K202509116385 1W3A',
       origin: 'USA',
-      status: 'Tránsito aéreo',
+      status: 'Avance! Comprobado',
       steps: [
-        { name: 'Pre-Alertado', date: '18:30 • Feb 7, 2025', completed: true },
-        { name: 'Recibido en Almacén (USA)', date: '08:20 • Feb 10, 2025', completed: true },
-        { name: 'Tránsito aéreo', date: '09:50 • Feb 10, 2025', completed: true, current: true },
-        { name: 'Aduana', date: '', completed: false },
-        { name: 'Recibido en Centro de distribución (VE)', date: '', completed: false },
-        { name: 'En ruta', date: '', completed: false },
-        { name: 'Disponible en tienda/e-Locker', date: '', completed: false },
-        { name: 'Entregado', date: '', completed: false }
+        { name: 'Recibido', date: 'Sep 11, 2025 • 16:38', completed: true },
+        { name: 'Procesado', date: 'Sep 16, 2025 • 10:54', completed: true },
+        { name: 'Rumbo a Venezuela', date: 'Oct 1, 2025 • 1:07', completed: true },
+        { name: 'Llegó a Venezuela', date: 'Oct 5, 2025 • 7:45', completed: true },
+        { name: 'Avance! Comprobado', date: 'Oct 6, 2025 • 08:50', completed: true, current: true }
       ],
-      guiaId: 123,
-      idGuia: 123
+      guiaId: null,
+      idGuia: null
     };
     setTrackingResult(mockResult);
   };
 
-  const generateStepsFromStatus = (estatus, historial) => {
-    if (!historial || historial.length === 0) {
-      return [{
-        name: estatus || 'En proceso',
-        date: 'Estado actual',
-        completed: true,
-        current: true
-      }];
-    }
-
-    const processedHistorial = [];
-    let lastProcessedEntry = null;
-
-    for (const entry of historial) {
-      const estatusLower = entry.estatus?.toLowerCase();
-
-      if (estatusLower === 'procesado') {
-        lastProcessedEntry = entry;
-      } else {
-        if (lastProcessedEntry) {
-          processedHistorial.push({
-            ...lastProcessedEntry,
-            name: 'Procesado'
-          });
-          lastProcessedEntry = null;
-        }
-        processedHistorial.push({
-          ...entry,
-          name: entry.estatus
-        });
-      }
-    }
-
-    if (lastProcessedEntry) {
-      processedHistorial.push({
-        ...lastProcessedEntry,
-        name: 'Procesado'
-      });
-    }
-
-    const steps = processedHistorial.map((entry, index) => {
-      const isLast = index === processedHistorial.length - 1;
-      return {
-        name: entry.name,
-        date: entry.fecha,
-        completed: true,
-        current: isLast
-      };
-    });
-
-    return steps;
-  };
-
+  // Resetear búsqueda
   const resetSearch = () => {
     setTrackingNumber('');
     setTrackingResult(null);
   };
 
+  // Ver detalles del paquete
   const handleVerDetallesTracking = async () => {
     if (!trackingResult) return;
 
@@ -212,7 +120,7 @@ export default function Rastrear() {
     } catch (error) {
       console.log('❌ Error buscando detalles de la guía:', error);
       window.alert(
-        `Información del Paquete\n` +
+        `Información del Paquete\n\n` +
         `Número de rastreo: ${trackingResult.trackingNumber}\n` +
         `Origen: ${trackingResult.origin}\n` +
         `Estado: ${trackingResult.status}\n` +
@@ -223,19 +131,27 @@ export default function Rastrear() {
     }
   };
 
+  // Renderizar cada paso del tracking (exacto de la app)
   const renderTrackingStep = (step, index) => {
     return (
       <div key={index} className={styles.stepRow}>
         <div className={styles.stepIndicator}>
           {step.completed ? (
             <div className={`${styles.stepCircle} ${styles.stepCompleted}`}>
-              {/* Placeholder for checkmark icon */}
-              <span style={{ color: 'var(--color-text-light)', fontSize: 12 }}>✓</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path 
+                  d="M10 3L4.5 8.5L2 6" 
+                  stroke="white" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
           ) : (
             <div className={`${styles.stepCircle} ${styles.stepPending}`} />
           )}
-          {index < 7 && <div className={styles.stepLine} />}
+          {index < (trackingResult?.steps?.length - 1 || 7) && <div className={styles.stepLine} />}
         </div>
         <div className={styles.stepContent}>
           <p className={`${styles.stepTitle} ${step.completed ? styles.stepTitleCompleted : ''} ${step.current ? styles.stepTitleCurrent : ''}`}>
@@ -249,15 +165,23 @@ export default function Rastrear() {
     );
   };
 
+  // Manejar Enter key en el input
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !isLoading) {
+      handleTrackPackage();
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.scrollContainer}>
         <div className={styles.content}>
           <div className={styles.trackingSection}>
+            {/* Header con título e icono */}
             <div className={styles.titleContainer}>
               <div className={styles.iconContainer}>
                 <img
-                  src="/images/about/icon-kraken-web-rastrear-_1.png"
+                  src="/src/assets/images/icon-kraken-web-rastrear-_1.png"
                   alt="Tracking Icon"
                   className={styles.calculatorIcon}
                 />
@@ -268,12 +192,14 @@ export default function Rastrear() {
               </p>
             </div>
 
+            {/* Input de búsqueda */}
             <div className={styles.inputContainer}>
               <input
                 type="text"
                 className={styles.trackingInput}
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="Ingresa tu número de rastreo"
                 disabled={isLoading}
               />
@@ -281,15 +207,40 @@ export default function Rastrear() {
                 className={`${styles.trackButton} ${isLoading ? styles.trackButtonDisabled : ''}`}
                 onClick={handleTrackPackage}
                 disabled={isLoading}
+                type="button"
               >
                 {isLoading ? (
-                  <div style={{ color: 'var(--color-text-light)', fontSize: 16 }}>Loading...</div>
+                  <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle 
+                      cx="12" 
+                      cy="12" 
+                      r="10" 
+                      stroke="white" 
+                      strokeWidth="4" 
+                      strokeDasharray="32" 
+                      strokeDashoffset="0"
+                      opacity="0.3"
+                    />
+                    <circle 
+                      cx="12" 
+                      cy="12" 
+                      r="10" 
+                      stroke="white" 
+                      strokeWidth="4" 
+                      strokeDasharray="32" 
+                      strokeDashoffset="8"
+                    />
+                  </svg>
                 ) : (
-                  <SearchIcon style={{ color: 'var(--color-text-light)', fontSize: 20 }} />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                  </svg>
                 )}
               </button>
             </div>
 
+            {/* Resultados del tracking */}
             {trackingResult && (
               <div>
                 <div className={styles.resultSection}>
@@ -298,11 +249,15 @@ export default function Rastrear() {
                       Haz seguimiento al estatus de tu paquete
                     </p>
 
+                    {/* Información del tracking */}
                     <div className={styles.trackingInfo}>
                       <div className={styles.labelContainer}>
                         <div className={styles.labelWithTooltip}>
                           <p className={styles.trackingLabel}>Tracking</p>
-                          <Tooltip content="Este es tu número de rastreo único para seguir el progreso de tu paquete." />
+                          <Tooltip 
+                            content="Este es tu número de rastreo único para seguir el progreso de tu paquete." 
+                            position="auto"
+                          />
                         </div>
                       </div>
 
@@ -317,30 +272,35 @@ export default function Rastrear() {
                       </p>
                     </div>
 
+                    {/* Origen del paquete */}
                     <div className={styles.originContainer}>
                       <p className={styles.originLabel}>Origen</p>
                       <p className={styles.originText}>{trackingResult.origin}</p>
                     </div>
                   </div>
 
+                  {/* Timeline de estados */}
                   <div className={styles.timelineContainer}>
                     {trackingResult.steps.map((step, index) => renderTrackingStep(step, index))}
                   </div>
-
                 </div>
 
+                {/* Link para ver detalles */}
                 <button
                   className={styles.packageDetailsLink}
                   onClick={handleVerDetallesTracking}
+                  type="button"
                 >
                   <p className={styles.packageDetailsText}>
                     Ver detalles del paquete
                   </p>
                 </button>
 
+                {/* Botón para nueva búsqueda */}
                 <button
                   className={styles.newTrackingButton}
                   onClick={resetSearch}
+                  type="button"
                 >
                   <p className={styles.newTrackingButtonText}>
                     Rastrear otro paquete

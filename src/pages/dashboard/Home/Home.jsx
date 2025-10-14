@@ -133,7 +133,9 @@ const Home = ({ onNavigateToShipments }) => {
       
       if (response.success && response.data) {
         // Format news items for carousel
-        const formattedNews = response.data.map(item => ({
+        const formattedNews = response.data
+        .filter(item => item.mostrar === true)
+        .map(item => ({
           id: item.id,
           title: item.title || item.titulo || 'Novedad',
           text: item.text || item.descripcion || item.contenido || '',

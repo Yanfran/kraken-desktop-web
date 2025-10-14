@@ -1,57 +1,45 @@
-/* Rastrear.module.scss */
+// src/pages/Rastrear/Rastrear.module.scss
+// Estilos adaptados desde React Native al diseño exacto de la app
 
-/* Define CSS variables for colors based on kraken/constants/Colors.ts */
-:root {
-  --color-input-background: #F5F5F5;
-  --color-border-color: #D0D0D0;
-  --color-primary: #FF4500;
-  --color-secondary: #0175c8;
-  --color-primary-light: #FF7F50;
-  --color-background: #FFFFFF;
-  --color-card-background: #F8F8F8;
-  --color-text-primary: #000000;
-  --color-text-secondary: #757575;
-  --color-text-light: #FFFFFF;
-  --color-text-placeholder: #AAAAAA;
-  --color-success: #4CAF50;
-  --color-error: #F44336;
-  --color-warning: #FF9800;
-  --color-info: #2196F3;
-  --color-disabled: #BDBDBD;
-  --color-tab-background: #FFFFFF;
-  --color-tab-active: #FF4500;
-  --color-tab-inactive: #757575;
-  --color-drawer-background: #FFFFFF;
-  --color-drawer-active-background: #FFE0D5;
-  --color-border: #E0E0E0;
-  --color-separator: #EEEEEE;
-  --color-shadow: #000000;
-  --color-overlay: rgba(0, 0, 0, 0.5);
-  --color-transparent: transparent;
-  --color-background-light: #F8F9FA;
-  --color-border-light: #F3F4F6;
-  --color-success-light: #ECFDF5;
-}
+// ===== COLORES (desde constants/Colors.ts) =====
+$primary: #FF4500;
+$secondary: #0175c8;
+$background: #FFFFFF;
+$card-background: #F8F8F8;
+$text-primary: #000000;
+$text-secondary: #757575;
+$text-light: #FFFFFF;
+$text-placeholder: #AAAAAA;
+$input-background: #F5F5F5;
+$border: #E0E0E0;
+$separator: #EEEEEE;
+$success: #4CAF50;
+$warning: #FF9800;
 
+// ===== CONTENEDOR PRINCIPAL =====
 .container {
-  background-color: var(--color-background);
-  min-height: 100%; /* Equivalent to flex: 1 in RN for full height */
+  flex: 1;
   display: flex;
   flex-direction: column;
+  background-color: $background;
+  min-height: 100vh;
+  width: 100%;
 }
 
 .scrollContainer {
   flex-grow: 1;
   padding-bottom: 100px;
-  overflow-y: auto; /* For web scrollability */
+  overflow-y: auto;
+  width: 100%;
 }
 
+// ===== CONTENIDO =====
 .content {
   flex: 1;
   padding: 0 16px;
-  max-width: 420px; /* Mimic AppContainer's max-width for mobile-like experience */
-  margin: 0 auto; /* Center the content */
   width: 100%;
+  max-width: 600px; // Limitar ancho máximo para mejor legibilidad
+  margin: 0 auto; // Centrar el contenido
 }
 
 .trackingSection {
@@ -59,8 +47,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
 }
 
+// ===== HEADER CON TÍTULO E ICONO =====
 .titleContainer {
   display: flex;
   flex-direction: column;
@@ -69,33 +59,40 @@
 }
 
 .iconContainer {
-  margin-bottom: 16px;
+  margin-top: 15px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 20px;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
 .calculatorIcon {
   width: 40px;
   height: 40px;
-  /* tintColor is React Native specific, use filter for web */
-  filter: brightness(0) saturate(100%) invert(29%) sepia(99%) saturate(7480%) hue-rotate(359deg) brightness(101%) contrast(103%); /* This filter approximates primary color */
+  // Aplicar tint color si es necesario
+  filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(5473%) hue-rotate(13deg) brightness(101%) contrast(106%);
 }
 
 .title {
   font-size: 20px;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: $text-primary;
   margin-bottom: 8px;
   text-align: center;
 }
 
 .subtitle {
   font-size: 16px;
-  color: var(--color-text-secondary);
+  color: $text-secondary;
   text-align: center;
   line-height: 22px;
   margin-bottom: 32px;
   padding: 0 20px;
 }
 
+// ===== INPUT DE BÚSQUEDA =====
 .inputContainer {
   display: flex;
   flex-direction: row;
@@ -106,30 +103,23 @@
 
 .trackingInput {
   flex: 1;
-  background-color: var(--color-input-background);
+  background-color: $input-background;
   border-radius: 30px;
   padding: 14px 16px;
   font-size: 16px;
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  outline: none; /* Remove default focus outline */
+  color: $text-primary;
+  border: 1px solid $border;
+  outline: none;
+  transition: border-color 0.2s ease;
 
   &::placeholder {
-    color: var(--color-text-placeholder);
+    color: $text-placeholder;
   }
-}
 
-.trackButton {
-  background-color: var(--color-secondary);
-  border-radius: 25px;
-  padding: 12px 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 60px;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-light); /* For icon color */
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+  }
 
   &:disabled {
     opacity: 0.6;
@@ -137,14 +127,47 @@
   }
 }
 
+.trackButton {
+  background-color: $secondary;
+  border-radius: 25px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 56px;
+
+  &:hover:not(:disabled) {
+    background-color: darken($secondary, 5%);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.trackButtonDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+// ===== SECCIÓN DE RESULTADOS =====
 .resultSection {
-  background-color: var(--color-background);
-  border-radius: 16px;
-  padding: 20px;
-  margin-top: 32px;
   width: 100%;
-  box-shadow: 0 2px 8px rgba(var(--color-shadow), 0.1); /* shadowOpacity 0.1 */
-  border: 1px solid var(--color-border);
+  background-color: $background;
+  border-radius: 16px;
+  padding: 24px 20px;
+  margin-top: 20px;
+  border: 1px solid $separator;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .resultHeader {
@@ -153,16 +176,21 @@
 
 .resultSubtitle {
   font-size: 16px;
-  color: var(--color-text-secondary);
-  text-align: center;
+  font-weight: 500;
+  color: $text-primary;
   margin-bottom: 20px;
+  text-align: center;
 }
 
+// ===== INFORMACIÓN DEL TRACKING =====
 .trackingInfo {
   margin-bottom: 20px;
 }
 
 .labelContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   margin-bottom: 8px;
 }
 
@@ -170,92 +198,150 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .trackingLabel {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: $text-secondary;
 }
 
-.trackingNumberContainer {
-  background-color: var(--color-input-background);
+// ===== TOOLTIP =====
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltipButton {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+}
+
+.tooltipContent {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.85);
+  color: $text-light;
+  padding: 8px 12px;
   border-radius: 8px;
-  padding: 12px;
-  margin: 8px 0;
-  border: 1px solid var(--color-border);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: normal;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.85);
+  }
+}
+
+// ===== NÚMERO DE TRACKING =====
+.trackingNumberContainer {
+  background-color: $input-background;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  border: 1px solid $border;
 }
 
 .trackingNumberText {
   font-size: 16px;
-  color: var(--color-text-primary);
   font-weight: 600;
+  color: $text-primary;
   text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .trackingHelper {
   font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 16px;
+  color: $text-secondary;
   text-align: center;
+  line-height: 16px;
+  padding: 0 8px;
 }
 
+// ===== ORIGEN =====
 .originContainer {
   display: flex;
-  flex-direction: column; /* Changed to column for flex-end alignment */
+  flex-direction: column;
   align-items: flex-end;
+  padding: 12px 16px;
+  margin-top: 8px;
 }
 
 .originLabel {
   font-size: 14px;
-  color: var(--color-text-secondary);
+  color: $text-secondary;
+  font-weight: 500;
   margin-bottom: 4px;
 }
 
 .originText {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  color: $text-primary;
 }
 
+// ===== TIMELINE DE ESTADOS =====
 .timelineContainer {
-  margin-bottom: 24px;
-  padding: 0 8px;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .stepRow {
   display: flex;
   flex-direction: row;
-  margin-bottom: 20px;
   align-items: flex-start;
+  gap: 16px;
+  position: relative;
+  min-height: 60px;
 }
 
 .stepIndicator {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: 16px;
   position: relative;
+  min-width: 20px;
 }
 
 .stepCircle {
   width: 20px;
   height: 20px;
-  border-radius: 50%;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   z-index: 2;
+  flex-shrink: 0;
 }
 
 .stepCompleted {
-  background-color: var(--color-success);
+  background-color: $success;
 }
 
 .stepPending {
-  background-color: var(--color-input-background);
-  border: 2px solid var(--color-border);
+  background-color: $input-background;
+  border: 2px solid $border;
 }
 
 .stepLine {
@@ -263,7 +349,7 @@
   top: 20px;
   width: 2px;
   height: 40px;
-  background-color: var(--color-border);
+  background-color: $border;
   z-index: 1;
 }
 
@@ -274,106 +360,155 @@
 
 .stepTitle {
   font-size: 16px;
-  color: var(--color-text-secondary);
+  color: $text-secondary;
   margin-bottom: 4px;
   line-height: 20px;
 }
 
 .stepTitleCompleted {
-  color: var(--color-text-primary);
+  color: $text-primary;
   font-weight: 500;
 }
 
 .stepTitleCurrent {
-  color: var(--color-primary);
+  color: $primary;
   font-weight: 600;
 }
 
 .stepDate {
   font-size: 14px;
-  color: var(--color-text-secondary);
+  color: $text-secondary;
   line-height: 18px;
 }
 
+// ===== BOTONES DE ACCIÓN =====
 .packageDetailsLink {
   display: flex;
   align-items: flex-end;
-  justify-content: flex-end; /* Align text to the right */
+  justify-content: flex-end;
   margin-right: 15px;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding: 8px 0;
   margin-top: 30px;
-  border-top: 1px solid #e0dddd; /* Specific color from RN style */
-  cursor: pointer;
+  border-top: 1px solid $separator;
   background: none;
   border-left: none;
   border-right: none;
   border-bottom: none;
-  width: auto; /* Allow button to size to content */
-  align-self: flex-end; /* Align button to the right */
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  width: 100%;
+
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
 .packageDetailsText {
-  color: var(--color-warning);
+  color: $warning;
   font-size: 14px;
   font-weight: 500;
   margin-top: 10px;
-  text-decoration: none; /* Ensure no underline by default */
 }
 
 .newTrackingButton {
-  background-color: var(--color-secondary);
+  background-color: $secondary;
   border-radius: 25px;
-  padding: 14px;
+  padding: 14px 0;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 20px;
   margin-bottom: 16px;
+  width: 100%;
   border: none;
   cursor: pointer;
-  width: 100%;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(1, 117, 200, 0.2);
+
+  &:hover {
+    background-color: darken($secondary, 5%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(1, 117, 200, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 .newTrackingButtonText {
-  color: var(--color-text-light);
+  color: $text-light;
   font-size: 16px;
   font-weight: 600;
 }
 
-/* Tooltip styles */
-.tooltipContainer {
-  position: relative;
-  display: inline-block;
+// ===== RESPONSIVE =====
+@media (max-width: 768px) {
+  .trackingSection {
+    padding-top: 30px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .resultSection {
+    padding: 20px 16px;
+  }
+
+  .content {
+    max-width: 100%; // Ancho completo en móvil
+  }
 }
 
-.tooltipButton {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  margin-left: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: var(--color-text-secondary); /* Default icon color */
+@media (max-width: 480px) {
+  .content {
+    padding: 0 12px;
+  }
+
+  .inputContainer {
+    gap: 8px;
+  }
+
+  .trackButton {
+    padding: 14px 16px;
+    min-width: 52px;
+  }
 }
 
-.tooltipContent {
-  position: absolute;
-  background-color: #333;
-  padding: 12px 16px;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 14px;
-  line-height: 20px;
-  text-align: center;
-  z-index: 1000;
-  bottom: 100%; /* Position above the icon */
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  max-width: 250px; /* Default max-width */
-  white-space: normal; /* Allow text to wrap */
+@media (min-width: 769px) {
+  .content {
+    max-width: 600px; // Limitar ancho en desktop para mejor legibilidad
+  }
+}
+
+// ===== ANIMACIONES =====
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resultSection {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.stepRow {
+  animation: fadeIn 0.3s ease-out;
+  animation-fill-mode: both;
+  
+  @for $i from 1 through 8 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
 }
