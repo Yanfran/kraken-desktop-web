@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import './EmailVerify.styles.scss';
+import logoImage from '../../../assets/images/logo.jpg';
 
 const EmailVerify = () => {
   const [searchParams] = useSearchParams();
@@ -81,7 +82,7 @@ const EmailVerify = () => {
         {/* Logo */}
         <div className="kraken-email-verify__logo">
           <img
-            src="/src/assets/images/logo.jpg"
+            src={logoImage}
             alt="Kraken Logo"
             className="kraken-email-verify__logo-image"
           />

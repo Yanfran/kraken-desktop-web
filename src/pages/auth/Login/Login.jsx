@@ -6,6 +6,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import './Login.styles.scss';
+import logoImage from '../../../assets/images/logo.jpg'; 
 
 const Login = () => {
   const navigate = useNavigate();
@@ -109,7 +110,7 @@ const Login = () => {
       {/* Logo */}
       <div className="kraken-login__logo">
         <img 
-          src="/src/assets/images/logo.jpg" 
+          src={logoImage} 
           alt="Kraken Logo" 
           className="kraken-login__logo-image"
         />

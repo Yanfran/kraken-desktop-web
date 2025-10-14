@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import './PreAlertList.styles.scss';
+import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png'; 
 
 // Services
 import { 
@@ -204,7 +205,7 @@ const PreAlertList = () => {
         <div className="pre-alert-list__header">
           <div className="pre-alert-list__icon">
             <img
-              src="/src/assets/images/icon-kraken-web-parlante_1.png"
+              src={iconImage}
               style={{
                 width: 50,
                 filter: 'invert(41%) sepia(99%) saturate(7496%) hue-rotate(358deg) brightness(99%) contrast(101%)'

@@ -2,6 +2,12 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import './TopNavigation.styles.scss';
+import iconPulpo from '../../../src/assets/images/icon-kraken-web-pulpo-peq.png'; 
+import iconCalcula from '../../../src/assets/images/icon-kraken-web-calculadora.png'; 
+import iconParlante from '../../../src/assets/images/icon-kraken-web-parlante_1.png'; 
+import iconRastreo from '../../../src/assets/images/icon-kraken-web-rastrear-_1.png'; 
+import iconLogo from '../../../src/assets/images/logo.jpg'; 
+
 
 const TopNavigation = ({ 
   onToggleSidebar, 
@@ -14,28 +20,28 @@ const TopNavigation = ({
     { 
       id: 'inicio', 
       label: 'Inicio', 
-      icon: '/src/assets/images/icon-kraken-web-pulpo-peq.png',
+      icon: iconPulpo,
       iconAlt: '🏠',
       path: '/dashboard'
     },
     { 
       id: 'calcular', 
       label: 'Calcular', 
-      icon: '/src/assets/images/icon-kraken-web-calculadora.png',
+      icon: iconCalcula,
       iconAlt: '🧮',
       path: '/calculator'
     },
     { 
       id: 'pre-alertar', 
       label: 'Pre-Alertar', 
-      icon: '/src/assets/images/icon-kraken-web-parlante_1.png',
+      icon: iconParlante,
       iconAlt: '📦',
       path: '/pre-alert/list'
     },
     { 
       id: 'rastrear', 
       label: 'Rastrear', 
-      icon: '/src/assets/images/icon-kraken-web-rastrear-_1.png',
+      icon: iconRastreo,
       iconAlt: '📍',
       path: '/rastrear'
     }
@@ -56,7 +62,7 @@ const TopNavigation = ({
         {/* Logo Kraken pegado a la izquierda */}
         <div className="top-navigation__logo-container">
           <img 
-            src="/src/assets/images/logo.jpg" 
+            src={iconLogo} 
             alt="Kraken Logo" 
             className="top-navigation__logo-image"
             onError={(e) => {

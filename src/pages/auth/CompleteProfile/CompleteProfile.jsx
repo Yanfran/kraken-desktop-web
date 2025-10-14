@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext'; // ✅ Importar desde contexts
 import { useTheme } from '../../../contexts/ThemeContext';
 import './CompleteProfile.styles.scss';
+import logoImage from '../../../assets/images/logo.jpg'; 
+
 
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
@@ -84,7 +86,7 @@ const CompleteProfile = () => {
       {/* Logo - Mismas medidas que otras pantallas */}
       <div className="kraken-complete-profile__logo">
         <img
-          src="/src/assets/images/logo.jpg"
+          src={logoImage}
           alt="Kraken Logo"
           className="kraken-complete-profile__logo-image"
           onError={(e) => {

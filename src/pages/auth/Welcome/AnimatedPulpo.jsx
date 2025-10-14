@@ -1,5 +1,6 @@
 // src/pages/auth/Welcome/AnimatedPulpo.jsx
 import React, { useEffect, useRef } from 'react';
+import pulpoImage from '../../../assets/images/splash-icon.png'; 
 
 const AnimatedPulpo = ({ size = 250 }) => {
   const pulpoRef = useRef(null);
@@ -23,7 +24,7 @@ const AnimatedPulpo = ({ size = 250 }) => {
     <div className="animated-pulpo-container">
       <img
         ref={pulpoRef}
-        src="/src/assets/images/splash-icon.png"
+        src={pulpoImage}
         alt="Kraken Pulpo"
         className="animated-pulpo"
         style={{

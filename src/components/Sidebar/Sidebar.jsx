@@ -6,15 +6,20 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { updateAvatar } from '../../services/profile/profileService';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
+import KrakenOriginal from '../../../src/assets/images/avatars/Kraken-Original.png'; 
+import KrakenChino from '../../../src/assets/images/avatars/Kraken-Chino.png'; 
+import KrakenSam from '../../../src/assets/images/avatars/Kraken-Sam.png'; 
+import KrakenAcademico from '../../../src/assets/images/avatars/Kraken-Academico.png'; 
+import KrakenAgente from '../../../src/assets/images/avatars/Kraken-Agente.png'; 
 import './Sidebar.styles.scss';
 
 // Mapeo de avatares disponibles (igual que en la app)
 const AVATAR_SOURCES = {
-  '1': '/src/assets/images/avatars/Kraken-Original.png',
-  '2': '/src/assets/images/avatars/Kraken-Chino.png',
-  '3': '/src/assets/images/avatars/Kraken-Sam.png',
-  '4': '/src/assets/images/avatars/Kraken-Academico.png',
-  '5': '/src/assets/images/avatars/Kraken-Agente.png',
+  '1': KrakenOriginal,
+  '2': KrakenChino,
+  '3': KrakenSam,
+  '4': KrakenAcademico,
+  '5': KrakenAgente,
 };
 
 const Sidebar = ({ isOpen, onClose }) => {

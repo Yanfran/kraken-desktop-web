@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Tooltip from '../../../components/common/Tooltip/Tooltip';
+import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png'; 
 
 // Services
 import {
@@ -549,7 +550,7 @@ const PreAlertCreate = () => {
         <div className="prealert-create__header">
           <div className="prealert-create__icon">
             <img
-              src="/src/assets/images/icon-kraken-web-parlante_1.png"
+              src={iconImage}
               style={{
                 width: 50,
                 filter: 'invert(41%) sepia(99%) saturate(7496%) hue-rotate(358deg) brightness(99%) contrast(101%)'

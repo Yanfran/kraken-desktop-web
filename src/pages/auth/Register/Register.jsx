@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'; // ✅ AGREGADO: Para notificaciones
 import './Register.styles.scss';
 // AGREGAR después de tus imports existentes:
 import PasswordValidator, { validatePassword } from '../../../components/auth/PasswordValidator/PasswordValidator';
+import logoImage from '../../../assets/images/logo.jpg'; 
 
 // Componente toggle para cambio de tema (mantener igual)
 const ThemeToggle = () => {
@@ -217,7 +218,7 @@ const Register = () => {
       {/* Logo */}
       <div className="kraken-register__logo">
         <img 
-          src="/src/assets/images/logo.jpg" 
+          src={logoImage }
           alt="Kraken Logo" 
           className="kraken-register__logo-image"
         />

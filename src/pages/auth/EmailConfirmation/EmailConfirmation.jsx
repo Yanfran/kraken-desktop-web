@@ -5,6 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import toast from 'react-hot-toast';
 import './EmailConfirmation.styles.scss';
+import logoImage from '../../../assets/images/logo.jpg';
 
 const ThemeToggle = () => {
   const { actualTheme, toggleTheme } = useTheme();
@@ -132,7 +133,7 @@ const EmailConfirmation = () => {
       
       <div className="kraken-email-confirmation__logo">
         <img
-          src="/src/assets/images/logo.jpg"
+          src={logoImage}
           alt="Kraken Logo"
           className="kraken-email-confirmation__logo-image"
           onError={(e) => {

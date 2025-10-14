@@ -8,6 +8,7 @@ import axiosInstance from '../../../services/axiosInstance';
 import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
 import './DeliveryOption.styles.scss';
 import { useAuth } from '../../../contexts/AuthContext';
+import logoImage from '../../../assets/images/logo.jpg'; 
 
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
@@ -388,7 +389,7 @@ const DeliveryOption = () => {
 
       <div className="kraken-delivery-option__logo">
         <img
-          src="/src/assets/images/logo.jpg"
+          src={logoImage}
           alt="Kraken Logo"
           className="kraken-delivery-option__logo-image"
           onError={(e) => {

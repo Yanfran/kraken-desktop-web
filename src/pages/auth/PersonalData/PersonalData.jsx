@@ -7,6 +7,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import axiosInstance from '../../../services/axiosInstance';
 import './PersonalData.styles.scss';
 import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
+import logoImage from '../../../assets/images/logo.jpg'; 
 
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
@@ -474,7 +475,7 @@ const PersonalData = () => {
       {/* Logo */}
       <div className="kraken-personal-data__logo">
         <img
-          src="/src/assets/images/logo.jpg"
+          src={logoImage}
           alt="Kraken Logo"
           className="kraken-personal-data__logo-image"
           onError={(e) => {

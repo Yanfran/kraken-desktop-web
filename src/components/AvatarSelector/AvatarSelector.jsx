@@ -1,32 +1,38 @@
 // src/components/AvatarSelector/AvatarSelector.jsx
 import React, { useState, useEffect } from 'react';
+
+import KrakenOriginal from '../../../src/assets/images/avatars/Kraken-Original.png'; 
+import KrakenChino from '../../../src/assets/images/avatars/Kraken-Chino.png'; 
+import KrakenSam from '../../../src/assets/images/avatars/Kraken-Sam.png'; 
+import KrakenAcademico from '../../../src/assets/images/avatars/Kraken-Academico.png'; 
+import KrakenAgente from '../../../src/assets/images/avatars/Kraken-Agente.png'; 
 import './AvatarSelector.styles.scss';
 
 // Configuración de avatares disponibles (igual que en la app)
 const AVAILABLE_AVATARS = [
   {
     id: '1',
-    source: '/src/assets/images/avatars/Kraken-Original.png',
+    source: KrakenOriginal,
     name: 'Original'
   },
   {
     id: '2',
-    source: '/src/assets/images/avatars/Kraken-Chino.png',
+    source: KrakenChino,
     name: 'Chino'
   },
   {
     id: '3',
-    source: '/src/assets/images/avatars/Kraken-Sam.png',
+    source: KrakenSam,
     name: 'Sam'
   },
   {
     id: '4',
-    source: '/src/assets/images/avatars/Kraken-Academico.png',
+    source: KrakenAcademico,
     name: 'Académico'
   },
   {
     id: '5',
-    source: '/src/assets/images/avatars/Kraken-Agente.png',
+    source: KrakenAgente,
     name: 'Agente'
   }
 ];

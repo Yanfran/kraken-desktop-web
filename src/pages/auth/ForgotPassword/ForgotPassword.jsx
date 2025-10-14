@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import './ForgotPassword.styles.scss'; // Importa el nuevo archivo de estilos
+import logoImage from '../../../assets/images/logo.jpg'; 
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const ForgotPassword = () => {
     <div className="kraken-forgot-password" data-theme={actualTheme}>
       <div className="kraken-forgot-password__logo">
         <img
-          src="/src/assets/images/logo.jpg"
+          src={logoImage}
           alt="Kraken Logo"
           className="kraken-forgot-password__logo-image"
         />

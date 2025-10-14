@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import './PreAlertDetail.styles.scss';
+import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png'; 
 
 // Icons actualizados
 import { 
@@ -151,7 +152,7 @@ const PreAlertDetail = () => {
         <div className="pre-alert-detail-padre__header">
           <div className="prealert-detail__icon">
             <img
-              src="/src/assets/images/icon-kraken-web-parlante_1.png"
+              src={iconImage}
               style={{
                 width: 50,
                 filter: 'invert(41%) sepia(99%) saturate(7496%) hue-rotate(358deg) brightness(99%) contrast(101%)'

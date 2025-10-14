@@ -7,6 +7,7 @@ import {
   validateTrackingNumber,
   generateStepsFromStatus 
 } from '../../services/trackingService';
+import iconImage from '../../../src/assets/images/icon-kraken-web-rastrear-_1.png'; 
 
 import Tooltip from '../../components/common/Tooltip/Tooltip';
 
@@ -181,7 +182,7 @@ export default function Rastrear() {
             <div className={styles.titleContainer}>
               <div className={styles.iconContainer}>
                 <img
-                  src="/src/assets/images/icon-kraken-web-rastrear-_1.png"
+                  src={iconImage}
                   alt="Tracking Icon"
                   className={styles.calculatorIcon}
                 />
