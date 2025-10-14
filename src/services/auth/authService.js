@@ -1,7 +1,8 @@
-// src/services/auth/authService.js - CORREGIDO
+// src/services/auth/authService.js - CORREGIDO COMPLETAMENTE
 import axios from 'axios';
 import { API_URL } from '../../utils/config';
 
+// Configurar axios instance
 const authAPI = axios.create({
   baseURL: API_URL,
   headers: {
@@ -9,6 +10,7 @@ const authAPI = axios.create({
   }
 });
 
+// Interceptor para incluir token en requests
 authAPI.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -20,6 +22,7 @@ authAPI.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Interceptor para manejar errores de autenticación
 authAPI.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -32,6 +35,52 @@ authAPI.interceptors.response.use(
   }
 );
 
+// ===== 🔥 FUNCIONES HELPER FUERA DEL OBJETO =====
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('❌ [AuthService] Error decodificando JWT:', error);
+    throw new Error('Token de Google inválido');
+  }
+};
+
+const mapUserData = (serverUser) => {
+  return {
+    id: serverUser.id,
+    email: serverUser.email,
+    name: serverUser.nombres || serverUser.name,
+    lastName: serverUser.apellidos || serverUser.lastName,
+    nombres: serverUser.nombres,
+    apellidos: serverUser.apellidos,
+    phone: serverUser.telefonoCelular,
+    phoneSecondary: serverUser.telefonoCelularSecundario,
+    telefonoCelular: serverUser.telefonoCelular,
+    telefonoCelularSecundario: serverUser.telefonoCelularSecundario,
+    idNumber: serverUser.nroIdentificacionCliente,
+    nroIdentificacionCliente: serverUser.nroIdentificacionCliente,
+    idClienteTipoIdentificacion: serverUser.idClienteTipoIdentificacion,
+    birthday: serverUser.fechaNacimiento,
+    fechaNacimiento: serverUser.fechaNacimiento,
+    avatarId: serverUser.avatarId || '1',
+    emailVerified: serverUser.emailVerified ?? serverUser.fromEmail ?? true,
+    profileComplete: serverUser.profileComplete ?? false,
+    clienteActivo: serverUser.clienteActivo ?? true,
+    fromGoogle: serverUser.fromGoogle ?? true,
+    codCliente: serverUser.codCliente,
+    idClienteTipo: serverUser.idClienteTipo
+  };
+};
+
+// ===== OBJETO PRINCIPAL =====
 export const authService = {
   // ===== LOGIN =====
   async login(credentials) {
@@ -220,131 +269,121 @@ export const authService = {
     }
   },
 
-  // ===== 🔥 GOOGLE AUTH =====
-  async loginWithGoogle(idToken) {
-    try {
-      console.log('🔵 [AuthService] Enviando ID Token a backend...');
+  // ===== 🔥 GOOGLE AUTH - SIN THIS =====
+  async loginWithGoogle(tokenOrCredential) {
+  try {
+    console.log('🔵 [AuthService] Procesando Google auth...');
+    
+    let userEmail, firstName, lastName, userId;
+    
+    // Verificar si es un JWT (tiene 3 partes separadas por puntos)
+    const isJWT = tokenOrCredential.includes('.') && tokenOrCredential.split('.').length === 3;
+    
+    if (isJWT) {
+      // Es un ID Token JWT - decodificar
+      console.log('🔵 [AuthService] Procesando ID Token JWT...');
+      const decoded = decodeJWT(tokenOrCredential);
+      userEmail = decoded.email;
+      firstName = decoded.given_name || decoded.name?.split(' ')[0] || decoded.name;
+      lastName = decoded.family_name || decoded.name?.split(' ').slice(1).join(' ') || '';
+      userId = decoded.sub;
+    } else {
+      // Es un Access Token - obtener info del usuario de Google
+      console.log('🔵 [AuthService] Procesando Access Token, obteniendo info del usuario...');
       
-      const decoded = authService.decodeJWT(idToken);
-      console.log('👤 [AuthService] Usuario de Google decodificado:', decoded.email);
-
-      const fakePassword = decoded.sub + '_google';
-      const firstName = decoded.given_name || decoded.name?.split(' ')[0] || decoded.name;
-      const lastName = decoded.family_name || decoded.name?.split(' ').slice(1).join(' ') || '';
-
       try {
-        console.log('🔵 [AuthService] Intentando REGISTRO con Google...');
-        const registerResponse = await authAPI.post('/Users/google', {
-          name: firstName,
-          email: decoded.email,
-          password: fakePassword,
-          last: lastName
+        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenOrCredential}` },
         });
-
-        if (registerResponse.data.success && registerResponse.data.token && registerResponse.data.user) {
-          console.log('✅ [AuthService] Usuario REGISTRADO con Google');
-          
-          const userData = authService.mapUserData(registerResponse.data.user);
-          localStorage.setItem('userId', userData.id.toString());
-          
-          return {
-            success: true,
-            token: registerResponse.data.token,
-            user: userData
-          };
+        
+        if (!userInfoResponse.ok) {
+          throw new Error('No se pudo obtener info del usuario de Google');
         }
-      } catch (registerError) {
-        console.log('⚠️ [AuthService] Registro falló, intentando LOGIN...');
+        
+        const userInfo = await userInfoResponse.json();
+        console.log('👤 [AuthService] Info del usuario obtenida:', userInfo.email);
+        
+        userEmail = userInfo.email;
+        firstName = userInfo.given_name || userInfo.name?.split(' ')[0] || userInfo.name;
+        lastName = userInfo.family_name || userInfo.name?.split(' ').slice(1).join(' ') || '';
+        userId = userInfo.sub;
+      } catch (fetchError) {
+        console.error('❌ [AuthService] Error obteniendo info del usuario:', fetchError);
+        throw new Error('No se pudo obtener información del usuario de Google');
       }
+    }
 
-      console.log('🔵 [AuthService] Intentando LOGIN con Google...');
-      const loginResponse = await authAPI.post('/Users/google', {
+    const fakePassword = userId + '_google';
+
+    // Intentar REGISTRO primero
+    try {
+      console.log('🔵 [AuthService] Intentando REGISTRO con Google...');
+      const registerResponse = await authAPI.post('/Users/google', {
         name: firstName,
-        email: decoded.email,
+        email: userEmail,
         password: fakePassword,
         last: lastName
       });
 
-      if (loginResponse.data.success && loginResponse.data.token && loginResponse.data.user) {
-        console.log('✅ [AuthService] Usuario LOGUEADO con Google');
+      if (registerResponse.data.success && registerResponse.data.token && registerResponse.data.user) {
+        console.log('✅ [AuthService] Usuario REGISTRADO con Google');
         
-        const userData = authService.mapUserData(loginResponse.data.user);
+        const userData = mapUserData(registerResponse.data.user);
         localStorage.setItem('userId', userData.id.toString());
         
         return {
           success: true,
-          token: loginResponse.data.token,
+          token: registerResponse.data.token,
           user: userData
         };
       }
+    } catch (registerError) {
+      console.log('⚠️ [AuthService] Registro falló, intentando LOGIN...');
+    }
 
-      return {
-        success: false,
-        message: loginResponse.data.message || 'Error con Google Auth'
-      };
+    // Si el registro falla, intentar LOGIN
+    console.log('🔵 [AuthService] Intentando LOGIN con Google...');
+    const loginResponse = await authAPI.post('/Users/google', {
+      name: firstName,
+      email: userEmail,
+      password: fakePassword,
+      last: lastName
+    });
 
-    } catch (error) {
-      console.error('❌ [AuthService] Google auth error:', error);
+    if (loginResponse.data.success && loginResponse.data.token && loginResponse.data.user) {
+      console.log('✅ [AuthService] Usuario LOGUEADO con Google');
       
-      if (error.response?.data) {
-        return {
-          success: false,
-          message: error.response.data.message || 'Error de autenticación con Google'
-        };
-      }
+      const userData = mapUserData(loginResponse.data.user);
+      localStorage.setItem('userId', userData.id.toString());
       
       return {
-        success: false,
-        message: 'Error de conexión con Google'
+        success: true,
+        token: loginResponse.data.token,
+        user: userData
       };
     }
-  },
 
-  // ===== 🔥 HELPER: Decodificar JWT de Google (ARROW FUNCTION) =====
-  decodeJWT: (token) => {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(jsonPayload);
-    } catch (error) {
-      console.error('❌ [AuthService] Error decodificando JWT:', error);
-      throw new Error('Token de Google inválido');
-    }
-  },
-
-  // ===== 🔥 HELPER: Mapear datos del usuario (ARROW FUNCTION) =====
-  mapUserData: (serverUser) => {
     return {
-      id: serverUser.id,
-      email: serverUser.email,
-      name: serverUser.nombres || serverUser.name,
-      lastName: serverUser.apellidos || serverUser.lastName,
-      nombres: serverUser.nombres,
-      apellidos: serverUser.apellidos,
-      phone: serverUser.telefonoCelular,
-      phoneSecondary: serverUser.telefonoCelularSecundario,
-      telefonoCelular: serverUser.telefonoCelular,
-      telefonoCelularSecundario: serverUser.telefonoCelularSecundario,
-      idNumber: serverUser.nroIdentificacionCliente,
-      nroIdentificacionCliente: serverUser.nroIdentificacionCliente,
-      idClienteTipoIdentificacion: serverUser.idClienteTipoIdentificacion,
-      birthday: serverUser.fechaNacimiento,
-      fechaNacimiento: serverUser.fechaNacimiento,
-      avatarId: serverUser.avatarId || '1',
-      emailVerified: serverUser.emailVerified ?? serverUser.fromEmail ?? true,
-      profileComplete: serverUser.profileComplete ?? false,
-      clienteActivo: serverUser.clienteActivo ?? true,
-      fromGoogle: serverUser.fromGoogle ?? true,
-      codCliente: serverUser.codCliente,
-      idClienteTipo: serverUser.idClienteTipo
+      success: false,
+      message: loginResponse.data.message || 'Error con Google Auth'
     };
-  },
+
+  } catch (error) {
+    console.error('❌ [AuthService] Google auth error:', error);
+    
+    if (error.response?.data) {
+      return {
+        success: false,
+        message: error.response.data.message || 'Error de autenticación con Google'
+      };
+    }
+    
+    return {
+      success: false,
+      message: error.message || 'Error de conexión con Google'
+    };
+  }
+},
 
   // ===== OTROS MÉTODOS =====
   async forgotPassword(email) {

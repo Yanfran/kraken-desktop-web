@@ -4,7 +4,7 @@ import Colors from '../../constants/colors'; // ✅ RUTA CORREGIDA
 
 const ThemeContext = createContext(undefined);
 
-export const ThemeProvider = ({ children, initialTheme = 'system' }) => {
+export const ThemeProvider = ({ children, initialTheme = 'light' }) => {
   const [theme, setThemeState] = useState(() => {
     // Intentar obtener el tema desde localStorage
     if (typeof window !== 'undefined') {
@@ -32,10 +32,7 @@ export const ThemeProvider = ({ children, initialTheme = 'system' }) => {
   }, []);
 
   // Determinar el tema actual
-  const actualTheme = 
-    theme === 'system' 
-      ? systemPrefersDark ? 'dark' : 'light'
-      : theme === 'dark' ? 'dark' : 'light';
+  const actualTheme = theme === 'dark' ? 'dark' : 'light';
 
   // Obtener los colores basados en el tema actual
   const colors = Colors[actualTheme];

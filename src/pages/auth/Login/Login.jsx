@@ -1,88 +1,66 @@
-// src/pages/auth/Login/Login.jsx - IMPLEMENTACIÓN COMPLETA CON TU DISEÑO
+// src/pages/auth/Login/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Usar el nuevo AuthContext
+import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
-import toast from 'react-hot-toast'; // ✅ AGREGADO: Para notificaciones
+import toast from 'react-hot-toast';
+import { useGoogleLogin } from '@react-oauth/google';
 import './Login.styles.scss';
-import { GoogleLogin } from '@react-oauth/google';
-
-// Componente toggle para cambio de tema (mantener igual)
-const ThemeToggle = () => {
-  const { actualTheme, toggleTheme } = useTheme();
-  
-  return (
-    <button
-      className="theme-toggle-button"
-      onClick={toggleTheme}
-      aria-label={`Cambiar a modo ${actualTheme === 'light' ? 'oscuro' : 'claro'}`}
-      style={{
-        position: 'absolute',
-        top: '20px',
-        right: '20px',
-        background: 'none',
-        border: 'none',
-        fontSize: '24px',
-        cursor: 'pointer',
-        zIndex: 20,
-        padding: '8px',
-        borderRadius: '50%',
-        transition: 'background-color 0.2s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.backgroundColor = actualTheme === 'light' 
-          ? 'rgba(0, 0, 0, 0.1)' 
-          : 'rgba(255, 255, 255, 0.1)';
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.backgroundColor = 'transparent';
-      }}
-    >
-      {actualTheme === 'light' ? '🌙' : '☀️'}
-    </button>
-  );
-};
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, signInWithGoogle, isLoading } = useAuth(); // ✅ FUNCIONALIDAD REAL
+  const { signIn, signInWithGoogle, isLoading } = useAuth();
   const { colors, actualTheme } = useTheme();
   
-  // ✅ ESTADOS DEL FORMULARIO
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  // ✅ MANEJAR CAMBIOS EN INPUTS
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Limpiar error cuando el usuario empieza a escribir
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  // 🔥 Login con Google
-  const handleGoogleLogin = async (credentialResponse) => {
-    try {
-      const result = await signInWithGoogle(credentialResponse);
-      
-      if (result.success) {
-        toast.success('¡Bienvenido!');
-        navigate('/dashboard');
-      } else {
-        toast.error(result.message || 'Error con Google');
+  // 🔥 CONFIGURAR GOOGLE LOGIN CON HOOK
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
+      try {
+        console.log('🔵 Token recibido de Google');
+        
+        // Crear credential response
+        const credentialResponse = {
+          credential: tokenResponse.access_token
+        };
+        
+        const result = await signInWithGoogle(credentialResponse);
+        
+        if (result.success) {
+          toast.success('¡Bienvenido!');
+          navigate('/dashboard');
+        } else {
+          toast.error(result.message || 'Error con Google');
+        }
+      } catch (error) {
+        console.error('❌ Error en Google login:', error);
+        toast.error('Error al conectar con Google');
+      } finally {
+        setGoogleLoading(false);
       }
-    } catch (error) {
-      toast.error('Error al conectar con Google');
-    }
-  };  
-  
+    },
+    onError: (error) => {
+      console.error('❌ Error de Google:', error);
+      toast.error('Error con Google');
+      setGoogleLoading(false);
+    },
+  });
 
-  // ✅ VALIDACIÓN DEL FORMULARIO
   const validateForm = () => {
     const newErrors = {};
     
@@ -100,7 +78,6 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ MANEJAR SUBMIT DEL FORMULARIO
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -113,7 +90,6 @@ const Login = () => {
         toast.success('¡Bienvenido de vuelta!');
         navigate('/dashboard');
       } else {
-        // Manejar errores específicos del backend
         if (result.field) {
           setErrors({ [result.field]: result.message });
         } else {
@@ -127,13 +103,9 @@ const Login = () => {
       toast.error('Error de conexión. Intenta de nuevo.');
     }
   };
-  
 
   return (
     <div className="kraken-login" data-theme={actualTheme}>
-      {/* Theme Toggle */}
-      {/* <ThemeToggle /> */}
-
       {/* Logo */}
       <div className="kraken-login__logo">
         <img 
@@ -146,15 +118,20 @@ const Login = () => {
       {/* Título */}
       <h1 className="kraken-login__title">Iniciar Sesión</h1>
 
-      {/* Botón Google */}
-      <GoogleLogin
-        onSuccess={handleGoogleLogin}
-        onError={() => {
-          toast.error('Error con Google');
-        }}
-        width="100%"
-        use_fedcm_for_prompt={true}
-      />
+      {/* 🔥 BOTÓN GOOGLE PERSONALIZADO */}
+      <button
+        type="button"
+        className="kraken-login__google-button"
+        onClick={() => googleLogin()}
+        disabled={isLoading || googleLoading}
+      >
+        <img
+          src="https://www.google.com/favicon.ico"
+          alt="Google"
+          className="kraken-login__google-icon"
+        />
+        <span>Continuar con Google</span>
+      </button>
 
       {/* Separador */}
       <div className="kraken-login__separator">
