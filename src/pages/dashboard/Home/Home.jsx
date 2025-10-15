@@ -1,4 +1,4 @@
-// src/pages/dashboard/Home/Home.jsx - ESTRUCTURA CORREGIDA SEGÚN IMAGEN
+// src/pages/dashboard/Home/Home.jsx - INTEGRACIÓN DE DIRECCIÓN
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import NewsCarousel from '../../../components/NewsCarousel/NewsCarousel';
 import { getLastShipment } from '../../../services/guiasService';
 import { getPreAlertasPendientes, deletePreAlerta } from '../../../services/preAlertService';
 import { getNovedades } from '../../../services/novedadesService';
+import { useAddresses } from '@hooks/useAddresses'; 
 import './Home.styles.scss';
 
 // Icons
@@ -15,16 +16,20 @@ import {
   IoCalendarOutline,
   IoPersonOutline,  
   IoSaveOutline,
+  IoLocationOutline,
   IoEyeOutline,
   IoCreateOutline,
   IoHelpOutline,
   IoTrashOutline,
-  IoCardOutline
+  IoCardOutline,
+  IoStorefrontOutline,
+  IoHomeOutline
 } from 'react-icons/io5';
 
 const Home = ({ onNavigateToShipments }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { defaultAddressText, isLoading: isLoadingAddress } = useAddresses();
   
   // Loading states
   const [loading, setLoading] = useState({
@@ -48,6 +53,86 @@ const Home = ({ onNavigateToShipments }) => {
     preAlerts: null,
     news: null
   });
+
+  /**
+   * ✅ NUEVA: Formatear dirección desde el backend
+   */
+  const formatAddress = (direccion) => {
+    if (!direccion) return 'Sin dirección';
+    
+    // Si ya viene el texto formateado del backend
+    if (direccion.direccionTexto) {
+      return direccion.direccionTexto;
+    }
+    
+    // Para tienda
+    if (direccion.tipo === 'store' || direccion.idLocker) {
+      return direccion.nombreLocker 
+        ? `Retiro en tienda: ${direccion.nombreLocker}` 
+        : 'Retiro en tienda';
+    }
+    
+    // Para domicilio - construir texto
+    const parts = [];
+    if (direccion.direccionCompleta) parts.push(direccion.direccionCompleta);
+    if (direccion.nombreParroquia) parts.push(direccion.nombreParroquia);
+    if (direccion.nombreMunicipio) parts.push(direccion.nombreMunicipio);
+    if (direccion.nombreEstado) parts.push(direccion.nombreEstado);
+    
+    return parts.length > 0 ? parts.join(', ') : 'Sin dirección';
+  };
+
+  /**
+   * ✅ NUEVA: Acortar texto para que no se salga del diseño
+   */
+  const truncateText = (text, maxLength = 40) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  /**
+   * ✅ ACTUALIZADO: Cargar pre-alertas con dirección
+   */
+  const loadPreAlerts = useCallback(async () => {
+    try {
+      setLoading(prev => ({ ...prev, preAlerts: true }));
+      setErrors(prev => ({ ...prev, preAlerts: null }));
+      
+      const response = await getPreAlertasPendientes();
+      
+      if (response.success && response.data) {
+        // ✅ Formatear pre-alertas CON dirección
+        const formattedPreAlerts = response.data.map(alert => ({
+          id: alert.id,
+          trackingNumber: Array.isArray(alert.trackings) 
+            ? alert.trackings[0] 
+            : alert.tracking || 'Sin tracking',
+          trackingsCount: Array.isArray(alert.trackings) ? alert.trackings.length : 1,
+          status: 'Pre-alertado',
+          date: alert.fecha || alert.fechaCreacion || '',
+          // ✅ NUEVO: Dirección completa y formateada
+          direccion: alert.direccion,
+          deliveryLocation: formatAddress(alert.direccion),
+          contenido: alert.contenido || 'Sin descripción'
+        }));
+        
+        setPreAlerts(formattedPreAlerts);
+      } else {
+        setErrors(prev => ({ 
+          ...prev, 
+          preAlerts: response.message || 'No se pudieron cargar las pre-alertas' 
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading pre-alerts:', error);
+      setErrors(prev => ({ 
+        ...prev, 
+        preAlerts: 'Error de conexión al cargar pre-alertas' 
+      }));
+    } finally {
+      setLoading(prev => ({ ...prev, preAlerts: false }));
+    }
+  }, []);
 
   /**
    * Load last shipment from API
@@ -80,48 +165,6 @@ const Home = ({ onNavigateToShipments }) => {
   }, []);
 
   /**
-   * Load pending pre-alerts from API
-   */
-  const loadPreAlerts = useCallback(async () => {
-    try {
-      setLoading(prev => ({ ...prev, preAlerts: true }));
-      setErrors(prev => ({ ...prev, preAlerts: null }));
-      
-      const response = await getPreAlertasPendientes();
-      
-      if (response.success && response.data) {
-        // Format pre-alerts for display
-        const formattedPreAlerts = response.data.map(alert => ({
-          id: alert.id,
-          trackingNumber: Array.isArray(alert.trackings) 
-            ? alert.trackings[0] 
-            : alert.tracking || 'Sin tracking',
-          trackingsCount: Array.isArray(alert.trackings) ? alert.trackings.length : 1,
-          status: 'Pre-alertado',
-          date: alert.fecha || alert.fechaCreacion || '',
-          deliveryLocation: formatDeliveryLocation(alert),
-          contenido: alert.contenido || 'Sin descripción'
-        }));
-        
-        setPreAlerts(formattedPreAlerts);
-      } else {
-        setErrors(prev => ({ 
-          ...prev, 
-          preAlerts: response.message || 'No se pudieron cargar las pre-alertas' 
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading pre-alerts:', error);
-      setErrors(prev => ({ 
-        ...prev, 
-        preAlerts: 'Error de conexión al cargar pre-alertas' 
-      }));
-    } finally {
-      setLoading(prev => ({ ...prev, preAlerts: false }));
-    }
-  }, []);
-
-  /**
    * Load news/novedades from API
    */
   const loadNews = useCallback(async () => {
@@ -132,7 +175,6 @@ const Home = ({ onNavigateToShipments }) => {
       const response = await getNovedades();
       
       if (response.success && response.data) {
-        // Format news items for carousel
         const formattedNews = response.data
         .filter(item => item.mostrar === true)
         .map(item => ({
@@ -155,25 +197,6 @@ const Home = ({ onNavigateToShipments }) => {
       setLoading(prev => ({ ...prev, news: false }));
     }
   }, []);
-
-  /**
-   * Format delivery location from address data
-   */
-  const formatDeliveryLocation = (alert) => {
-    if (alert.direccionResumen) {
-      return alert.direccionResumen;
-    }
-    
-    if (alert.nombreLocker) {
-      return `Tienda: ${alert.nombreLocker}`;
-    }
-    
-    if (alert.direccion) {
-      return `Domicilio: ${alert.direccion.substring(0, 30)}...`;
-    }
-    
-    return 'Sin dirección';
-  };
 
   /**
    * Load all data on component mount
@@ -222,20 +245,16 @@ const Home = ({ onNavigateToShipments }) => {
     navigate(`/guide/detail/${shipment.id}`);
   };
 
- // ✅ ACTUALIZADO: Navegar a página de pago
   const handlePayShipment = (shipment) => {
     console.log('Pagar shipment:', shipment);
     setVisibleMenus({});
-    navigate(`/payment/${shipment.id}`); // ← CAMBIO AQUÍ
+    navigate(`/payment/${shipment.id}`);
   };
 
   const handleHelpShipment = (shipment) => {
     console.log('Ayuda shipment:', shipment);
     setVisibleMenus({});
-    // TODO: Open help modal
   };
-
-  
 
   /**
    * Menu handlers for pre-alerts
@@ -243,21 +262,18 @@ const Home = ({ onNavigateToShipments }) => {
   const handleViewDetail = (alert) => {
     console.log('Ver detalle:', alert);
     setVisibleMenus({});
-    // Navigate to detail page
     navigate(`/pre-alert/${alert.id}`);
   };
 
   const handleEdit = (alert) => {
     console.log('Editar:', alert);
     setVisibleMenus({});
-    // Navigate to edit page
     navigate(`/pre-alert/edit/${alert.id}`);
   };
 
   const handleHelp = (alert) => {
     console.log('Ayuda:', alert);
     setVisibleMenus({});
-    // TODO: Open help modal
   };
 
   const handleDelete = async (alert) => {
@@ -311,9 +327,9 @@ const Home = ({ onNavigateToShipments }) => {
         <span className="delivery-address__label">Tu dirección de entrega</span>
         <div className="delivery-address__location">
           <span className="delivery-address__name">
-            {user?.deliveryAddress || 'Tienda Chacao'}
+             {defaultAddressText}
           </span>
-          <span className="delivery-address__icon">📍</span>
+          <span className="delivery-address__icon"><IoLocationOutline size={18}/></span>
         </div>
       </div>
 
@@ -343,7 +359,6 @@ const Home = ({ onNavigateToShipments }) => {
           </div>
         ) : lastShipment ? (
           <>
-            {/* GRID CON 4 COLUMNAS: 3 DATOS + MENÚ */}
             <div className="last-shipment-card__row">
               <div className="last-shipment-card__cell">
                 <span className="last-shipment-card__label">N° Guía</span>
@@ -368,7 +383,6 @@ const Home = ({ onNavigateToShipments }) => {
                 <span className="last-shipment-card__price">{lastShipment.cost}</span>
               </div>
 
-              {/* MENÚ EN LA MISMA FILA */}
               <div className="last-shipment-card__menu" ref={el => menuRefs.current['lastShipment'] = el}>
                 <button 
                   className="last-shipment-card__menu-button"
@@ -396,7 +410,6 @@ const Home = ({ onNavigateToShipments }) => {
                 )}
               </div>
 
-              {/* ALERT SIN FONDO - EN LA MISMA FILA */}
               {!lastShipment.prealerted && lastShipment.discount && (
                 <div className="last-shipment-card__alert">
                   <span className="alert-icon">🚫</span>
@@ -450,8 +463,24 @@ const Home = ({ onNavigateToShipments }) => {
                     <span className="pre-alert-row__date">{alert.date}</span>
                   </div>
 
-                  <div className="pre-alert-row__delivery">
-                    {alert.deliveryLocation}
+                  {/* ✅ COLUMNA DE DIRECCIÓN ACTUALIZADA */}
+                  <div 
+                    className="pre-alert-row__delivery"
+                    title={alert.deliveryLocation} // Tooltip con texto completo
+                  >
+                    {/* Icono según tipo */}
+                    <span className="pre-alert-row__delivery-icon">
+                      {alert.direccion?.tipo === 'store' || alert.direccion?.idLocker ? (
+                        <IoStorefrontOutline size={16} />
+                      ) : (
+                        <IoHomeOutline size={16} />
+                      )}
+                    </span>
+                    
+                    {/* Texto truncado de la dirección */}
+                    <span className="pre-alert-row__delivery-text">
+                      {truncateText(alert.deliveryLocation)}
+                    </span>
                   </div>
 
                   <div className="pre-alert-row__menu" ref={el => menuRefs.current[alert.id] = el}>

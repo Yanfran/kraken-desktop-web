@@ -280,9 +280,15 @@ export default function Rastrear() {
                     </div>
                   </div>
 
-                  {/* Timeline de estados */}
+                  {/* Timeline de estados */}                  
                   <div className={styles.timelineContainer}>
-                    {trackingResult.steps.map((step, index) => renderTrackingStep(step, index))}
+                        {/* ⭐ MODIFICACIÓN CLAVE AQUÍ: Invertir el array antes de mapear */}
+                    {trackingResult.steps
+                        .slice() // Crea una copia del array
+                        .reverse() // Invierte la copia
+                        .map((step, index, reversedSteps) => 
+                            renderTrackingStep(step, index, reversedSteps.length)
+                        )}
                   </div>
                 </div>
 

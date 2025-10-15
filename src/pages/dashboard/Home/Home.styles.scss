@@ -343,11 +343,51 @@
   font-weight: 400;
 }
 
+// .pre-alert-row__delivery {
+//   color: #1F2937;
+//   font-size: 14px;
+//   font-weight: 400;
+// }
+
 .pre-alert-row__delivery {
-  color: #1F2937;
-  font-size: 14px;
-  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  cursor: help; // Indica que hay tooltip al hacer hover
 }
+
+.pre-alert-row__delivery-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: #6B7280;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.pre-alert-row__delivery-text {
+  color: #374151;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* ========================================
+   ESTADO VACÍO - SIN DIRECCIÓN
+======================================== */
+
+.pre-alert-row__delivery-empty {
+  color: #9CA3AF;
+  font-size: 14px;
+  font-style: italic;
+}
+
 
 /* Menu de pre-alertas */
 .pre-alert-row__menu {
