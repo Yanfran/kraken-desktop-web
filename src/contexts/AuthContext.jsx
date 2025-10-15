@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useReducer, useCallback, useMemo } from 'react';
 import { authService } from '../services/auth/authService';
 import { googleService } from '../services/auth/googleService';
+import { useQueryClient } from '@tanstack/react-query';
 import Cookies from 'js-cookie';
 
 // ===== ESTADO INICIAL =====
@@ -79,6 +80,7 @@ export const AuthContext = createContext({
 // ===== PROVIDER =====
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const queryClient = useQueryClient(); 
 
   // ===== VERIFICAR TOKEN AL CARGAR =====
   useEffect(() => {
@@ -124,7 +126,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // ===== SIGN IN (Email/Password) =====
-  const signIn = useCallback(async (email, password) => {
+ const signIn = useCallback(async (email, password) => {
     try {
       dispatch({ type: 'LOADING' });
       console.log('🔐 [Auth] Iniciando sesión con email...');
@@ -135,7 +137,11 @@ export const AuthProvider = ({ children }) => {
         // Guardar en localStorage y cookies
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userData', JSON.stringify(response.user));
+        localStorage.setItem('userId', response.user.id); // ✅ AGREGAR
         Cookies.set('authToken', response.token, { expires: 7 });
+        
+        // ✅ LIMPIAR caché anterior al hacer login
+        queryClient.clear();
         
         dispatch({ type: 'LOGIN_SUCCESS', payload: response.user });
         console.log('✅ [Auth] Login exitoso:', response.user.email);
@@ -150,7 +156,7 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'ERROR', payload: errorMessage });
       return { success: false, message: errorMessage };
     }
-  }, []);
+  }, [queryClient]);
 
   // ===== SIGN UP =====
   const signUp = useCallback(async (userData) => {
@@ -253,7 +259,11 @@ export const AuthProvider = ({ children }) => {
       // ✅ GUARDAR USUARIO NORMALIZADO
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('userData', JSON.stringify(normalizedUser));
+      localStorage.setItem('userId', normalizedUser.id);
       Cookies.set('authToken', response.token, { expires: 7 });
+
+      // ✅ LIMPIAR caché anterior
+      queryClient.clear();
       
       dispatch({ type: 'LOGIN_SUCCESS', payload: normalizedUser });
       console.log('✅ [Auth] Google login exitoso:', normalizedUser.email);
@@ -272,10 +282,10 @@ export const AuthProvider = ({ children }) => {
       message: error.message || 'Error con Google. Intenta nuevamente.' 
     };
   }
-}, []);
+}, [queryClient]);
 
   // ===== SIGN OUT =====
-  const signOut = useCallback(async () => {
+ const signOut = useCallback(async () => {
     try {
       console.log('🚪 [Auth] Cerrando sesión...');
       await authService.logout();
@@ -284,11 +294,16 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
+      localStorage.removeItem('userId'); // ✅ AGREGAR
       Cookies.remove('authToken');
+      
+      // ✅ CRÍTICO: Limpiar TODO el caché de React Query
+      queryClient.clear();
+      
       dispatch({ type: 'LOGOUT' });
-      console.log('✅ [Auth] Sesión cerrada');
+      console.log('✅ [Auth] Sesión cerrada y caché limpiado');
     }
-  }, []);
+  }, [queryClient]); 
 
   // ===== CONFIRM EMAIL =====
   const confirmEmail = useCallback(() => {

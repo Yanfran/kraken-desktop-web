@@ -1,5 +1,5 @@
 // src/pages/dashboard/Home/Home.jsx - INTEGRACIÓN DE DIRECCIÓN
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import NewsCarousel from '../../../components/NewsCarousel/NewsCarousel';
@@ -28,8 +28,21 @@ import {
 
 const Home = ({ onNavigateToShipments }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { defaultAddressText, isLoading: isLoadingAddress } = useAddresses();
+  const { user } = useAuth();  
+  const { 
+    defaultAddressText, 
+    isLoading: isLoadingAddress,
+    error: addressError 
+  } = useAddresses();
+
+  // Debug: ver qué está pasando
+  useEffect(() => {
+    console.log('📍 Address state:', {
+      defaultAddressText,
+      isLoadingAddress,
+      addressError
+    });
+  }, [defaultAddressText, isLoadingAddress, addressError]);
   
   // Loading states
   const [loading, setLoading] = useState({
@@ -57,22 +70,20 @@ const Home = ({ onNavigateToShipments }) => {
   /**
    * ✅ NUEVA: Formatear dirección desde el backend
    */
-  const formatAddress = (direccion) => {
+  // ✅ MEMOIZAR funciones auxiliares para evitar recrearlas
+  const formatAddress = useCallback((direccion) => {
     if (!direccion) return 'Sin dirección';
     
-    // Si ya viene el texto formateado del backend
     if (direccion.direccionTexto) {
       return direccion.direccionTexto;
     }
     
-    // Para tienda
     if (direccion.tipo === 'store' || direccion.idLocker) {
       return direccion.nombreLocker 
         ? `Retiro en tienda: ${direccion.nombreLocker}` 
         : 'Retiro en tienda';
     }
     
-    // Para domicilio - construir texto
     const parts = [];
     if (direccion.direccionCompleta) parts.push(direccion.direccionCompleta);
     if (direccion.nombreParroquia) parts.push(direccion.nombreParroquia);
@@ -80,19 +91,20 @@ const Home = ({ onNavigateToShipments }) => {
     if (direccion.nombreEstado) parts.push(direccion.nombreEstado);
     
     return parts.length > 0 ? parts.join(', ') : 'Sin dirección';
-  };
+  }, []);
 
   /**
    * ✅ NUEVA: Acortar texto para que no se salga del diseño
    */
-  const truncateText = (text, maxLength = 40) => {
+  const truncateText = useCallback((text, maxLength = 40) => {
     if (!text || text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
-  };
+  }, []);
 
   /**
    * ✅ ACTUALIZADO: Cargar pre-alertas con dirección
    */
+  // ✅ OPTIMIZAR: Agregar useCallback a TODAS las funciones de carga
   const loadPreAlerts = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, preAlerts: true }));
@@ -101,7 +113,6 @@ const Home = ({ onNavigateToShipments }) => {
       const response = await getPreAlertasPendientes();
       
       if (response.success && response.data) {
-        // ✅ Formatear pre-alertas CON dirección
         const formattedPreAlerts = response.data.map(alert => ({
           id: alert.id,
           trackingNumber: Array.isArray(alert.trackings) 
@@ -110,7 +121,6 @@ const Home = ({ onNavigateToShipments }) => {
           trackingsCount: Array.isArray(alert.trackings) ? alert.trackings.length : 1,
           status: 'Pre-alertado',
           date: alert.fecha || alert.fechaCreacion || '',
-          // ✅ NUEVO: Dirección completa y formateada
           direccion: alert.direccion,
           deliveryLocation: formatAddress(alert.direccion),
           contenido: alert.contenido || 'Sin descripción'
@@ -132,7 +142,7 @@ const Home = ({ onNavigateToShipments }) => {
     } finally {
       setLoading(prev => ({ ...prev, preAlerts: false }));
     }
-  }, []);
+  }, [formatAddress]); // ✅ Agregar dependencia
 
   /**
    * Load last shipment from API
@@ -158,11 +168,11 @@ const Home = ({ onNavigateToShipments }) => {
       setErrors(prev => ({ 
         ...prev, 
         lastShipment: 'Error de conexión al cargar el último envío' 
-        }));
+      }));
     } finally {
       setLoading(prev => ({ ...prev, lastShipment: false }));
     }
-  }, []);
+  }, []); // ✅ Sin dependencias externas
 
   /**
    * Load news/novedades from API
@@ -176,15 +186,15 @@ const Home = ({ onNavigateToShipments }) => {
       
       if (response.success && response.data) {
         const formattedNews = response.data
-        .filter(item => item.mostrar === true)
-        .map(item => ({
-          id: item.id,
-          title: item.title || item.titulo || 'Novedad',
-          text: item.text || item.descripcion || item.contenido || '',
-          iconName: item.iconName || item.icono || 'information-circle',
-          backgroundColor: item.backgroundColor || item.colorFondo || '#f0f8ff',
-          textColor: item.textColor || item.colorTexto || '#333'
-        }));
+          .filter(item => item.mostrar === true)
+          .map(item => ({
+            id: item.id,
+            title: item.title || item.titulo || 'Novedad',
+            text: item.text || item.descripcion || item.contenido || '',
+            iconName: item.iconName || item.icono || 'information-circle',
+            backgroundColor: item.backgroundColor || item.colorFondo || '#f0f8ff',
+            textColor: item.textColor || item.colorTexto || '#333'
+          }));
         
         setNewsItems(formattedNews);
       } else {
@@ -196,18 +206,18 @@ const Home = ({ onNavigateToShipments }) => {
     } finally {
       setLoading(prev => ({ ...prev, news: false }));
     }
-  }, []);
+  }, []); // ✅ Sin dependencias externas
 
-  /**
-   * Load all data on component mount
-   */
+
+  // ✅ CARGAR TODO SOLO UNA VEZ cuando hay usuario
   useEffect(() => {
     if (user) {
+      console.log('👤 User detected, loading data...');
       loadLastShipment();
       loadPreAlerts();
       loadNews();
     }
-  }, [user, loadLastShipment, loadPreAlerts, loadNews]);
+  }, [user]); 
 
   /**
    * Close menu when clicking outside
@@ -327,9 +337,11 @@ const Home = ({ onNavigateToShipments }) => {
         <span className="delivery-address__label">Tu dirección de entrega</span>
         <div className="delivery-address__location">
           <span className="delivery-address__name">
-             {defaultAddressText}
+            {defaultAddressText}
           </span>
-          <span className="delivery-address__icon"><IoLocationOutline size={18}/></span>
+          <span className="delivery-address__icon">
+            <IoLocationOutline size={18}/>
+          </span>
         </div>
       </div>
 
