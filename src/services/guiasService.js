@@ -221,6 +221,55 @@ export const downloadAllInvoices = async (guiaId) => {
 };
 
 
+
+// ========================================
+// 📌 AGREGAR ESTAS FUNCIONES AL FINAL DE src/services/guiasService.js
+// ========================================
+
+/**
+ * Upload invoice for a specific guia
+ * @param {number} guiaId - Guia ID
+ * @param {File} file - Invoice file to upload
+ * @returns {Promise<ApiResponse>}
+ */
+export const uploadGuiaInvoice = async (guiaId, file) => {
+  try {
+    // Convert file to base64
+    const base64Data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const payload = {
+      guiaId: guiaId,
+      facturas: [{
+        nombre: file.name,
+        uri: `data:${file.type};base64,${base64Data}`,
+        tipo: file.type,
+        tamaño: file.size
+      }]
+    };
+
+    const response = await axiosInstance.post('/Guias/uploadInvoice', payload);
+    
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: 'Factura subida exitosamente'
+    };
+  } catch (error) {
+    console.error('Error uploading invoice:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al subir factura',
+      errors: error.response?.data?.errors || [error.message],
+      data: null
+    };
+  }
+};
+
 // Export default object with all functions
 export default {
   getGuias,
@@ -230,4 +279,5 @@ export default {
   getGuiaInvoices,
   downloadInvoice,
   downloadAllInvoices,
+  uploadGuiaInvoice
 };

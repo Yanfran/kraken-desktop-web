@@ -1,159 +1,337 @@
-
+// src/pages/MyGuides/MyGuides.module.scss
 .container {
-  padding: 1.5rem 2rem;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20px;
 }
 
 .header {
-  margin-bottom: 2rem;
-  h1 {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
+  margin-bottom: 24px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.headerTop {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.iconContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.icon {
+  font-size: 48px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: #666;
+  margin: 0;
+}
+
+// Tabs Container
+.tabsContainer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.tabButton {
+  padding: 8px 20px;
+  border-radius: 16px;
+  border: 1px solid #e5e5e5;
+  background: white;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+
+  &:hover {
+    border-color: #ff6b35;
+    color: #ff6b35;
+  }
+
+  &.tabButtonActive {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+    font-weight: 600;
   }
 }
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
+  gap: 16px;
   align-items: center;
-  gap: 2rem;
+  flex-wrap: wrap;
 }
 
 .searchContainer {
-  flex-grow: 1;
+  flex: 1;
+  min-width: 250px;
 }
 
 .searchInput {
   width: 100%;
-  padding: 0.8rem 1rem;
-  font-size: 1rem;
-  background-color: #fff;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0; // gray-200
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 12px 20px;
+  border: none;
+  border-radius: 25px;
+  font-size: 14px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &::placeholder {
+    color: #999;
+  }
 }
 
 .viewToggle {
   display: flex;
-  background-color: #f1f5f9; // gray-100
+  gap: 8px;
+  background: #f5f5f5;
+  padding: 4px;
   border-radius: 8px;
-  padding: 0.25rem;
 }
 
 .toggleButton {
-  padding: 0.5rem 1rem;
+  padding: 8px 16px;
   border: none;
-  background-color: transparent;
-  cursor: pointer;
-  font-size: 0.9rem;
+  background: transparent;
+  color: #666;
+  font-size: 13px;
   font-weight: 500;
+  cursor: pointer;
   border-radius: 6px;
-  color: #4a5568; // gray-700
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e5e5e5;
+  }
 
   &.active {
-    background-color: #fff;
-    color: #2d3748; // gray-800
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    background: white;
+    color: #ff6b35;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 }
 
-.error {
-  color: #e53e3e; // red-600
+.content {
+  min-height: 400px;
 }
 
 .guidesList {
+  display: grid;
+  gap: 16px;
+
   &.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
+
   &.list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    grid-template-columns: 1fr;
   }
 }
 
-// --- GuiaCard Styles ---
+// Empty State
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
 
-.guiaCard {
-  border: 1px solid #e2e8f0; // gray-200
+.emptyIcon {
+  font-size: 64px;
+  opacity: 0.6;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.emptyDescription {
+  font-size: 15px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.error {
+  text-align: center;
+  color: #ef4444;
+  padding: 20px;
+  background: #fef2f2;
   border-radius: 8px;
-  padding: 1.5rem;
+  border: 1px solid #fecaca;
+}
+
+// Guia Card Styles
+.guiaCard {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
   cursor: pointer;
-  transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
-  background-color: #fff;
 
   &:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
   }
 
-  // Styles for List mode
   &.list {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    .cardBody {
-      flex-grow: 1;
-      margin-bottom: 0;
-    }
-    .cardFooter {
-      flex-shrink: 0;
-      min-width: 150px;
-      text-align: right;
-    }
+    gap: 16px;
   }
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  .list & {
-    margin-bottom: 0;
-    margin-right: 1.5rem;
-  }
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
 }
 
 .guiaNumber {
-  font-size: 1.25rem;
+  font-size: 16px;
   font-weight: 600;
-  color: #2d3748; // gray-800
+  color: #1a1a1a;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.badgesContainer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.paidBadge {
+  font-size: 13px;
+  font-weight: 700;
+  color: #10b981;
+  white-space: nowrap;
 }
 
 .statusBadge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.status_default {
-  background-color: #e2e8f0; // gray-200
-  color: #4a5568; // gray-700
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  white-space: nowrap;
 }
 
 .cardBody {
-  margin-bottom: 1.5rem;
+  margin-bottom: 12px;
+  margin-top: 8px;
 }
 
 .guiaContent {
-  font-size: 1rem;
-  color: #4a5568; // gray-700
-  margin-bottom: 0.5rem;
+  font-size: 12px;
+  color: #999;
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .guiaDate {
-  font-size: 0.875rem;
-  color: #718096; // gray-600
+  font-size: 12px;
+  color: #999;
+  margin: 0;
 }
 
 .cardFooter {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
-  color: #718096; // gray-600
+  font-size: 12px;
+  color: #999;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  .header {
+    padding: 16px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchContainer {
+    width: 100%;
+  }
+
+  .viewToggle {
+    justify-content: center;
+  }
+
+  .guidesList {
+    &.grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .tabsContainer {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .tabButton {
+    flex: 1;
+    max-width: 150px;
+  }
 }
