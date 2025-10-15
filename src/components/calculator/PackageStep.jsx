@@ -3,7 +3,7 @@ import CurrencyInput from '../common/CurrencyInput/CurrencyInput';
 import SearchableSelect from '../common/SearchableSelect/SearchableSelect';
 import './PackageStep.scss';
 
-const HIGH_VALUE_THRESHOLD = 1000;
+const HIGH_VALUE_THRESHOLD = 100.01;
 
 const PackageStep = ({
   declaredValue,
@@ -57,21 +57,20 @@ const PackageStep = ({
     onDeclaredValueChange(formattedValue);
   };
 
-  const handleWeightInputChange = (e) => {
-    const value = e.target.value;
-    // Solo permitir números y punto decimal
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      onWeightChange(value);
-    }
-  };
+  // ✅ NUEVO HANDLER PARA PESO (Adapta la salida de CurrencyInput al prop onWeightChange)
+  // CurrencyInput.onChange(formattedValue, numericValue)
+  const handleWeightCurrencyInputChange = (formattedValue, numericValue) => {
+    // onWeightChange espera el valor formateado (ej. "10,50")
+    onWeightChange(formattedValue);
+  };
 
-  const handleDimensionInputChange = (dimension, e) => {
-    const value = e.target.value;
-    // Solo permitir números y punto decimal
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      onDimensionChange(dimension, value);
-    }
-  };
+  // ✅ NUEVO HANDLER PARA DIMENSIONES (Adapta la salida de CurrencyInput al prop onDimensionChange)
+  // Usamos currying para pasar la dimensión (length, width, height)
+  // y devolver una función que reciba la salida de CurrencyInput.
+  const handleDimensionCurrencyInputChange = (dimension) => (formattedValue, numericValue) => {
+    // onDimensionChange espera la dimensión y el valor formateado
+    onDimensionChange(dimension, formattedValue);
+  };
 
   const handleContentToggle = (value) => {
     const newContenidos = localContenidos.includes(value)
@@ -129,15 +128,14 @@ const PackageStep = ({
               <div className="package-step__field">
                 <label className="package-step__label">Peso *</label>
                 <div className="package-step__weight-container">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
-                    placeholder="0.00"
-                    value={weight}
-                    onChange={handleWeightInputChange}
-                    disabled={isCalculating}
-                  />
+                  <CurrencyInput
+                    value={weight}
+                    onChange={handleWeightCurrencyInputChange}
+                    placeholder="0,00"
+                    maxLength={10} // Asegúrate de que este maxLength sea suficiente para el peso
+                    disabled={isCalculating}
+                    className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
+                  />
                   <button
                     type="button"
                     className="package-step__unit-toggle"
@@ -166,41 +164,38 @@ const PackageStep = ({
               <div className="package-step__dimensions-grid">
                 <div className="package-step__dimension-input">
                   <label className="package-step__dimension-label">Largo</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
-                    placeholder="0.0"
-                    value={dimensions.length}
-                    onChange={(e) => handleDimensionInputChange('length', e)}
-                    disabled={isCalculating}
-                  />
+                  <CurrencyInput
+                    value={dimensions.length}
+                    onChange={handleDimensionCurrencyInputChange('length')}
+                    placeholder="0,0"
+                    maxLength={5} // MaxLength sugerido para dimensiones
+                    disabled={isCalculating}
+                    className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
+                  />
                 </div>
                 
                 <div className="package-step__dimension-input">
                   <label className="package-step__dimension-label">Ancho</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
-                    placeholder="0.0"
-                    value={dimensions.width}
-                    onChange={(e) => handleDimensionInputChange('width', e)}
-                    disabled={isCalculating}
-                  />
+                  <CurrencyInput
+                    value={dimensions.width}
+                    onChange={handleDimensionCurrencyInputChange('width')}
+                    placeholder="0,0"
+                    maxLength={5} 
+                    disabled={isCalculating}
+                    className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
+                  />
                 </div>
                 
                 <div className="package-step__dimension-input">
                   <label className="package-step__dimension-label">Alto</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
-                    placeholder="0.0"
-                    value={dimensions.height}
-                    onChange={(e) => handleDimensionInputChange('height', e)}
-                    disabled={isCalculating}
-                  />
+                  <CurrencyInput
+                    value={dimensions.height}
+                    onChange={handleDimensionCurrencyInputChange('height')}
+                    placeholder="0,0"
+                    maxLength={5} 
+                    disabled={isCalculating}
+                    className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
+                  />
                 </div>
               </div>
             </div>
