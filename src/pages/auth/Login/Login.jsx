@@ -266,8 +266,7 @@ const Login = () => {
           Al continuar, aceptas nuestros{' '}
           <a 
             href="/terms" 
-            className="kraken-login__terms-link"
-            target="_blank"
+            className="kraken-login__terms-link"            
             rel="noopener noreferrer"
           >
             Términos y Condiciones
@@ -275,8 +274,7 @@ const Login = () => {
           {' '}y{' '}
           <a 
             href="/privacy" 
-            className="kraken-login__terms-link"
-            target="_blank"
+            className="kraken-login__terms-link"            
             rel="noopener noreferrer"
           >
             Política de Privacidad

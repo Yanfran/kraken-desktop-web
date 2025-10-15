@@ -54,27 +54,35 @@ const decodeJWT = (token) => {
 };
 
 const mapUserData = (serverUser) => {
+  // ✅ NORMALIZAR: Crear campos "name" y "lastName" SIEMPRE
   return {
     id: serverUser.id,
     email: serverUser.email,
+    
+    // ✅ CAMPOS NORMALIZADOS (los que usa el frontend)
     name: serverUser.nombres || serverUser.name,
     lastName: serverUser.apellidos || serverUser.lastName,
+    phone: serverUser.telefonoCelular || serverUser.phone,
+    phoneSecondary: serverUser.telefonoCelularSecundario || serverUser.phoneSecondary,
+    nro: serverUser.nroIdentificacionCliente || serverUser.nro,
+    birthday: serverUser.fechaNacimiento || serverUser.birthday,
+    
+    // ✅ TAMBIÉN MANTENER CAMPOS ORIGINALES (por compatibilidad)
     nombres: serverUser.nombres,
     apellidos: serverUser.apellidos,
-    phone: serverUser.telefonoCelular,
-    phoneSecondary: serverUser.telefonoCelularSecundario,
     telefonoCelular: serverUser.telefonoCelular,
     telefonoCelularSecundario: serverUser.telefonoCelularSecundario,
-    idNumber: serverUser.nroIdentificacionCliente,
     nroIdentificacionCliente: serverUser.nroIdentificacionCliente,
-    idClienteTipoIdentificacion: serverUser.idClienteTipoIdentificacion,
-    birthday: serverUser.fechaNacimiento,
     fechaNacimiento: serverUser.fechaNacimiento,
+    
+    // ✅ OTROS CAMPOS
+    idClienteTipoIdentificacion: serverUser.idClienteTipoIdentificacion,
     avatarId: serverUser.avatarId || '1',
     emailVerified: serverUser.emailVerified ?? serverUser.fromEmail ?? true,
     profileComplete: serverUser.profileComplete ?? false,
     clienteActivo: serverUser.clienteActivo ?? true,
-    fromGoogle: serverUser.fromGoogle ?? true,
+    fromGoogle: serverUser.fromGoogle ?? false,
+    fromEmail: serverUser.fromEmail ?? false,
     codCliente: serverUser.codCliente,
     idClienteTipo: serverUser.idClienteTipo
   };

@@ -195,49 +195,84 @@ export const AuthProvider = ({ children }) => {
 
   // ===== SIGN IN CON GOOGLE =====
   const signInWithGoogle = useCallback(async (credentialResponse) => {
-    try {
-      dispatch({ type: 'LOADING' });
-      console.log('🔵 [Auth] Iniciando Google Sign-In...');
-      
-      // Si recibimos el objeto completo de Google
-      let credential = credentialResponse;
-      
-      // Si es un objeto con la propiedad credential
-      if (credentialResponse?.credential) {
-        credential = credentialResponse.credential;
-      }
-
-      if (!credential) {
-        throw new Error('No se recibió credencial de Google');
-      }
-
-      console.log('✅ [Auth] Credencial de Google obtenida');
-
-      // Enviar credencial al backend
-      const response = await authService.loginWithGoogle(credential);
-      
-      if (response.success) {
-        localStorage.setItem('authToken', response.token);
-        localStorage.setItem('userData', JSON.stringify(response.user));
-        Cookies.set('authToken', response.token, { expires: 7 });
-        
-        dispatch({ type: 'LOGIN_SUCCESS', payload: response.user });
-        console.log('✅ [Auth] Google login exitoso:', response.user.email);
-        
-        return { success: true, user: response.user };
-      } else {
-        dispatch({ type: 'ERROR', payload: response.message });
-        return { success: false, message: response.message };
-      }
-    } catch (error) {
-      console.error('❌ [Auth] Error en Google Sign-In:', error);
-      dispatch({ type: 'ERROR', payload: error.message });
-      return { 
-        success: false, 
-        message: error.message || 'Error con Google. Intenta nuevamente.' 
-      };
+  try {
+    dispatch({ type: 'LOADING' });
+    console.log('🔵 [Auth] Iniciando Google Sign-In...');
+    
+    // Si recibimos el objeto completo de Google
+    let credential = credentialResponse;
+    
+    // Si es un objeto con la propiedad credential
+    if (credentialResponse?.credential) {
+      credential = credentialResponse.credential;
     }
-  }, []);
+
+    if (!credential) {
+      throw new Error('No se recibió credencial de Google');
+    }
+
+    console.log('✅ [Auth] Credencial de Google obtenida');
+
+    // Enviar credencial al backend
+    const response = await authService.loginWithGoogle(credential);
+    
+    if (response.success) {
+      // ✅ NORMALIZAR DATOS DEL USUARIO ANTES DE GUARDAR
+      const normalizedUser = {
+        id: response.user.id,
+        email: response.user.email,
+        
+        // ✅ CAMPOS NORMALIZADOS
+        name: response.user.nombres || response.user.name,
+        lastName: response.user.apellidos || response.user.lastName,
+        phone: response.user.telefonoCelular || response.user.phone,
+        phoneSecundary: response.user.telefonoCelularSecundario || response.user.phoneSecondary,
+        nro: response.user.nroIdentificacionCliente || response.user.nro,
+        birthday: response.user.fechaNacimiento || response.user.birthday,
+        
+        // ✅ MANTENER TAMBIÉN LOS CAMPOS ORIGINALES
+        nombres: response.user.nombres,
+        apellidos: response.user.apellidos,
+        telefonoCelular: response.user.telefonoCelular,
+        telefonoCelularSecundario: response.user.telefonoCelularSecundario,
+        nroIdentificacionCliente: response.user.nroIdentificacionCliente,
+        fechaNacimiento: response.user.fechaNacimiento,
+        
+        // ✅ OTROS CAMPOS
+        idClienteTipoIdentificacion: response.user.idClienteTipoIdentificacion,
+        avatarId: response.user.avatarId || '1',
+        emailVerified: response.user.emailVerified ?? response.user.fromEmail ?? true,
+        profileComplete: response.user.profileComplete ?? false,
+        clienteActivo: response.user.clienteActivo ?? true,
+        fromGoogle: response.user.fromGoogle ?? true,
+        fromEmail: response.user.fromEmail ?? false,
+        codCliente: response.user.codCliente,
+        idClienteTipo: response.user.idClienteTipo
+      };
+      
+      // ✅ GUARDAR USUARIO NORMALIZADO
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('userData', JSON.stringify(normalizedUser));
+      Cookies.set('authToken', response.token, { expires: 7 });
+      
+      dispatch({ type: 'LOGIN_SUCCESS', payload: normalizedUser });
+      console.log('✅ [Auth] Google login exitoso:', normalizedUser.email);
+      console.log('✅ [Auth] Usuario normalizado:', { name: normalizedUser.name, lastName: normalizedUser.lastName });
+      
+      return { success: true, user: normalizedUser };
+    } else {
+      dispatch({ type: 'ERROR', payload: response.message });
+      return { success: false, message: response.message };
+    }
+  } catch (error) {
+    console.error('❌ [Auth] Error en Google Sign-In:', error);
+    dispatch({ type: 'ERROR', payload: error.message });
+    return { 
+      success: false, 
+      message: error.message || 'Error con Google. Intenta nuevamente.' 
+    };
+  }
+}, []);
 
   // ===== SIGN OUT =====
   const signOut = useCallback(async () => {

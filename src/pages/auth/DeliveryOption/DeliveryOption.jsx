@@ -10,6 +10,54 @@ import './DeliveryOption.styles.scss';
 import { useAuth } from '../../../contexts/AuthContext';
 import logoImage from '../../../assets/images/logo.jpg'; 
 
+
+const normalizeUserData = (serverUser) => {
+  if (!serverUser) return null;
+  
+  return {
+    // ✅ CAMPOS ORIGINALES DEL BACKEND (español)
+    id: serverUser.id,
+    clienteActivo: serverUser.clienteActivo,
+    codCliente: serverUser.codCliente,
+    email: serverUser.email,
+    sdoEmail: serverUser.sdoEmail,
+    nombres: serverUser.nombres,
+    apellidos: serverUser.apellidos,
+    telefonoCelular: serverUser.telefonoCelular,
+    telefonoCelularSecundario: serverUser.telefonoCelularSecundario,
+    telefonoCasa: serverUser.telefonoCasa,
+    idClienteTipo: serverUser.idClienteTipo,
+    genero: serverUser.genero,
+    fechaNacimiento: serverUser.fechaNacimiento,
+    reg_CodPais: serverUser.reg_CodPais,
+    reg_FechaRegistro: serverUser.reg_FechaRegistro,
+    idTiendaPorDefecto: serverUser.idTiendaPorDefecto,
+    idDestinoFrecuente: serverUser.idDestinoFrecuente,
+    idClienteTipoIdentificacion: serverUser.idClienteTipoIdentificacion,
+    nroIdentificacionCliente: serverUser.nroIdentificacionCliente,
+    idiomaPreferido: serverUser.idiomaPreferido,
+    idClienteFormaPago: serverUser.idClienteFormaPago,
+    clave: serverUser.clave,
+    verificationToken: serverUser.verificationToken,
+    verificationDate: serverUser.verificationDate,
+    fromGoogle: serverUser.fromGoogle,
+    fromEmail: serverUser.fromEmail,
+    profileComplete: serverUser.profileComplete,
+    passwordResetToken: serverUser.passwordResetToken,
+    passwordResetTokenExpiration: serverUser.passwordResetTokenExpiration,
+    avatarId: serverUser.avatarId || '1',
+    
+    // ✅ CAMPOS NORMALIZADOS (inglés) - para el frontend
+    name: serverUser.nombres || serverUser.name,
+    lastName: serverUser.apellidos || serverUser.lastName,
+    phone: serverUser.telefonoCelular || serverUser.phone,
+    phoneSecondary: serverUser.telefonoCelularSecundario || serverUser.phoneSecondary,
+    nro: serverUser.nroIdentificacionCliente || serverUser.nro,
+    birthday: serverUser.fechaNacimiento || serverUser.birthday,
+    emailVerified: serverUser.emailVerified ?? serverUser.fromEmail ?? true,
+  };
+};
+
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
   const { actualTheme, toggleTheme } = useTheme();
@@ -338,18 +386,33 @@ const DeliveryOption = () => {
         }
         
         // ✅ ACTUALIZAR USUARIO CON LA RESPUESTA DEL SERVIDOR
-        if (response.data.user) {
-          console.log('💾 Guardando usuario actualizado:', response.data.user);
-          localStorage.setItem('userData', JSON.stringify(response.data.user));
+       if (response.data.user) {          
           
-          // Actualizar el contexto
-          await setUserState(response.data.user, response.data.token);
+          // ✅ NORMALIZAR DATOS DEL USUARIO
+          const normalizedUser = normalizeUserData(response.data.user);
           
-          // ✅ ESPERAR A QUE EL CONTEXTO SE ACTUALICE
-          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // ✅ GUARDAR USUARIO NORMALIZADO
+          localStorage.setItem('userData', JSON.stringify(normalizedUser));
+          
+          // ✅ GUARDAR TOKEN SI EXISTE
+          if (response.data.token) {
+            localStorage.setItem('authToken', response.data.token);
+          }
+          
+          // ✅ ACTUALIZAR CONTEXTO (aunque luego haremos reload)
+          await setUserState(normalizedUser, response.data.token);
+                    
+          
+          // ✅ NAVEGAR A WELCOME
+          navigate('/welcome');
+          
+          // ✅ FORZAR RECARGA DESPUÉS DE UN PEQUEÑO DELAY
+          // Esto asegura que el contexto se actualice en todos los componentes
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
         }
-        
-        navigate('/welcome');
       }
       
     } catch (error) {

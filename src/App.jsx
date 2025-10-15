@@ -21,6 +21,10 @@ const DeliveryOption = React.lazy(() => import('./pages/auth/DeliveryOption/Deli
 const EmailVerify = React.lazy(() => import('./pages/auth/EmailVerify/EmailVerify'));
 const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
 
+// ✅ NUEVAS PÁGINAS LEGALES
+const Terms = React.lazy(() => import('./pages/legal/Terms/Terms'));
+const Privacy = React.lazy(() => import('./pages/legal/Privacy/Privacy'));
+
 // Protected pages
 const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
 const Calculator = React.lazy(() => import('./pages/calculator/Calculator/Calculator'));
@@ -100,6 +104,19 @@ function App() {
                     <ForgotPassword />
                   </PublicRoute>
                 } />
+
+                 <Route path="/terms" element={
+                  <PublicRoute>
+                    <Terms />
+                  </PublicRoute>
+                } />
+
+                <Route path="/privacy" element={
+                  <PublicRoute>
+                    <Privacy />
+                  </PublicRoute>
+                } />
+                                
 
                 {/* ===== RUTAS SEMI-PROTEGIDAS ===== */}
                 <Route path="/email-confirmation" element={

@@ -1,0 +1,163 @@
+// src/pages/legal/Privacy/Privacy.scss
+// ✅ COPIADO EXACTAMENTE DE Login.styles.scss
+
+.privacy-container {
+  min-height: 100vh;
+  width: 100vw;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 20px;
+  background-color: #f7f9fc;
+  transition: background-color 0.3s ease;
+  
+  &[data-theme="dark"] {
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+    
+    @media (min-width: 768px) {
+      justify-content: center;
+      padding: 40px 20px;
+    }
+  }
+}
+
+.privacy-wrapper {
+  width: 100%;
+  max-width: 1620px;
+  z-index: 10;
+  position: relative;
+}
+
+.privacy-header {
+  background-color: #1a3a6e;
+  padding: 20px;
+  text-align: center;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.privacy-header-title {
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.privacy-last-updated {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  margin: 8px 0 0 0;
+}
+
+.privacy-date {
+  font-weight: 600;
+}
+
+.privacy-content {
+  background-color: #fff;
+  padding: 20px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.privacy-intro-text {
+  color: #333;
+  font-size: 14px;
+  line-height: 20px;
+  margin-bottom: 20px;
+  margin-top: 0;
+}
+
+.privacy-section {
+  margin-bottom: 20px;
+}
+
+.privacy-section-title {
+  color: #1a3a6e;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  margin-top: 0;
+}
+
+.privacy-section-text {
+  color: #333;
+  font-size: 14px;
+  line-height: 20px;
+  margin-bottom: 8px;
+  margin-top: 0;
+
+  strong {
+    font-weight: bold;
+  }
+}
+
+.privacy-highlight-box {
+  background-color: #e9f0f8;
+  border-left: 4px solid #1a3a6e;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+
+  .privacy-section-text {
+    margin-bottom: 0;
+  }
+}
+
+.privacy-back-button {
+  background-color: #ff6b00;
+  padding: 12px;
+  border-radius: 30px;
+  text-align: center;
+  margin-top: 20px;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.privacy-copyright {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  font-style: italic;
+}
+
+// Responsive para móviles
+@media (max-width: 768px) {
+  .privacy-container {
+    padding: 10px 20px;
+  }
+  
+  .privacy-header-title {
+    font-size: 18px;
+  }
+
+  .privacy-section-title {
+    font-size: 15px;
+  }
+
+  .privacy-section-text,
+  .privacy-intro-text {
+    font-size: 13px;
+  }
+
+  .privacy-last-updated {
+    font-size: 12px;
+  }
+}
