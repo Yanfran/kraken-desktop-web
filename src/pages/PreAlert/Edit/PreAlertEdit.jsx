@@ -754,69 +754,72 @@ const PreAlertEdit = () => {
             )}
           </div>
 
-          {/* SECCIÓN VALOR DECLARADO */}
-          <div className="prealert-edit__section">
-            <div className="prealert-edit__label-row">
-              <label className="prealert-edit__label">
-                Valor Declarado (Opcional)
-              </label>
-              <Tooltip 
-                content="El FOB (Free On Board) es el costo de la mercancía en la factura de compra. Debes ingresar el monto total de los artículos contenidos en el paquete."
-                position="auto"
-              />  
-            </div>
+          {/* ✅ SECCIÓN CONSOLIDADA: VALOR DECLARADO Y TIPO DE CONTENIDO */}
+<div className="prealert-edit__section">
+  <div className="prealert-edit__label-row">
+    <label className="prealert-edit__label">
+      Valor Declarado (Opcional)
+    </label>
+    <Tooltip
+      content="El FOB (Free On Board) es el costo de la mercancía en la factura de compra. Debes ingresar el monto total de los artículos contenidos en el paquete."
+      position="auto"
+    />
+  </div>
 
-            <div className="prealert-edit__row">
-              <div className="prealert-edit__col prealert-edit__col--small">
-                <select
-                  className="prealert-edit__select"
-                  value={formState.currency}
-                  onChange={(e) => updateFormState('currency', e.target.value)}
-                >
-                  <option value="USD">USD</option>
-                </select>
-              </div>
+  {/* CONTENEDOR GRID (Moneda | Monto | Tipo Contenido) */}
+  <div className="prealert-edit__value-type-grid">
+    
+    {/* COLUMNA 1: Moneda (Pequeña) */}
+    <div className="prealert-edit__col">
+      <label className="prealert-edit__label">Moneda</label>
+      <select
+        className="prealert-edit__select"
+        value={formState.currency}
+        onChange={(e) => updateFormState('currency', e.target.value)}
+      >
+        <option value="USD">USD</option>
+        {/* Puedes agregar EUR y VES si también se permiten en la edición */}
+      </select>
+    </div>
 
-              <div className="prealert-edit__col">
-                <CurrencyInput
-                  className="prealert-edit__input prealert-edit__input--currency"
-                  placeholder="0,00"
-                  value={formState.valorDeclarado}
-                  onChange={(formattedValue, numericValue) => {
-                    // ✅ Solo guardar valores reales, no enviar "0,01" por escribir "1"
-                    if (numericValue > 0) {
-                      updateFormState('valorDeclarado', formattedValue);
-                    } else {
-                      updateFormState('valorDeclarado', '');
-                    }
-                  }}
-                  maxLength={10}
-                />
-              </div>
-            </div>
-          </div>
+    {/* COLUMNA 2: Monto (Grande) */}
+    <div className="prealert-edit__col">
+      <label className="prealert-edit__label">Monto</label>
+      <CurrencyInput
+        className="prealert-edit__input prealert-edit__input--currency"
+        placeholder="0,00"
+        value={formState.valorDeclarado}
+        onChange={(formattedValue) => {
+          updateFormState('valorDeclarado', formattedValue);
+        }}
+        maxLength={10}
+      />
+    </div>
 
-          {/* SECCIÓN TIPO DE CONTENIDO */}
-          <div className="prealert-edit__section">
-            <label className="prealert-edit__label">
-              Tipo de Contenido (Opcional)
-            </label>
-            <div className="prealert-edit__checkboxes">
-              {['Frágil', 'Líquidos'].map((option) => (
-                <label
-                  key={option}
-                  className="prealert-edit__checkbox-option"
-                >
-                  <input
-                    type="checkbox"
-                    checked={(formState.tipoContenido || []).includes(option)}
-                    onChange={() => handleToggleContentType(option)}
-                  />
-                  <span>{option}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+    {/* COLUMNA 3: Tipo de Contenido */}
+    <div className="prealert-edit__col">
+      <label className="prealert-edit__label">
+        Tipo de Contenido (Opcional)
+      </label>
+      <div className="prealert-edit__checkboxes">
+        {['Frágil', 'Líquidos'].map((option) => (
+          <label
+            key={option}
+            className="prealert-edit__checkbox-option"
+          >
+            <input
+              type="checkbox"
+              checked={(formState.tipoContenido || []).includes(option)}
+              onChange={() => handleToggleContentType(option)}
+            />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</div>
 
           {/* ✅ NUEVA SECCIÓN: DIRECCIÓN PREDETERMINADA CON OPCIÓN A CAMBIAR */}
           <div className="prealert-edit__section">

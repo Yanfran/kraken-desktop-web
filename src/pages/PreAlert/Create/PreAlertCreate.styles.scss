@@ -271,6 +271,7 @@
       grid-template-columns: 1fr;
     }
   }
+  
 }
 
 &__col {
@@ -537,6 +538,66 @@
     color: #6b7280 !important;
     line-height: 1.4;
   }
+
+// Contenedor principal del grid
+.prealert-create__value-type-grid {
+  display: grid;
+  // Columnas: Moneda (fija), Monto (flexible), Tipo (flexible)
+  grid-template-columns: 90px 1.5fr 1fr;
+  gap: var(--spacing-3);
+  align-items: flex-end; // Alinea los inputs/selects en la parte inferior
+
+  // Comportamiento en tablets y pantallas medianas
+  @media (max-width: 1024px) {
+    grid-template-columns: 90px 1fr; // Moneda y Monto en la primera fila
+    gap: var(--spacing-4);
+
+    // La tercera columna (Tipo de Contenido) se va a la siguiente fila
+    .prealert-create__col:nth-child(3) {
+      grid-column: 1 / -1; // Ocupa todo el ancho de la nueva fila
+      margin-top: var(--spacing-4);
+    }
+  }
+
+  // Comportamiento en móviles
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr; // Todo en una sola columna, apilado
+    gap: var(--spacing-5); // Aumentar el espacio vertical en móvil
+    
+    .prealert-create__col:nth-child(3) {
+      margin-top: 0; // Resetear margen para el apilado móvil
+    }
+  }
+}
+
+// Estilos específicos para las columnas DENTRO del grid
+// Esto asegura que no entren en conflicto con otros estilos de .prealert-create__col
+.prealert-create__value-type-grid .prealert-create__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+// Altura fija para el select de moneda para que se alinee con los demás
+.prealert-create__value-type-grid .prealert-create__select {
+  height: 50px;
+}
+
+// Contenedor de checkboxes para alineación vertical perfecta
+.prealert-create__checkboxes {
+  display: flex;
+  gap: var(--spacing-4);
+  align-items: center;
+  height: 50px; // Altura fija para alinear con los inputs
+}
+
+// Cada opción de checkbox
+.prealert-create__checkboxes .prealert-create__checkbox-option {
+  flex: 1; // Ocupan el espacio disponible equitativamente
+  min-width: fit-content;
+}
+
+
 
   // ═══════════════════════════════════════
   // DIRECCIÓN

@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Tooltip from '../../../components/common/Tooltip/Tooltip';
-import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png'; 
+import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png';
 
 // Services
 import {
@@ -87,8 +87,7 @@ const PreAlertCreate = () => {
   const { data: userAddresses, isLoading: isLoadingUserAddresses } = useQuery({
     queryKey: ['userAddresses'],
     queryFn: getUserAddresses,
-    select: (response) => {      
-      
+    select: (response) => {
       // ✅ Ahora sí retorna el array correcto con esPredeterminada
       return response.data || [];
     },
@@ -150,12 +149,11 @@ const PreAlertCreate = () => {
     }));
   }, [contenidosData]);
 
-  useEffect(() => {    
+  useEffect(() => {
     // Esperar a que ambos datos estén listos
-    if (!userAddresses || !deliveryData) {    
+    if (!userAddresses || !deliveryData) {
       return;
     }
-    
 
     // Buscar dirección predeterminada
     const defaultAddr = userAddresses.find(
@@ -163,7 +161,7 @@ const PreAlertCreate = () => {
     );
 
     // Si NO hay dirección predeterminada, usar tienda por defecto
-    if (!defaultAddr) {      
+    if (!defaultAddr) {
       const defaultStore =
         deliveryData.tiendas?.find((t) =>
           t.nombre.toLowerCase().includes('chacao')
@@ -181,11 +179,9 @@ const PreAlertCreate = () => {
       }
       return;
     }
-    
 
     // Configurar según tipo
-    if (defaultAddr.tipoDireccion === 'store') {      
-
+    if (defaultAddr.tipoDireccion === 'store') {
       setAddressState((prev) => ({
         ...prev,
         deliveryMethod: 'store',
@@ -196,8 +192,7 @@ const PreAlertCreate = () => {
 
       const texto = `Retiro en tienda: ${defaultAddr.nombreLocker ?? 'Locker'}`;
       setDefaultAddressText(defaultAddr.nombreDireccion || texto);
-    } else {      
-
+    } else {
       setAddressState((prev) => ({
         ...prev,
         deliveryMethod: 'home',
@@ -220,7 +215,6 @@ const PreAlertCreate = () => {
       const texto = parts.join(', ');
       setDefaultAddressText(defaultAddr.nombreDireccion || texto);
     }
-    
   }, [userAddresses, deliveryData]);
 
   // Handlers
@@ -448,12 +442,12 @@ const PreAlertCreate = () => {
           (a) => a.esPredeterminada === true
         );
 
-        if (defaultAddr) {          
+        if (defaultAddr) {
           direccion.idDireccion = defaultAddr.id;
           direccion.tipo = defaultAddr.tipoDireccion;
         } else {
           // Fallback: si no hay predeterminada pero está en modo 'default',
-          // crear nueva dirección con los datos actuales          
+          // crear nueva dirección con los datos actuales
           if (addressState.deliveryMethod === 'store') {
             direccion.tipo = 'store';
             direccion.ciudad = addressState.selectedCity;
@@ -470,13 +464,13 @@ const PreAlertCreate = () => {
         }
       }
       // ✅ CASO 2: Nueva tienda
-      else if (addressState.selectedOption === 'store') {        
+      else if (addressState.selectedOption === 'store') {
         direccion.tipo = 'store';
         direccion.ciudad = addressState.selectedCity;
         direccion.tienda = addressState.selectedLocker;
       }
       // ✅ CASO 3: Nuevo domicilio
-      else if (addressState.selectedOption === 'new') {        
+      else if (addressState.selectedOption === 'new') {
         direccion.tipo = 'home';
         direccion.estado = addressState.selectedState;
         direccion.municipio = addressState.selectedMunicipality;
@@ -489,7 +483,7 @@ const PreAlertCreate = () => {
       else if (addressState.selectedOption?.startsWith('addr-')) {
         const addressId = parseInt(
           addressState.selectedOption.replace('addr-', '')
-        );        
+        );
         direccion.idDireccion = addressId;
 
         // Buscar el tipo de dirección
@@ -500,32 +494,31 @@ const PreAlertCreate = () => {
       }
 
       const formatValueForBackend = (value) => {
-      if (!value) return '0';
-      return value.toString().replace(/\./g, '').replace(',', '.');
-    };
+        if (!value) return '0';
+        return value.toString().replace(/\./g, '').replace(',', '.');
+      };
 
-    const valorParaBackend = formatValueForBackend(formState.valorDeclarado);
+      const valorParaBackend = formatValueForBackend(formState.valorDeclarado);
 
-    const payload = {
-      trackings: formState.trackings.filter((t) => t.trim().length > 0),
-      contenidos: formState.contenidos,
-      direccion,
-      tipoContenido: Array.isArray(formState.tipoContenido)
-        ? formState.tipoContenido.join(', ')
-        : formState.tipoContenido || '',
-      ...(valorParaBackend &&
-        valorParaBackend !== '0' && {
-          valorDeclarado: {
-            monto: valorParaBackend,
-            moneda: formState.currency,
-          },
+      const payload = {
+        trackings: formState.trackings.filter((t) => t.trim().length > 0),
+        contenidos: formState.contenidos,
+        direccion,
+        tipoContenido: Array.isArray(formState.tipoContenido)
+          ? formState.tipoContenido.join(', ')
+          : formState.tipoContenido || '',
+        ...(valorParaBackend &&
+          valorParaBackend !== '0' && {
+            valorDeclarado: {
+              monto: valorParaBackend,
+              moneda: formState.currency,
+            },
+          }),
+        // ✅ CAMBIO CRÍTICO: Enviar los archivos File directos (sin URL.createObjectURL)
+        ...(formState.facturas.length > 0 && {
+          facturas: formState.facturas, // ✅ Array de objetos File nativos del navegador
         }),
-      // ✅ CAMBIO CRÍTICO: Enviar los archivos File directos (sin URL.createObjectURL)
-      ...(formState.facturas.length > 0 && {
-        facturas: formState.facturas // ✅ Array de objetos File nativos del navegador
-      }),
-    };
-      
+      };
 
       await createMutation.mutateAsync(payload);
     } catch (error) {
@@ -553,14 +546,16 @@ const PreAlertCreate = () => {
               src={iconImage}
               style={{
                 width: 50,
-                filter: 'invert(41%) sepia(99%) saturate(7496%) hue-rotate(358deg) brightness(99%) contrast(101%)'
+                filter:
+                  'invert(41%) sepia(99%) saturate(7496%) hue-rotate(358deg) brightness(99%) contrast(101%)',
               }}
               alt=""
             />
           </div>
           <h1 className="prealert-create__title">Pre-Alerta tu compra</h1>
           <p className="prealert-create__subtitle">
-            Ayúdanos a gestionar tu envío más rápido, avísanos tan pronto recibas el tracking de tu compra
+            Ayúdanos a gestionar tu envío más rápido, avísanos tan pronto
+            recibas el tracking de tu compra
           </p>
         </div>
 
@@ -571,11 +566,11 @@ const PreAlertCreate = () => {
               <label className="prealert-create__label">
                 Números de Tracking
                 <span className="prealert-create__required">*</span>
-              </label>              
-              <Tooltip 
+              </label>
+              <Tooltip
                 content="El tracking es el número de seguimiento de tu paquete. La tienda online te lo enviará cuando procese y despache tu pedido. Si aún no lo tienes, espera la confirmación en tu email."
                 position="auto"
-              />              
+              />
             </div>
 
             {formState.trackings.map((tracking, index) => (
@@ -620,11 +615,11 @@ const PreAlertCreate = () => {
                 Contenido ({formState.contenidos.length} seleccionado
                 {formState.contenidos.length !== 1 ? 's' : ''})
                 <span className="prealert-create__required">*</span>
-              </label>              
-              <Tooltip 
+              </label>
+              <Tooltip
                 content="Selecciona uno o más productos o categorías del contenido de tu paquete. Puedes elegir múltiples opciones."
                 position="auto"
-              />              
+              />
             </div>
 
             <MultiSelectSearchable
@@ -645,20 +640,23 @@ const PreAlertCreate = () => {
             )}
           </div>
 
-          {/* SECCIÓN VALOR DECLARADO */}
+        {/* ✅ SECCIÓN CONSOLIDADA: VALOR DECLARADO Y TIPO DE CONTENIDO */}
           <div className="prealert-create__section">
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
                 Valor Declarado (Opcional)
-              </label>              
-              <Tooltip 
+              </label>
+              <Tooltip
                 content="El FOB (Free On Board) es el costo de la mercancía en la factura de compra. Debes ingresar el monto total de los artículos contenidos en el paquete."
                 position="auto"
-              />              
+              />
             </div>
 
-            <div className="prealert-create__row">
-              <div className="prealert-create__col prealert-create__col--small">
+            {/* CONTENEDOR GRID (Moneda | Monto | Tipo Contenido) */}
+            <div className="prealert-create__value-type-grid">
+              
+              {/* COLUMNA 1: Moneda (Pequeña) */}
+              <div className="prealert-create__col">
                 <label className="prealert-create__label">Moneda</label>
                 <select
                   className="prealert-create__select"
@@ -666,47 +664,47 @@ const PreAlertCreate = () => {
                   onChange={(e) => updateFormState('currency', e.target.value)}
                 >
                   <option value="USD">USD</option>
+                  {/* <option value="EUR">EUR</option>
+                  <option value="VES">VES</option> */}
                 </select>
               </div>
 
+              {/* COLUMNA 2: Monto (Grande) */}
               <div className="prealert-create__col">
                 <label className="prealert-create__label">Monto</label>
                 <CurrencyInput
                   className="prealert-create__input prealert-create__input--currency"
                   placeholder="0,00"
                   value={formState.valorDeclarado}
-                  onChange={(formattedValue, numericValue) => {
-                    if (numericValue > 0) {
-                      updateFormState('valorDeclarado', formattedValue);
-                    } else {
-                      updateFormState('valorDeclarado', '');
-                    }
+                  onChange={(formattedValue) => {
+                    updateFormState('valorDeclarado', formattedValue);
                   }}
                   maxLength={10}
                 />
               </div>
-            </div>
-            </div>
 
-          {/* SECCIÓN TIPO DE CONTENIDO */}
-          <div className="prealert-create__section">
-            <label className="prealert-create__label">
-              Tipo de Contenido (Opcional)
-            </label>
-            <div className="prealert-create__checkboxes">
-              {['Frágil', 'Líquidos'].map((option) => (
-                <label
-                  key={option}
-                  className="prealert-create__checkbox-option"
-                >
-                  <input
-                    type="checkbox"
-                    checked={(formState.tipoContenido || []).includes(option)}
-                    onChange={() => handleToggleContentType(option)}
-                  />
-                  <span>{option}</span>
+              {/* COLUMNA 3: Tipo de Contenido */}
+              <div className="prealert-create__col">
+                <label className="prealert-create__label">
+                  Tipo de Contenido (Opcional)
                 </label>
-              ))}
+                <div className="prealert-create__checkboxes">
+                  {['Frágil', 'Líquidos'].map((option) => (
+                    <label
+                      key={option}
+                      className="prealert-create__checkbox-option"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={(formState.tipoContenido || []).includes(option)}
+                        onChange={() => handleToggleContentType(option)}
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -715,11 +713,11 @@ const PreAlertCreate = () => {
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
                 Dirección de Entrega Predeterminada
-              </label>              
-              <Tooltip 
+              </label>
+              <Tooltip
                 content="Esta es la dirección en la que recibirás todos tus paquetes. Si no la modificas ahora, tu paquete será enviado allí y no podrás cambiarla después de que llegue a nuestro almacén."
                 position="auto"
-              />              
+              />
             </div>
 
             <div className="prealert-create__address-display">

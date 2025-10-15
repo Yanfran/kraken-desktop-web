@@ -405,6 +405,70 @@
     }
   }
 
+
+
+  /* ===== SECCIÓN CONSOLIDADA DE VALOR/TIPO PARA EDITAR ===== */
+
+// Contenedor principal del grid
+.prealert-edit__value-type-grid {
+  display: grid;
+  // Columnas: Moneda (fija), Monto (flexible), Tipo (flexible)
+  grid-template-columns: 90px 1.5fr 1fr;
+  gap: var(--spacing-3);
+  align-items: flex-end; // Alinea los inputs/selects en la parte inferior
+
+  // Comportamiento en tablets y pantallas medianas
+  @media (max-width: 1024px) {
+    grid-template-columns: 90px 1fr; // Moneda y Monto en la primera fila
+    gap: var(--spacing-4);
+
+    // La tercera columna (Tipo de Contenido) se va a la siguiente fila
+    .prealert-edit__col:nth-child(3) {
+      grid-column: 1 / -1; // Ocupa todo el ancho de la nueva fila
+      margin-top: var(--spacing-4);
+    }
+  }
+
+  // Comportamiento en móviles
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr; // Todo en una sola columna, apilado
+    gap: var(--spacing-5);
+    
+    .prealert-edit__col:nth-child(3) {
+      margin-top: 0; // Resetear margen para el apilado móvil
+    }
+  }
+}
+
+// Estilos específicos para las columnas DENTRO del grid
+.prealert-edit__value-type-grid .prealert-edit__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+// Altura fija para el select de moneda
+.prealert-edit__value-type-grid .prealert-edit__select {
+  height: 50px;
+}
+
+// Contenedor de checkboxes para alineación vertical
+.prealert-edit__checkboxes {
+  display: flex;
+  gap: var(--spacing-4);
+  align-items: center;
+  height: 50px; // Altura fija para alinear con los inputs
+}
+
+// Cada opción de checkbox
+.prealert-edit__checkboxes .prealert-edit__checkbox-option {
+  flex: 1;
+  min-width: fit-content;
+}
+/* ======================================================= */
+
+
+
   /* ═══════ DEFAULT ADDRESS BOX ═══════ */
   &__default-address {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
