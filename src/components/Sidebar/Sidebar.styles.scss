@@ -1,9 +1,9 @@
-/* SIDEBAR PRINCIPAL - ALTURA AJUSTADA */
+/* SIDEBAR PRINCIPAL - SIEMPRE FIXED */
 .dashboard-sidebar {
-  position: fixed;
+  position: fixed; /* ✅ SIEMPRE fixed, nunca sticky */
   top: 0;
   left: 0;
-  height: 100vh;
+  height: 100vh; /* ✅ Altura completa */
   width: 280px;
   background-color: var(--color-background);
   border-right: 1px solid #E1E5E9;
@@ -13,41 +13,49 @@
   z-index: 200;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* ✅ NUEVO: Evitar overflow del sidebar */
   
   &.open {
     transform: translateX(0);
   }
   
+  /* ✅ En desktop: siempre visible */
   @media (min-width: 1200px) {
-    position: sticky;
     transform: translateX(0);
     flex-shrink: 0;
   }
 }
 
-/* OVERLAY PARA MOBILE */
+/* OVERLAY PARA MOBILE/TABLET - NO CUBRE EL SIDEBAR */
 .dashboard-sidebar__overlay {
   position: fixed;
   top: 0;
-  left: 0;
-  width: 100vw;
+  left: 280px; /* ✅ CRÍTICO: Empieza DESPUÉS del sidebar */
+  width: calc(100vw - 280px); /* ✅ Solo cubre el resto de la pantalla */
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 150;
+  cursor: pointer;
   
   @media (min-width: 1200px) {
     display: none;
   }
+  
+  @media (max-width: 768px) {
+    left: 0; /* ✅ En móvil sí cubre todo */
+    width: 100vw;
+  }
 }
 
-/* CONTENIDO DEL SIDEBAR - CON SCROLL */
+/* Asegurar que el contenido del sidebar sea clickeable */
 .dashboard-sidebar__content {
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Evitar scroll en el contenedor */
+  overflow: hidden;
+  position: relative;
+  z-index: 1; /* ✅ Asegurar que esté por encima */
 }
-
 // Agregar estos estilos al archivo src/components/Sidebar/Sidebar.styles.scss
 // Busca la sección .dashboard-sidebar__user-profile y reemplázala con esto:
 
@@ -219,16 +227,17 @@
   }
 }
 
-/* MENU - ÁREA CON SCROLL */
+/* MENU */
 .dashboard-sidebar__menu {
-  flex: 1; /* Toma el espacio disponible */
+  flex: 1;
   padding: 16px;
-  overflow-y: auto; /* Solo scroll vertical cuando sea necesario */
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0; /* ✅ Sin gap que pueda crear líneas visuales */
+  position: relative;
+  z-index: 1;
   
-  /* Personalizar scrollbar */
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -245,13 +254,20 @@
       background: rgba(0, 0, 0, 0.2);
     }
   }
+  
+  /* ✅ NUEVO: Asegurar que no haya bordes en ningún hijo directo */
+  > * {
+    border-top: none;
+    border-bottom: none;
+  }
 }
 
+/* MENU ITEM - SIN LÍNEAS SEPARADORAS */
 .dashboard-sidebar__menu-item {
   width: 100%;
   padding: 16px 20px;
   background: none;
-  border: none;
+  border: none; /* ✅ Sin bordes */
   color: var(--color-text-secondary);
   text-align: left;
   cursor: pointer;
@@ -263,7 +279,9 @@
   font-size: 14px;
   font-weight: 500;
   position: relative;
-  flex-shrink: 0; /* No se comprimen */
+  flex-shrink: 0;
+  z-index: 2;
+  margin-bottom: 2px; /* ✅ Pequeño espacio entre items */
   
   &:hover {
     background-color: #F8F9FA;
@@ -275,21 +293,19 @@
     background-color: rgba(255, 69, 0, 0.08);
     color: var(--color-primary);
     font-weight: 600;
-    border-left: 3px solid var(--color-primary);
-    margin-left: -3px;
-    padding-left: 23px;
   }
 }
 
-
-/* ===== SUBMENU STYLES ===== */
+/* SUBMENU - SIN LÍNEAS */
 .dashboard-sidebar__submenu {
   display: flex;
   flex-direction: column;
   padding-left: 20px;
-  margin-top: 4px;
+  margin-top: 0; /* ✅ CAMBIO: Sin margen superior */
   margin-bottom: 4px;
   animation: slideDown 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 @keyframes slideDown {
@@ -309,12 +325,14 @@
   font-weight: 400;
   color: var(--color-text-secondary);
   background: transparent;
-  border: none;
+  border: none; /* ✅ Sin bordes */
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
   transition: all 0.2s ease;
   margin-bottom: 2px;
+  position: relative;
+  z-index: 2;
 
   &:hover {
     background-color: rgba(255, 180, 133, 0.1);

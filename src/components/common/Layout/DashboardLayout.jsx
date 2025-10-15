@@ -1,52 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
-
-// Importar componentes separados
-import Sidebar from '../../../components/Sidebar/Sidebar';
-import TopNavigation from '../../../components/TopNavigation/TopNavigation';
+import Sidebar from '../../Sidebar/Sidebar';
+import TopNavigation from '../../TopNavigation/TopNavigation';
+import MobileBlock from '../../MobileBlock/MobileBlock'; // ✅ NUEVO
 import '../../../pages/dashboard/Dashboard.styles.scss';
 
 const DashboardLayout = ({ children }) => {
   const { actualTheme } = useTheme();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false); // ✅ NUEVO
 
-  // Responsive: cerrar sidebar automáticamente en mobile
+  // ✅ Detectar si es móvil
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 768) {
-        setSidebarOpen(false);
+    const checkMobile = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768); // Bloquear para pantallas menores a 768px
+      
+      // Gestionar sidebar según tamaño
+      if (width >= 1200) {
+        setSidebarOpen(true); // Desktop: abierto
+      } else if (width < 768) {
+        setSidebarOpen(false); // Mobile: cerrado (aunque no se verá)
       } else {
-        setSidebarOpen(true);
+        setSidebarOpen(false); // Tablet: cerrado por defecto
       }
     };
 
-    handleResize(); // Verificar al montar
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Handlers para sidebar
   const handleToggleSidebar = () => {
     setSidebarOpen(prev => !prev);
   };
 
   const handleCloseSidebar = () => {
-    setSidebarOpen(false);
+    if (window.innerWidth < 1200) {
+      setSidebarOpen(false);
+    }
   };
 
+  // ✅ Si es móvil, mostrar página de bloqueo
+  if (isMobile) {
+    return <MobileBlock />;
+  }
+
+  // ✅ Si es tablet o desktop, mostrar dashboard normal
   return (
     <div className="dashboard-container" data-theme={actualTheme}>
+      {sidebarOpen && window.innerWidth < 1200 && (
+        <div 
+          className="dashboard-sidebar__overlay" 
+          onClick={handleCloseSidebar}
+        />
+      )}
+      
       <Sidebar 
         isOpen={sidebarOpen}
         onClose={handleCloseSidebar}
       />
-      <main className={`dashboard-main ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      
+      <main className="dashboard-main">
         <TopNavigation 
           onToggleSidebar={handleToggleSidebar}
           sidebarOpen={sidebarOpen}
         />
-        {children}
+        
+        <div className="dashboard-content">
+          {children}
+        </div>
       </main>
     </div>
   );

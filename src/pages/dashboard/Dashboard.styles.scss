@@ -18,6 +18,8 @@
 .dashboard-container {
   display: flex;
   min-height: 100vh;
+  max-width: 100vw; /* ✅ NUEVO: Nunca más ancho que la pantalla */
+  overflow-x: hidden; /* ✅ NUEVO: Ocultar cualquier overflow */
   background-color: var(--color-surface);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
@@ -54,40 +56,49 @@
 //   }
 // }
 
+/* MAIN CONTENT */
 .dashboard-main {
   flex: 1;
-  // margin-left: 280px;
   display: flex;
   flex-direction: column;
-  transition: margin-left 0.3s ease;
   min-height: 100vh;
-  width: calc(100vw - 280px); /* FORZAR ANCHO COMPLETO */
+  max-width: 100%;
+  overflow-x: hidden;
+  transition: margin-left 0.3s ease;
+  box-sizing: border-box;
   
-  &.sidebar-closed {
-    // margin-left: 80px;
-    // width: calc(100vw - 80px); /* AJUSTAR CUANDO SIDEBAR CERRADO */
+  /* Desktop: empujar contenido a la derecha del sidebar */
+  @media (min-width: 1200px) {
+    margin-left: 280px; /* ✅ CRÍTICO: Espacio para el sidebar fixed */
+    width: calc(100% - 280px);
   }
   
-  @media (max-width: 768px) {
+  /* Tablet y móvil: sin margen */
+  @media (max-width: 1199px) {
     margin-left: 0;
-    width: 100vw;
-    
-    &.sidebar-closed {
-      margin-left: 0;
-      width: 100vw;
-    }
+    width: 100%;
   }
 }
 
 /* CONTENT AREA */
 .dashboard-content {
   flex: 1;
-  padding: 24px 40px; /* Más padding horizontal */
-  max-width: none;
-  margin: 0;
+  padding: 24px 40px;
+  max-width: 100%; /* ✅ NUEVO: Limitar al 100% */
   width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* ✅ NUEVO: Por si acaso */
+  
+  @media (max-width: 1024px) {
+    padding: 20px 24px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 }
 
+/* SECCIONES DEL DASHBOARD */
 .dashboard-section {
   background-color: var(--color-background);
   border-radius: 12px;
@@ -95,8 +106,10 @@
   margin-bottom: 24px;
   border: 1px solid var(--color-border);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  width: 100%; /* Asegurar que ocupe todo el ancho disponible */
-  max-width: none; /* Sin límites de ancho */
+  width: 100%;
+  max-width: 100%; /* ✅ NUEVO */
+  box-sizing: border-box; /* ✅ NUEVO */
+  overflow-x: auto; /* ✅ NUEVO: Si hay tablas anchas, scroll interno */
 }
 
 .dashboard-section-header {
