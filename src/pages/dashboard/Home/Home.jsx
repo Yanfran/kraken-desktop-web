@@ -126,6 +126,8 @@ const Home = ({ onNavigateToShipments }) => {
           contenido: alert.contenido || 'Sin descripción'
         }));
         
+        console.log('Formatted pre-alerts:', formattedPreAlerts);
+
         setPreAlerts(formattedPreAlerts);
       } else {
         setErrors(prev => ({ 

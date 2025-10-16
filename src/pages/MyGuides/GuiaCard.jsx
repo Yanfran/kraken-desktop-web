@@ -68,7 +68,7 @@ export default function GuiaCard({ guia, viewMode }) {
       </div>
       
       <div className={styles.cardFooter}>
-        <span>Origen: {guia.origen || 'N/A'}</span>
+        <span>Origen: {guia.origen || 'USA'}</span>
         <span>Trackings: {guia.trackings?.length || 0}</span>
       </div>
     </div>

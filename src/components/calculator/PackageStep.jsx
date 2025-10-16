@@ -154,7 +154,7 @@ const PackageStep = ({
           {isHighValue && (
             <div className="package-step__dimensions">
               <p className="package-step__high-value-note">
-                ⚠️ Alto valor detectado. Por favor ingresa las dimensiones del paquete.
+                Por favor ingresa las dimensiones del paquete.
               </p>
               
               <label className="package-step__label">

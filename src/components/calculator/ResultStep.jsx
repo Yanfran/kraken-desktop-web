@@ -196,7 +196,7 @@ const ResultStep = ({
         </div>
 
         {/* Selector de moneda */}
-        <div className="result-step__currency-selector">
+        {/* <div className="result-step__currency-selector">
           <div className="result-step__currency-header">
             <span className="result-step__currency-label">Ver precios en:</span>
             {!isLoadingRate && exchangeDetails && (
@@ -231,7 +231,7 @@ const ResultStep = ({
               </span>
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Cards de resultados */}
         <div className="result-step__cards">

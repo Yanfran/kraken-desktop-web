@@ -10,6 +10,7 @@ import {
 } from '../../services/guiasService';
 import styles from './GuideDetail.module.scss';
 import clsx from 'clsx';
+import CustomAlert from '../../components/common/CustomAlert/CustomAlert';
 
 // Iconos de react-icons/io5
 import {
@@ -80,16 +81,22 @@ export default function GuideDetail() {
 
   const handlePagar = useCallback(() => {
     if (!guiaDetail) return;
+    
+    const montoFormateado = (guiaDetail.detalleFactura?.total || 0).toLocaleString('es-VE', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    }) + ' Bs.';
+    
     alert.showConfirm(
       {
         title: 'Proceder al Pago',
-        message: `¿Deseas proceder al pago de la guía ${guiaDetail.nGuia}?\n\nMonto: ${formatBolivar(guiaDetail.detalleFactura.total)}`,
+        message: `¿Deseas proceder al pago de la guía ${guiaDetail.nGuia}?\n\nMonto: ${montoFormateado}`,
         type: 'info',
         confirmText: 'Pagar Ahora',
       },
       () => navigate(`/payment/${guiaDetail.idGuia}`)
     );
-  }, [guiaDetail, navigate, alert]);
+  }, [guiaDetail, navigate, alert]); // ✅ AGREGADO 'alert' a las dependencias
 
   // ✅ NUEVA FUNCIÓN: Manejar descarga de facturas (igual que en app móvil)
   const handleVerFactura = useCallback(async () => {
@@ -251,6 +258,7 @@ export default function GuideDetail() {
 
   return (
     <div className={styles.container}>
+      <CustomAlert {...alert.alertProps} />
       <div className={styles.scrollView}>
         
         {/* Alert de Pre-alerta */}

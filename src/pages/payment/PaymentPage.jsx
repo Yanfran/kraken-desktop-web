@@ -374,10 +374,10 @@ export default function PaymentPage() {
           {isMultiplePayment ? 'Total a pagar:' : 'Monto a pagar:'}
         </p>
         <h2 className={styles.amountValue}>{formatBolivar(parseFloat(amount))}</h2>
-        <p className={styles.usdReference}>{formatUSDReference(parseFloat(amount))}</p>
-        <p className={styles.exchangeRate}>
+        {/* <p className={styles.usdReference}>{formatUSDReference(parseFloat(amount))}</p> */}
+        {/* <p className={styles.exchangeRate}>
           Tasa BCV: {paymentData?.tasaCambio?.toFixed(2)} Bs./USD
-        </p>
+        </p> */}
         {isMultiplePayment && (
           <p className={styles.multipleNote}>
             Pago por {multipleIds.split(',').length} guías
@@ -582,7 +582,7 @@ export default function PaymentPage() {
           disabled
           className={styles.disabled}
         />
-        <small>{formatUSDReference(parseFloat(amount))}</small>
+        {/* <small>{formatUSDReference(parseFloat(amount))}</small> */}
       </div>
 
       {/* Botones */}

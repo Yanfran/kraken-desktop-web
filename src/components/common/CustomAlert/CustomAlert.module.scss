@@ -1,0 +1,189 @@
+// src/components/common/CustomAlert/CustomAlert.module.scss
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.alertContainer {
+  background-color: white;
+  border-radius: 16px;
+  min-width: 300px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.alertHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px 16px;
+}
+
+.iconContainer {
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.alertTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  line-height: 24px;
+  margin: 0;
+}
+
+.alertBody {
+  padding: 0 20px 24px;
+}
+
+.alertMessage {
+  font-size: 16px;
+  color: #333;
+  line-height: 22px;
+  text-align: center;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.alertFooter {
+  border-top: 1px solid #F0F0F0;
+  padding: 20px;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 12px;
+}
+
+.button {
+  border-radius: 12px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.singleButton {
+  width: 100%;
+}
+
+.cancelButton {
+  flex: 1;
+  background-color: #F8F9FA;
+  color: #333;
+  border: 2px solid #E5E5E5;
+
+  &:hover:not(:disabled) {
+    background-color: #E9ECEF;
+  }
+}
+
+.confirmButton {
+  flex: 1;
+  color: white;
+  font-weight: 700;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive
+@media (max-width: 480px) {
+  .overlay {
+    padding: 16px;
+  }
+
+  .alertContainer {
+    min-width: unset;
+    max-width: 100%;
+  }
+
+  .alertTitle {
+    font-size: 16px;
+  }
+
+  .alertMessage {
+    font-size: 14px;
+  }
+
+  .button {
+    padding: 12px 20px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+}
