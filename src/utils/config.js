@@ -1,7 +1,23 @@
-// src/utils/config.js - CONFIGURACIÓN CON TU BACKEND REAL
+// src/utils/config.js - CONFIGURACIÓN CON SWITCH MANUAL
+
+// 🎯 SWITCH MANUAL: Cambia este valor para alternar entre desarrollo y producción
+const USE_PRODUCTION = true; // 👈 Cambia a true para producción
+
+// ===== FUNCIÓN PARA OBTENER API_URL =====
+const getApiUrl = () => {
+  if (USE_PRODUCTION) {
+    return 'https://api.krakencourier.com/api'; // ✅ Producción (HTTPS)
+  }
+  
+  // Desarrollo - Backend local
+  return 'http://localhost:7031/api';
+};
+
+// ===== EXPORTS =====
+export const API_URL = getApiUrl();
+
 export const API_CONFIG = {
-  // ✅ USA LA MISMA URL QUE TU REACT NATIVE
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:7031/api',
+  BASE_URL: API_URL,
   TIMEOUT: 30000,
   
   // ✅ ENDPOINTS REALES DE TU BACKEND
@@ -53,6 +69,9 @@ export const API_CONFIG = {
       LIST: '/guias',
       DETAIL: (id) => `/guias/${id}`,
       UPLOAD_INVOICE: (id) => `/guias/${id}/upload-invoice`,
+      INVOICES: (id) => `/guias/${id}/invoices`,
+      DOWNLOAD_INVOICE: (invoiceId) => `/guias/invoices/${invoiceId}/download`,
+      DOWNLOAD_ALL: (id) => `/guias/${id}/invoices/download-all`,
     },
     
     // Payment - BASADO EN TU PaymentController
@@ -62,6 +81,8 @@ export const API_CONFIG = {
       MOBILE_PAYMENT: '/payment/mobile',
       GET_DATA: (id) => `/payment/${id}/data`,
       GET_MULTIPLE: '/payment/multiple/data',
+      CALCULATE_SINGLE: (id) => `/guias/${id}/calculate-price`,
+      CALCULATE_MULTIPLE: '/guias/calculate-multiple-price',
     },
     
     // Build Info
@@ -69,18 +90,15 @@ export const API_CONFIG = {
   }
 };
 
-// ✅ EXPORT DIRECTO DE API_URL (REQUERIDO)
-export const API_URL = API_CONFIG.BASE_URL;
-
 export const GOOGLE_CONFIG = {
-  CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  CLIENT_ID: '916873587215-1tnv72lh39rd411i1ugrfo6fuglg7ob9.apps.googleusercontent.com',
   SCOPES: ['email', 'profile'],
 };
 
 export const APP_CONFIG = {
-  NAME: import.meta.env.VITE_APP_NAME || 'Kraken Desktop',
-  VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
-  ENVIRONMENT: import.meta.env.VITE_NODE_ENV || 'development',
+  NAME: USE_PRODUCTION ? 'Kraken Courier' : 'Kraken Desktop (Dev)',
+  VERSION: '1.0.0',
+  ENVIRONMENT: USE_PRODUCTION ? 'production' : 'development',
   
   // Configuraciones de almacenamiento
   STORAGE: {
@@ -115,20 +133,20 @@ export const APP_CONFIG = {
 // ===== FUNCIÓN PARA VERIFICAR CONFIGURACIÓN =====
 export const validateConfig = () => {
   const required = [
-    { key: 'VITE_API_BASE_URL', value: API_CONFIG.BASE_URL },
+    { key: 'API_URL', value: API_URL },
   ];
   
   const missing = required.filter(({ value }) => !value);
   
   if (missing.length > 0) {
-    console.warn('⚠️ Variables de entorno faltantes:', missing.map(({ key }) => key));
+    console.warn('⚠️ Variables de configuración faltantes:', missing.map(({ key }) => key));
   }
   
   return missing.length === 0;
 };
 
 // ===== LOGGING =====
-export const isDevelopment = () => APP_CONFIG.ENVIRONMENT === 'development';
+export const isDevelopment = () => !USE_PRODUCTION;
 
 export const log = (...args) => {
   if (isDevelopment()) {
@@ -141,5 +159,19 @@ export const logError = (...args) => {
 };
 
 // ===== DEBUG INFO =====
-console.log('🔗 API_URL configurada:', API_URL);
-console.log('🎯 Modo:', isDevelopment() ? 'DESARROLLO' : 'PRODUCCIÓN');
+console.log('═══════════════════════════════════════');
+console.log('🚀 CONFIGURACIÓN DE KRAKEN WEB');
+console.log('═══════════════════════════════════════');
+console.log('🔗 API_URL:', API_URL);
+console.log('🎯 Modo:', USE_PRODUCTION ? '🟢 PRODUCCIÓN' : '🔵 DESARROLLO');
+console.log('📱 App Name:', APP_CONFIG.NAME);
+console.log('📦 Version:', APP_CONFIG.VERSION);
+console.log('═══════════════════════════════════════');
+
+// ✅ VERIFICACIÓN ADICIONAL
+if (!USE_PRODUCTION) {
+  console.log('💡 TIP: Para cambiar a producción, modifica USE_PRODUCTION = true en src/utils/config.js');
+} else {
+  console.log('⚠️ ADVERTENCIA: Estás en modo PRODUCCIÓN');
+  console.log('📡 Conectando a:', API_URL);
+}

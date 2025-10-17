@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import toast from 'react-hot-toast';
 import './PersonalData.styles.scss';
+import axiosInstance from '../../../../services/axiosInstance';
+import { API_URL } from '../../../../utils/config';
 
 // Icons
 import { 
@@ -233,7 +235,7 @@ const PersonalData = () => {
     try {
       // ✅ Construir el payload según tu backend
       const payload = {
-        email: formData.email,
+        email: formData.email || user?.email,
         name: formData.name,
         lastName: formData.lastName,
         phone: formData.phone,
@@ -246,7 +248,8 @@ const PersonalData = () => {
       console.log('📤 Enviando datos al backend:', payload);
       console.log('📋 Tipo de documento seleccionado:', formData.idType);
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Users/update-profile`, {
+      // const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Users/update-profile`, {
+      const response = await axiosInstance.post(`${API_URL}/Users/update-profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
