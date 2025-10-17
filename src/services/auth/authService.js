@@ -431,7 +431,7 @@ export const authService = {
 
   async resendVerificationEmail(email) {
     try {
-      const response = await authAPI.post('/Users/resend-verification', { email });
+      const response = await authAPI.post('/Users/resend-verification-email', { email });
       return {
         success: response.data.success,
         message: response.data.message

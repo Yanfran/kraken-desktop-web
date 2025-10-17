@@ -47,7 +47,7 @@ const PersonalData = () => {
   // ✅ Cargar datos del usuario desde el contexto
   useEffect(() => {
     if (user) {
-      console.log('👤 Usuario en contexto:', user);
+      // console.log('👤 Usuario en contexto:', user);
       
       // Mapear los campos del backend a tu formulario
       const detectedIdType = detectDocumentType(user);
@@ -233,73 +233,84 @@ const PersonalData = () => {
     setLoading(true);
 
     try {
-      // ✅ Construir el payload según tu backend
+      const emailToSend = formData.email || user?.email;
+      
+      if (!emailToSend) {
+        console.error('❌ No se encontró email');
+        toast.error('Error: No se pudo obtener tu email');
+        setLoading(false);
+        return;
+      }
+
       const payload = {
-        email: formData.email || user?.email,
+        email: emailToSend,
         name: formData.name,
         lastName: formData.lastName,
         phone: formData.phone,
         phoneSecondary: formData.phoneSecondary || null,
-        idType: formData.idType, // ⚠️ Backend espera el string, no el número
+        idType: formData.idType,
         idNumber: formData.idNumber,
         birthday: new Date(formData.birthday).toISOString()
       };
 
-      console.log('📤 Enviando datos al backend:', payload);
-      console.log('📋 Tipo de documento seleccionado:', formData.idType);
+      // console.log('📤 Payload FINAL:', JSON.stringify(payload, null, 2));
 
-      // const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Users/update-profile`, {
-      const response = await axiosInstance.post(`${API_URL}/Users/update-profile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      // ✅ CORRECTO: Axios maneja automáticamente headers y JSON
+      const response = await axiosInstance.post('/Users/update-profile', payload);
 
-      const data = await response.json();
-      console.log('📥 Respuesta del backend:', data);
+      // console.log('📥 Respuesta:', response.data);
 
-      if (data.success) {
-        // ✅ Actualizar el usuario en el contexto con los datos retornados
+      if (response.data.success) {
         const updatedUser = {
           ...user,
-          name: data.user.nombres || formData.name,
-          lastName: data.user.apellidos || formData.lastName,
-          nombres: data.user.nombres || formData.name,
-          apellidos: data.user.apellidos || formData.lastName,
-          phone: data.user.telefonoCelular || formData.phone,
-          phoneSecondary: data.user.telefonoCelularSecundario || formData.phoneSecondary,
-          telefonoCelular: data.user.telefonoCelular || formData.phone,
-          telefonoCelularSecundario: data.user.telefonoCelularSecundario || formData.phoneSecondary,
+          name: response.data.user.nombres || formData.name,
+          lastName: response.data.user.apellidos || formData.lastName,
+          nombres: response.data.user.nombres || formData.name,
+          apellidos: response.data.user.apellidos || formData.lastName,
+          phone: response.data.user.telefonoCelular || formData.phone,
+          phoneSecondary: response.data.user.telefonoCelularSecundario || formData.phoneSecondary,
+          telefonoCelular: response.data.user.telefonoCelular || formData.phone,
+          telefonoCelularSecundario: response.data.user.telefonoCelularSecundario || formData.phoneSecondary,
           idType: formData.idType,
-          idNumber: data.user.nroIdentificacionCliente || formData.idNumber,
-          nroIdentificacionCliente: data.user.nroIdentificacionCliente || formData.idNumber,
-          idClienteTipoIdentificacion: data.user.idClienteTipoIdentificacion,
+          idNumber: response.data.user.nroIdentificacionCliente || formData.idNumber,
+          nroIdentificacionCliente: response.data.user.nroIdentificacionCliente || formData.idNumber,
+          idClienteTipoIdentificacion: response.data.user.idClienteTipoIdentificacion,
           birthday: formData.birthday,
-          fechaNacimiento: data.user.fechaNacimiento,
+          fechaNacimiento: response.data.user.fechaNacimiento,
           profileComplete: true
         };
         
-        // Actualizar localStorage
         localStorage.setItem('userData', JSON.stringify(updatedUser));
         
-        // Actualizar contexto si existe la función
         if (updateUserContext) {
           await updateUserContext(updatedUser);
         }
 
-        toast.success(data.message || 'Datos actualizados exitosamente');
+        toast.success(response.data.message || 'Datos actualizados exitosamente');
+        navigate(-1);
       } else {
-        if (data.field) {
-          setErrors({ [data.field]: data.message });
+        if (response.data.field) {
+          setErrors({ [response.data.field]: response.data.message });
         }
-        toast.error(data.message || 'Error al actualizar los datos');
+        toast.error(response.data.message || 'Error al actualizar los datos');
       }
     } catch (error) {
       console.error('❌ Error updating profile:', error);
-      toast.error('Error de conexión. Verifica tu conexión e intenta nuevamente.');
+      console.error('📦 Response data:', error.response?.data);
+      
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        if (errorData.field) {
+          setErrors({ [errorData.field]: errorData.message || `Campo ${errorData.field} requerido` });
+          toast.error(`Error: ${errorData.message || `Campo ${errorData.field} requerido`}`);
+        } else {
+          toast.error(errorData.message || 'Error de validación');
+        }
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Error de conexión. Intenta nuevamente.');
+      }
     } finally {
       setLoading(false);
     }

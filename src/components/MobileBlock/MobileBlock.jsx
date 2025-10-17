@@ -1,8 +1,31 @@
 // src/components/MobileBlock/MobileBlock.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './MobileBlock.styles.scss';
 
 const MobileBlock = () => {
+  const [countdown, setCountdown] = useState(5);
+  const [manualRedirect, setManualRedirect] = useState(false);
+
+  useEffect(() => {
+    // Redirigir automáticamente después de 5 segundos
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          window.location.href = 'https://m.krakencourier.com/login';
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleManualRedirect = () => {
+    setManualRedirect(true);
+    window.location.href = 'https://m.krakencourier.com/login';
+  };
+
   return (
     <div className="mobile-block">
       <div className="mobile-block__content">
@@ -22,22 +45,38 @@ const MobileBlock = () => {
         </div>
         
         <h1 className="mobile-block__title">
-          Versión Móvil No Disponible
+          Versión Móvil Detectada
         </h1>
         
         <p className="mobile-block__message">
-          Esta plataforma está optimizada únicamente para <strong>tablet y escritorio</strong>.
+          Esta plataforma está optimizada para <strong>tablet y escritorio</strong>.
         </p>
+
+        <div className="mobile-block__redirect">
+          <p className="mobile-block__redirect-text">
+            Serás redirigido a nuestra versión móvil en <strong>{countdown}</strong> segundo{countdown !== 1 ? 's' : ''}...
+          </p>
+          
+          <button 
+            className="mobile-block__button"
+            onClick={handleManualRedirect}
+            disabled={manualRedirect}
+          >
+            {manualRedirect ? 'Redirigiendo...' : 'Ir ahora a versión móvil'}
+          </button>
+        </div>
         
-        <p className="mobile-block__suggestion">
-          Por favor, accede desde:
-        </p>
-        
-        <ul className="mobile-block__list">
-          <li>💻 Computadora de escritorio</li>
-          <li>💻 Laptop</li>
-          <li>📱 Tablet (iPad, Android Tablet)</li>
-        </ul>
+        <div className="mobile-block__alternative">
+          <p className="mobile-block__suggestion">
+            También puedes acceder desde:
+          </p>
+          
+          <ul className="mobile-block__list">
+            <li>💻 Computadora de escritorio</li>
+            <li>💻 Laptop</li>
+            <li>📱 Tablet (iPad, Android Tablet)</li>
+          </ul>
+        </div>
         
         <div className="mobile-block__footer">
           <p>¿Necesitas ayuda?</p>

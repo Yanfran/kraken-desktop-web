@@ -5,6 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import './EmailVerify.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg';
+import axiosInstance from '../../../services/axiosInstance';
 
 const EmailVerify = () => {
   const [searchParams] = useSearchParams();
@@ -31,16 +32,16 @@ const EmailVerify = () => {
     try {
       setStatus('loading');
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/Users/verify-email?token=${token}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      // ✅ CORRECTO: axiosInstance.get sin opciones adicionales
+      const response = await axiosInstance.get(`/Users/verify-email?token=${token}`);
 
-      const data = await response.json();
+      // ✅ CORRECTO: Con axios, usar response.data (NO response.json())
+      const data = response.data;
 
-      if (!response.ok || !data.success) {
+      console.log('📥 Respuesta del backend:', data);
+
+      // ✅ Validar respuesta
+      if (!data.success) {
         throw new Error(data.message || 'Token inválido o expirado');
       }
 
@@ -65,9 +66,15 @@ const EmailVerify = () => {
       }, 2000);
 
     } catch (error) {
-      console.error('Error al verificar email:', error);
+      console.error('❌ Error al verificar email:', error);
       setStatus('error');
-      setErrorMessage(error.message || 'No se pudo verificar el correo electrónico');
+      
+      // ✅ Manejo de errores mejorado
+      const message = error.response?.data?.message 
+        || error.message 
+        || 'No se pudo verificar el correo electrónico';
+      
+      setErrorMessage(message);
     }
   };
 
