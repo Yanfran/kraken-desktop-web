@@ -48,10 +48,16 @@ export default function GuideDetail() {
       if (response.success) {
         setGuiaDetail(response.data);
       } else {
-        alert.showError('Error al cargar la guía', response.message || 'No se pudieron obtener los detalles.');
+        alert.showError(
+          'Error al cargar la guía',
+          response.message || 'No se pudieron obtener los detalles.'
+        );
       }
     } catch (error) {
-      alert.showError('Error de Conexión', 'No se pudieron cargar los detalles de la guía.');
+      alert.showError(
+        'Error de Conexión',
+        'No se pudieron cargar los detalles de la guía.'
+      );
       console.error('Error loading guia detail:', error);
     } finally {
       setIsLoading(false);
@@ -68,25 +74,28 @@ export default function GuideDetail() {
   }, [idGuia, isSignedIn]);
 
   const toggleSection = useCallback((section) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   }, []);
 
   // Formato de bolívares mejorado
   const formatBolivar = (amount = 0) => {
-    return amount.toLocaleString('es-VE', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
-    }) + ' Bs.';
+    return (
+      amount.toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + ' Bs.'
+    );
   };
 
   const handlePagar = useCallback(() => {
     if (!guiaDetail) return;
-    
-    const montoFormateado = (guiaDetail.detalleFactura?.total || 0).toLocaleString('es-VE', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
-    }) + ' Bs.';
-    
+
+    const montoFormateado =
+      (guiaDetail.detalleFactura?.detalles?.montoBs || 0).toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + ' Bs.';
+
     alert.showConfirm(
       {
         title: 'Proceder al Pago',
@@ -110,16 +119,22 @@ export default function GuideDetail() {
 
       // Obtener lista de facturas
       const facturasResponse = await getGuiaInvoices(guiaDetail.idGuia);
-      
+
       if (!facturasResponse.success || !facturasResponse.data) {
-        alert.showWarning('Sin facturas', 'No hay facturas disponibles para esta guía');
+        alert.showWarning(
+          'Sin facturas',
+          'No hay facturas disponibles para esta guía'
+        );
         return;
       }
 
       const { facturas: facturasDisponibles } = facturasResponse.data;
-      
+
       if (facturasDisponibles.length === 0) {
-        alert.showWarning('Sin facturas', 'No hay facturas cargadas para esta guía');
+        alert.showWarning(
+          'Sin facturas',
+          'No hay facturas cargadas para esta guía'
+        );
         return;
       }
 
@@ -129,9 +144,12 @@ export default function GuideDetail() {
       if (facturasDisponibles.length === 1) {
         const factura = facturasDisponibles[0];
         const success = await downloadInvoice(factura.id, factura.nombre);
-        
+
         if (success) {
-          alert.showSuccess('Descarga exitosa', `Se inició la descarga de: ${factura.nombre}`);
+          alert.showSuccess(
+            'Descarga exitosa',
+            `Se inició la descarga de: ${factura.nombre}`
+          );
         } else {
           alert.showError('Error', 'No se pudo descargar la factura');
         }
@@ -151,7 +169,7 @@ export default function GuideDetail() {
           // Descargar todas las facturas
           try {
             const result = await downloadAllInvoices(guiaDetail.idGuia);
-            
+
             if (result.success) {
               alert.showSuccess('Descarga exitosa', result.message);
             } else {
@@ -163,17 +181,20 @@ export default function GuideDetail() {
           }
         }
       );
-
     } catch (error) {
       console.error('Error obteniendo facturas:', error);
-      alert.showError('Error', 'No se pudieron obtener las facturas de esta guía');
+      alert.showError(
+        'Error',
+        'No se pudieron obtener las facturas de esta guía'
+      );
     } finally {
       setIsDownloadingInvoices(false);
     }
   }, [guiaDetail, alert]);
 
   const puedePagar = () => {
-    if (!guiaDetail || guiaDetail.detallePago || guiaDetail.tienePago) return false;
+    if (!guiaDetail || guiaDetail.detallePago || guiaDetail.tienePago)
+      return false;
     const fob = guiaDetail.valorFOB || 0;
     const idEstatus = guiaDetail.idEstatus || 0;
     if (fob <= 100) return idEstatus >= 2;
@@ -183,27 +204,30 @@ export default function GuideDetail() {
   // ✅ FUNCIÓN SIMPLIFICADA: Consolidar "Procesado" consecutivos
   const consolidateHistorial = (historial) => {
     if (!historial || historial.length === 0) return [];
-    
+
     const result = [];
-    
+
     for (let i = 0; i < historial.length; i++) {
       const current = historial[i];
       const currentStatus = current.estatus?.toLowerCase().trim();
-      
+
       // Si es "Procesado"
       if (currentStatus === 'procesado') {
         // Mirar hacia adelante para ver si hay más "Procesado"
         let j = i + 1;
-        while (j < historial.length && historial[j].estatus?.toLowerCase().trim() === 'procesado') {
+        while (
+          j < historial.length &&
+          historial[j].estatus?.toLowerCase().trim() === 'procesado'
+        ) {
           j++;
         }
-        
+
         // Si encontramos más "Procesado" consecutivos
         if (j > i + 1) {
           // Solo agregar el último "Procesado" del grupo
           result.push({
             ...historial[j - 1],
-            estatus: 'Procesado'
+            estatus: 'Procesado',
           });
           // Saltar todos los "Procesado" que ya procesamos
           i = j - 1;
@@ -211,7 +235,7 @@ export default function GuideDetail() {
           // Solo hay uno, agregarlo normalmente
           result.push({
             ...current,
-            estatus: 'Procesado'
+            estatus: 'Procesado',
           });
         }
       } else {
@@ -219,7 +243,7 @@ export default function GuideDetail() {
         result.push(current);
       }
     }
-    
+
     return result;
   };
 
@@ -247,10 +271,24 @@ export default function GuideDetail() {
     );
   }
 
-  const { 
-    prealertado, nGuia, estatus, fecha, origen, contenido, valorFOB, direccionEntrega,
-    contieneLiquidos, esFragil, facturaUrl, peso, unidadPeso, medidas,
-    historialEstatus, detalleFactura, detallePago 
+  const {
+    prealertado,
+    nGuia,
+    estatus,
+    fecha,
+    origen,
+    contenido,
+    valorFOB,
+    direccionEntrega,
+    contieneLiquidos,
+    esFragil,
+    facturaUrl,
+    peso,
+    unidadPeso,
+    medidas,
+    historialEstatus,
+    detalleFactura,
+    detallePago,
   } = guiaDetail;
 
   // ✅ Aplicar consolidación de historial para eliminar "Procesado" duplicados
@@ -260,17 +298,21 @@ export default function GuideDetail() {
     <div className={styles.container}>
       <CustomAlert {...alert.alertProps} />
       <div className={styles.scrollView}>
-        
         {/* Alert de Pre-alerta */}
-        <div className={clsx(styles.alertContainer, prealertado ? styles.alertSuccess : styles.alertError)}>
+        <div
+          className={clsx(
+            styles.alertContainer,
+            prealertado ? styles.alertSuccess : styles.alertError
+          )}
+        >
           {prealertado ? (
-            <IoCheckmarkCircleOutline size={24} style={{color: '#4CAF50'}} />
+            <IoCheckmarkCircleOutline size={24} style={{ color: '#4CAF50' }} />
           ) : (
-            <IoCloseCircleOutline size={24} style={{color: '#F44336'}} />
+            <IoCloseCircleOutline size={24} style={{ color: '#F44336' }} />
           )}
           <p className={styles.alertText}>
-            {prealertado 
-              ? 'Pre-alertado - Ahorraste 10% en tu envío' 
+            {prealertado
+              ? 'Pre-alertado - Ahorraste 10% en tu envío'
               : 'No pre-alertado - Perdiste -10% de descuento'}
           </p>
         </div>
@@ -305,7 +347,7 @@ export default function GuideDetail() {
             <p className={styles.sectionValue}>${valorFOB?.toFixed(2)} USD</p>
           </div>
         </div>
-        
+
         {/* Dirección de Entrega */}
         <div className={styles.section}>
           <label className={styles.sectionLabel}>Dirección de Entrega</label>
@@ -313,7 +355,10 @@ export default function GuideDetail() {
         </div>
 
         {/* Otros Detalles - Expandible */}
-        <div className={styles.expandableHeader} onClick={() => toggleSection('otrosDetalles')}> 
+        <div
+          className={styles.expandableHeader}
+          onClick={() => toggleSection('otrosDetalles')}
+        >
           <h2 className={styles.expandableTitle}>Otros Detalles</h2>
           {expandedSections.otrosDetalles ? (
             <IoChevronUpOutline size={24} />
@@ -327,20 +372,24 @@ export default function GuideDetail() {
               <div className={styles.rowItem}>
                 <label className={styles.sectionLabel}>Tipo de Contenido</label>
                 <p className={styles.sectionValue}>
-                  {contieneLiquidos ? "Líquidos" : ""}
-                  {esFragil ? (contieneLiquidos ? ", Frágil" : "Frágil") : ""}
+                  {contieneLiquidos ? 'Líquidos' : ''}
+                  {esFragil ? (contieneLiquidos ? ', Frágil' : 'Frágil') : ''}
                 </p>
               </div>
               <div className={styles.rowItem}>
                 <label className={styles.sectionLabel}>Factura</label>
-                <button 
-                  onClick={facturaUrl ? handleVerFactura : undefined} 
-                  disabled={isDownloadingInvoices || !facturaUrl} 
+                <button
+                  onClick={facturaUrl ? handleVerFactura : undefined}
+                  disabled={isDownloadingInvoices || !facturaUrl}
                   className={styles.linkButton}
                   style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <IoDocumentTextOutline size={18} />
-                  {facturaUrl ? (isDownloadingInvoices ? 'Descargando...' : 'Ver facturas') : 'Sin factura'}
+                  {facturaUrl
+                    ? isDownloadingInvoices
+                      ? 'Descargando...'
+                      : 'Ver facturas'
+                    : 'Sin factura'}
                 </button>
               </div>
             </div>
@@ -354,7 +403,8 @@ export default function GuideDetail() {
               <div className={styles.rowItem}>
                 <label className={styles.sectionLabel}>Medidas</label>
                 <p className={styles.sectionValue}>
-                  L {medidas?.largo?.toFixed(2)} A {medidas?.ancho?.toFixed(2)} H {medidas?.alto?.toFixed(2)} ({medidas?.unidad})
+                  L {medidas?.largo?.toFixed(2)} A {medidas?.ancho?.toFixed(2)}{' '}
+                  H {medidas?.alto?.toFixed(2)} ({medidas?.unidad})
                 </p>
               </div>
             </div>
@@ -362,7 +412,10 @@ export default function GuideDetail() {
         )}
 
         {/* Historial de Estatus - Expandible */}
-        <div className={styles.expandableHeader} onClick={() => toggleSection('historialEstatus')}> 
+        <div
+          className={styles.expandableHeader}
+          onClick={() => toggleSection('historialEstatus')}
+        >
           <h2 className={styles.expandableTitle}>Historial de Estatus</h2>
           {expandedSections.historialEstatus ? (
             <IoChevronUpOutline size={24} />
@@ -373,7 +426,10 @@ export default function GuideDetail() {
         {expandedSections.historialEstatus && (
           <div className={styles.expandableContent}>
             {consolidatedHistorial?.map((item, index) => (
-              <div key={`${item.estatus}-${index}`} className={styles.historyItem}>
+              <div
+                key={`${item.estatus}-${index}`}
+                className={styles.historyItem}
+              >
                 <IoCheckmarkCircleOutline size={24} color="#28a745" />
                 <div className={styles.historyContent}>
                   <p className={styles.historyStatus}>{item.estatus}</p>
@@ -384,55 +440,62 @@ export default function GuideDetail() {
           </div>
         )}
 
-       {/* Detalle de Factura - MOSTRAR LISTA DE DETALLES SOLO EN BS */}
-{estatus !== "Recibido" && detalleFactura && (
-  <div className={styles.facturaSection}>
-    <h2 className={styles.facturaTitle}>
-      <IoReceiptOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-      Detalle de Factura
-    </h2>
-    
-    {/* RENDERIZAR CADA LÍNEA DE DETALLE */}
-    {detalleFactura.detalles && detalleFactura.detalles.length > 0 ? (
-      <div className={styles.facturaTable}>
-        {detalleFactura.detalles.map((detalle) => {
-          // Determinar si es una línea especial
-          const isSubtotal = detalle.categoria === 'SUBTOTAL';
-          const isTotal = detalle.categoria === 'TOTAL_BS';
-          const isDescuento = detalle.esDescuento;
+        {/* Detalle de Factura - MOSTRAR LISTA DE DETALLES SOLO EN BS */}
+        {estatus !== 'Recibido' && detalleFactura && (
+          <div className={styles.facturaSection}>
+            <h2 className={styles.facturaTitle}>
+              <IoReceiptOutline
+                size={22}
+                style={{ marginRight: 8, verticalAlign: 'middle' }}
+              />
+              Detalle de Factura
+            </h2>
 
-          // Determinar clase CSS según tipo
-          const rowClass = clsx(
-            styles.facturaRow,
-            {
-              [styles.facturaRowBold]: isSubtotal,
-              [styles.facturaRowTotal]: isTotal,
-              [styles.facturaRowDescuento]: isDescuento
-            }
-          );
+            {/* RENDERIZAR CADA LÍNEA DE DETALLE */}
+            {detalleFactura.detalles && detalleFactura.detalles.length > 0 ? (
+              <div className={styles.facturaTable}>
+                {detalleFactura.detalles.map((detalle) => {
+                  // Determinar si es una línea especial
+                  const isSubtotal = detalle.categoria === 'SUBTOTAL';
+                  const isTotal = detalle.categoria === 'TOTAL_BS';
+                  const isDescuento = detalle.esDescuento;
 
-          const labelClass = isTotal ? styles.facturaTotalLabel : 
-                           isSubtotal ? styles.facturaLabelBold : 
-                           styles.facturaLabel;
+                  // ✅ NO MOSTRAR si el monto es 0 y NO es subtotal ni total
+                  if (detalle.montoBs === 0 && !isSubtotal && !isTotal) {
+                    return null;
+                  }
 
-          const valueClass = isTotal ? styles.facturaTotalValue : 
-                           isSubtotal ? styles.facturaValueBold : 
-                           styles.facturaValue;
+                  // Determinar clase CSS según tipo
+                  const rowClass = clsx(styles.facturaRow, {
+                    [styles.facturaRowBold]: isSubtotal,
+                    [styles.facturaRowTotal]: isTotal,
+                    [styles.facturaRowDescuento]: isDescuento,
+                  });
 
-          return (
-            <div key={detalle.numLinea} className={rowClass}>
-              <p className={labelClass}>
-                {detalle.descripcionItem}
-              </p>
-              <span className={valueClass}>
-                {formatBolivar(detalle.montoBs)}
-              </span>
-            </div>
-          );
-        })}
+                  const labelClass = isTotal
+                    ? styles.facturaTotalLabel
+                    : isSubtotal
+                      ? styles.facturaLabelBold
+                      : styles.facturaLabel;
 
-        {/* INFO ADICIONAL */}
-        {/* <div className={styles.facturaInfo}>
+                  const valueClass = isTotal
+                    ? styles.facturaTotalValue
+                    : isSubtotal
+                      ? styles.facturaValueBold
+                      : styles.facturaValue;
+
+                  return (
+                    <div key={detalle.numLinea} className={rowClass}>
+                      <p className={labelClass}>{detalle.descripcionItem}</p>
+                      <span className={valueClass}>
+                        {formatBolivar(detalle.montoBs)}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* INFO ADICIONAL */}
+                {/* <div className={styles.facturaInfo}>
           <p className={styles.facturaInfoText}>
             <span className={styles.infoLabel}>Tipo:</span>{' '}
             {detalleFactura.esBajoValor ? 'Bajo Valor (≤ $100)' : 'Alto Valor (> $100)'}
@@ -450,14 +513,16 @@ export default function GuideDetail() {
               : detalleFactura.pesoVolumen?.toFixed(2)} lb
           </p>
         </div> */}
-      </div>
-    ) : (
-      <div className={styles.facturaTable}>
-        <p className={styles.noDataText}>No hay detalles de factura disponibles</p>
-      </div>
-    )}
-  </div>
-)}
+              </div>
+            ) : (
+              <div className={styles.facturaTable}>
+                <p className={styles.noDataText}>
+                  No hay detalles de factura disponibles
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Botón de Pago */}
         {puedePagar() && (
@@ -473,22 +538,35 @@ export default function GuideDetail() {
         {detallePago && (
           <div className={styles.pagoSection}>
             <h2 className={styles.pagoTitle}>
-              <IoCheckmarkDoneOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle', color: '#28a745' }} />
+              <IoCheckmarkDoneOutline
+                size={22}
+                style={{
+                  marginRight: 8,
+                  verticalAlign: 'middle',
+                  color: '#28a745',
+                }}
+              />
               Detalle de Pago
             </h2>
             <div className={styles.pagoTable}>
               <div className={styles.pagoRow}>
                 <p className={styles.pagoLabel}>Método de Pago</p>
-                <span className={styles.pagoValue}>{detallePago.metodoPago}</span>
+                <span className={styles.pagoValue}>
+                  {detallePago.metodoPago}
+                </span>
               </div>
               <div className={styles.pagoRow}>
                 <p className={styles.pagoLabel}>Id de Transacción</p>
-                <span className={styles.pagoValue}>{detallePago.idTransaccion}</span>
+                <span className={styles.pagoValue}>
+                  {detallePago.idTransaccion}
+                </span>
               </div>
               <div className={styles.pagoRow}>
                 <p className={styles.pagoLabel}>Monto</p>
                 <div className={styles.priceContainer}>
-                  <span className={styles.pagoValue}>{formatBolivar(detallePago.monto)}</span>
+                  <span className={styles.pagoValue}>
+                    {formatBolivar(detallePago.monto)}
+                  </span>
                 </div>
               </div>
               <div className={styles.pagoRow}>
