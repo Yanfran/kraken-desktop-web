@@ -1,7 +1,7 @@
 // src/utils/config.js - CONFIGURACIÓN CON SWITCH MANUAL
 
 // 🎯 SWITCH MANUAL: Cambia este valor para alternar entre desarrollo y producción
-const USE_PRODUCTION = true; // 👈 Cambia a true para producción
+const USE_PRODUCTION = false; // 👈 Cambia a true para producción
 
 // ===== FUNCIÓN PARA OBTENER API_URL =====
 const getApiUrl = () => {

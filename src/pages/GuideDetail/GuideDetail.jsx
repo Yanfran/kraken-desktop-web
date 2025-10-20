@@ -384,57 +384,80 @@ export default function GuideDetail() {
           </div>
         )}
 
-        {/* Detalle de Factura - TODOS LOS PRECIOS EN BOLÍVARES */}
-        {estatus !== "Recibido" && detalleFactura && (
-          <div className={styles.facturaSection}>
-            <h2 className={styles.facturaTitle}>
-              <IoReceiptOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Detalle de Factura
-            </h2>
-            <div className={styles.facturaTable}>
-              <div className={styles.facturaRow}>
-                <p className={styles.facturaLabel}>Flete</p>
-                <span className={styles.facturaValue}>{formatBolivar(detalleFactura.flete)}</span>
-              </div>
-              <div className={styles.facturaRow}>
-                <p className={styles.facturaLabel}>Seguro</p>
-                <span className={styles.facturaValue}>{formatBolivar(detalleFactura.seguro)}</span>
-              </div>
-              <div className={styles.facturaRow}>
-                <p className={styles.facturaLabel}>Promo Prealerta</p>
-                <span className={styles.facturaValue}>{formatBolivar(detalleFactura.descuento)}</span>
-              </div>
-              <div className={clsx(styles.facturaRow, styles.facturaRowBold)}>
-                <p className={styles.facturaLabelBold}>SUBTOTAL</p>
-                <span className={styles.facturaValueBold}>{formatBolivar(detalleFactura.subtotal)}</span>
-              </div>
-              <div className={styles.facturaRow}>
-                <p className={styles.facturaLabel}>Aduana</p>
-                <span className={styles.facturaValue}>{formatBolivar(detalleFactura.aduana)}</span>
-              </div>
-              <div className={styles.facturaRow}>
-                <p className={styles.facturaLabel}>Franqueo Postal</p>
-                <span className={styles.facturaValue}>{formatBolivar(detalleFactura.franqueoPostal)}</span>
-              </div>
-              {detalleFactura.totalAranceles > 0 && (
-                <div className={styles.facturaRow}>
-                  <p className={styles.facturaLabel}>Aranceles</p>
-                  <span className={styles.facturaValue}>{formatBolivar(detalleFactura.totalAranceles)}</span>
-                </div>
-              )}
-              <div className={styles.facturaRow}>
-                <p className={styles.facturaLabel}>IVA</p>
-                <span className={styles.facturaValue}>{formatBolivar(detalleFactura.iva)}</span>
-              </div>
-              <div className={clsx(styles.facturaRow, styles.facturaRowTotal)}>
-                <p className={styles.facturaTotalLabel}>TOTAL</p>
-                <div className={styles.priceContainer}>
-                  <span className={styles.facturaTotalValue}>{formatBolivar(detalleFactura.total)}</span>
-                </div>
-              </div>
+       {/* Detalle de Factura - MOSTRAR LISTA DE DETALLES SOLO EN BS */}
+{estatus !== "Recibido" && detalleFactura && (
+  <div className={styles.facturaSection}>
+    <h2 className={styles.facturaTitle}>
+      <IoReceiptOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+      Detalle de Factura
+    </h2>
+    
+    {/* RENDERIZAR CADA LÍNEA DE DETALLE */}
+    {detalleFactura.detalles && detalleFactura.detalles.length > 0 ? (
+      <div className={styles.facturaTable}>
+        {detalleFactura.detalles.map((detalle) => {
+          // Determinar si es una línea especial
+          const isSubtotal = detalle.categoria === 'SUBTOTAL';
+          const isTotal = detalle.categoria === 'TOTAL_BS';
+          const isDescuento = detalle.esDescuento;
+
+          // Determinar clase CSS según tipo
+          const rowClass = clsx(
+            styles.facturaRow,
+            {
+              [styles.facturaRowBold]: isSubtotal,
+              [styles.facturaRowTotal]: isTotal,
+              [styles.facturaRowDescuento]: isDescuento
+            }
+          );
+
+          const labelClass = isTotal ? styles.facturaTotalLabel : 
+                           isSubtotal ? styles.facturaLabelBold : 
+                           styles.facturaLabel;
+
+          const valueClass = isTotal ? styles.facturaTotalValue : 
+                           isSubtotal ? styles.facturaValueBold : 
+                           styles.facturaValue;
+
+          return (
+            <div key={detalle.numLinea} className={rowClass}>
+              <p className={labelClass}>
+                {detalle.descripcionItem}
+              </p>
+              <span className={valueClass}>
+                {formatBolivar(detalle.montoBs)}
+              </span>
             </div>
-          </div>
-        )}
+          );
+        })}
+
+        {/* INFO ADICIONAL */}
+        {/* <div className={styles.facturaInfo}>
+          <p className={styles.facturaInfoText}>
+            <span className={styles.infoLabel}>Tipo:</span>{' '}
+            {detalleFactura.esBajoValor ? 'Bajo Valor (≤ $100)' : 'Alto Valor (> $100)'}
+          </p>
+          <p className={styles.facturaInfoText}>
+            <span className={styles.infoLabel}>Tasa de Cambio:</span>{' '}
+            {typeof detalleFactura.tasaCambio === 'object' 
+              ? detalleFactura.tasaCambio.parsedValue?.toFixed(2) 
+              : detalleFactura.tasaCambio?.toFixed(2)} Bs/$
+          </p>
+          <p className={styles.facturaInfoText}>
+            <span className={styles.infoLabel}>Peso Calculado:</span>{' '}
+            {typeof detalleFactura.pesoVolumen === 'object' 
+              ? detalleFactura.pesoVolumen.parsedValue?.toFixed(2) 
+              : detalleFactura.pesoVolumen?.toFixed(2)} lb
+          </p>
+        </div> */}
+      </div>
+    ) : (
+      <div className={styles.facturaTable}>
+        <p className={styles.noDataText}>No hay detalles de factura disponibles</p>
+      </div>
+    )}
+  </div>
+)}
 
         {/* Botón de Pago */}
         {puedePagar() && (

@@ -296,3 +296,221 @@ $separator-color: #EEEEEE;
     font-size: 0.8em;
     color: $text-secondary-color;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Sección de factura
+.facturaSection {
+  // margin: 24px 0;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.facturaTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.facturaTable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// Filas de la tabla
+.facturaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f9f9f9;
+  }
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+}
+
+// Fila en negrita (para subtotales)
+.facturaRowBold {
+  background-color: rgba(33, 150, 243, 0.05);
+  font-weight: 600;
+  border-top: 2px solid #2196F3;
+  border-bottom: 2px solid #2196F3;
+  padding: 14px 0;
+}
+
+// Fila de total
+.facturaRowTotal {
+  background-color: rgba(33, 150, 243, 0.1);
+  border-top: 3px double #2196F3;
+  border-bottom: 3px double #2196F3;
+  padding: 16px 0;
+  margin-top: 8px;
+}
+
+// Fila de descuento (verde)
+.facturaRowDescuento {
+  background-color: rgba(76, 175, 80, 0.05);
+  
+  .facturaValue {
+    color: #4CAF50;
+    font-weight: 600;
+  }
+}
+
+// Labels
+.facturaLabel {
+  font-size: 0.95rem;
+  color: #555;
+  font-weight: 400;
+}
+
+.facturaLabelBold {
+  font-size: 1rem;
+  color: #1a1a1a;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.facturaTotalLabel {
+  font-size: 1.1rem;
+  color: #2196F3;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+// Valores
+.facturaValue {
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  font-weight: 500;
+  text-align: right;
+}
+
+.facturaValueBold {
+  font-size: 1rem;
+  color: #1a1a1a;
+  font-weight: 700;
+  text-align: right;
+}
+
+.facturaTotalValue {
+  font-size: 1.3rem;
+  color: #2196F3;
+  font-weight: 700;
+  text-align: right;
+}
+
+// Info adicional
+.facturaInfo {
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border-left: 4px solid #2196F3;
+}
+
+.facturaInfoText {
+  font-size: 0.875rem;
+  color: #555;
+  margin: 6px 0;
+  line-height: 1.5;
+  
+  &:first-child {
+    margin-top: 0;
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.infoLabel {
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-right: 4px;
+}
+
+// Sin datos
+.noDataText {
+  text-align: center;
+  padding: 32px 20px;
+  color: #999;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .facturaSection {
+    padding: 16px;
+  }
+
+  .facturaRow {
+    padding: 10px 0;
+  }
+
+  .facturaLabel,
+  .facturaValue {
+    font-size: 0.875rem;
+  }
+
+  .facturaTotalValue {
+    font-size: 1.1rem;
+  }
+
+  .facturaInfo {
+    padding: 12px;
+  }
+
+  .facturaInfoText {
+    font-size: 0.8rem;
+  }
+}
