@@ -122,11 +122,11 @@ export default function PaymentPage() {
           setPaymentData({
             idGuia: response.data.idGuia,
             trackingNumber: response.data.nGuia,
-            amount: response.data.detalleFactura.total,
+            amount: response.data.detalleFactura.precioBase,
             detalle: response.data.detalleFactura,
             tasaCambio: response.data.detalleFactura.tasaCambio || 102.16,
           });
-          setAmount(response.data.detalleFactura.total.toFixed(2));
+          setAmount(response.data.detalleFactura.precioBase.toFixed(2));
           setStep('method');
         } else {
           setDataError(response.message || 'Error al cargar datos de pago');
@@ -340,7 +340,7 @@ export default function PaymentPage() {
   };
 
   const handleBackToGuides = () => {
-    navigate('/guides');
+    navigate('/my-guides');
   };
 
   const handleRetry = () => {
@@ -361,7 +361,7 @@ export default function PaymentPage() {
       <IoCloseCircleOutline size={64} color="#F44336" />
       <h2>Error al Cargar</h2>
       <p>{dataError}</p>
-      <button onClick={() => navigate('/guides')} className={styles.btn_primary}>
+      <button onClick={() => navigate('/my-guides')} className={styles.btn_primary}>
         Volver a Guías
       </button>
     </div>

@@ -89,12 +89,21 @@ export default function GuideDetail() {
 
   const handlePagar = useCallback(() => {
     if (!guiaDetail) return;
+    
+
+    // 1. Busca en el array 'detalles' la línea que corresponde al TOTAL.
+    const totalDetail = guiaDetail.detalleFactura.detalles.find(
+      (d) => d.categoria === 'TOTAL_BS'
+    );
+
+    // 2. Obtén el monto de esa línea. Si no la encuentra, usa 0 como fallback.
+    const montoPagar = totalDetail ? totalDetail.montoBs : 0;
 
     const montoFormateado =
-      (guiaDetail.detalleFactura?.detalles?.montoBs || 0).toLocaleString('es-VE', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + ' Bs.';
+    montoPagar.toLocaleString('es-VE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + ' Bs.';
 
     alert.showConfirm(
       {
