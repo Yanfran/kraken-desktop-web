@@ -102,19 +102,38 @@ const Addresses = () => {
 
   // ✅ Procesar ciudades y tiendas
   const availableCities = useMemo(() => {
-    if (!deliveryData?.ciudad) return [];
-    return [{
-      label: deliveryData.ciudad.name,
-      value: deliveryData.ciudad.id.toString(),
-    }];
+    // Usar ciudadesDisponibles (nuevo del backend)
+    if (deliveryData?.ciudadesDisponibles && deliveryData.ciudadesDisponibles.length > 0) {
+      return deliveryData.ciudadesDisponibles.map(c => ({
+        label: c.name,
+        value: c.id.toString(),
+      }));
+    }
+    
+    // Fallback: ciudad única
+    if (deliveryData?.ciudad) {
+      return [{
+        label: deliveryData.ciudad.name,
+        value: deliveryData.ciudad.id.toString(),
+      }];
+    }
+    
+    return [];
   }, [deliveryData]);
 
   const filteredTiendas = useMemo(() => {
     if (!deliveryData?.tiendas) return [];
+    
     return deliveryData.tiendas
-      .filter((t) => t.idTiendaTipo === 2)
+      .filter((t) => {
+        const isTipo2 = t.idTiendaTipo === 2;
+        const matchesCity = selectedCity 
+          ? t.idZonaCiudad === parseInt(selectedCity)
+          : true;
+        return isTipo2 && matchesCity;
+      })
       .map((t) => ({ label: t.nombre, value: t.id.toString() }));
-  }, [deliveryData]);
+  }, [deliveryData, selectedCity]); // ⬅️ ¡Agregar selectedCity!
 
   // Ordenar direcciones
   const sortedAddresses = useMemo(() => {
@@ -145,6 +164,21 @@ const Addresses = () => {
     }
   }, [selectedMunicipality, selectedOption]);
 
+  // Auto-seleccionar primera ciudad al abrir formulario
+  useEffect(() => {
+    if (showForm && selectedOption === 'store' && !selectedCity && availableCities.length > 0) {
+      console.log('🏙️ Auto-seleccionando primera ciudad:', availableCities[0].value);
+      setSelectedCity(availableCities[0].value);
+    }
+  }, [showForm, selectedOption, selectedCity, availableCities]);
+
+  // Handler para cuando cambia la ciudad
+  const handleCityChange = (newCityId) => {
+    console.log('🏙️ Ciudad cambiada a:', newCityId);
+    setSelectedCity(newCityId);
+    setSelectedLocker(''); // Limpiar tienda seleccionada
+  };
+
   const validateForm = () => {
     if (!selectedOption) {
       toast.error('Seleccione un tipo de dirección');
@@ -158,7 +192,7 @@ const Addresses = () => {
         return false;
       }
       if (!selectedLocker) {
-        toast.error('Seleccione una tienda/locker');
+        toast.error('Seleccione una tienda');
         return false;
       }
     } else if (selectedOption === 'home') {
@@ -449,15 +483,15 @@ const Addresses = () => {
                             <SearchableSelect
                               options={availableCities}
                               value={selectedCity}
-                              onChange={setSelectedCity}
+                              onChange={handleCityChange} // ⬅️ Usar nuevo handler
                               placeholder="Seleccione una ciudad"
-                              disabled={submitting}
+                              disabled={isLoadingDelivery}
                             />
                           </div>
 
                           <div className="form-group">
                             <label className="form-label">
-                              TIENDA/LOCKER <span className="required">*</span>
+                              TIENDA <span className="required">*</span>
                             </label>
                             <SearchableSelect
                               options={filteredTiendas}

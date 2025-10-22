@@ -124,22 +124,42 @@ const PreAlertCreate = () => {
 
   // Procesar ciudades (solo Caracas ID=50)
   const availableCities = useMemo(() => {
-    if (!deliveryData?.ciudad) return [];
-    return [
-      {
+    // Usar ciudadesDisponibles (nuevo del backend)
+    if (deliveryData?.ciudadesDisponibles && deliveryData.ciudadesDisponibles.length > 0) {
+      return deliveryData.ciudadesDisponibles.map(c => ({
+        label: c.name,
+        value: c.id.toString(),
+      }));
+    }
+    
+    // Fallback
+    if (deliveryData?.ciudad) {
+      return [{
         label: deliveryData.ciudad.name,
         value: deliveryData.ciudad.id.toString(),
-      },
-    ];
+      }];
+    }
+    
+    return [];
   }, [deliveryData]);
 
   // Filtrar tiendas tipo 2 (Lockers)
   const filteredTiendas = useMemo(() => {
     if (!deliveryData?.tiendas) return [];
+    
     return deliveryData.tiendas
-      .filter((t) => t.idTiendaTipo === 2)
+      .filter((t) => {
+        const isTipo2 = t.idTiendaTipo === 2;
+        
+        // Filtrar por ciudad seleccionada
+        const matchesCity = addressState.selectedCity 
+          ? t.idZonaCiudad === parseInt(addressState.selectedCity)
+          : true;
+        
+        return isTipo2 && matchesCity;
+      })
       .map((t) => ({ label: t.nombre, value: t.id.toString() }));
-  }, [deliveryData]);
+  }, [deliveryData, addressState.selectedCity]); // ⬅️ ¡Agregar dependencia!
 
   const contentList = useMemo(() => {
     if (!contenidosData) return [];
@@ -148,6 +168,15 @@ const PreAlertCreate = () => {
       value: c.id.toString(),
     }));
   }, [contenidosData]);
+
+  const handleCityChange = (newCityId) => {
+    console.log('🏙️ Ciudad cambiada a:', newCityId);
+    setAddressState(prev => ({
+      ...prev,
+      selectedCity: newCityId,
+      selectedLocker: ''
+    }));
+  };
 
   useEffect(() => {
     // Esperar a que ambos datos estén listos
@@ -824,10 +853,7 @@ const PreAlertCreate = () => {
                         <SearchableSelect
                           options={availableCities}
                           value={addressState.selectedCity}
-                          onChange={(value) => {
-                            updateAddressState('selectedCity', value);
-                            updateAddressState('selectedLocker', '');
-                          }}
+                          onChange={handleCityChange} // ⬅️ Cambio aquí
                           placeholder="Seleccione una ciudad"
                           disabled={isLoadingDelivery}
                         />
@@ -835,7 +861,7 @@ const PreAlertCreate = () => {
 
                       <div className="prealert-create__col">
                         <label className="prealert-create__label">
-                          Tienda/Locker{' '}
+                          Tienda{' '}
                           <span className="prealert-create__required">*</span>
                         </label>
                         <SearchableSelect

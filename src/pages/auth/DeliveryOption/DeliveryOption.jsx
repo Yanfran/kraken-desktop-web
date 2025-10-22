@@ -150,28 +150,40 @@ const DeliveryOption = () => {
         const deliveryRes = await axiosInstance.get('/Addresses/delivery-data');
         console.log('🏪 Delivery data:', deliveryRes.data);
         
-        if (deliveryRes.data.success) {
-          const { ciudad, tiendas } = deliveryRes.data.data;
-          
-          setAllStores(tiendas);
-          
-          if (ciudad) {
-            setAvailableCities([{
-              label: ciudad.name,
-              value: ciudad.id.toString()
-            }]);
-          }
-          
-          const storesType2 = tiendas
-            .filter(t => t.idTiendaTipo === 2)
-            .map(t => ({
-              label: t.nombre,
-              value: t.id.toString(),
-              idEstado: t.idEstado
-            }));
-          
-          setFilteredStores(storesType2);
+       // Dentro de loadInitialData
+      if (deliveryRes.data.success) {
+        const { ciudad, ciudadesDisponibles, tiendas } = deliveryRes.data.data;
+        
+        setAllStores(tiendas);
+        
+        // ✅ CAMBIO 1: Usar ciudadesDisponibles si está disponible
+        if (ciudadesDisponibles && ciudadesDisponibles.length > 0) {
+          const cities = ciudadesDisponibles.map(c => ({
+            label: c.name,
+            value: c.id.toString()
+          }));
+          setAvailableCities(cities);
+        } else if (ciudad) {
+          // Fallback: ciudad única
+          setAvailableCities([{
+            label: ciudad.name,
+            value: ciudad.id.toString()
+          }]);
         }
+        
+        // ✅ CAMBIO 2: Ya NO filtrar aquí, se filtrará dinámicamente
+        // Solo guardar todas las tiendas tipo 2
+        const storesType2 = tiendas
+          .filter(t => t.idTiendaTipo === 2)
+          .map(t => ({
+            label: t.nombre,
+            value: t.id.toString(),
+            idEstado: t.idEstado,
+            idZonaCiudad: t.idZonaCiudad // ⬅️ Importante: agregar este campo
+          }));
+        
+        setFilteredStores(storesType2);
+      }
         
         // 2. Cargar estados usando location-data (COMO TU APP)
         const statesRes = await axiosInstance.get('/Addresses/location-data?countryId=1');
@@ -194,6 +206,40 @@ const DeliveryOption = () => {
 
     loadInitialData();
   }, []);
+
+  // ✅ CAMBIO 3: Filtrar tiendas cuando cambia la ciudad seleccionada
+useEffect(() => {
+  if (!storeData.city || !allStores.length) {
+    // Si no hay ciudad seleccionada, mostrar todas las tiendas tipo 2
+    const storesType2 = allStores
+      .filter(t => t.idTiendaTipo === 2)
+      .map(t => ({
+        label: t.nombre,
+        value: t.id.toString(),
+        idEstado: t.idEstado,
+        idZonaCiudad: t.idZonaCiudad
+      }));
+    setFilteredStores(storesType2);
+    return;
+  }
+
+  // Filtrar tiendas de la ciudad seleccionada
+  const filtered = allStores
+      .filter(t => 
+        t.idTiendaTipo === 2 && 
+        t.idZonaCiudad === parseInt(storeData.city)
+      )
+      .map(t => ({
+        label: t.nombre,
+        value: t.id.toString(),
+        idEstado: t.idEstado,
+        idZonaCiudad: t.idZonaCiudad
+      }));
+    
+    console.log('🏙️ Filtrando tiendas para ciudad:', storeData.city, 'Resultado:', filtered);
+    setFilteredStores(filtered);
+    
+  }, [storeData.city, allStores]);
 
   // ✅ CARGAR MUNICIPIOS cuando cambia el estado (USANDO location-data)
   useEffect(() => {
@@ -302,17 +348,12 @@ const DeliveryOption = () => {
   };
 
   const handleStoreInputChange = (field, value) => {
-    console.log('🏪 Store input cambiado:', field, value);
     setStoreData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
+      // ✅ Si cambia la ciudad, limpiar la tienda seleccionada
+      ...(field === 'city' && { store: '' })
     }));
-    if (field === 'city') {
-      setStoreData(prev => ({
-        ...prev,
-        store: ''
-      }));
-    }
   };
 
   // Validación
