@@ -229,6 +229,15 @@ export default function PaymentPage() {
     return true;
   };
 
+
+  const formatPhoneForMercantil = (phoneCode, phoneNumber) => {
+    // Remover el 0 del código de operadora
+    const cleanCode = phoneCode.replace(/^0/, ''); // 0414 -> 414
+    
+    // Formato: 58 + código sin 0 + número
+    return `58${cleanCode}${phoneNumber}`; // Ejemplo: 584143177318
+  };  
+
   // Handlers
   const handlePayment = async () => {
     if (!validateForm()) return;
@@ -238,14 +247,18 @@ export default function PaymentPage() {
     try {
       setIsLoading(true);
 
+      // ✅ ESTRUCTURA EXACTA DE TU APP MÓVIL
       const paymentRequest = {
-        customerId,
-        originMobileNumber: `${phoneCode}${phoneNumber}`,
         amount: amount.toString(),
+        customerId,
+        originMobileNumber:  formatPhoneForMercantil(phoneCode, phoneNumber),
         tasa: paymentData.tasaCambio,
-        ...(isMultiplePayment
-          ? { guiasIds: multipleIds.split(',').map(Number), isMultiplePayment: true }
-          : { idGuia: paymentData.idGuia }),
+        twofactorAuth: "00001111",
+        idGuia: isMultiplePayment ? multipleIds.split(',').map(Number)[0] : paymentData.idGuia,
+        guiasIds: isMultiplePayment 
+          ? multipleIds.split(',').map(Number) 
+          : [paymentData.idGuia], // ✅ SIEMPRE enviar como array
+        isMultiplePayment: isMultiplePayment || false, // ✅ SIEMPRE enviar el flag
       };
 
       console.log('📤 Enviando solicitud de pago móvil:', paymentRequest);
