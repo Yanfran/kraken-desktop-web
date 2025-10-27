@@ -26,7 +26,8 @@ import { getGuiaById } from '@/services/guiasService';
 import { 
   processMercantilPayment, 
   getMercantilCardAuth, 
-  processMercantilDebitCardPayment 
+  processMercantilDebitCardPayment ,
+  processCardPaymentUnified
 } from '@/services/payment/paymentService';
 
 // Constantes
@@ -261,7 +262,7 @@ export default function PaymentPage() {
         isMultiplePayment: isMultiplePayment || false, // ✅ SIEMPRE enviar el flag
       };
 
-      console.log('📤 Enviando solicitud de pago móvil:', paymentRequest);
+      // console.log('📤 Enviando solicitud de pago móvil:', paymentRequest);
 
       const response = await processMercantilPayment(paymentRequest);
 
@@ -285,72 +286,85 @@ export default function PaymentPage() {
     }
   };
 
-  const handleCardAuth = async () => {
-    if (!validateForm()) return;
+ const handleCardAuth = async () => {
+  if (!validateForm()) return;
 
-    const customerId = `${idType}${idNumber}`;
+  const customerId = `${idType}${idNumber}`;
 
-    try {
-      setIsLoading(true);
+  try {
+    setIsLoading(true);
+    setError('');
 
-      // 1. Primero autenticar la tarjeta
-      const authRequest = {
-        customerId,
-        cardNumber: cardNumber.replace(/\s/g, ''),
-      };
+    console.log('💳 === PROCESANDO PAGO CON TARJETA ===');
 
-      console.log('🔐 Solicitando autenticación de tarjeta...');
+    // ✅ CONSTRUIR REQUEST - SIN GENERAR twofactorAuth
+    const paymentRequest = {
+      // Datos del cliente
+      customerId: customerId,
+      
+      // Datos de la tarjeta
+      cardNumber: cardNumber.replace(/\s/g, ''),
+      expirationDate: expirationDate, // MM/YY - ✅ CORRECTO (ej: "07/33")
+      cvv: cvv,
+      
+      // ✅ CAMBIO CRÍTICO: NO generar twofactorAuth, dejar vacío o null
+      twofactorAuth: "", // ✅ El backend lo genera automáticamente
+      
+      // Datos del pago
+      amount: parseFloat(amount),
+      paymentMethod: 'tdd',
+      // invoiceNumber: paymentData.trackingNumber || `INV-${Date.now()}`,
+      
+      // Datos de las guías
+      idGuia: isMultiplePayment 
+        ? multipleIds.split(',').map(Number)[0] 
+        : paymentData.idGuia,
+      guiasIds: isMultiplePayment 
+        ? multipleIds.split(',').map(Number)
+        : [paymentData.idGuia],
+      isMultiplePayment: isMultiplePayment || false,
+      
+      // Tasa de cambio
+      tasa: paymentData.tasaCambio,
+    };
 
-      const authResponse = await getMercantilCardAuth(authRequest);
+    
 
-      if (authResponse.success && authResponse.data?.twofactor_auth) {
-        const token = authResponse.data.twofactor_auth;
-        setAuthToken(token);
-        
-        console.log('✅ Token de autenticación obtenido');
+    // Llamar al servicio
+    const paymentResponse = await processCardPaymentUnified(paymentRequest);
 
-        // 2. Procesar el pago con el token obtenido
-        const paymentRequest = {
-          customerId,
-          cardNumber: cardNumber.replace(/\s/g, ''),
-          expirationDate,
-          cvv,
-          amount: amount.toString(),
-          twofactorAuth: token,
-          tasa: paymentData.tasaCambio,
-          ...(isMultiplePayment
-            ? { guiasIds: multipleIds.split(',').map(Number), isMultiplePayment: true }
-            : { idGuia: paymentData.idGuia }),
-        };
-
-        console.log('📤 Procesando pago con tarjeta...');
-
-        const paymentResponse = await processMercantilDebitCardPayment(paymentRequest);
-
-        if (paymentResponse.success) {
-          setPaymentReference(paymentResponse.data?.payment_reference || '');
-          setAuthorizationCode(paymentResponse.data?.authorization_code || '');
-          setStep('success');
-          toast.success('¡Pago procesado exitosamente!');
-        } else {
-          setError(paymentResponse.message || 'Error al procesar el pago');
-          setStep('error');
-          toast.error(paymentResponse.message || 'Error al procesar el pago');
-        }
-      } else {
-        toast.error(authResponse.message || 'Error en la autenticación de la tarjeta');
-        setError(authResponse.message || 'Error en la autenticación');
-        setStep('error');
-      }
-    } catch (error) {
-      console.error('Error processing card payment:', error);
-      setError('Error de conexión al procesar el pago');
-      setStep('error');
-      toast.error('Error de conexión');
-    } finally {
-      setIsLoading(false);
+    if (paymentResponse.success) {
+      console.log('✅ Pago procesado exitosamente');
+      
+      const responseData = paymentResponse.data.data || paymentResponse.data;
+      
+      setPaymentReference(
+        responseData.paymentReference || 
+        responseData.payment_reference || 
+        ''
+      );
+      setAuthorizationCode(
+        responseData.authorizationCode || 
+        responseData.authorization_code || 
+        ''
+      );
+      
+      toast.success('¡Pago procesado exitosamente!');
+      setStep('success');
+    } else {
+      throw new Error(paymentResponse.message || 'Pago rechazado');
     }
-  };
+
+  } catch (error) {
+    console.error('❌ Error procesando pago:', error);
+    const errorMsg = error.response?.data?.message || error.message || 'Error al procesar el pago';
+    setError(errorMsg);
+    toast.error(errorMsg);
+    setStep('error');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleBackToGuides = () => {
     navigate('/my-guides');

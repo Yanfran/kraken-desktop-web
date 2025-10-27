@@ -49,7 +49,7 @@ export const getMercantilCardAuth = async (authData) => {
   try {
     console.log('🔐 Solicitando autenticación de tarjeta...');
 
-    const response = await axiosInstance.post('/Payment/mercantil/card/auth', authData);
+    const response = await axiosInstance.post('/PaymentTDD/mercantil/card/auth', authData);
 
     console.log('✅ Respuesta de autenticación:', response.data);
 
@@ -64,6 +64,52 @@ export const getMercantilCardAuth = async (authData) => {
     return {
       success: false,
       message: error.response?.data?.message || 'Error en la autenticación',
+      error: error.message,
+    };
+  }
+};
+
+
+/**
+ * 🆕 NUEVO: Procesar pago con tarjeta usando el endpoint unificado
+ */
+export const processCardPaymentUnified = async (paymentData) => {
+  try {
+    console.log('💳 Procesando pago con tarjeta (endpoint unificado)...');
+    console.log('📦 Datos del pago:', {
+      ...paymentData,
+      cardNumber: `****${paymentData.cardNumber.slice(-4)}`,
+      cvv: '***',
+      twofactorAuth: '[ENCRYPTED]',
+    });
+
+    const response = await axiosInstance.post('/PaymentTDD/mercantil/card/pay', {
+      customerId: paymentData.customerId,
+      cardNumber: paymentData.cardNumber.replace(/\s/g, ''),
+      expirationDate: paymentData.expirationDate,
+      cvv: paymentData.cvv,
+      twofactorAuth: paymentData.twofactorAuth,
+      amount: parseFloat(paymentData.amount),
+      paymentMethod: paymentData.paymentMethod || 'tdd',
+      invoiceNumber: paymentData.invoiceNumber,
+      idGuia: paymentData.idGuia,
+      guiasIds: paymentData.guiasIds,
+      isMultiplePayment: paymentData.isMultiplePayment || false,
+      tasa: paymentData.tasa,
+    });
+
+    console.log('✅ Respuesta del servidor:', response.data);
+
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'Pago procesado exitosamente',
+    };
+  } catch (error) {
+    console.error('❌ Error procesando pago con tarjeta:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al procesar el pago',
       error: error.message,
     };
   }
