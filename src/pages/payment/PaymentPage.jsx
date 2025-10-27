@@ -295,77 +295,119 @@ export default function PaymentPage() {
     setIsLoading(true);
     setError('');
 
-    console.log('💳 === PROCESANDO PAGO CON TARJETA ===');
-
-    // ✅ CONSTRUIR REQUEST - SIN GENERAR twofactorAuth
-    const paymentRequest = {
-      // Datos del cliente
-      customerId: customerId,
-      
-      // Datos de la tarjeta
-      cardNumber: cardNumber.replace(/\s/g, ''),
-      expirationDate: expirationDate, // MM/YY - ✅ CORRECTO (ej: "07/33")
-      cvv: cvv,
-      
-      // ✅ CAMBIO CRÍTICO: NO generar twofactorAuth, dejar vacío o null
-      twofactorAuth: "", // ✅ El backend lo genera automáticamente
-      
-      // Datos del pago
-      amount: parseFloat(amount),
-      paymentMethod: 'tdd',
-      // invoiceNumber: paymentData.trackingNumber || `INV-${Date.now()}`,
-      
-      // Datos de las guías
-      idGuia: isMultiplePayment 
-        ? multipleIds.split(',').map(Number)[0] 
-        : paymentData.idGuia,
-      guiasIds: isMultiplePayment 
-        ? multipleIds.split(',').map(Number)
-        : [paymentData.idGuia],
-      isMultiplePayment: isMultiplePayment || false,
-      
-      // Tasa de cambio
-      tasa: paymentData.tasaCambio,
-    };
-
+    console.log('🔐 Paso 1: Autenticando tarjeta...');
     
+    // PASO 1: AUTENTICAR (con timeout de 120s)
+    const authResult = await getMercantilCardAuth({
+      customerId,
+      cardNumber: cardNumber.replace(/\s/g, ''),
+      paymentMethod: 'tdd'
+    });
 
-    // Llamar al servicio
-    const paymentResponse = await processCardPaymentUnified(paymentRequest);
+    console.log('📥 Respuesta auth:', authResult);
 
-    if (paymentResponse.success) {
-      console.log('✅ Pago procesado exitosamente');
+    // Verificar si hay timeout en autenticación
+    if (!authResult.success) {
+      if (authResult.isTimeout) {
+        setError('La autenticación tardó demasiado. Por favor, intenta nuevamente.');
+        toast.error('Timeout: La autenticación tardó demasiado');
+        setStep('error');
+        return;
+      }
       
-      const responseData = paymentResponse.data.data || paymentResponse.data;
-      
-      setPaymentReference(
-        responseData.paymentReference || 
-        responseData.payment_reference || 
-        ''
-      );
-      setAuthorizationCode(
-        responseData.authorizationCode || 
-        responseData.authorization_code || 
-        ''
-      );
-      
-      toast.success('¡Pago procesado exitosamente!');
-      setStep('success');
-    } else {
-      throw new Error(paymentResponse.message || 'Pago rechazado');
+      setError(authResult.message || 'Error en la autenticación');
+      toast.error(authResult.message || 'Error en la autenticación');
+      setStep('error');
+      return;
     }
 
+    // Extraer token
+    const twofactorToken = authResult.data?.twofactor_token || 
+                          authResult.data?.data?.twofactor_token;
+
+    if (!twofactorToken) {
+      setError('No se recibió el token de autenticación');
+      toast.error('No se recibió el token de autenticación');
+      setStep('error');
+      return;
+    }
+
+    console.log('✅ Token obtenido, procesando pago...');
+    console.log('⏱️ NOTA: El pago puede tardar hasta 2 minutos');
+    
+    // Mostrar mensaje al usuario
+    toast.loading('Procesando pago... Esto puede tardar hasta 2 minutos', {
+      duration: 120000, // 2 minutos
+      id: 'processing-payment'
+    });
+
+    // PASO 2: PROCESAR PAGO (con timeout de 120s)
+    const paymentResult = await processCardPaymentUnified({
+      customerId,
+      cardNumber: cardNumber.replace(/\s/g, ''),
+      expirationDate,
+      cvv,
+      twofactorAuth: twofactorToken,
+      amount: parseFloat(amount),
+      paymentMethod: 'tdd',
+      idGuia: paymentData.idGuia,
+      guiasIds: isMultiplePayment ? multipleIds.split(',').map(Number) : [paymentData.idGuia],
+      isMultiplePayment,
+      tasa: paymentData.tasaCambio
+    });
+
+    // Cerrar el toast de loading
+    toast.dismiss('processing-payment');
+
+    console.log('📥 Respuesta pago:', paymentResult);
+
+    // Verificar si hay timeout en pago
+    if (!paymentResult.success) {
+      if (paymentResult.isTimeout) {
+        setError(
+          'El pago tardó demasiado. Por favor, verifica el estado de tu pago ' +
+          'en "Mis Guías" antes de intentar nuevamente.'
+        );
+        toast.error('Timeout: Verifica el estado en "Mis Guías"', { duration: 5000 });
+        setStep('error');
+        return;
+      }
+
+      setError(paymentResult.message || 'Error al procesar el pago');
+      toast.error(paymentResult.message || 'Error al procesar el pago');
+      setStep('error');
+      return;
+    }
+
+    // PAGO EXITOSO
+    console.log('✅ Pago exitoso:', paymentResult.data);
+    
+    setPaymentReference(paymentResult.data?.paymentReference || 'N/A');
+    setAuthorizationCode(paymentResult.data?.authorizationCode || 'N/A');
+    
+    toast.success('¡Pago procesado exitosamente!');
+    setStep('success');
+
   } catch (error) {
-    console.error('❌ Error procesando pago:', error);
-    const errorMsg = error.response?.data?.message || error.message || 'Error al procesar el pago';
-    setError(errorMsg);
-    toast.error(errorMsg);
+    console.error('❌ Error en handleCardAuth:', error);
+    
+    // Cerrar cualquier toast de loading
+    toast.dismiss('processing-payment');
+    
+    // Manejar timeout
+    if (error.isTimeout || error.code === 'TIMEOUT') {
+      setError('La operación tardó demasiado. Verifica tu conexión e intenta nuevamente.');
+      toast.error('Timeout: Verifica tu conexión', { duration: 5000 });
+    } else {
+      setError(error.message || 'Error al procesar el pago');
+      toast.error(error.message || 'Error al procesar el pago');
+    }
+    
     setStep('error');
   } finally {
     setIsLoading(false);
   }
 };
-
   const handleBackToGuides = () => {
     navigate('/my-guides');
   };

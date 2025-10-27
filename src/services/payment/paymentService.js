@@ -1,5 +1,80 @@
-// src/services/payment/paymentService.js
-import axiosInstance from '../axiosInstance';
+// src/services/payment/paymentService.js - CORREGIDO CON TIMEOUT EXTENDIDO
+import axios from 'axios';
+import { API_URL } from '../../utils/config';
+
+// ============================================================
+// ✅ CONFIGURACIÓN DE TIMEOUTS DIFERENCIADOS
+// ============================================================
+const TIMEOUTS = {
+  DEFAULT: 60000,   // 60 segundos - operaciones normales
+  PAYMENT: 120000,  // 120 segundos - pagos con tarjeta
+};
+
+// ============================================================
+// INSTANCIA PRINCIPAL (60s para operaciones normales)
+// ============================================================
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: TIMEOUTS.DEFAULT,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// ============================================================
+// ✅ INSTANCIA PARA PAGOS (120s para pagos con tarjeta)
+// ============================================================
+const axiosPaymentInstance = axios.create({
+  baseURL: API_URL,
+  timeout: TIMEOUTS.PAYMENT, // 🔑 CLAVE: 120 segundos
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// ============================================================
+// INTERCEPTOR DE REQUEST (aplicar a ambas instancias)
+// ============================================================
+const requestInterceptor = (config) => {
+  const token = localStorage.getItem('authToken');
+  const userId = localStorage.getItem('userId');
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  if (config.url === '/Addresses/user-addresses' && userId) {
+    config.data = {
+      ...config.data,
+      ClientId: parseInt(userId)
+    };
+  }
+  
+  return config;
+};
+
+// ============================================================
+// INTERCEPTOR DE ERRORES (manejar timeout específicamente)
+// ============================================================
+const errorInterceptor = (error) => {
+  // Error de timeout
+  if (error.code === 'ECONNABORTED') {
+    console.error('⏱️ TIMEOUT:', error.config?.url);
+    const customError = new Error('La operación tardó demasiado. Por favor, intenta nuevamente.');
+    customError.code = 'TIMEOUT';
+    customError.isTimeout = true;
+    return Promise.reject(customError);
+  }
+  
+  return Promise.reject(error);
+};
+
+// Aplicar interceptores a ambas instancias
+axiosInstance.interceptors.request.use(requestInterceptor, errorInterceptor);
+axiosInstance.interceptors.response.use(null, errorInterceptor);
+
+axiosPaymentInstance.interceptors.request.use(requestInterceptor, errorInterceptor);
+axiosPaymentInstance.interceptors.response.use(null, errorInterceptor);
+
+// ============================================================
+// FUNCIONES DE PAGO MÓVIL (usar instancia normal - 60s)
+// ============================================================
 
 /**
  * Procesa un pago móvil con Mercantil
@@ -18,6 +93,7 @@ export const processMercantilPayment = async (paymentData) => {
     console.log('💳 Procesando pago móvil Mercantil...');
     console.log('📦 Datos del pago:', paymentData);
 
+    // Pago móvil es más rápido, usar instancia normal
     const response = await axiosInstance.post('/Payment/mercantil/comprar', paymentData);
 
     console.log('✅ Respuesta del pago:', response.data);
@@ -38,18 +114,24 @@ export const processMercantilPayment = async (paymentData) => {
   }
 };
 
+// ============================================================
+// FUNCIONES DE PAGO CON TARJETA (usar instancia con 120s)
+// ============================================================
+
 /**
- * Solicita autenticación de tarjeta (Paso 1 para pago con tarjeta)
+ * ✅ CORREGIDO: Solicita autenticación de tarjeta con timeout extendido
  * @param {Object} authData
  * @param {string} authData.customerId - Cédula/RIF
  * @param {string} authData.cardNumber - Número de tarjeta sin espacios
+ * @param {string} authData.paymentMethod - Tipo: "tdc" o "tdd"
  * @returns {Promise<Object>}
  */
 export const getMercantilCardAuth = async (authData) => {
   try {
     console.log('🔐 Solicitando autenticación de tarjeta...');
 
-    const response = await axiosInstance.post('/PaymentTDD/mercantil/card/auth', authData);
+    // ✅ USAR INSTANCIA CON TIMEOUT EXTENDIDO
+    const response = await axiosPaymentInstance.post('/PaymentTDD/mercantil/card/auth', authData);
 
     console.log('✅ Respuesta de autenticación:', response.data);
 
@@ -61,6 +143,16 @@ export const getMercantilCardAuth = async (authData) => {
   } catch (error) {
     console.error('❌ Error en getMercantilCardAuth:', error);
 
+    // Manejar timeout específicamente
+    if (error.isTimeout || error.code === 'TIMEOUT') {
+      return {
+        success: false,
+        message: 'La autenticación tardó demasiado. Por favor, intenta nuevamente.',
+        error: 'TIMEOUT',
+        isTimeout: true
+      };
+    }
+
     return {
       success: false,
       message: error.response?.data?.message || 'Error en la autenticación',
@@ -69,9 +161,21 @@ export const getMercantilCardAuth = async (authData) => {
   }
 };
 
-
 /**
- * 🆕 NUEVO: Procesar pago con tarjeta usando el endpoint unificado
+ * ✅ CORREGIDO: Procesar pago con tarjeta usando timeout extendido
+ * @param {Object} paymentData
+ * @param {string} paymentData.customerId - Cédula/RIF
+ * @param {string} paymentData.cardNumber - Número de tarjeta
+ * @param {string} paymentData.expirationDate - Fecha vencimiento MM/YY
+ * @param {string} paymentData.cvv - CVV
+ * @param {string} paymentData.twofactorAuth - Token de autenticación recibido
+ * @param {string} paymentData.amount - Monto en VES
+ * @param {string} paymentData.paymentMethod - "tdc" o "tdd"
+ * @param {number} paymentData.tasa - Tasa de cambio BCV
+ * @param {number} [paymentData.idGuia] - ID de la guía (pago único)
+ * @param {number[]} [paymentData.guiasIds] - IDs de las guías (pago múltiple)
+ * @param {boolean} [paymentData.isMultiplePayment] - Flag para pago múltiple
+ * @returns {Promise<Object>}
  */
 export const processCardPaymentUnified = async (paymentData) => {
   try {
@@ -83,7 +187,8 @@ export const processCardPaymentUnified = async (paymentData) => {
       twofactorAuth: '[ENCRYPTED]',
     });
 
-    const response = await axiosInstance.post('/PaymentTDD/mercantil/card/pay', {
+    // ✅ USAR INSTANCIA CON TIMEOUT EXTENDIDO (120 SEGUNDOS)
+    const response = await axiosPaymentInstance.post('/PaymentTDD/mercantil/card/pay', {
       customerId: paymentData.customerId,
       cardNumber: paymentData.cardNumber.replace(/\s/g, ''),
       expirationDate: paymentData.expirationDate,
@@ -107,6 +212,17 @@ export const processCardPaymentUnified = async (paymentData) => {
     };
   } catch (error) {
     console.error('❌ Error procesando pago con tarjeta:', error);
+    
+    // Manejar timeout específicamente
+    if (error.isTimeout || error.code === 'TIMEOUT') {
+      return {
+        success: false,
+        message: 'El pago tardó demasiado. Por favor, verifica el estado de tu pago en "Mis Guías" antes de intentar nuevamente.',
+        error: 'TIMEOUT',
+        isTimeout: true
+      };
+    }
+    
     return {
       success: false,
       message: error.response?.data?.message || 'Error al procesar el pago',
@@ -116,18 +232,8 @@ export const processCardPaymentUnified = async (paymentData) => {
 };
 
 /**
- * Procesa el pago con tarjeta de débito (Paso 2, después de autenticación)
+ * ✅ CORREGIDO: Procesa el pago con tarjeta de débito con timeout extendido
  * @param {Object} paymentData
- * @param {string} paymentData.customerId - Cédula/RIF
- * @param {string} paymentData.cardNumber - Número de tarjeta
- * @param {string} paymentData.expirationDate - Fecha vencimiento MM/YY
- * @param {string} paymentData.cvv - CVV
- * @param {string} paymentData.twofactorAuth - Token de autenticación recibido
- * @param {string} paymentData.amount - Monto en VES
- * @param {number} paymentData.tasa - Tasa de cambio BCV
- * @param {number} [paymentData.idGuia] - ID de la guía (pago único)
- * @param {number[]} [paymentData.guiasIds] - IDs de las guías (pago múltiple)
- * @param {boolean} [paymentData.isMultiplePayment] - Flag para pago múltiple
  * @returns {Promise<Object>}
  */
 export const processMercantilDebitCardPayment = async (paymentData) => {
@@ -140,7 +246,8 @@ export const processMercantilDebitCardPayment = async (paymentData) => {
       twofactorAuth: '[ENCRYPTED]',
     });
 
-    const response = await axiosInstance.post('/Payment/mercantil/card/comprar', paymentData);
+    // ✅ USAR INSTANCIA CON TIMEOUT EXTENDIDO
+    const response = await axiosPaymentInstance.post('/Payment/mercantil/card/comprar', paymentData);
 
     console.log('✅ Respuesta del pago:', response.data);
 
@@ -152,6 +259,16 @@ export const processMercantilDebitCardPayment = async (paymentData) => {
   } catch (error) {
     console.error('❌ Error en processMercantilDebitCardPayment:', error);
 
+    // Manejar timeout específicamente
+    if (error.isTimeout || error.code === 'TIMEOUT') {
+      return {
+        success: false,
+        message: 'El pago tardó demasiado. Verifica el estado de tu pago antes de reintentar.',
+        error: 'TIMEOUT',
+        isTimeout: true
+      };
+    }
+
     return {
       success: false,
       message: error.response?.data?.message || 'Error al procesar el pago',
@@ -159,6 +276,10 @@ export const processMercantilDebitCardPayment = async (paymentData) => {
     };
   }
 };
+
+// ============================================================
+// FUNCIONES DE INFORMACIÓN (usar instancia normal - 60s)
+// ============================================================
 
 /**
  * Obtiene información de pago para una guía
@@ -214,7 +335,9 @@ export const calculateMultiplePayment = async (guiaIds) => {
   }
 };
 
-// =================== FUNCIONES DE VALIDACIÓN ===================
+// ============================================================
+// FUNCIONES DE VALIDACIÓN
+// ============================================================
 
 /**
  * Validar número de tarjeta con algoritmo Luhn
@@ -326,17 +449,22 @@ export const formatExpirationDate = (value) => {
   return clean;
 };
 
-// =================== ALIAS PARA RETROCOMPATIBILIDAD ===================
+// ============================================================
+// ALIAS PARA RETROCOMPATIBILIDAD
+// ============================================================
 
-// Mantener los nombres antiguos para no romper código existente
 export const processMobilPayment = processMercantilPayment;
 export const processMercantilCardPayment = processMercantilDebitCardPayment;
 
-// Export default
+// ============================================================
+// EXPORTACIÓN POR DEFECTO
+// ============================================================
+
 export default {
   // Nombres principales
   processMercantilPayment,
   getMercantilCardAuth,
+  processCardPaymentUnified,
   processMercantilDebitCardPayment,
   getPaymentInfo,
   calculateMultiplePayment,
