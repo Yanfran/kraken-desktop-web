@@ -1,4 +1,4 @@
-// src/services/payment/paymentService.js - CORREGIDO CON TIMEOUT EXTENDIDO
+// src/services/payment/paymentService.js - ✅ ACTUALIZADO CON AUTH INTEGRADA EN BACKEND
 import axios from 'axios';
 import { API_URL } from '../../utils/config';
 
@@ -24,7 +24,7 @@ const axiosInstance = axios.create({
 // ============================================================
 const axiosPaymentInstance = axios.create({
   baseURL: API_URL,
-  timeout: TIMEOUTS.PAYMENT, // 🔑 CLAVE: 120 segundos
+  timeout: TIMEOUTS.PAYMENT,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -53,7 +53,6 @@ const requestInterceptor = (config) => {
 // INTERCEPTOR DE ERRORES (manejar timeout específicamente)
 // ============================================================
 const errorInterceptor = (error) => {
-  // Error de timeout
   if (error.code === 'ECONNABORTED') {
     console.error('⏱️ TIMEOUT:', error.config?.url);
     const customError = new Error('La operación tardó demasiado. Por favor, intenta nuevamente.');
@@ -80,7 +79,7 @@ axiosPaymentInstance.interceptors.response.use(null, errorInterceptor);
  * Procesa un pago móvil con Mercantil
  * @param {Object} paymentData
  * @param {string} paymentData.customerId - Cédula/RIF (ej: V12345678)
- * @param {string} paymentData.originMobileNumber - Teléfono completo (ej: 04141234567)
+ * @param {string} paymentData.originMobileNumber - Teléfono completo (ej: 584141234567)
  * @param {string} paymentData.amount - Monto en VES
  * @param {number} paymentData.tasa - Tasa de cambio BCV
  * @param {number} [paymentData.idGuia] - ID de la guía (pago único)
@@ -93,7 +92,6 @@ export const processMercantilPayment = async (paymentData) => {
     console.log('💳 Procesando pago móvil Mercantil...');
     console.log('📦 Datos del pago:', paymentData);
 
-    // Pago móvil es más rápido, usar instancia normal
     const response = await axiosInstance.post('/Payment/mercantil/comprar', paymentData);
 
     console.log('✅ Respuesta del pago:', response.data);
@@ -115,25 +113,94 @@ export const processMercantilPayment = async (paymentData) => {
 };
 
 // ============================================================
-// FUNCIONES DE PAGO CON TARJETA (usar instancia con 120s)
+// ✅ NUEVO: FUNCIÓN UNIFICADA PARA PAGO CON TARJETA
+// Auth + Pago en una sola llamada (el backend maneja auth internamente)
 // ============================================================
 
 /**
- * ✅ CORREGIDO: Solicita autenticación de tarjeta con timeout extendido
- * @param {Object} authData
- * @param {string} authData.customerId - Cédula/RIF
- * @param {string} authData.cardNumber - Número de tarjeta sin espacios
- * @param {string} authData.paymentMethod - Tipo: "tdc" o "tdd"
+ * ✅ NUEVO: Procesa pago con tarjeta (autenticación integrada en backend)
+ * @param {Object} paymentData
+ * @param {string} paymentData.customerId - Cédula/RIF
+ * @param {string} paymentData.cardNumber - Número de tarjeta sin espacios
+ * @param {string} paymentData.expirationDate - Fecha vencimiento MM/YY
+ * @param {string} paymentData.cvv - CVV
+ * @param {string} paymentData.amount - Monto en VES (como string)
+ * @param {number} paymentData.tasa - Tasa de cambio BCV
+ * @param {number} [paymentData.idGuia] - ID de la guía (pago único)
+ * @param {number[]} [paymentData.guiasIds] - IDs de las guías (pago múltiple)
+ * @param {boolean} [paymentData.isMultiplePayment] - Flag para pago múltiple
  * @returns {Promise<Object>}
  */
-export const getMercantilCardAuth = async (authData) => {
+export const processMercantilDebitCardPayment = async (paymentData) => {
   try {
-    console.log('🔐 Solicitando autenticación de tarjeta...');
+    console.log('💳 Procesando pago con tarjeta (auth integrada en backend)...');
+    console.log('📦 Datos del pago:', {
+      customerId: paymentData.customerId,
+      cardNumber: `****${paymentData.cardNumber.slice(-4)}`,
+      expirationDate: paymentData.expirationDate,
+      cvv: '***',
+      amount: paymentData.amount,
+      hasIdGuia: !!paymentData.idGuia,
+      hasGuiasIds: !!paymentData.guiasIds,
+      guiasCount: paymentData.guiasIds?.length || 0,
+      isMultiple: paymentData.isMultiplePayment
+    });
 
-    // ✅ USAR INSTANCIA CON TIMEOUT EXTENDIDO
+    // ✅ ENDPOINT UNIFICADO - El backend maneja auth + pago internamente
+    const response = await axiosPaymentInstance.post('/PaymentTDD/mercantil/card/pay', {
+      customerId: paymentData.customerId,
+      cardNumber: paymentData.cardNumber.replace(/\s/g, ''),
+      expirationDate: paymentData.expirationDate,
+      cvv: paymentData.cvv,
+      amount: parseFloat(paymentData.amount),
+      paymentMethod: 'tdd', // Siempre TDD para débito
+      tasa: paymentData.tasa,
+      idGuia: paymentData.idGuia,
+      guiasIds: paymentData.guiasIds,
+      isMultiplePayment: paymentData.isMultiplePayment || false,
+    });
+
+    console.log('✅ Respuesta del servidor:', response.data);
+
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'Pago procesado exitosamente',
+    };
+  } catch (error) {
+    console.error('❌ Error en processMercantilDebitCardPayment:', error);
+
+    // Manejar timeout específicamente
+    if (error.isTimeout || error.code === 'TIMEOUT') {
+      return {
+        success: false,
+        message: 'El pago tardó demasiado. Verifica el estado de tu pago en "Mis Guías" antes de reintentar.',
+        error: 'TIMEOUT',
+        isTimeout: true
+      };
+    }
+
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al procesar el pago con tarjeta',
+      error: error.message,
+    };
+  }
+};
+
+// ============================================================
+// ⚠️ FUNCIONES DEPRECADAS (mantener para compatibilidad)
+// ============================================================
+
+/**
+ * @deprecated Usar processMercantilDebitCardPayment en su lugar
+ * El backend ahora maneja la autenticación internamente
+ */
+export const getMercantilCardAuth = async (authData) => {
+  console.warn('⚠️ getMercantilCardAuth está deprecada. Usar processMercantilDebitCardPayment directamente.');
+  
+  try {
     const response = await axiosPaymentInstance.post('/PaymentTDD/mercantil/card/auth', authData);
-
-    console.log('✅ Respuesta de autenticación:', response.data);
 
     return {
       success: true,
@@ -143,7 +210,6 @@ export const getMercantilCardAuth = async (authData) => {
   } catch (error) {
     console.error('❌ Error en getMercantilCardAuth:', error);
 
-    // Manejar timeout específicamente
     if (error.isTimeout || error.code === 'TIMEOUT') {
       return {
         success: false,
@@ -162,119 +228,11 @@ export const getMercantilCardAuth = async (authData) => {
 };
 
 /**
- * ✅ CORREGIDO: Procesar pago con tarjeta usando timeout extendido
- * @param {Object} paymentData
- * @param {string} paymentData.customerId - Cédula/RIF
- * @param {string} paymentData.cardNumber - Número de tarjeta
- * @param {string} paymentData.expirationDate - Fecha vencimiento MM/YY
- * @param {string} paymentData.cvv - CVV
- * @param {string} paymentData.twofactorAuth - Token de autenticación recibido
- * @param {string} paymentData.amount - Monto en VES
- * @param {string} paymentData.paymentMethod - "tdc" o "tdd"
- * @param {number} paymentData.tasa - Tasa de cambio BCV
- * @param {number} [paymentData.idGuia] - ID de la guía (pago único)
- * @param {number[]} [paymentData.guiasIds] - IDs de las guías (pago múltiple)
- * @param {boolean} [paymentData.isMultiplePayment] - Flag para pago múltiple
- * @returns {Promise<Object>}
+ * @deprecated Usar processMercantilDebitCardPayment en su lugar
  */
 export const processCardPaymentUnified = async (paymentData) => {
-  try {
-    console.log('💳 Procesando pago con tarjeta (endpoint unificado)...');
-    console.log('📦 Datos del pago:', {
-      ...paymentData,
-      cardNumber: `****${paymentData.cardNumber.slice(-4)}`,
-      cvv: '***',
-      twofactorAuth: '[ENCRYPTED]',
-    });
-
-    // ✅ USAR INSTANCIA CON TIMEOUT EXTENDIDO (120 SEGUNDOS)
-    const response = await axiosPaymentInstance.post('/PaymentTDD/mercantil/card/pay', {
-      customerId: paymentData.customerId,
-      cardNumber: paymentData.cardNumber.replace(/\s/g, ''),
-      expirationDate: paymentData.expirationDate,
-      cvv: paymentData.cvv,
-      twofactorAuth: paymentData.twofactorAuth,
-      amount: parseFloat(paymentData.amount),
-      paymentMethod: paymentData.paymentMethod || 'tdd',
-      invoiceNumber: paymentData.invoiceNumber,
-      idGuia: paymentData.idGuia,
-      guiasIds: paymentData.guiasIds,
-      isMultiplePayment: paymentData.isMultiplePayment || false,
-      tasa: paymentData.tasa,
-    });
-
-    console.log('✅ Respuesta del servidor:', response.data);
-
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: response.data.message || 'Pago procesado exitosamente',
-    };
-  } catch (error) {
-    console.error('❌ Error procesando pago con tarjeta:', error);
-    
-    // Manejar timeout específicamente
-    if (error.isTimeout || error.code === 'TIMEOUT') {
-      return {
-        success: false,
-        message: 'El pago tardó demasiado. Por favor, verifica el estado de tu pago en "Mis Guías" antes de intentar nuevamente.',
-        error: 'TIMEOUT',
-        isTimeout: true
-      };
-    }
-    
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al procesar el pago',
-      error: error.message,
-    };
-  }
-};
-
-/**
- * ✅ CORREGIDO: Procesa el pago con tarjeta de débito con timeout extendido
- * @param {Object} paymentData
- * @returns {Promise<Object>}
- */
-export const processMercantilDebitCardPayment = async (paymentData) => {
-  try {
-    console.log('💳 Procesando pago con tarjeta de débito...');
-    console.log('📦 Datos del pago:', {
-      ...paymentData,
-      cardNumber: `****${paymentData.cardNumber.slice(-4)}`,
-      cvv: '***',
-      twofactorAuth: '[ENCRYPTED]',
-    });
-
-    // ✅ USAR INSTANCIA CON TIMEOUT EXTENDIDO
-    const response = await axiosPaymentInstance.post('/Payment/mercantil/card/comprar', paymentData);
-
-    console.log('✅ Respuesta del pago:', response.data);
-
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: response.data.message || 'Pago procesado exitosamente',
-    };
-  } catch (error) {
-    console.error('❌ Error en processMercantilDebitCardPayment:', error);
-
-    // Manejar timeout específicamente
-    if (error.isTimeout || error.code === 'TIMEOUT') {
-      return {
-        success: false,
-        message: 'El pago tardó demasiado. Verifica el estado de tu pago antes de reintentar.',
-        error: 'TIMEOUT',
-        isTimeout: true
-      };
-    }
-
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al procesar el pago',
-      error: error.message,
-    };
-  }
+  console.warn('⚠️ processCardPaymentUnified está deprecada. Usar processMercantilDebitCardPayment directamente.');
+  return processMercantilDebitCardPayment(paymentData);
 };
 
 // ============================================================
@@ -454,18 +412,22 @@ export const formatExpirationDate = (value) => {
 // ============================================================
 
 export const processMobilPayment = processMercantilPayment;
-export const processMercantilCardPayment = processMercantilDebitCardPayment;
+export const processMercantilCardPayment = processMercantilDebitCardPayment; // Alias actualizado
 
 // ============================================================
 // EXPORTACIÓN POR DEFECTO
 // ============================================================
 
 export default {
-  // Nombres principales
+  // Funciones principales
   processMercantilPayment,
+  processMercantilDebitCardPayment, // ✅ FUNCIÓN PRINCIPAL UNIFICADA
+  
+  // Funciones deprecadas (mantener para compatibilidad)
   getMercantilCardAuth,
   processCardPaymentUnified,
-  processMercantilDebitCardPayment,
+  
+  // Información
   getPaymentInfo,
   calculateMultiplePayment,
   
@@ -478,7 +440,7 @@ export default {
   formatCardNumber,
   formatExpirationDate,
   
-  // Alias para retrocompatibilidad
+  // Alias
   processMobilPayment,
   processMercantilCardPayment,
 };

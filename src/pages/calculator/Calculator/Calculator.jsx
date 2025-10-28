@@ -1,5 +1,5 @@
 // src/pages/calculator/Calculator/Calculator.jsx
-// ✅ CORREGIDO - Usando los servicios correctos
+// ✅ ACTUALIZADO CON SELECTOR DE PAÍS Y LÓGICA DE DIMENSIONES
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import CalculatorHeader from '../../../components/calculator/CalculatorHeader';
@@ -14,7 +14,7 @@ import {
   getParishesByMunicipality 
 } from '../../../services/address/addressService';
 import './Calculator.scss';
-import './calculator-fixes.scss'; // ✅ Importar correcciones específicas
+import './calculator-fixes.scss';
 
 const KG_TO_LB = 2.20462;
 const LB_TO_KG = 0.453592;
@@ -23,7 +23,7 @@ const getInitialCalculation = () => ({
   state: '',
   municipality: '',
   parish: '',
-  originCountry: 'US',
+  originCountry: 'US', // 🆕 País de origen (US por defecto)
   destinationCountry: 'Venezuela',
   currency: 'USD',
   declaredValue: '',
@@ -40,7 +40,6 @@ const getInitialCalculation = () => ({
 });
 
 const Calculator = () => {
-  // Estado principal consolidado
   const [state, setState] = useState({
     currentStep: 1,
     isLoading: false,
@@ -49,23 +48,19 @@ const Calculator = () => {
     isHighValue: false,
   });
 
-  // Datos de ubicación
   const [locationData, setLocationData] = useState({
     statesList: [],
     municipalitiesList: [],
     parishesList: [],
   });
 
-  // Contenidos disponibles
   const [contentOptions, setContentOptions] = useState([]);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Cargar datos iniciales
   useEffect(() => {
     loadInitialData();
   }, []);
 
-  // Cargar municipios cuando cambia el estado
   useEffect(() => {
     if (state.calculation.state) {
       loadMunicipalities(Number(state.calculation.state));
@@ -78,7 +73,6 @@ const Calculator = () => {
     }
   }, [state.calculation.state]);
 
-  // Cargar parroquias cuando cambia el municipio
   useEffect(() => {
     if (state.calculation.municipality) {
       loadParishes(Number(state.calculation.municipality));
@@ -90,18 +84,15 @@ const Calculator = () => {
     }
   }, [state.calculation.municipality]);
 
-  // Funciones de carga de datos
   const loadInitialData = async () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       
-      // ✅ USAR EL SERVICIO CORRECTO
       const [estadosResp, contentResp] = await Promise.all([
         getStatesByCountry(1), // Venezuela = 1
-        axiosInstance.get(`${API_URL}/PaqueteContenidos/getContent`) // ✅ Endpoint correcto
+        axiosInstance.get(`${API_URL}/PaqueteContenidos/getContent`)
       ]);
       
-      // ✅ MANEJAR RESPUESTA CORRECTA DEL SERVICIO
       const formattedStates = estadosResp.success && estadosResp.data 
         ? estadosResp.data.map(e => ({
             label: e.name,
@@ -130,7 +121,6 @@ const Calculator = () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       
-      // ✅ USAR EL SERVICIO CORRECTO
       const response = await getMunicipalitiesByState(stateId);
       
       const formatted = response.success && response.data
@@ -162,7 +152,6 @@ const Calculator = () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       
-      // ✅ USAR EL SERVICIO CORRECTO
       const response = await getParishesByMunicipality(municipalityId);
       
       const formatted = response.success && response.data
@@ -189,7 +178,6 @@ const Calculator = () => {
     }
   };
 
-  // Navegación entre pasos
   const handleLocationNext = () => {
     if (!state.calculation.state || !state.calculation.municipality) {
       toast.error('Por favor selecciona estado y municipio');
@@ -198,7 +186,6 @@ const Calculator = () => {
     setState(prev => ({ ...prev, currentStep: 2 }));
   };
 
-  // Parsear valores con formato
   const parseFormattedValue = (formattedValue) => {
     if (!formattedValue || formattedValue.trim() === '') return 0;
     
@@ -237,12 +224,15 @@ const Calculator = () => {
         weight: weightNum,
         weightUnit: state.calculation.weightUnit,
         dimensionUnit: state.calculation.dimensionUnit,
+        paisOrigen: state.calculation.originCountry, // 🆕 ENVIAR PAÍS DE ORIGEN
         dimensions: {
           length: parseFloat(state.calculation.dimensions.length) || 0,
           width: parseFloat(state.calculation.dimensions.width) || 0,
           height: parseFloat(state.calculation.dimensions.height) || 0,
         },
       };
+      
+      console.log('📤 Enviando cálculo:', calculationForAPI);
       
       const response = await axiosInstance.post(`${API_URL}/Calculator/calculate`, calculationForAPI);
       
@@ -264,7 +254,6 @@ const Calculator = () => {
     }
   };
 
-  // Actualizar cálculo
   const updateCalculation = (updates) => {
     setState(prev => ({
       ...prev,
@@ -282,12 +271,32 @@ const Calculator = () => {
     }));
   };
 
+  // 🆕 Handler para cambio de país de origen
+  const handleOriginCountryChange = (newCountry) => {
+    console.log(`🌍 País de origen cambiado a: ${newCountry}`);
+    
+    // Limpiar dimensiones al cambiar de país
+    setState(prev => ({
+      ...prev,
+      calculation: {
+        ...prev.calculation,
+        originCountry: newCountry,
+        dimensions: {
+          length: '',
+          width: '',
+          height: ''
+        }
+      }
+    }));
+  };
+
   const handleHighValueChange = (newIsHighValue) => {
     setState(prev => ({
       ...prev,
       isHighValue: newIsHighValue
     }));
     
+    // Si se vuelve a bajo valor, limpiar dimensiones
     if (!newIsHighValue) {
       setState(prev => ({
         ...prev,
@@ -350,7 +359,6 @@ const Calculator = () => {
     });
   };
 
-  // Renderizar paso actual
   const renderCurrentStep = () => {
     switch (state.currentStep) {
       case 1:
@@ -362,9 +370,11 @@ const Calculator = () => {
             selectedState={state.calculation.state}
             selectedMunicipality={state.calculation.municipality}
             selectedParish={state.calculation.parish}
+            originCountry={state.calculation.originCountry} // 🆕 Pasar país
             onStateChange={(value) => updateCalculation({ state: value })}
             onMunicipalityChange={(value) => updateCalculation({ municipality: value })}
             onParishChange={(value) => updateCalculation({ parish: value })}
+            onOriginCountryChange={handleOriginCountryChange} // 🆕 Callback
             onNext={handleLocationNext}
             isLoading={state.isLoading}
           />
@@ -382,6 +392,7 @@ const Calculator = () => {
             dimensionUnit={state.calculation.dimensionUnit}
             dimensions={state.calculation.dimensions}
             isHighValue={state.isHighValue}
+            originCountry={state.calculation.originCountry} // 🆕 Pasar país
             contentOptions={contentOptions}
             onDeclaredValueChange={handleDeclaredValueChange}
             onContentChange={(content) => updateCalculation({ content })}

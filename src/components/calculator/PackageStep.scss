@@ -1,5 +1,5 @@
 // src/components/calculator/PackageStep.scss
-// ✅ DISEÑO EXACTO DE LA APP MÓVIL
+// ✅ DISEÑO MEJORADO - Inputs de dimensiones más visibles
 
 @import '../../styles/variables';
 
@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   min-height: 800px;
-  padding: 0 20px; // Padding igual a la app
+  padding: 0 20px;
 
   &__scroll {
     flex: 1;
@@ -19,10 +19,9 @@
     padding-bottom: 10px;
   }
 
-  // ✅ NUEVOS ESTILOS DE GRID PARA VALOR Y PESO
-  &__top-grid {
+  &__grid {
     display: flex;
-    flex-direction: column; /* Móvil: apilado */
+    flex-direction: column;
     gap: 16px; 
     margin-bottom: 16px;
     
@@ -31,16 +30,14 @@
       gap: 20px;
     }
   }
-
   
   &__col {
     width: 100%;
     
     @media (min-width: 600px) {
-        flex: 1; /* Ocupan el mismo ancho */
+        flex: 1;
     }
   }
-  // FIN NUEVOS ESTILOS
 
   &__label {
     display: block;
@@ -55,49 +52,47 @@
     }
   }
 
-  // ✅ NUEVO GRUPO PARA VALOR DECLARADO (USD + INPUT)
+  &__label-with-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
   &__value-input-group {
     display: flex;
-    align-items: stretch; /* Asegura que los hijos ocupen toda la altura */
+    align-items: stretch;
     width: 100%;
-    // Utiliza el borde naranja del input principal en el grupo
     border: 1px solid $primary; 
     border-radius: 25px;
     background-color: #fff;
     overflow: hidden;
-    height: 53px; /* Fija la altura del grupo para precisión */
+    height: 53px;
   }
 
   &__input-container {
     position: relative;
     display: flex;
     align-items: center;
-    // gap: 8px;
   }
 
-   &__currency-badge {
+  &__currency-badge {
     display: flex;
     align-items: center;
     gap: 4px;
-    
-    // Estilos visuales para el lado izquierdo del campo
-    background-color: #fff; // Fondo blanco
-    padding: 14px 0 14px 16px; // Espacio a la izquierda
-    // height: 53px; // La altura la define el padre (__value-input-group)
-    
-    // ✅ CORRECCIÓN: Usar el separador del tema para la línea divisoria
+    background-color: #fff;
+    padding: 14px 0 14px 16px;
     border-right: 1px solid $separator; 
-    
     font-size: 15px; 
-    color: $text-secondary; // Color grisáceo para el USD
+    color: $text-secondary;
     font-weight: 500;
-    flex-shrink: 0; /* Evita que se encoja */
+    flex-shrink: 0;
     
     svg {
       width: 16px;
       height: 16px;
       color: $text-secondary;
-      margin-right: 16px; /* Espacio antes del separador */
+      margin-right: 16px;
     }
   }
 
@@ -106,33 +101,42 @@
     padding: 14px 16px;
     font-size: 15px;
     color: $text-primary;
-    
-    // ✅ Eliminamos todos los bordes para que el input-group los maneje
-    border: none; 
-    border-radius: 0;
-    
+    border: 1px solid $separator;
+    border-radius: 25px;
     background-color: #fff;
     transition: all 0.3s ease;
 
-
     &:focus {
       outline: none;
-      // border-color: $primary;
-      // box-shadow: none;
-      // z-index: 20;
+      border-color: $primary;
     }
 
-     // Solo el campo de valor declarado necesita esta clase para el estilo integrado
     &--value-field {
-      // Asegura que no haya padding extra si el badge está presente
       padding-left: 0; 
     }
 
-    // Ajuste para el CurrencyInput, haciendo que se superponga 1px al badge
     &--full {
       margin-left: -1px; 
     }
-    
+
+    // 🆕 ESTILO ESPECIAL PARA INPUTS DE DIMENSIONES
+    &--dimension {
+      border: 2px solid $primary; // Borde más grueso y naranja
+      border-radius: 12px; // Menos redondeado
+      background-color: #fff;
+      font-weight: 500; // Texto más grueso
+      text-align: center; // Centrar el texto
+      
+      &:focus {
+        border-color: darken($primary, 10%);
+        box-shadow: 0 0 0 3px rgba($primary, 0.1); // Sutil glow
+      }
+
+      &::placeholder {
+        color: lighten($text-secondary, 10%);
+        font-weight: normal;
+      }
+    }
 
     &--disabled {
       background-color: $card-background;
@@ -176,7 +180,6 @@
     &:focus {
       outline: none;
       border-color: $primary;
-      box-shadow: none; // ❌ SIN box-shadow
     }
 
     &--disabled {
@@ -239,28 +242,18 @@
     width: 100%; 
   }
 
-   .package-step__weight-container {
-      .package-step__input {
-        border: 1px solid $separator; /* Borde normal para el input de peso */
-        border-radius: 25px; /* Fully rounded */
-      }
-      
-      .package-step__unit-toggle {
-          border-radius: 25px; /* Botón KG/LB también redondeado */
-      }
-  }
-
   &__unit-toggle {
     padding: 14px 20px;
     background-color: $card-background;
     border: 1px solid $separator;
-    border-radius: 12px;
+    border-radius: 25px;
     font-size: 14px;
     font-weight: 600;
     color: $text-primary;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 60px;
+    min-width: 80px;
+    white-space: nowrap;
 
     &:hover:not(:disabled) {
       background-color: $primary;
@@ -274,26 +267,46 @@
     }
   }
 
-  &__dimensions {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    padding: 16px;
-    background-color: rgba($primary, 0.05);
-    border: 1px solid rgba($primary, 0.2);
-    border-radius: 12px;
+  &__unit-label {
+    font-size: 14px;
+    color: $text-secondary;
+    font-weight: 500;
+    margin-top: 4px;
+    display: block;
   }
 
-  &__high-value-note {
-    font-size: 12px;
+  // 🆕 SECCIÓN DE DIMENSIONES MEJORADA
+  &__dimensions-section {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba($primary, 0.08) 0%, rgba($primary, 0.03) 100%);
+    border: 2px solid rgba($primary, 0.3);
+    border-radius: 16px;
+  }
+
+  &__dimensions-header {
+    margin-bottom: 16px;
+  }
+
+  &__dimension-note {
+    display: block;
+    font-size: 13px;
     color: $text-secondary;
-    margin-bottom: 12px;
+    margin-top: 4px;
     font-style: italic;
   }
 
   &__dimensions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 16px;
+    margin-bottom: 12px;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
   }
 
   &__dimension-input {
@@ -303,9 +316,11 @@
 
   &__dimension-label {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: $text-primary;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   &__buttons {
@@ -318,7 +333,7 @@
 
   &__calculate-button {
     width: 100%;
-    background-color: $secondary; // ✅ Azul como en la app
+    background-color: $secondary;
     color: white;
     border: none;
     border-radius: 25px;
@@ -330,12 +345,10 @@
 
     &:hover:not(.package-step__button--disabled) {
       background-color: darken($secondary, 10%);
-      transform: none; // ❌ SIN transform
-      box-shadow: none; // ❌ SIN box-shadow
     }
 
     &:active:not(.package-step__button--disabled) {
-      transform: none;
+      transform: scale(0.98);
     }
   }
 
@@ -385,13 +398,4 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-// Responsive
-@media (max-width: 768px) {
-  .package-step {
-    &__dimensions-grid {
-      grid-template-columns: 1fr;
-    }
-  }
 }

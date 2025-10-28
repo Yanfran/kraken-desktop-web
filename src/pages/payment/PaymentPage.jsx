@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/contexts/ThemeContext'; // Importar hook de tema
+import { useTheme } from '@/contexts/ThemeContext';
 import toast from 'react-hot-toast';
 import styles from './PaymentPage.module.scss';
 
@@ -18,16 +18,14 @@ import {
   IoChevronDown,
   IoChevronUp,
   IoAlertCircleOutline,
-  IoInformationCircleOutline,
+  IoShieldCheckmarkOutline,
 } from 'react-icons/io5';
 
 // Services
 import { getGuiaById } from '@/services/guiasService';
 import { 
   processMercantilPayment, 
-  getMercantilCardAuth, 
-  processMercantilDebitCardPayment ,
-  processCardPaymentUnified
+  processCardPaymentUnified // ✅ FUNCIÓN CON 2FA
 } from '@/services/payment/paymentService';
 
 // Constantes
@@ -53,7 +51,7 @@ export default function PaymentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isSignedIn } = useAuth();
-  const { actualTheme } = useTheme(); // Obtener tema actual
+  const { actualTheme } = useTheme();
 
   // Estados principales
   const [step, setStep] = useState('loading');
@@ -74,15 +72,13 @@ export default function PaymentPage() {
   const [phoneCode, setPhoneCode] = useState('0414');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
+  const [twofactorAuth, setTwofactorAuth] = useState(''); // ✅ CÓDIGO 2FA
   
   // Tarjeta
   const [cardNumber, setCardNumber] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [cardholderName, setCardholderName] = useState('');
-  
-  // Token de autenticación (obtenido del backend)
-  const [authToken, setAuthToken] = useState('');
 
   // Dropdowns
   const [showIdTypes, setShowIdTypes] = useState(false);
@@ -92,18 +88,17 @@ export default function PaymentPage() {
   const [paymentReference, setPaymentReference] = useState('');
   const [authorizationCode, setAuthorizationCode] = useState('');
 
-  // Aplicar tema al contenedor principal
+  // Aplicar tema
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', actualTheme);
   }, [actualTheme]);
 
-  // Cargar datos de pago
+  // Cargar datos
   useEffect(() => {
     if (!isSignedIn) {
       navigate('/login');
       return;
     }
-
     loadPaymentData();
   }, [id, isSignedIn, navigate]);
 
@@ -114,7 +109,6 @@ export default function PaymentPage() {
 
       if (isMultiplePayment) {
         const guiaIds = multipleIds.split(',').map(Number);
-        // TODO: Implementar carga de múltiples guías
         toast.info('Función de pago múltiple en desarrollo');
       } else {
         const response = await getGuiaById(parseInt(id));
@@ -143,13 +137,12 @@ export default function PaymentPage() {
     }
   };
 
-  // Cerrar dropdowns al hacer click fuera
+  // Cerrar dropdowns
   useEffect(() => {
     const handleClickOutside = () => {
       setShowIdTypes(false);
       setShowPhoneCodes(false);
     };
-
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
@@ -205,6 +198,12 @@ export default function PaymentPage() {
         toast.error('El número de teléfono debe tener 7 dígitos');
         return false;
       }
+      
+      // ✅ VALIDAR CÓDIGO 2FA PARA PAGO MÓVIL
+      if (!twofactorAuth || twofactorAuth.length < 4) {
+        toast.error('Ingresa el código de autenticación (mínimo 4 dígitos)');
+        return false;
+      }
     } else {
       if (!cardNumber || cardNumber.replace(/\s/g, '').length < 15) {
         toast.error('Ingresa un número de tarjeta válido');
@@ -225,21 +224,25 @@ export default function PaymentPage() {
         toast.error('Ingresa el nombre completo del tarjetahabiente');
         return false;
       }
+      
+      // // ✅ VALIDAR CÓDIGO 2FA PARA TARJETA
+      // if (!twofactorAuth || twofactorAuth.length < 4) {
+      //   toast.error('Ingresa el código de autenticación (mínimo 4 dígitos)');
+      //   return false;
+      // }
     }
 
     return true;
   };
 
-
   const formatPhoneForMercantil = (phoneCode, phoneNumber) => {
-    // Remover el 0 del código de operadora
-    const cleanCode = phoneCode.replace(/^0/, ''); // 0414 -> 414
-    
-    // Formato: 58 + código sin 0 + número
-    return `58${cleanCode}${phoneNumber}`; // Ejemplo: 584143177318
-  };  
+    const cleanCode = phoneCode.replace(/^0/, '');
+    return `58${cleanCode}${phoneNumber}`;
+  };
 
-  // Handlers
+  // ============================================================
+  // PAGO MÓVIL (CON CÓDIGO 2FA)
+  // ============================================================
   const handlePayment = async () => {
     if (!validateForm()) return;
 
@@ -248,21 +251,18 @@ export default function PaymentPage() {
     try {
       setIsLoading(true);
 
-      // ✅ ESTRUCTURA EXACTA DE TU APP MÓVIL
       const paymentRequest = {
         amount: amount.toString(),
         customerId,
-        originMobileNumber:  formatPhoneForMercantil(phoneCode, phoneNumber),
+        originMobileNumber: formatPhoneForMercantil(phoneCode, phoneNumber),
         tasa: paymentData.tasaCambio,
-        twofactorAuth: "00001111",
+        twofactorAuth: twofactorAuth, // ✅ CÓDIGO INGRESADO POR EL USUARIO
         idGuia: isMultiplePayment ? multipleIds.split(',').map(Number)[0] : paymentData.idGuia,
         guiasIds: isMultiplePayment 
           ? multipleIds.split(',').map(Number) 
-          : [paymentData.idGuia], // ✅ SIEMPRE enviar como array
-        isMultiplePayment: isMultiplePayment || false, // ✅ SIEMPRE enviar el flag
+          : [paymentData.idGuia],
+        isMultiplePayment: isMultiplePayment || false,
       };
-
-      // console.log('📤 Enviando solicitud de pago móvil:', paymentRequest);
 
       const response = await processMercantilPayment(paymentRequest);
 
@@ -286,128 +286,104 @@ export default function PaymentPage() {
     }
   };
 
- const handleCardAuth = async () => {
-  if (!validateForm()) return;
+  // ============================================================
+  // ✅ PAGO CON TARJETA (CON CÓDIGO 2FA INGRESADO POR USUARIO)
+  // ============================================================
+  const handleCardPayment = async () => {
+    if (!validateForm()) return;
 
-  const customerId = `${idType}${idNumber}`;
+    const customerId = `${idType}${idNumber}`;
 
-  try {
-    setIsLoading(true);
-    setError('');
+    try {
+      setIsLoading(true);
+      setError('');
 
-    console.log('🔐 Paso 1: Autenticando tarjeta...');
-    
-    // PASO 1: AUTENTICAR (con timeout de 120s)
-    const authResult = await getMercantilCardAuth({
-      customerId,
-      cardNumber: cardNumber.replace(/\s/g, ''),
-      paymentMethod: 'tdd'
-    });
+      console.log('💳 Procesando pago con tarjeta...');
 
-    console.log('📥 Respuesta auth:', authResult);
+      // Mostrar mensaje al usuario
+      toast.loading('Procesando pago... Esto puede tardar hasta 2 minutos', {
+        duration: 120000,
+        id: 'processing-payment'
+      });
 
-    // Verificar si hay timeout en autenticación
-    if (!authResult.success) {
-      if (authResult.isTimeout) {
-        setError('La autenticación tardó demasiado. Por favor, intenta nuevamente.');
-        toast.error('Timeout: La autenticación tardó demasiado');
+      // ✅ LLAMADA CON CÓDIGO 2FA INGRESADO POR USUARIO
+      const paymentData_request = {
+        customerId,
+        cardNumber: cardNumber.replace(/\s/g, ''),
+        expirationDate,
+        cvv,
+        // twofactorAuth: twofactorAuth, // ✅ CÓDIGO INGRESADO POR EL USUARIO
+        amount: parseFloat(amount),
+        paymentMethod: 'tdd',
+        tasa: paymentData.tasaCambio,
+        idGuia: isMultiplePayment 
+          ? multipleIds.split(',').map(Number)[0] 
+          : paymentData.idGuia,
+        guiasIds: isMultiplePayment 
+          ? multipleIds.split(',').map(Number) 
+          : [paymentData.idGuia],
+        isMultiplePayment: isMultiplePayment || false,
+      };
+
+      // console.log('📤 Enviando datos de pago:', {
+      //   customerId: paymentData_request.customerId,
+      //   cardNumber: paymentData_request.cardNumber.substring(0, 6) + '****',
+      //   amount: paymentData_request.amount,
+      //   has2FA: !!paymentData_request.twofactorAuth
+      // });
+
+      const paymentResult = await processCardPaymentUnified(paymentData_request);
+
+      // Cerrar el toast de loading
+      toast.dismiss('processing-payment');
+
+      console.log('📥 Respuesta del servidor:', paymentResult);
+
+      if (!paymentResult.success) {
+        if (paymentResult.isTimeout) {
+          setError(
+            'El pago tardó demasiado. Por favor, verifica el estado de tu pago ' +
+            'en "Mis Guías" antes de intentar nuevamente.'
+          );
+          toast.error('Timeout: Verifica el estado en "Mis Guías"', { duration: 5000 });
+          setStep('error');
+          return;
+        }
+
+        setError(paymentResult.message || 'Error al procesar el pago');
+        toast.error(paymentResult.message || 'Error al procesar el pago');
         setStep('error');
         return;
+      }
+
+      // PAGO EXITOSO
+      console.log('✅ Pago exitoso:', paymentResult.data);
+      
+      setPaymentReference(paymentResult.data?.paymentReference || paymentResult.data?.payment_reference || 'N/A');
+      setAuthorizationCode(paymentResult.data?.authorizationCode || paymentResult.data?.authorization_code || 'N/A');
+      
+      toast.success('¡Pago procesado exitosamente!');
+      setStep('success');
+
+    } catch (error) {
+      console.error('❌ Error en handleCardPayment:', error);
+      
+      toast.dismiss('processing-payment');
+      
+      if (error.isTimeout || error.code === 'TIMEOUT') {
+        setError('La operación tardó demasiado. Verifica tu conexión e intenta nuevamente.');
+        toast.error('Timeout: Verifica tu conexión', { duration: 5000 });
+      } else {
+        setError(error.message || 'Error al procesar el pago');
+        toast.error(error.message || 'Error al procesar el pago');
       }
       
-      setError(authResult.message || 'Error en la autenticación');
-      toast.error(authResult.message || 'Error en la autenticación');
       setStep('error');
-      return;
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    // Extraer token
-    const twofactorToken = authResult.data?.twofactor_token || 
-                          authResult.data?.data?.twofactor_token;
-
-    if (!twofactorToken) {
-      setError('No se recibió el token de autenticación');
-      toast.error('No se recibió el token de autenticación');
-      setStep('error');
-      return;
-    }
-
-    console.log('✅ Token obtenido, procesando pago...');
-    console.log('⏱️ NOTA: El pago puede tardar hasta 2 minutos');
-    
-    // Mostrar mensaje al usuario
-    toast.loading('Procesando pago... Esto puede tardar hasta 2 minutos', {
-      duration: 120000, // 2 minutos
-      id: 'processing-payment'
-    });
-
-    // PASO 2: PROCESAR PAGO (con timeout de 120s)
-    const paymentResult = await processCardPaymentUnified({
-      customerId,
-      cardNumber: cardNumber.replace(/\s/g, ''),
-      expirationDate,
-      cvv,
-      twofactorAuth: twofactorToken,
-      amount: parseFloat(amount),
-      paymentMethod: 'tdd',
-      idGuia: paymentData.idGuia,
-      guiasIds: isMultiplePayment ? multipleIds.split(',').map(Number) : [paymentData.idGuia],
-      isMultiplePayment,
-      tasa: paymentData.tasaCambio
-    });
-
-    // Cerrar el toast de loading
-    toast.dismiss('processing-payment');
-
-    console.log('📥 Respuesta pago:', paymentResult);
-
-    // Verificar si hay timeout en pago
-    if (!paymentResult.success) {
-      if (paymentResult.isTimeout) {
-        setError(
-          'El pago tardó demasiado. Por favor, verifica el estado de tu pago ' +
-          'en "Mis Guías" antes de intentar nuevamente.'
-        );
-        toast.error('Timeout: Verifica el estado en "Mis Guías"', { duration: 5000 });
-        setStep('error');
-        return;
-      }
-
-      setError(paymentResult.message || 'Error al procesar el pago');
-      toast.error(paymentResult.message || 'Error al procesar el pago');
-      setStep('error');
-      return;
-    }
-
-    // PAGO EXITOSO
-    console.log('✅ Pago exitoso:', paymentResult.data);
-    
-    setPaymentReference(paymentResult.data?.paymentReference || 'N/A');
-    setAuthorizationCode(paymentResult.data?.authorizationCode || 'N/A');
-    
-    toast.success('¡Pago procesado exitosamente!');
-    setStep('success');
-
-  } catch (error) {
-    console.error('❌ Error en handleCardAuth:', error);
-    
-    // Cerrar cualquier toast de loading
-    toast.dismiss('processing-payment');
-    
-    // Manejar timeout
-    if (error.isTimeout || error.code === 'TIMEOUT') {
-      setError('La operación tardó demasiado. Verifica tu conexión e intenta nuevamente.');
-      toast.error('Timeout: Verifica tu conexión', { duration: 5000 });
-    } else {
-      setError(error.message || 'Error al procesar el pago');
-      toast.error(error.message || 'Error al procesar el pago');
-    }
-    
-    setStep('error');
-  } finally {
-    setIsLoading(false);
-  }
-};
   const handleBackToGuides = () => {
     navigate('/my-guides');
   };
@@ -443,10 +419,6 @@ export default function PaymentPage() {
           {isMultiplePayment ? 'Total a pagar:' : 'Monto a pagar:'}
         </p>
         <h2 className={styles.amountValue}>{formatBolivar(parseFloat(amount))}</h2>
-        {/* <p className={styles.usdReference}>{formatUSDReference(parseFloat(amount))}</p> */}
-        {/* <p className={styles.exchangeRate}>
-          Tasa BCV: {paymentData?.tasaCambio?.toFixed(2)} Bs./USD
-        </p> */}
         {isMultiplePayment && (
           <p className={styles.multipleNote}>
             Pago por {multipleIds.split(',').length} guías
@@ -553,46 +525,64 @@ export default function PaymentPage() {
 
       {/* Campos específicos según método */}
       {paymentMethod === 'mobile' ? (
-        <div className={styles.inputGroup}>
-          <label>Número de Teléfono</label>
-          <div className={styles.combinedInput}>
-            <div
-              className={styles.dropdown}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowPhoneCodes(!showPhoneCodes);
-                setShowIdTypes(false);
-              }}
-            >
-              <span>{phoneCode}</span>
-              {showPhoneCodes ? <IoChevronUp /> : <IoChevronDown />}
+        <>
+          <div className={styles.inputGroup}>
+            <label>Número de Teléfono</label>
+            <div className={styles.combinedInput}>
+              <div
+                className={styles.dropdown}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPhoneCodes(!showPhoneCodes);
+                  setShowIdTypes(false);
+                }}
+              >
+                <span>{phoneCode}</span>
+                {showPhoneCodes ? <IoChevronUp /> : <IoChevronDown />}
+              </div>
+              <input
+                type="text"
+                placeholder="1234567"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                maxLength={7}
+              />
             </div>
+            {showPhoneCodes && (
+              <div className={styles.dropdownMenu}>
+                {PHONE_CODES.map((phone) => (
+                  <div
+                    key={phone.code}
+                    className={styles.dropdownItem}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPhoneCode(phone.code);
+                      setShowPhoneCodes(false);
+                    }}
+                  >
+                    {phone.code} - {phone.carrier}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ✅ NUEVO: INPUT CÓDIGO DE AUTENTICACIÓN 2FA PARA PAGO MÓVIL */}
+          <div className={styles.inputGroup}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <IoShieldCheckmarkOutline size={18} />
+              Código de Autenticación
+            </label>
             <input
               type="text"
-              placeholder="1234567"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-              maxLength={7}
+              placeholder="123456"
+              value={twofactorAuth}
+              onChange={(e) => setTwofactorAuth(e.target.value.replace(/[^0-9]/g, ''))}
+              maxLength={10}
             />
+            <small>💡 Código de 10 dígitos enviado por tu banco</small>
           </div>
-          {showPhoneCodes && (
-            <div className={styles.dropdownMenu}>
-              {PHONE_CODES.map((phone) => (
-                <div
-                  key={phone.code}
-                  className={styles.dropdownItem}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPhoneCode(phone.code);
-                    setShowPhoneCodes(false);
-                  }}
-                >
-                  {phone.code} - {phone.carrier}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        </>
       ) : (
         <>
           <div className={styles.inputGroup}>
@@ -639,6 +629,22 @@ export default function PaymentPage() {
               onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
             />
           </div>
+
+          {/* ✅ NUEVO: INPUT CÓDIGO DE AUTENTICACIÓN 2FA PARA TARJETA */}
+          {/* <div className={styles.inputGroup}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <IoShieldCheckmarkOutline size={18} />
+              Código de Autenticación (2FA)
+            </label>
+            <input
+              type="text"
+              placeholder="123456"
+              value={twofactorAuth}
+              onChange={(e) => setTwofactorAuth(e.target.value.replace(/[^0-9]/g, ''))}
+              maxLength={10}
+            />
+            <small>💡 Código de 10 dígitos enviado por tu banco</small>
+          </div> */}
         </>
       )}
 
@@ -651,7 +657,6 @@ export default function PaymentPage() {
           disabled
           className={styles.disabled}
         />
-        {/* <small>{formatUSDReference(parseFloat(amount))}</small> */}
       </div>
 
       {/* Botones */}
@@ -664,7 +669,7 @@ export default function PaymentPage() {
           <IoArrowBack /> Volver
         </button>
         <button
-          onClick={paymentMethod === 'mobile' ? handlePayment : handleCardAuth}
+          onClick={paymentMethod === 'mobile' ? handlePayment : handleCardPayment}
           disabled={isLoading}
           className={styles.btn_primary}
         >
