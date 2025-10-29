@@ -293,11 +293,12 @@ const ResultStep = ({
         </div>
 
         <div className="result-step__cards">
-          {isOptionAvailable('oficina') && result?.data?.breakdowns?.oficina && 
-            renderCard('Retiro en Oficina', result.data.breakdowns.oficina, 'oficina')}
-          
+
           {isOptionAvailable('domicilio') && result?.data?.breakdowns?.domicilio && 
             renderCard('Entrega a Domicilio', result.data.breakdowns.domicilio, 'domicilio')}
+
+          {isOptionAvailable('oficina') && result?.data?.breakdowns?.oficina && 
+            renderCard('Retiro en Oficina', result.data.breakdowns.oficina, 'oficina')}                    
           
           {(!result?.data?.deliveryOptions || result.data.deliveryOptions.length === 0) && (
             <div className="result-step__no-options">

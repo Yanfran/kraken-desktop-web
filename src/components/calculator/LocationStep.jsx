@@ -122,7 +122,7 @@ const LocationStep = ({
         </div>
 
         {/* ✅ CONTENEDOR 3: PARROQUIA EN 1 COLUMNA (OPCIONAL) */}
-        <div className="location-step__field">
+        {/* <div className="location-step__field">
           <label className="location-step__label">Parroquia (opcional)</label>
           <SearchableSelect
             options={parishesList}
@@ -132,7 +132,7 @@ const LocationStep = ({
             disabled={isLoading || !selectedMunicipality || parishesList.length === 0}
             className="location-step__select"
           />
-        </div>
+        </div> */}
 
         {/* Mensaje de error */}
         {validationError && (

@@ -48,10 +48,11 @@ const PackageStep = ({
   // 🆕 LÓGICA CORREGIDA: Dimensiones solo si FOB > 100 (para ambos países)
   const shouldShowDimensions = () => {
     const fobValue = parseFormattedValue(declaredValue);
-    const showDims = fobValue > 100;
-    
+    // ✅ Condición: Debe ser China Y el valor mayor a 100
+    const showDims = originCountry === 'CN';
+
     console.log(`📦 País: ${originCountry}, FOB: ${fobValue}, Mostrar dimensiones: ${showDims}`);
-    
+
     return showDims;
   };
 
@@ -105,19 +106,13 @@ const PackageStep = ({
               />
             </div>
 
-            {/* Peso con toggle */}
+
+           {/* Peso con toggle */}
             <div className="package-step__field">
-              <div className="package-step__label-with-toggle">
-                <label className="package-step__label">Peso *</label>
-                <button
-                  type="button"
-                  onClick={onWeightUnitToggle}
-                  className="package-step__unit-toggle"
-                  disabled={isCalculating}
-                >
-                  {weightUnit === 'kg' ? 'kg → lb' : 'lb → kg'}
-                </button>
-              </div>
+              {/* Label principal del peso */}
+              <label className="package-step__label">Peso *</label>
+
+              {/* Input del peso */}
               <CurrencyInput
                 value={weight}
                 onChange={handleWeightCurrencyInputChange}
@@ -126,9 +121,35 @@ const PackageStep = ({
                 disabled={isCalculating}
                 className={`package-step__input ${isCalculating ? 'package-step__input--disabled' : ''}`}
               />
-              <span className="package-step__unit-label">{weightUnit}</span>
+
+              {/* 👇 CONTENEDOR SOLO PARA EL SWITCHER, ABAJO Y A LA DERECHA 👇 */}
+              <div className="package-step__switcher-container">
+                <div className="package-step__unit-switcher">
+                  <button
+                    type="button"
+                    className={`package-step__switcher-option ${weightUnit === 'kg' ? 'package-step__switcher-option--active' : ''}`}
+                    onClick={() => weightUnit !== 'kg' && onWeightUnitToggle()}
+                    disabled={isCalculating}
+                  >
+                    kg
+                  </button>
+                  <button
+                    type="button"
+                    className={`package-step__switcher-option ${weightUnit === 'lb' ? 'package-step__switcher-option--active' : ''}`}
+                    onClick={() => weightUnit !== 'lb' && onWeightUnitToggle()}
+                    disabled={isCalculating}
+                  >
+                    lb
+                  </button>
+                </div>
+              </div>
+              {/* 👆 FIN CONTENEDOR DEL SWITCHER 👆 */}
             </div>
+
+
           </div>
+
+         
 
           {/* 🆕 DIMENSIONES - SOLO SI FOB > 100 */}
           {showDimensions && (

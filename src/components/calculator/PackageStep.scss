@@ -21,13 +21,14 @@
 
   &__grid {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; // Apilado en móvil (default)
     gap: 16px; 
     margin-bottom: 16px;
     
     @media (min-width: 600px) {
-      flex-direction: row;
+      flex-direction: row; // En fila en pantallas más grandes
       gap: 20px;
+      align-items: flex-start; // Alinea los labels en la parte superior
     }
   }
   
@@ -150,8 +151,14 @@
     }
   }
 
-  &__field {
+ &__field {
     margin-bottom: 16px;
+    width: 100%; // Asegura que ocupe todo el ancho en móvil
+
+    @media (min-width: 600px) {
+      flex: 1; // 👈 ESTA ES LA CORRECCIÓN CLAVE
+      margin-bottom: 0; // Quita el margen extra cuando están en fila
+    }
   }
 
   &__label-container {
@@ -394,8 +401,107 @@
     height: 20px;
     animation: spin 1s linear infinite;
   }
+
+
+
+
+
+
+
+  // ✅ NUEVO: Contenedor para alinear el switcher ABAJO y a la DERECHA
+  &__switcher-container {
+    display: flex;             // Habilita Flexbox
+    justify-content: flex-end; // Alinea el contenido (el switcher) a la derecha
+    margin-top: 8px;           // Añade un pequeño espacio encima del switcher
+  }
+
+  // ✅ Estilos del Switcher (pueden permanecer igual que antes)
+  &__unit-switcher {
+    display: inline-flex;
+    background-color: $card-background;
+    border: 1px solid $separator;
+    border-radius: 20px;
+    padding: 4px;
+    overflow: hidden;
+  }
+
+  &__switcher-option {
+    background-color: transparent;
+    border: none;
+    border-radius: 16px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-secondary;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+
+    &--active {
+      background-color: $primary;
+      color: white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    &:hover:not(&--active):not(:disabled) {
+      background-color: darken($card-background, 5%);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+  
+
+  // ✅ Contenedor del Switcher (la "píldora")
+  &__unit-switcher {
+    display: inline-flex; // Para que los botones estén en línea
+    background-color: $card-background; // Color de fondo gris claro
+    border: 1px solid $separator; // Borde sutil
+    border-radius: 20px; // Bordes redondeados
+    padding: 4px; // Espacio interno
+    overflow: hidden; // Asegura que los bordes redondeados se apliquen bien
+  }
+
+  // ✅ Estilos para cada opción (kg/lb) dentro del Switcher
+  &__switcher-option {
+    background-color: transparent; // Fondo transparente por defecto
+    border: none;
+    border-radius: 16px; // Redondeado interno
+    padding: 6px 16px; // Espaciado interno
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-secondary; // Color de texto gris por defecto
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease; // Transición suave
+    white-space: nowrap; // Evita que el texto se parta
+
+    // Estilos cuando una opción está activa
+    &--active {
+      background-color: $primary; // Fondo naranja (tu color primario)
+      color: white; // Texto blanco
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); // Sombra sutil
+    }
+
+    // Estilos al pasar el mouse (solo si NO está activa)
+    &:hover:not(&--active):not(:disabled) {
+      background-color: darken($card-background, 5%); // Un gris un poco más oscuro
+    }
+
+    // Estilos cuando está deshabilitado
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+
+
