@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import Sidebar from '../../Sidebar/Sidebar';
 import TopNavigation from '../../TopNavigation/TopNavigation';
-import MobileBlock from '../../MobileBlock/MobileBlock'; // ✅ NUEVO
+// import MobileBlock from '../../MobileBlock/MobileBlock'; // ✅ NUEVO
 import '../../../pages/dashboard/Dashboard.styles.scss';
+import SmartPlatformDetector from '../../SmartPlatformDetector/SmartPlatformDetector';
 
 const DashboardLayout = ({ children }) => {
   const { actualTheme } = useTheme();
@@ -43,7 +44,7 @@ const DashboardLayout = ({ children }) => {
 
   // ✅ Si es móvil, mostrar página de bloqueo
   if (isMobile) {
-    return <MobileBlock />;
+    return <SmartPlatformDetector />;
   }
 
   // ✅ Si es tablet o desktop, mostrar dashboard normal

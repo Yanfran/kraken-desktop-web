@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Bridge - Kraken Courier</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        /**
+         * Token Bridge - Permite compartir tokens entre dominios
+         * 
+         * Este archivo se carga en un iframe invisible desde:
+         * - krakencourier.com
+         * - m.krakencourier.com
+         * 
+         * Usa postMessage para comunicación segura cross-domain
+         */
+        (function() {
+            try {
+                // Obtener tokens de localStorage
+                const token = localStorage.getItem('kraken_auth_token');
+                const userDataStr = localStorage.getItem('kraken_user_data');
+                const refreshToken = localStorage.getItem('kraken_refresh_token');
+                
+                // Parsear datos del usuario si existen
+                let userData = null;
+                if (userDataStr) {
+                    try {
+                        userData = JSON.parse(userDataStr);
+                    } catch (e) {
+                        console.error('Error parsing user data:', e);
+                    }
+                }
+
+                // Enviar mensaje al padre si tenemos un token
+                if (token && window.parent !== window) {
+                    // Datos a enviar
+                    const message = {
+                        token,
+                        userData,
+                        refreshToken,
+                        timestamp: Date.now()
+                    };
+
+                    // Enviar a todos los orígenes permitidos
+                    const allowedOrigins = [
+                        'https://krakencourier.com',
+                        'https://m.krakencourier.com',
+                        'http://localhost:3000', // Para desarrollo
+                        'http://localhost:5173', // Vite dev server
+                    ];
+
+                    // Enviar a todos los orígenes (el receptor verificará el origen)
+                    window.parent.postMessage(message, '*');
+
+                    console.log('✅ Token enviado al dominio padre');
+                } else {
+                    console.log('⚠️ No hay token disponible para compartir');
+                    
+                    // Enviar mensaje vacío para que el padre sepa que no hay token
+                    if (window.parent !== window) {
+                        window.parent.postMessage({
+                            token: null,
+                            userData: null,
+                            refreshToken: null,
+                            timestamp: Date.now()
+                        }, '*');
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error en token bridge:', error);
+                
+                // Notificar error al padre
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        error: error.message,
+                        timestamp: Date.now()
+                    }, '*');
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

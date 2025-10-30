@@ -1,4 +1,4 @@
-// src/App.jsx - ACTUALIZADO con rutas de perfil
+// src/App.jsx - ACTUALIZADO SIN BrowserRouter (ya está en main.jsx)
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -6,6 +6,9 @@ import { ProtectedRoute, PublicRoute, SemiProtectedRoute } from './components/au
 import Loading from './components/common/Loading/Loading';
 import { Toaster } from 'react-hot-toast';
 import './App.styles.scss';
+
+// ✅ NUEVO: Smart Platform Detector (reemplaza MobileBlock)
+import SmartPlatformDetector from './components/SmartPlatformDetector';
 
 import DashboardLayout from './components/common/Layout/DashboardLayout';
 
@@ -21,7 +24,7 @@ const DeliveryOption = React.lazy(() => import('./pages/auth/DeliveryOption/Deli
 const EmailVerify = React.lazy(() => import('./pages/auth/EmailVerify/EmailVerify'));
 const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
 
-// ✅ NUEVAS PÁGINAS LEGALES
+// ✅ PÁGINAS LEGALES
 const Terms = React.lazy(() => import('./pages/legal/Terms/Terms'));
 const Privacy = React.lazy(() => import('./pages/legal/Privacy/Privacy'));
 
@@ -40,9 +43,9 @@ const Rastrear = React.lazy(() => import('./pages/Rastrear/Rastrear'));
 const MyGuides = React.lazy(() => import('./pages/MyGuides/MyGuides'));
 const GuideDetail = React.lazy(() => import('./pages/GuideDetail/GuideDetail'));
 const AddressesPage = React.lazy(() => import('./pages/addresses/Addresses'));
-const PaymentPage  = React.lazy(() => import('./pages/payment/PaymentPage'));
+const PaymentPage = React.lazy(() => import('./pages/payment/PaymentPage'));
 
-// ✅ NUEVAS RUTAS DE PERFIL
+// ✅ RUTAS DE PERFIL
 const PersonalDataProfile = React.lazy(() => import('./pages/profile/Profile/PersonalData/PersonalData'));
 const Addresses = React.lazy(() => import('./pages/profile/Profile/Addresses/Addresses'));
 
@@ -51,267 +54,269 @@ export { useAuth } from './contexts/AuthContext';
 
 function App() {
   return (
+    // ⚠️ NO USAR BrowserRouter AQUÍ - Ya está en main.jsx
+    <SmartPlatformDetector>
       <ThemeProvider>
-          <div className="app">
-            {/* Toast notifications */}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
+        <div className="app">
+          {/* Toast notifications */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: 'var(--color-card-background)',
+                color: 'var(--color-text-primary)',
+                border: '1px solid var(--color-border)',
+              },
+              success: {
+                duration: 3000,
                 style: {
-                  background: 'var(--color-card-background)',
-                  color: 'var(--color-text-primary)',
-                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-success)',
+                  color: '#fff',
                 },
-                success: {
-                  duration: 3000,
-                  style: {
-                    background: 'var(--color-success)',
-                    color: '#fff',
-                  },
+              },
+              error: {
+                duration: 5000,
+                style: {
+                  background: 'var(--color-error)',
+                  color: '#fff',
                 },
-                error: {
-                  duration: 5000,
-                  style: {
-                    background: 'var(--color-error)',
-                    color: '#fff',
-                  },
-                },
-              }}
-            />
+              },
+            }}
+          />
 
-            {/* Rutas principales */}
-            <Suspense fallback={<Loading />}>
-              <Routes>
-                {/* ===== RUTA RAÍZ ===== */}
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Rutas principales */}
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              {/* ===== RUTA RAÍZ ===== */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                {/* ===== RUTAS PÚBLICAS ===== */}
-                <Route path="/login" element={
-                  <PublicRoute>
-                    <Login />
-                  </PublicRoute>
-                } />
+              {/* ===== RUTAS PÚBLICAS ===== */}
+              <Route path="/login" element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              } />
 
-                <Route path="/register" element={
-                  <PublicRoute>
-                    <Register />
-                  </PublicRoute>
-                } />
+              <Route path="/register" element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              } />
 
-                <Route path="/forgot-password" element={
-                  <PublicRoute>
-                    <ForgotPassword />
-                  </PublicRoute>
-                } />
+              <Route path="/forgot-password" element={
+                <PublicRoute>
+                  <ForgotPassword />
+                </PublicRoute>
+              } />
 
-                 <Route path="/terms" element={
-                  <PublicRoute>
-                    <Terms />
-                  </PublicRoute>
-                } />
+              <Route path="/terms" element={
+                <PublicRoute>
+                  <Terms />
+                </PublicRoute>
+              } />
 
-                <Route path="/privacy" element={
-                  <PublicRoute>
-                    <Privacy />
-                  </PublicRoute>
-                } />
-                                
+              <Route path="/privacy" element={
+                <PublicRoute>
+                  <Privacy />
+                </PublicRoute>
+              } />
 
-                {/* ===== RUTAS SEMI-PROTEGIDAS ===== */}
-                <Route path="/email-confirmation" element={
-                  <SemiProtectedRoute>
-                    <EmailConfirmation />
-                  </SemiProtectedRoute>
-                } />
+              {/* ===== RUTAS SEMI-PROTEGIDAS ===== */}
+              <Route path="/email-confirmation" element={
+                <SemiProtectedRoute>
+                  <EmailConfirmation />
+                </SemiProtectedRoute>
+              } />
 
-                <Route path="/email-verify" element={
-                  <SemiProtectedRoute>
-                    <EmailVerify />
-                  </SemiProtectedRoute>
-                } />
+              <Route path="/email-verify" element={
+                <SemiProtectedRoute>
+                  <EmailVerify />
+                </SemiProtectedRoute>
+              } />
 
-                <Route path="/complete-profile" element={
-                  <SemiProtectedRoute requireAuth={true}>
-                    <CompleteProfile />
-                  </SemiProtectedRoute>
-                } />
+              <Route path="/complete-profile" element={
+                <SemiProtectedRoute requireAuth={true}>
+                  <CompleteProfile />
+                </SemiProtectedRoute>
+              } />
 
-                <Route path="/personal-data" element={
-                  <SemiProtectedRoute requireAuth={true}>
-                    <PersonalData />
-                  </SemiProtectedRoute>
-                } />
+              <Route path="/personal-data" element={
+                <SemiProtectedRoute requireAuth={true}>
+                  <PersonalData />
+                </SemiProtectedRoute>
+              } />
 
-                <Route path="/delivery-option" element={
-                  <SemiProtectedRoute requireAuth={true}>
-                    <DeliveryOption />
-                  </SemiProtectedRoute>
-                } />
+              <Route path="/delivery-option" element={
+                <SemiProtectedRoute requireAuth={true}>
+                  <DeliveryOption />
+                </SemiProtectedRoute>
+              } />
 
-                <Route path="/welcome" element={
-                  <SemiProtectedRoute requireAuth={true}>
-                    <Welcome />
-                  </SemiProtectedRoute>
-                } />
+              <Route path="/welcome" element={
+                <SemiProtectedRoute requireAuth={true}>
+                  <Welcome />
+                </SemiProtectedRoute>
+              } />
 
-                {/* ===== RUTAS PROTEGIDAS ===== */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Dashboard />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              {/* ===== RUTAS PROTEGIDAS ===== */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Dashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/calculator" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Calculator />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/calculator" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Calculator />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                {/* Pre-Alertas */}
-                <Route path="/pre-alert/create" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <PreAlertCreate />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              {/* Pre-Alertas */}
+              <Route path="/pre-alert/create" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PreAlertCreate />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/pre-alert/list" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <PreAlertList />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/pre-alert/list" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PreAlertList />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/pre-alert/:id" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <PreAlertDetail />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/pre-alert/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PreAlertDetail />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/pre-alert/edit/:id" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <PreAlertEdit />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/pre-alert/edit/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PreAlertEdit />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                {/* Envíos */}
-                <Route path="/dashboard/mis-envios" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <ShipmentsList />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              {/* Envíos */}
+              <Route path="/dashboard/mis-envios" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ShipmentsList />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                {/* Perfil - Ruta principal */}
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Profile />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              {/* Perfil - Ruta principal */}
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Profile />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                {/* ✅ NUEVAS RUTAS DE PERFIL */}
-                <Route path="/profile/personal-data" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <PersonalDataProfile />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              {/* ✅ RUTAS DE PERFIL */}
+              <Route path="/profile/personal-data" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PersonalDataProfile />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/profile/addresses" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Addresses />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/profile/addresses" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Addresses />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                {/* Direcciones (nueva página) */}
-                <Route path="/addresses" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <AddressesPage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              {/* Direcciones (nueva página) */}
+              <Route path="/addresses" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <AddressesPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                {/* Otras rutas protegidas */}
-                <Route path="/billing" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Billing />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              {/* Otras rutas protegidas */}
+              <Route path="/billing" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Billing />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/security" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Security />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/security" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Security />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/rastrear" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <Rastrear />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/rastrear" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Rastrear />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/my-guides" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <MyGuides />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/my-guides" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <MyGuides />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/guide/detail/:idGuia" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <GuideDetail />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/guide/detail/:idGuia" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <GuideDetail />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                <Route path="/payment/:id" element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <PaymentPage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                } />
+              <Route path="/payment/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PaymentPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
 
-                {/* ===== RUTA 404 ===== */}
-                <Route path="*" element={
-                  <div className="error-page">
-                    <h1>404 - Página no encontrada</h1>
-                    <p>La página que buscas no existe.</p>
-                    <button onClick={() => window.history.back()}>
-                      Volver atrás
-                    </button>
-                  </div>
-                } />
-              </Routes>
-            </Suspense>
-          </div>
+              {/* ===== RUTA 404 ===== */}
+              <Route path="*" element={
+                <div className="error-page">
+                  <h1>404 - Página no encontrada</h1>
+                  <p>La página que buscas no existe.</p>
+                  <button onClick={() => window.history.back()}>
+                    Volver atrás
+                  </button>
+                </div>
+              } />
+            </Routes>
+          </Suspense>
+        </div>
       </ThemeProvider>
+    </SmartPlatformDetector>
   );
 }
 
