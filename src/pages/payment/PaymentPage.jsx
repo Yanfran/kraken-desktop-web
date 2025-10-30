@@ -31,10 +31,11 @@ import {
 // Constantes
 const PHONE_CODES = [
   { code: '0412', carrier: 'Digitel' },
+  { code: '0422', carrier: 'Digitel' },
   { code: '0414', carrier: 'Movistar' },
-  { code: '0416', carrier: 'Movistar' },
-  { code: '0424', carrier: 'Digitel' },
-  { code: '0426', carrier: 'Movistar' },
+  { code: '0424', carrier: 'Movistar' },
+  { code: '0416', carrier: 'Movilnet' },
+  { code: '0426', carrier: 'Movilnet' },
 ];
 
 const ID_TYPES = [

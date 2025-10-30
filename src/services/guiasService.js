@@ -1,8 +1,10 @@
 // src/services/guiasService.js
 import axiosInstance from './axiosInstance';
 
-// ... (JSDoc comments remain the same)
-
+/**
+ * Get all guias for the current user
+ * @returns {Promise<ApiResponse>}
+ */
 export const getGuias = async () => {
   try {
     const response = await axiosInstance.get('/PostPreAlert/getGuias');
@@ -22,6 +24,10 @@ export const getGuias = async () => {
   }
 };
 
+/**
+ * Fetch guias (alternative version)
+ * @returns {Promise<Array>}
+ */
 export const fetchGuias = async () => {
   const response = await axiosInstance.get('/PostPreAlert/getGuias');
   const apiResponse = response.data;
@@ -33,6 +39,11 @@ export const fetchGuias = async () => {
   return Array.isArray(apiResponse.data) ? apiResponse.data : [];
 };
 
+/**
+ * Get guia by ID
+ * @param {number} id - Guia ID
+ * @returns {Promise<ApiResponse>}
+ */
 export const getGuiaById = async (id) => {
   try {
     if (!id || isNaN(id)) {
@@ -55,6 +66,36 @@ export const getGuiaById = async (id) => {
   }
 };
 
+/**
+ * ✅ NUEVA: Calculate price for a single guia using the calculator endpoint
+ * @param {number} guiaId - Guia ID
+ * @returns {Promise<ApiResponse>}
+ */
+export const calculateSingleGuiaPrice = async (guiaId) => {
+  try {
+    console.log('💰 Calculando precio para guía:', guiaId);
+    const response = await axiosInstance.get(`/Guias/getGuiaDetail/${guiaId}`);
+    
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: 'Precio calculado exitosamente'
+    };
+  } catch (error) {
+    console.error('Error calculating single guia price:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al calcular precio',
+      errors: error.response?.data?.errors || [error.message],
+      data: null
+    };
+  }
+};
+
+/**
+ * ✅ ACTUALIZADA: Get last shipment with calculated price
+ * @returns {Promise<ApiResponse>}
+ */
 export const getLastShipment = async () => {
   try {
     const response = await getGuias();
@@ -68,15 +109,39 @@ export const getLastShipment = async () => {
       
       console.log('📦 Last guia data:', lastGuia);
       
-      // ✅ FIX: Extraer solo el string 'contenido' del primer objeto
+      // ✅ Extraer solo el string 'contenido' del primer objeto
       const primerContenido = Array.isArray(lastGuia.contenidos) && lastGuia.contenidos.length > 0
-        ? lastGuia.contenidos[0].contenido  // ✅ Accede a la propiedad .contenido
+        ? lastGuia.contenidos[0].contenido
         : 'Sin descripción';
       
-      // ✅ FIX: Usar valorFOB en lugar de costoEnvio
-      const costoEnvio = lastGuia.valorFOB 
-        ? `$${parseFloat(lastGuia.valorFOB).toFixed(2)}` 
-        : '$0.00';
+      // ✅ NUEVO: Calcular el precio real usando el CalculatorController
+      let costoEnvio = '$0.00';
+      let costoCalculado = null;
+      
+      try {
+        const calculationResponse = await calculateSingleGuiaPrice(lastGuia.idGuia);
+        
+        if (calculationResponse.success && calculationResponse.data) {
+          // El endpoint retorna { totalOficina, totalDomicilio, breakdown }
+          const precioOficina = calculationResponse.data.detalleFactura.precioBaseUSD || 0;
+          costoEnvio = `$${parseFloat(precioOficina).toFixed(2)}`;
+          costoCalculado = calculationResponse.data; // Guardar datos completos por si se necesitan
+          
+          console.log('💵 Precio calculado:', costoEnvio);
+        } else {
+          console.warn('⚠️ No se pudo calcular el precio, usando valor por defecto');
+          // Fallback al valorFOB si falla el cálculo
+          costoEnvio = lastGuia.valorFOB 
+            ? `$${parseFloat(lastGuia.valorFOB).toFixed(2)}` 
+            : '$0.00';
+        }
+      } catch (calcError) {
+        console.error('❌ Error al calcular precio:', calcError);
+        // Fallback al valorFOB si hay error
+        costoEnvio = lastGuia.valorFOB 
+          ? `$${parseFloat(lastGuia.valorFOB).toFixed(2)}` 
+          : '$0.00';
+      }
       
       return {
         success: true,
@@ -90,7 +155,8 @@ export const getLastShipment = async () => {
           prealerted: lastGuia.prealertado || false,
           discount: lastGuia.prealertado ? null : '-10%',
           trackingNumbers: lastGuia.trackings || [],
-          contenido: primerContenido // ✅ Ahora es un string
+          contenido: primerContenido,
+          calculationData: costoCalculado // Datos adicionales del cálculo si se necesitan
         },
         message: 'Último envío cargado'
       };
@@ -111,6 +177,11 @@ export const getLastShipment = async () => {
   }
 };
 
+/**
+ * Calculate price for multiple guias
+ * @param {number[]} guiaIds - Array of Guia IDs
+ * @returns {Promise<ApiResponse>}
+ */
 export const calculateMultipleGuiasPrice = async (guiaIds) => {
   try {
     const response = await axiosInstance.post('/Guias/calculateMultiplePrice', { guiaIds });
@@ -163,7 +234,7 @@ export const getGuiaInvoices = async (guiaId) => {
 export const downloadInvoice = async (facturaId, nombreArchivo) => {
   try {
     const response = await axiosInstance.get(`/Guias/downloadInvoice/${facturaId}`, {
-      responseType: 'blob', // Important for file downloads
+      responseType: 'blob',
     });
 
     const blob = new Blob([response.data], { type: response.headers['content-type'] });
@@ -220,12 +291,6 @@ export const downloadAllInvoices = async (guiaId) => {
   }
 };
 
-
-
-// ========================================
-// 📌 AGREGAR ESTAS FUNCIONES AL FINAL DE src/services/guiasService.js
-// ========================================
-
 /**
  * Upload invoice for a specific guia
  * @param {number} guiaId - Guia ID
@@ -275,6 +340,7 @@ export default {
   getGuias,
   getGuiaById,
   getLastShipment,
+  calculateSingleGuiaPrice,
   calculateMultipleGuiasPrice,
   getGuiaInvoices,
   downloadInvoice,
