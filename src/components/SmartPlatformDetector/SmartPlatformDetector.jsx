@@ -218,29 +218,62 @@ const SmartPlatformDetector = ({ children }) => {
     };
 
     // =============================================
-    // SINCRONIZAR TOKEN DESDE URL
+    // SINCRONIZAR TOKEN DESDE URL (CON VALIDACIÓN)
     // =============================================
-    const syncTokenFromUrl = () => {
+    const syncTokenFromUrl = async () => {
       const params = new URLSearchParams(window.location.search);
       const token = params.get('token');
       const userDataStr = params.get('userData');
       const refreshToken = params.get('refreshToken');
 
       if (token) {
-        console.log('✅ Token recibido desde URL, sincronizando...');
-        const userData = userDataStr ? JSON.parse(userDataStr) : null;
-        TokenService.saveToken(token, userData, refreshToken);
+        console.log('🔄 Token recibido desde URL, validando con backend...');
+        
+        try {
+          // Importar API_URL desde config
+          const { API_URL } = await import('../../utils/config');
+          
+          // Validar token con el backend
+          const response = await fetch(`${API_URL}/Users/validate-token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+          });
 
-        // Limpiar URL
-        const cleanUrl = window.location.pathname + window.location.hash;
-        window.history.replaceState({}, document.title, cleanUrl);
-        console.log('✅ Token sincronizado, URL limpiada');
+          const data = await response.json();
+
+          if (data.success) {
+            console.log('✅ Token válido, sincronizando...');
+            // Usar userData del backend (más seguro)
+            TokenService.saveToken(data.token, data.user, refreshToken);
+
+            // Limpiar URL
+            const cleanUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, document.title, cleanUrl);
+            console.log('✅ Token sincronizado y URL limpiada');
+          } else {
+            console.warn('⚠️ Token inválido:', data.message);
+            // Limpiar URL incluso si el token es inválido
+            const cleanUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+        } catch (error) {
+          console.error('❌ Error validando token:', error);
+          // En caso de error, intentar con datos de la URL (fallback)
+          const userData = userDataStr ? JSON.parse(userDataStr) : null;
+          TokenService.saveToken(token, userData, refreshToken);
+          
+          const cleanUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
       }
     };
 
-    // Ejecutar
-    syncTokenFromUrl();
-    detectAndRedirect();
+    const init = async () => {
+      await syncTokenFromUrl();
+      detectAndRedirect();
+    };
+    init();
 
     // =============================================
     // LISTENER PARA RESIZE
