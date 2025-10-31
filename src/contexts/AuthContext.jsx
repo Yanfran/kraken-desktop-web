@@ -4,6 +4,7 @@ import { authService } from '../services/auth/authService';
 import { googleService } from '../services/auth/googleService';
 import { useQueryClient } from '@tanstack/react-query';
 import Cookies from 'js-cookie';
+import sharedTokenBridge from '../utils/SharedTokenBridge';
 
 // ===== ESTADO INICIAL =====
 const initialState = {
@@ -77,45 +78,55 @@ export const AuthContext = createContext({
   resendVerificationEmail: async () => ({ success: false, message: 'Not implemented' })
 });
 
-// ===== PROVIDER =====
+// ===== AUTH PROVIDER =====
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
-  const queryClient = useQueryClient(); 
+  const queryClient = useQueryClient();
 
-  // ===== VERIFICAR TOKEN AL CARGAR =====
+  // =============================================
+  // ✅ NUEVO: EFECTO INICIAL - Sincronizar desde URL si hay token
+  // =============================================
   useEffect(() => {
     const initAuth = async () => {
       try {
-        console.log('🔍 [Auth] Verificando sesión existente...');
-        
-        const token = localStorage.getItem('authToken') || Cookies.get('authToken');
-        const userDataStr = localStorage.getItem('userData');
-
-        if (token && userDataStr) {
-          try {
-            const userData = JSON.parse(userDataStr);
+        // 1. Verificar si hay token en URL (viene de Mobile)
+        const currentUrl = window.location.href;
+        if (currentUrl.includes('?token=')) {
+          console.log('🔄 [Auth] Token en URL detectado, sincronizando...');
+          
+          const synced = await sharedTokenBridge.syncTokenFromUrl(currentUrl);
+          
+          if (synced) {
+            const token = await sharedTokenBridge.getToken();
+            const userData = await sharedTokenBridge.getUserData();
             
-            // Validar token con el servidor (opcional pero recomendado)
-            try {
-              const validatedUser = await authService.validateToken(token);
-              console.log('✅ [Auth] Sesión válida:', validatedUser.email);
-              dispatch({ type: 'LOGIN_SUCCESS', payload: validatedUser });
-            } catch (error) {
-              // Si falla la validación, usar datos del localStorage
-              console.warn('⚠️ [Auth] No se pudo validar token, usando datos locales');
+            if (token && userData) {
+              console.log('✅ [Auth] Token sincronizado desde URL');
               dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
+              
+              // Limpiar URL
+              const cleanUrl = window.location.pathname;
+              window.history.replaceState({}, document.title, cleanUrl);
+              return;
             }
-          } catch (error) {
-            console.warn('⚠️ [Auth] Token inválido, limpiando sesión');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            Cookies.remove('authToken');
-            dispatch({ type: 'LOGOUT' });
           }
-        } else {
-          console.log('ℹ️ [Auth] No hay sesión previa');
-          dispatch({ type: 'LOGOUT' });
         }
+
+        // 2. Si no hay token en URL, verificar localStorage
+        const token = await sharedTokenBridge.getToken();
+        if (token && await sharedTokenBridge.isTokenValid()) {
+          const userData = await sharedTokenBridge.getUserData();
+          if (userData) {
+            console.log('✅ [Auth] Sesión previa encontrada');
+            dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
+            return;
+          }
+        }
+
+        // 3. No hay sesión válida
+        console.log('ℹ️ [Auth] No hay sesión previa');
+        dispatch({ type: 'LOGOUT' });
+        
       } catch (error) {
         console.error('❌ [Auth] Error al verificar autenticación:', error);
         dispatch({ type: 'LOGOUT' });
@@ -125,8 +136,30 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  // ===== SIGN IN (Email/Password) =====
- const signIn = useCallback(async (email, password) => {
+  // =============================================
+  // ✅ NUEVO: LISTENER PARA CAMBIOS EN OTRAS PESTAÑAS
+  // =============================================
+  useEffect(() => {
+    const cleanup = sharedTokenBridge.setupTokenListener(async (data) => {
+      console.log('📡 [Auth] Evento recibido de otra pestaña:', data.type);
+      
+      if (data.type === 'LOGOUT') {
+        console.log('🚪 [Auth] Logout detectado en otra pestaña');
+        dispatch({ type: 'LOGOUT' });
+      } 
+      else if (data.type === 'TOKEN_UPDATED' && data.userData) {
+        console.log('🔄 [Auth] Token actualizado en otra pestaña');
+        dispatch({ type: 'LOGIN_SUCCESS', payload: data.userData });
+      }
+    });
+
+    return cleanup;
+  }, []);
+
+  // =============================================
+  // ✅ ACTUALIZADO: SIGN IN - Usar SharedTokenBridge
+  // =============================================
+  const signIn = useCallback(async (email, password) => {
     try {
       dispatch({ type: 'LOADING' });
       console.log('🔐 [Auth] Iniciando sesión con email...');
@@ -134,13 +167,19 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login({ email, password });
       
       if (response.success) {
-        // Guardar en localStorage y cookies
+        // ✅ GUARDAR CON SharedTokenBridge
+        await sharedTokenBridge.saveToken(
+          response.token, 
+          response.user, 
+          response.refreshToken
+        );
+        
+        // También mantener localStorage directo para compatibilidad
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userData', JSON.stringify(response.user));
-        localStorage.setItem('userId', response.user.id); // ✅ AGREGAR
+        localStorage.setItem('userId', response.user.id);
         Cookies.set('authToken', response.token, { expires: 7 });
         
-        // ✅ LIMPIAR caché anterior al hacer login
         queryClient.clear();
         
         dispatch({ type: 'LOGIN_SUCCESS', payload: response.user });
@@ -158,7 +197,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [queryClient]);
 
-  // ===== SIGN UP =====
+  // =============================================
+  // ✅ ACTUALIZADO: SIGN UP - Usar SharedTokenBridge
+  // =============================================
   const signUp = useCallback(async (userData) => {
     try {
       dispatch({ type: 'LOADING' });
@@ -172,14 +213,21 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (result.success) {
-        // Si el registro incluye token, guardar sesión
         if (result.token) {
+          // ✅ GUARDAR CON SharedTokenBridge
+          await sharedTokenBridge.saveToken(
+            result.token, 
+            result.user, 
+            result.refreshToken
+          );
+          
+          // También mantener localStorage directo
           localStorage.setItem('authToken', result.token);
           localStorage.setItem('userData', JSON.stringify(result.user));
           Cookies.set('authToken', result.token, { expires: 7 });
+          
           dispatch({ type: 'LOGIN_SUCCESS', payload: result.user });
         } else {
-          // Si no hay token, solo detener loading
           dispatch({ type: 'SET_LOADING', payload: false });
         }
         
@@ -194,7 +242,7 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: false });
       return { 
         success: false, 
-        message: error.message || 'Error de conexión. Intenta de nuevo.' 
+        message: error.message || 'Error de conexión. Intenta de nuevo.'
       };
     }
   }, []);
@@ -284,26 +332,43 @@ export const AuthProvider = ({ children }) => {
   }
 }, [queryClient]);
 
-  // ===== SIGN OUT =====
- const signOut = useCallback(async () => {
+ // =============================================
+  // ✅ ACTUALIZADO: SIGN OUT - Usar SharedTokenBridge
+  // =============================================
+  const signOut = useCallback(async () => {
     try {
       console.log('🚪 [Auth] Cerrando sesión...');
-      await authService.logout();
-    } catch (error) {
-      console.warn('⚠️ [Auth] Error en logout del servidor:', error);
-    } finally {
+      
+      // Intentar logout en servidor
+      try {
+        await authService.logout();
+      } catch (error) {
+        console.warn('⚠️ [Auth] Error en logout del servidor:', error);
+      }
+      
+      // ✅ LIMPIAR CON SharedTokenBridge
+      await sharedTokenBridge.clearToken();
+      
+      // También limpiar localStorage directo
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
-      localStorage.removeItem('userId'); // ✅ AGREGAR
+      localStorage.removeItem('userId');
       Cookies.remove('authToken');
       
-      // ✅ CRÍTICO: Limpiar TODO el caché de React Query
+      // Limpiar cache de React Query
       queryClient.clear();
       
       dispatch({ type: 'LOGOUT' });
-      console.log('✅ [Auth] Sesión cerrada y caché limpiado');
+      console.log('✅ [Auth] Sesión cerrada exitosamente');
+    } catch (error) {
+      console.error('❌ [Auth] Error al cerrar sesión:', error);
+      // Forzar logout local de todas formas
+      await sharedTokenBridge.clearToken();
+      localStorage.clear();
+      Cookies.remove('authToken');
+      dispatch({ type: 'LOGOUT' });
     }
-  }, [queryClient]); 
+  }, [queryClient]);
 
   // ===== CONFIRM EMAIL =====
   const confirmEmail = useCallback(() => {
@@ -322,26 +387,27 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.user]);
 
-  // ===== SET USER STATE - FUNCIÓN CRÍTICA =====
+  // =============================================
+  // ✅ ACTUALIZADO: SET USER STATE - Usar SharedTokenBridge
+  // =============================================
   const setUserState = useCallback(async (userData, token = null) => {
     try {
       if (userData) {
         console.log('🔄 [Auth] Actualizando estado de usuario...');
         
-        // Guardar en localStorage
-        localStorage.setItem('userData', JSON.stringify(userData));
-        
-        // Si se proporciona token, guardarlo también
         if (token) {
+          // ✅ GUARDAR CON SharedTokenBridge
+          await sharedTokenBridge.saveToken(token, userData);
+          
+          // También mantener localStorage directo
           localStorage.setItem('authToken', token);
           Cookies.set('authToken', token, { expires: 7 });
         }
         
-        // Actualizar estado
+        localStorage.setItem('userData', JSON.stringify(userData));
         dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
         console.log('✅ [Auth] Estado actualizado:', userData.email);
       } else {
-        // Si userData es null, hacer logout
         await signOut();
       }
     } catch (error) {
@@ -371,21 +437,18 @@ export const AuthProvider = ({ children }) => {
 
   // ===== VALOR DEL CONTEXTO MEMOIZADO =====
   const value = useMemo(() => ({
-    // Estado
     user: state.user,
     isLoading: state.isLoading,
     isSignedIn: state.isSignedIn,
-    loading: state.isLoading, // Alias para compatibilidad
+    loading: state.isLoading,
     
-    // Funciones de autenticación
     signIn,
     signOut,
     signUp,
     signInWithGoogle,
     
-    // Funciones de gestión de usuario
     setUserState,
-    setUser: setUserState, // Alias
+    setUser: setUserState,
     confirmEmail,
     resendVerificationEmail
   }), [

@@ -1,19 +1,63 @@
 // src/components/SmartPlatformDetector/SmartPlatformDetector.jsx
-// CORREGIDO: Mapeo correcto de rutas entre Web y Mobile
+// 🔥 VERSIÓN MEJORADA CON SINCRONIZACIÓN AUTOMÁTICA DE TOKENS
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DeviceDetection from '../../utils/DeviceDetection';
-import TokenService from '../../utils/TokenService';
+import sharedTokenBridge from '../../utils/SharedTokenBridge';
 import './SmartPlatformDetector.styles.scss';
 
 const SmartPlatformDetector = ({ children }) => {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState(null);
+  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, synced, error
   const navigate = useNavigate();
   const location = useLocation();
+  const hasSynced = useRef(false);
 
   useEffect(() => {
+    const initializeAndDetect = async () => {
+      // =============================================
+      // PASO 1: SINCRONIZAR TOKEN DESDE URL (SI EXISTE)
+      // =============================================
+      if (!hasSynced.current) {
+        const currentUrl = window.location.href;
+        const hasToken = currentUrl.includes('?token=');
+        
+        if (hasToken) {
+          console.log('🔄 Token detectado en URL, sincronizando...');
+          setSyncStatus('syncing');
+          
+          const synced = await sharedTokenBridge.syncTokenFromUrl(currentUrl);
+          
+          if (synced) {
+            console.log('✅ Token sincronizado exitosamente');
+            setSyncStatus('synced');
+            
+            // Limpiar URL sin recargar página
+            const cleanUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, document.title, cleanUrl);
+            
+            // Marcar como sincronizado
+            hasSynced.current = true;
+            
+            // Dar tiempo al AuthContext para actualizar
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } else {
+            console.warn('⚠️ No se pudo sincronizar token desde URL');
+            setSyncStatus('error');
+          }
+        } else {
+          hasSynced.current = true;
+        }
+      }
+
+      // =============================================
+      // PASO 2: DETECTAR DISPOSITIVO Y REDIRIGIR SI ES NECESARIO
+      // =============================================
+      await detectAndRedirect();
+    };
+
     const detectAndRedirect = async () => {
       const info = DeviceDetection.getDeviceInfo();
       setDeviceInfo(info);
@@ -33,8 +77,7 @@ const SmartPlatformDetector = ({ children }) => {
       // =============================================
       // MAPEO DE RUTAS WEB ↔ MOBILE
       // =============================================
-      const routeMap = {
-        // Web → Mobile (React Router → Expo Router)
+      const routeMap = {        
         webToMobile: {
           '/': '/home',
           '/home': '/home',
@@ -72,22 +115,23 @@ const SmartPlatformDetector = ({ children }) => {
       // =============================================
       // LÓGICA DE REDIRECCIÓN
       // =============================================
-
-      // CASO 1: Web → Mobile
-      if (isWebPort && (info.isMobile || info.isNarrowScreen) && !info.isTablet) {
+      
+      // Si estamos en puerto Web pero dispositivo es móvil → Redirigir a Mobile
+      if (isWebPort && info.isMobile && info.screenWidth < 768) {
         console.log('🔄 Web → Mobile: Pantalla pequeña detectada');
         await redirectToMobile(info, routeMap.webToMobile);
         return;
       }
 
-      // CASO 2: Mobile → Web
-      if (isMobilePort && !info.isMobile && !info.isNarrowScreen) {
+      // Si estamos en puerto Mobile pero dispositivo es desktop → Redirigir a Web
+      if (isMobilePort && (!info.isMobile || info.screenWidth >= 1024)) {
         console.log('🔄 Mobile → Web: Pantalla grande detectada');
         await redirectToWeb(info, routeMap.mobileToWeb);
         return;
       }
 
       console.log('✅ Estás en el puerto correcto');
+      setSyncStatus('idle');
     };
 
     // =============================================
@@ -95,22 +139,17 @@ const SmartPlatformDetector = ({ children }) => {
     // =============================================
     const redirectToMobile = async (info, routeMap) => {
       setIsRedirecting(true);
+      setSyncStatus('syncing');
 
       try {
-        const token = TokenService.getToken();
-        const userData = TokenService.getUserData();
-        const refreshToken = TokenService.getRefreshToken();
-
-        // Obtener ruta actual
         const currentPath = location.pathname;
         console.log('📍 Ruta actual (Web):', currentPath);
 
         // Mapear ruta de Web a Mobile
         let mobilePath = routeMap[currentPath];
         
-        // Si no hay mapeo exacto, intentar con rutas dinámicas
         if (!mobilePath) {
-          // Rutas con parámetros (ej: /guide/detail/123)
+          // Rutas dinámicas
           if (currentPath.startsWith('/guide/detail/')) {
             const id = currentPath.split('/').pop();
             mobilePath = `/(protected)/guide/detail/${id}`;
@@ -123,31 +162,26 @@ const SmartPlatformDetector = ({ children }) => {
             const id = currentPath.split('/').pop();
             mobilePath = `/(protected)/pre-alert/${id}`;
           }
-          // Si sigue sin encontrar, usar home como fallback
           else {
-            mobilePath = token ? '/home' : '/(auth)/login';
+            // Verificar si hay token para decidir ruta fallback
+            const hasToken = await sharedTokenBridge.getToken();
+            mobilePath = hasToken ? '/(protected)/home' : '/(auth)/login';
             console.warn('⚠️ Ruta no mapeada, usando fallback:', mobilePath);
           }
         }
 
         console.log('🎯 Ruta destino (Mobile):', mobilePath);
 
-        // Construir URL
-        const mobileUrl = `http://localhost:8081${mobilePath}`;
-        const url = new URL(mobileUrl);
+        // 🔥 GENERAR URL CON TOKEN USANDO SharedTokenBridge
+        const mobileBaseUrl = `http://localhost:${MOBILE_PORT}`;
+        const fullUrl = await sharedTokenBridge.generateAuthUrl(mobileBaseUrl, mobilePath);
 
-        // Agregar token si existe
-        if (token) {
-          url.searchParams.set('token', token);
-          if (userData) url.searchParams.set('userData', JSON.stringify(userData));
-          if (refreshToken) url.searchParams.set('refreshToken', refreshToken);
-        }
-
-        console.log('🚀 Redirigiendo a:', url.toString());
-        window.location.href = url.toString();
+        console.log('🚀 Redirigiendo a Mobile:', fullUrl);
+        window.location.href = fullUrl;
       } catch (error) {
         console.error('❌ Error en redirección a mobile:', error);
         setIsRedirecting(false);
+        setSyncStatus('error');
       }
     };
 
@@ -156,22 +190,17 @@ const SmartPlatformDetector = ({ children }) => {
     // =============================================
     const redirectToWeb = async (info, routeMap) => {
       setIsRedirecting(true);
+      setSyncStatus('syncing');
 
       try {
-        const token = TokenService.getToken();
-        const userData = TokenService.getUserData();
-        const refreshToken = TokenService.getRefreshToken();
-
-        // Obtener ruta actual
         const currentPath = location.pathname;
         console.log('📍 Ruta actual (Mobile):', currentPath);
 
         // Mapear ruta de Mobile a Web
         let webPath = routeMap[currentPath];
 
-        // Si no hay mapeo exacto, intentar con rutas dinámicas
         if (!webPath) {
-          // Rutas con parámetros
+          // Rutas dinámicas
           if (currentPath.includes('/guide/detail/')) {
             const id = currentPath.split('/').pop();
             webPath = `/guide/detail/${id}`;
@@ -189,58 +218,33 @@ const SmartPlatformDetector = ({ children }) => {
               webPath = `/pre-alert/${id}`;
             }
           }
-          // Fallback
           else {
-            webPath = token ? '/home' : '/login';
+            // Verificar si hay token para decidir ruta fallback
+            const hasToken = await sharedTokenBridge.getToken();
+            webPath = hasToken ? '/home' : '/login';
             console.warn('⚠️ Ruta no mapeada, usando fallback:', webPath);
           }
         }
 
         console.log('🎯 Ruta destino (Web):', webPath);
 
-        // Construir URL
-        const webUrl = `http://localhost:3000${webPath}`;
-        const url = new URL(webUrl);
+        // 🔥 GENERAR URL CON TOKEN USANDO SharedTokenBridge
+        const webBaseUrl = `http://localhost:${WEB_PORT}`;
+        const fullUrl = await sharedTokenBridge.generateAuthUrl(webBaseUrl, webPath);
 
-        // Agregar token si existe
-        if (token) {
-          url.searchParams.set('token', token);
-          if (userData) url.searchParams.set('userData', JSON.stringify(userData));
-          if (refreshToken) url.searchParams.set('refreshToken', refreshToken);
-        }
-
-        console.log('🚀 Redirigiendo a:', url.toString());
-        window.location.href = url.toString();
+        console.log('🚀 Redirigiendo a Web:', fullUrl);
+        window.location.href = fullUrl;
       } catch (error) {
         console.error('❌ Error en redirección a web:', error);
         setIsRedirecting(false);
+        setSyncStatus('error');
       }
     };
 
     // =============================================
-    // SINCRONIZAR TOKEN DESDE URL
+    // EJECUTAR INICIALIZACIÓN
     // =============================================
-    const syncTokenFromUrl = () => {
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get('token');
-      const userDataStr = params.get('userData');
-      const refreshToken = params.get('refreshToken');
-
-      if (token) {
-        console.log('✅ Token recibido desde URL, sincronizando...');
-        const userData = userDataStr ? JSON.parse(userDataStr) : null;
-        TokenService.saveToken(token, userData, refreshToken);
-
-        // Limpiar URL
-        const cleanUrl = window.location.pathname + window.location.hash;
-        window.history.replaceState({}, document.title, cleanUrl);
-        console.log('✅ Token sincronizado, URL limpiada');
-      }
-    };
-
-    // Ejecutar
-    syncTokenFromUrl();
-    detectAndRedirect();
+    initializeAndDetect();
 
     // =============================================
     // LISTENER PARA RESIZE
@@ -255,26 +259,47 @@ const SmartPlatformDetector = ({ children }) => {
 
     window.addEventListener('resize', handleResize);
 
+    // =============================================
+    // LISTENER PARA CAMBIOS DE TOKEN EN OTRAS PESTAÑAS
+    // =============================================
+    const cleanup = sharedTokenBridge.setupTokenListener((data) => {
+      console.log('📡 Evento de token recibido:', data.type);
+      if (data.type === 'LOGOUT') {
+        navigate('/login', { replace: true });
+      } else if (data.type === 'TOKEN_UPDATED') {
+        console.log('✅ Token actualizado en otra pestaña');
+      }
+    });
+
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(resizeTimeout);
+      if (cleanup) cleanup();
     };
   }, [location.pathname, location.search, location.hash, navigate]);
 
   // =============================================
   // PANTALLA DE REDIRECCIÓN
   // =============================================
-  if (isRedirecting) {
+  if (isRedirecting || syncStatus === 'syncing') {
     return (
       <div className="smart-platform-detector">
         <div className="redirect-screen">
           <div className="redirect-spinner"></div>
-          <h2>Redirigiendo...</h2>
-          <p>Te estamos llevando a la versión correcta</p>
+          <h2>
+            {syncStatus === 'syncing' ? 'Sincronizando sesión...' : 'Redirigiendo...'}
+          </h2>
+          <p>
+            {syncStatus === 'syncing' 
+              ? 'Transferimos tu sesión de forma segura'
+              : 'Te estamos llevando a la versión correcta'}
+          </p>
           {deviceInfo && (
             <div className="device-info">
               <p>Dispositivo: {deviceInfo.isMobile ? '📱 Móvil' : '💻 Desktop'}</p>
-              <p>Pantalla: {deviceInfo.screenWidth}x{deviceInfo.screenHeight}</p>
+              <p>Pantalla: {deviceInfo.screenWidth} x {deviceInfo.screenHeight}</p>
+              <p>Navegador: {deviceInfo.browser}</p>
+              <p>SO: {deviceInfo.os}</p>
             </div>
           )}
         </div>
@@ -283,30 +308,13 @@ const SmartPlatformDetector = ({ children }) => {
   }
 
   // =============================================
-  // APLICAR CLASE CSS SEGÚN DISPOSITIVO
+  // MOSTRAR ESTADO DE ERROR SI ES NECESARIO
   // =============================================
-  useEffect(() => {
-    if (deviceInfo) {
-      const appContainer = document.querySelector('.app');
-      if (appContainer) {
-        appContainer.classList.remove(
-          'app-container--mobile',
-          'app-container--tablet',
-          'app-container--desktop'
-        );
-        
-        if (deviceInfo.isTablet) {
-          appContainer.classList.add('app-container--tablet');
-        } else if (deviceInfo.isMobile) {
-          appContainer.classList.add('app-container--mobile');
-        } else {
-          appContainer.classList.add('app-container--desktop');
-        }
-      }
-    }
-  }, [deviceInfo]);
+  if (syncStatus === 'error') {
+    console.error('❌ Error en sincronización de token');
+  }
 
-  return <>{children}</>;
+  return children;
 };
 
 export default SmartPlatformDetector;
