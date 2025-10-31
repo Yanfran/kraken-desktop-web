@@ -43,7 +43,7 @@ const TopNavigation = ({
       label: 'Rastrear', 
       icon: iconRastreo,
       iconAlt: '📍',
-      path: '/rastrear'
+      path: '/tracking'
     }
   ];
 

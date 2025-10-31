@@ -1,5 +1,5 @@
 // src/components/SmartPlatformDetector/SmartPlatformDetector.jsx
-// Sistema de redirección automática entre web y mobile (INCLUSO EN LOCALHOST)
+// CORREGIDO: Mapeo correcto de rutas entre Web y Mobile
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -21,87 +21,129 @@ const SmartPlatformDetector = ({ children }) => {
       console.log('📱 Device Info:', info);
 
       // =============================================
-      // CONFIGURACIÓN DE PUERTOS (Cambiar según tu setup)
+      // CONFIGURACIÓN DE PUERTOS
       // =============================================
-      const WEB_PORT = '3000';      // Puerto de tu web (React)
-      const MOBILE_PORT = '8081';   // Puerto de tu mobile (Expo)
+      const WEB_PORT = '3000';
+      const MOBILE_PORT = '8081';
       
       const currentPort = window.location.port || '80';
       const isWebPort = currentPort === WEB_PORT;
       const isMobilePort = currentPort === MOBILE_PORT;
 
       // =============================================
+      // MAPEO DE RUTAS WEB ↔ MOBILE
+      // =============================================
+      const routeMap = {
+        // Web → Mobile (React Router → Expo Router)
+        webToMobile: {
+          '/': '/home',
+          '/dashboard': '/home',
+          '/login': '/login',
+          '/register': '/register',
+          '/forgot-password': '/forgot',
+          '/calculator': '/',          
+          '/profile/personal-data': '/profile?initialTab=Datos Personales',
+          '/profile/addresses': '/profile?initialTab=Mis Direcciones',
+          '/addresses': '/addresses',          
+          '/tracking': '/tracking',
+          '/guide/guides': '/guide/guides',
+          '/pre-alert/create': '/pre-alert/pre-alert',
+          '/pre-alert/list': '/pre-alert/list',
+          // Agregar más rutas según necesites
+        },
+        // Mobile → Web (Expo Router → React Router)
+        mobileToWeb: {
+          '/home': '/dashboard',          
+          '/login': '/login',
+          '/register': '/register',
+          '/forgot': '/forgot-password',
+          '/': '/calculator',          
+          '/profile?initialTab=Datos Personales': '/profile/personal-data',
+          '/profile?initialTab=Mis Direcciones': '/profile/addresses',
+          '/addresses': '/addresses',          
+          '/tracking': '/tracking',
+          '/guide/guides': '/guide/guides',
+          '/pre-alert/pre-alert': '/pre-alert/create',
+          '/pre-alert/list': '/pre-alert/list',
+          // Agregar más rutas según necesites
+        }
+      };
+
+      // =============================================
       // LÓGICA DE REDIRECCIÓN
       // =============================================
 
-      // CASO 1: Estás en WEB pero deberías estar en MOBILE
-      if (isWebPort && info.isMobile && !info.isTablet) {
-        console.log('🔄 Detectado dispositivo móvil en puerto WEB → Redirigiendo a MOBILE');
-        await redirectToMobile(info);
+      // CASO 1: Web → Mobile
+      if (isWebPort && (info.isMobile || info.isNarrowScreen) && !info.isTablet) {
+        console.log('🔄 Web → Mobile: Pantalla pequeña detectada');
+        await redirectToMobile(info, routeMap.webToMobile);
         return;
       }
 
-      // CASO 2: Estás en WEB pero la pantalla es pequeña (simulando móvil)
-      if (isWebPort && info.isNarrowScreen && !info.isTablet) {
-        console.log('🔄 Detectado pantalla pequeña en puerto WEB → Redirigiendo a MOBILE');
-        await redirectToMobile(info);
-        return;
-      }
-
-      // CASO 3: Estás en MOBILE pero deberías estar en WEB
+      // CASO 2: Mobile → Web
       if (isMobilePort && !info.isMobile && !info.isNarrowScreen) {
-        console.log('🔄 Detectado pantalla grande en puerto MOBILE → Redirigiendo a WEB');
-        await redirectToWeb(info);
+        console.log('🔄 Mobile → Web: Pantalla grande detectada');
+        await redirectToWeb(info, routeMap.mobileToWeb);
         return;
       }
 
-      // CASO 4: Estás en MOBILE pero expandiste la ventana (desktop)
-      if (isMobilePort && info.platform === 'desktop') {
-        console.log('🔄 Detectado desktop en puerto MOBILE → Redirigiendo a WEB');
-        await redirectToWeb(info);
-        return;
-      }
-
-      console.log('✅ Estás en el puerto correcto para tu dispositivo');
+      console.log('✅ Estás en el puerto correcto');
     };
 
     // =============================================
-    // FUNCIONES DE REDIRECCIÓN
+    // FUNCIÓN: REDIRIGIR A MOBILE
     // =============================================
-
-    const redirectToMobile = async (info) => {
+    const redirectToMobile = async (info, routeMap) => {
       setIsRedirecting(true);
 
       try {
-        // 1. Obtener token actual
         const token = TokenService.getToken();
         const userData = TokenService.getUserData();
         const refreshToken = TokenService.getRefreshToken();
 
-        console.log('📦 Preparando datos para mobile:', { 
-          hasToken: !!token, 
-          hasUserData: !!userData 
-        });
+        // Obtener ruta actual
+        const currentPath = location.pathname;
+        console.log('📍 Ruta actual (Web):', currentPath);
 
-        // 2. Construir URL de destino
-        const currentPath = location.pathname + location.search + location.hash;
-        const mobileUrl = `http://localhost:8081${currentPath}`;
+        // Mapear ruta de Web a Mobile
+        let mobilePath = routeMap[currentPath];
+        
+        // Si no hay mapeo exacto, intentar con rutas dinámicas
+        if (!mobilePath) {
+          // Rutas con parámetros (ej: /guide/detail/123)
+          if (currentPath.startsWith('/guide/detail/')) {
+            const id = currentPath.split('/').pop();
+            mobilePath = `/(protected)/guide/detail/${id}`;
+          }
+          else if (currentPath.startsWith('/payment/')) {
+            const id = currentPath.split('/').pop();
+            mobilePath = `/(protected)/payment/${id}`;
+          }
+          else if (currentPath.startsWith('/pre-alert/')) {
+            const id = currentPath.split('/').pop();
+            mobilePath = `/(protected)/pre-alert/${id}`;
+          }
+          // Si sigue sin encontrar, usar home como fallback
+          else {
+            mobilePath = token ? '/home' : '/(auth)/login';
+            console.warn('⚠️ Ruta no mapeada, usando fallback:', mobilePath);
+          }
+        }
 
-        // 3. Agregar token a la URL (query string)
+        console.log('🎯 Ruta destino (Mobile):', mobilePath);
+
+        // Construir URL
+        const mobileUrl = `http://localhost:8081${mobilePath}`;
         const url = new URL(mobileUrl);
+
+        // Agregar token si existe
         if (token) {
           url.searchParams.set('token', token);
-        }
-        if (userData) {
-          url.searchParams.set('userData', JSON.stringify(userData));
-        }
-        if (refreshToken) {
-          url.searchParams.set('refreshToken', refreshToken);
+          if (userData) url.searchParams.set('userData', JSON.stringify(userData));
+          if (refreshToken) url.searchParams.set('refreshToken', refreshToken);
         }
 
-        console.log('🚀 Redirigiendo a mobile:', url.toString());
-
-        // 4. Redirigir
+        console.log('🚀 Redirigiendo a:', url.toString());
         window.location.href = url.toString();
       } catch (error) {
         console.error('❌ Error en redirección a mobile:', error);
@@ -109,39 +151,65 @@ const SmartPlatformDetector = ({ children }) => {
       }
     };
 
-    const redirectToWeb = async (info) => {
+    // =============================================
+    // FUNCIÓN: REDIRIGIR A WEB
+    // =============================================
+    const redirectToWeb = async (info, routeMap) => {
       setIsRedirecting(true);
 
       try {
-        // 1. Obtener token actual
         const token = TokenService.getToken();
         const userData = TokenService.getUserData();
         const refreshToken = TokenService.getRefreshToken();
 
-        console.log('📦 Preparando datos para web:', { 
-          hasToken: !!token, 
-          hasUserData: !!userData 
-        });
+        // Obtener ruta actual
+        const currentPath = location.pathname;
+        console.log('📍 Ruta actual (Mobile):', currentPath);
 
-        // 2. Construir URL de destino
-        const currentPath = location.pathname + location.search + location.hash;
-        const webUrl = `http://localhost:3000${currentPath}`;
+        // Mapear ruta de Mobile a Web
+        let webPath = routeMap[currentPath];
 
-        // 3. Agregar token a la URL
+        // Si no hay mapeo exacto, intentar con rutas dinámicas
+        if (!webPath) {
+          // Rutas con parámetros
+          if (currentPath.includes('/guide/detail/')) {
+            const id = currentPath.split('/').pop();
+            webPath = `/guide/detail/${id}`;
+          }
+          else if (currentPath.includes('/payment/')) {
+            const id = currentPath.split('/').pop();
+            webPath = `/payment/${id}`;
+          }
+          else if (currentPath.includes('/pre-alert/')) {
+            const segments = currentPath.split('/');
+            const id = segments[segments.length - 1];
+            if (currentPath.includes('/edit/')) {
+              webPath = `/pre-alert/edit/${id}`;
+            } else {
+              webPath = `/pre-alert/${id}`;
+            }
+          }
+          // Fallback
+          else {
+            webPath = token ? '/dashboard' : '/login';
+            console.warn('⚠️ Ruta no mapeada, usando fallback:', webPath);
+          }
+        }
+
+        console.log('🎯 Ruta destino (Web):', webPath);
+
+        // Construir URL
+        const webUrl = `http://localhost:3000${webPath}`;
         const url = new URL(webUrl);
+
+        // Agregar token si existe
         if (token) {
           url.searchParams.set('token', token);
-        }
-        if (userData) {
-          url.searchParams.set('userData', JSON.stringify(userData));
-        }
-        if (refreshToken) {
-          url.searchParams.set('refreshToken', refreshToken);
+          if (userData) url.searchParams.set('userData', JSON.stringify(userData));
+          if (refreshToken) url.searchParams.set('refreshToken', refreshToken);
         }
 
-        console.log('🚀 Redirigiendo a web:', url.toString());
-
-        // 4. Redirigir
+        console.log('🚀 Redirigiendo a:', url.toString());
         window.location.href = url.toString();
       } catch (error) {
         console.error('❌ Error en redirección a web:', error);
@@ -150,7 +218,7 @@ const SmartPlatformDetector = ({ children }) => {
     };
 
     // =============================================
-    // SINCRONIZAR TOKEN DESDE URL (al cargar)
+    // SINCRONIZAR TOKEN DESDE URL
     // =============================================
     const syncTokenFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
@@ -160,33 +228,29 @@ const SmartPlatformDetector = ({ children }) => {
 
       if (token) {
         console.log('✅ Token recibido desde URL, sincronizando...');
-        
         const userData = userDataStr ? JSON.parse(userDataStr) : null;
         TokenService.saveToken(token, userData, refreshToken);
 
-        // Limpiar URL (quitar parámetros sensibles)
+        // Limpiar URL
         const cleanUrl = window.location.pathname + window.location.hash;
         window.history.replaceState({}, document.title, cleanUrl);
-        
-        console.log('✅ Token sincronizado y URL limpiada');
+        console.log('✅ Token sincronizado, URL limpiada');
       }
     };
 
-    // Primero sincronizar token si viene en URL
+    // Ejecutar
     syncTokenFromUrl();
-
-    // Luego detectar y redirigir si es necesario
     detectAndRedirect();
 
     // =============================================
-    // LISTENER PARA CAMBIOS DE TAMAÑO
+    // LISTENER PARA RESIZE
     // =============================================
     let resizeTimeout;
     const handleResize = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
         detectAndRedirect();
-      }, 500); // Esperar 500ms después del último cambio
+      }, 500);
     };
 
     window.addEventListener('resize', handleResize);
@@ -195,7 +259,7 @@ const SmartPlatformDetector = ({ children }) => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(resizeTimeout);
     };
-  }, [location.pathname, location.search, location.hash]);
+  }, [location.pathname, location.search, location.hash, navigate]);
 
   // =============================================
   // PANTALLA DE REDIRECCIÓN
@@ -206,7 +270,7 @@ const SmartPlatformDetector = ({ children }) => {
         <div className="redirect-screen">
           <div className="redirect-spinner"></div>
           <h2>Redirigiendo...</h2>
-          <p>Te estamos llevando a la versión correcta de la aplicación</p>
+          <p>Te estamos llevando a la versión correcta</p>
           {deviceInfo && (
             <div className="device-info">
               <p>Dispositivo: {deviceInfo.isMobile ? '📱 Móvil' : '💻 Desktop'}</p>
@@ -225,14 +289,12 @@ const SmartPlatformDetector = ({ children }) => {
     if (deviceInfo) {
       const appContainer = document.querySelector('.app');
       if (appContainer) {
-        // Remover clases previas
         appContainer.classList.remove(
           'app-container--mobile',
           'app-container--tablet',
           'app-container--desktop'
         );
         
-        // Agregar clase según plataforma
         if (deviceInfo.isTablet) {
           appContainer.classList.add('app-container--tablet');
         } else if (deviceInfo.isMobile) {

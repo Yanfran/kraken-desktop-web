@@ -2,12 +2,12 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchGuias } from '../../services/guiasService';
-import styles from './MyGuides.module.scss';
+import styles from './Guides.module.scss';
 import GuiaCard from './GuiaCard';
 import clsx from 'clsx';
 import Loading from '../../components/common/Loading/Loading';
 
-export default function MyGuides() {
+export default function Guides() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [activeTab, setActiveTab] = useState('activos'); // 'activos' o 'historial'
@@ -47,9 +47,9 @@ export default function MyGuides() {
       <header className={styles.header}>
         <div className={styles.headerTop}>
           <div className={styles.iconContainer}>
-            <span className={styles.icon}>📦</span>
+            {/* <span className={styles.icon}>📦</span> */}
           </div>
-          <h1>Mis Guías</h1>
+          <h1>Listado de Envíos</h1>
           <p className={styles.subtitle}>
             Gestiona tus envíos activos e historial de pagos
           </p>
@@ -109,7 +109,7 @@ export default function MyGuides() {
               ))
             ) : (
               <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>📭</span>
+                {/* <span className={styles.emptyIcon}>📭</span> */}
                 <p className={styles.emptyTitle}>
                   {activeTab === 'activos' 
                     ? 'No tienes guías activas' 

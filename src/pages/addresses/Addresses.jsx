@@ -13,13 +13,12 @@ import chinaFlag from '../../../src/assets/images/china.png';
 
 // Sub-component for displaying an address block
 const AddressBlock = ({ 
-  name,
-  line1,
-  line2,
-  city,
-  state,
-  zip,
   country,
+  state,
+  city,
+  line1,
+  zip,
+  name,  
   phone,
 }) => {
   const Row = ({ label, value }) => (
@@ -30,13 +29,12 @@ const AddressBlock = ({
   );
   return (
     <div className="address-block__wrapper">
-      <Row label="Full Name:" value={name} />
-      <Row label="Address Line 1:" value={line1} />
-      <Row label="Address Line 2:" value={line2} />
-      <Row label="City:" value={city} />
-      <Row label="State Province:" value={state} />
-      <Row label="ZIP:" value={zip} />
       <Row label="Country:" value={country} />
+      <Row label="State Province:" value={state} />
+      <Row label="City:" value={city} />
+      <Row label="Address Line 1:" value={line1} />      
+      <Row label="ZIP:" value={zip} />
+      <Row label="Full Name:" value={name} />
       <Row label="Phone Number:" value={phone} />
     </div>
   );
@@ -83,38 +81,69 @@ export default function AddressesPage() {
   const chinaAddress = addresses?.[1];
 
   const copyUSAAddress = async () => {
-    if (!usaAddress) return;
-    const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
-    const address = `🇺🇸 DIRECCIÓN USA\nFull Name: ${userName}\nAddress Line 1: ${usaAddress.addressLine1}\nAddress Line 2: ${user?.codCliente || "KVXXXXXXXX"}\nCity: ${usaAddress.city}\nState: ${usaAddress.stateProvince}\nZIP: ${usaAddress.zip}\nCountry: ${usaAddress.country}\nPhone: ${usaAddress.phoneNumber}`;
-    await copyToClipboard(address);
-  };
+  if (!usaAddress) return;
+  const userName = `${user?.name ?? ""} + ${user?.lastName ?? ""}`.trim();
+  const address = `🇺🇸 DIRECCIÓN USA
+Country: ${usaAddress.country}
+State Province: ${usaAddress.stateProvince}
+City: ${usaAddress.city}
+Address Line 1: ${usaAddress.addressLine1} (${user?.codCliente || "KVXXXXXXXX"})
+ZIP: ${usaAddress.zip}
+Full Name: ${userName}
+Phone Number: ${usaAddress.phoneNumber}`;
+  await copyToClipboard(address);
+};
 
   const copyChinaAddress = async () => {
-    if (!chinaAddress) return;
-    const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
-    const address = `🇨🇳 DIRECCIÓN CHINA\nFull Name: ${userName}\nAddress Line 1: ${chinaAddress.addressLine1}\nAddress Line 2: ${user?.codCliente || "KVXXXXXXXX"}\nCity: ${chinaAddress.city}\nState: ${chinaAddress.stateProvince}\nZIP: ${chinaAddress.zip}\nCountry: ${chinaAddress.country}\nPhone: ${chinaAddress.phoneNumber}`;
-    await copyToClipboard(address);
-  };
+  if (!chinaAddress) return;
+  const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
+  const address = `🇨🇳 DIRECCIÓN CHINA
+Country: ${chinaAddress.country}
+State Province: ${chinaAddress.stateProvince}
+City: ${chinaAddress.city}
+Address Line 1: ${chinaAddress.addressLine1} (${user?.codCliente || "KVXXXXXXXX"})
+ZIP: ${chinaAddress.zip}
+Full Name: ${userName}
+Phone Number: ${chinaAddress.phoneNumber}`;
+  await copyToClipboard(address);
+};
 
   const shareAddresses = async () => {
-    const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
-    const userCode = user?.codCliente || "KVXXXXXXXX";
+  const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
+  const userCode = user?.codCliente || "KVXXXXXXXX";
 
-    const text = `📦 DIRECCIONES PARA ENVIAR COMPRAS\n\n🇺🇸 USA\nFull Name: ${userName}\nAddress Line 1: ${usaAddress.addressLine1}\nAddress Line 2: ${userCode}\nCity: ${usaAddress.city}\nState: ${usaAddress.stateProvince}\nZIP: ${usaAddress.zip}\nCountry: ${usaAddress.country}\nPhone: ${usaAddress.phoneNumber}\n\n🇨🇳 CHINA\nFull Name: ${userName}\nAddress Line 1: ${chinaAddress.addressLine1}\nAddress Line 2: ${userCode}\nCity: ${chinaAddress.city}\nState: ${chinaAddress.stateProvince}\nZIP: ${chinaAddress.zip}\nCountry: ${chinaAddress.country}\nPhone: ${chinaAddress.phoneNumber}`;
+  const text = `📦 DIRECCIONES PARA ENVIAR COMPRAS
 
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Mis Direcciones Kraken', text });
-      } catch (error) {
-        console.error('Error sharing:', error);
-        toast.error('Error al compartir.');
-      }
-    } else {
-      // Fallback for browsers that do not support Web Share API
-      await copyToClipboard(text);
-      toast.info('Direcciones copiadas al portapapeles para compartir.');
+🇺🇸 USA
+Country: ${usaAddress.country}
+State Province: ${usaAddress.stateProvince}
+City: ${usaAddress.city}
+Address Line 1: ${usaAddress.addressLine1} (${userCode})
+ZIP: ${usaAddress.zip}
+Full Name: ${userName}
+Phone Number: ${usaAddress.phoneNumber}
+
+🇨🇳 CHINA
+Country: ${chinaAddress.country}
+State Province: ${chinaAddress.stateProvince}
+City: ${chinaAddress.city}
+Address Line 1: ${chinaAddress.addressLine1} (${userCode})
+ZIP: ${chinaAddress.zip}
+Full Name: ${userName}
+Phone Number: ${chinaAddress.phoneNumber}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Mis Direcciones Kraken', text });
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast.error('Error al compartir.');
     }
-  };
+  } else {
+    await copyToClipboard(text);
+    toast.info('Direcciones copiadas al portapapeles para compartir.');
+  }
+};
 
   if (isLoading || !user) {
     return (
@@ -174,13 +203,12 @@ export default function AddressesPage() {
             </button>
           </div>
           <AddressBlock
-            name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}
-            line1={`${usaAddress.addressLine1}`}
-            line2={`${user.codCliente || "KVXXXXXXXX"}`}
-            city={`${usaAddress.city}`}
-            state={`${usaAddress.stateProvince}`}
-            zip={`${usaAddress.zip}`}
             country={`${usaAddress.country}`}
+            state={`${usaAddress.stateProvince}`}
+            city={`${usaAddress.city}`}
+            line1={`${usaAddress.addressLine1} (${user.codCliente || "KVXXXXXXXX"})`}
+            zip={`${usaAddress.zip}`}
+            name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}            
             phone={`${usaAddress.phoneNumber}`}
           />
         </div>
@@ -195,13 +223,12 @@ export default function AddressesPage() {
             </button>
           </div>
           <AddressBlock
-            name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}
-            line1={`${chinaAddress.addressLine1}`}
-            line2={`${user.codCliente || "KVXXXXXXXX"}`}
-            city={`${chinaAddress.city}`}
-            state={`${chinaAddress.stateProvince}`}
-            zip={`${chinaAddress.zip}`}
             country={`${chinaAddress.country}`}
+            state={`${chinaAddress.stateProvince}`}
+            city={`${chinaAddress.city}`}
+            line1={`${chinaAddress.addressLine1} (${user.codCliente || "KVXXXXXXXX"})`}
+            zip={`${chinaAddress.zip}`}
+            name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}            
             phone={`${chinaAddress.phoneNumber}`}
           />
         </div>

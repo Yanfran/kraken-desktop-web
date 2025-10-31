@@ -33,8 +33,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [avatarSelectorVisible, setAvatarSelectorVisible] = useState(false);
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
 
+  // ✅ MENÚ ACTUALIZADO - IDÉNTICO A LA IMAGEN
   const sidebarMenuItems = [
-    { id: 'mis-envios', label: 'Mis Envíos', path: '/my-guides' },
+    { id: 'mis-envios', label: 'Mis Envíos', path: '/guide/guides' },
     { id: 'mis-pre-alertas', label: 'Mis Pre-Alertas', path: '/pre-alert/list' },
     { 
       id: 'perfil', 
@@ -45,7 +46,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { id: 'direcciones', label: 'Direcciones', path: '/profile/addresses' }
       ]
     },
-     // { id: 'facturacion', label: 'Facturación', path: '/billing', hasArrow: true },
+    // { id: 'facturacion', label: 'Facturación', path: '/billing', hasArrow: true },
     // { id: 'seguridad', label: 'Seguridad', path: '/security', hasArrow: true }
   ];
 

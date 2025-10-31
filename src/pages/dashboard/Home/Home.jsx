@@ -426,7 +426,7 @@ const Home = ({ onNavigateToShipments }) => {
 
               {!lastShipment.prealerted && lastShipment.discount && (
                 <div className="last-shipment-card__alert">
-                  <span className="alert-icon">🚫</span>
+                  {/* <span className="alert-icon">🚫</span> */}
                   <span className="alert-text">No pre-alertado</span>
                   <span className="alert-discount">Perdiste {lastShipment.discount}</span>
                   <button className="alert-link" onClick={onNavigateToShipments}>
@@ -438,7 +438,7 @@ const Home = ({ onNavigateToShipments }) => {
           </>
         ) : (
           <div className="last-shipment-card__empty">
-            <span className="empty-icon">📦</span>
+            {/* <span className="empty-icon">📦</span> */}
             <p>No tienes envíos registrados</p>
           </div>
         )}
@@ -539,7 +539,7 @@ const Home = ({ onNavigateToShipments }) => {
           </>
         ) : (
           <div className="pre-alerts-card__empty">
-            <span className="empty-icon">📋</span>
+            {/* <span className="empty-icon">📋</span> */}
             <p>No tienes pre-alertas pendientes</p>
           </div>
         )}

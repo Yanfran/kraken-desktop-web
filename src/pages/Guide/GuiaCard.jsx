@@ -1,7 +1,7 @@
 // src/pages/MyGuides/GuiaCard.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from './MyGuides.module.scss';
+import styles from './Guides.module.scss';
 import clsx from 'clsx';
 
 export default function GuiaCard({ guia, viewMode }) {

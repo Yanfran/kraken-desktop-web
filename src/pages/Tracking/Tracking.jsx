@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from './Rastrear.module.scss';
+import styles from './Tracking.module.scss';
 import { 
   searchTrackingNumber, 
   searchTrackingInGuias, 
@@ -11,7 +11,7 @@ import iconImage from '../../../src/assets/images/icon-kraken-web-rastrear-_1.pn
 
 import Tooltip from '../../components/common/Tooltip/Tooltip';
 
-export default function Rastrear() {
+export default function Tracking() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [trackingResult, setTrackingResult] = useState(null);

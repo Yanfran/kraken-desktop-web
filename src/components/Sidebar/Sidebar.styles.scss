@@ -1,9 +1,14 @@
+/* ============================================
+   SIDEBAR STYLES - VERSIÓN ACTUALIZADA
+   Diseño del menú: Cards blancos con sombra
+   ============================================ */
+
 /* SIDEBAR PRINCIPAL - SIEMPRE FIXED */
 .dashboard-sidebar {
-  position: fixed; /* ✅ SIEMPRE fixed, nunca sticky */
+  position: fixed;
   top: 0;
   left: 0;
-  height: 100vh; /* ✅ Altura completa */
+  height: 100vh;
   width: 280px;
   background-color: var(--color-background);
   border-right: 1px solid #E1E5E9;
@@ -13,25 +18,24 @@
   z-index: 200;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* ✅ NUEVO: Evitar overflow del sidebar */
+  overflow: hidden;
   
   &.open {
     transform: translateX(0);
   }
   
-  /* ✅ En desktop: siempre visible */
   @media (min-width: 1200px) {
     transform: translateX(0);
     flex-shrink: 0;
   }
 }
 
-/* OVERLAY PARA MOBILE/TABLET - NO CUBRE EL SIDEBAR */
+/* OVERLAY PARA MOBILE/TABLET */
 .dashboard-sidebar__overlay {
   position: fixed;
   top: 0;
-  left: 280px; /* ✅ CRÍTICO: Empieza DESPUÉS del sidebar */
-  width: calc(100vw - 280px); /* ✅ Solo cubre el resto de la pantalla */
+  left: 280px;
+  width: calc(100vw - 280px);
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 150;
@@ -42,24 +46,24 @@
   }
   
   @media (max-width: 768px) {
-    left: 0; /* ✅ En móvil sí cubre todo */
+    left: 0;
     width: 100vw;
   }
 }
 
-/* Asegurar que el contenido del sidebar sea clickeable */
+/* Contenido del sidebar */
 .dashboard-sidebar__content {
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  z-index: 1; /* ✅ Asegurar que esté por encima */
+  z-index: 1;
 }
-// Agregar estos estilos al archivo src/components/Sidebar/Sidebar.styles.scss
-// Busca la sección .dashboard-sidebar__user-profile y reemplázala con esto:
 
-/* USER PROFILE - ACTUALIZADO CON AVATAR EDITABLE */
+/* ============================================
+   USER PROFILE - CON AVATAR EDITABLE
+   ============================================ */
 .dashboard-sidebar__user-profile {
   flex-shrink: 0;
   padding: 24px 24px 20px;
@@ -71,7 +75,6 @@
   background: linear-gradient(135deg, rgba(255, 69, 0, 0.03) 0%, transparent 100%);
 }
 
-// ✅ NUEVO: Botón para cambiar avatar
 .dashboard-sidebar__avatar-button {
   background: none;
   border: none;
@@ -116,14 +119,12 @@
   transition: all 0.3s ease;
 }
 
-// ✅ NUEVO: Imagen de avatar
 .dashboard-sidebar__avatar-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-// ✅ NUEVO: Overlay de edición
 .dashboard-sidebar__avatar-edit-overlay {
   position: absolute;
   bottom: 0;
@@ -190,21 +191,23 @@
   border: 1px solid #E1E5E9;
 }
 
-/* CASILLERO INFO - FIJO */
+/* ============================================
+   CASILLERO INFO
+   ============================================ */
 .dashboard-sidebar__casillero-info {
-  flex-shrink: 0; /* No se comprime */
+  flex-shrink: 0;
   padding: 0 24px 24px;
   text-align: center;
   border-bottom: 1px solid #F5F5F5;
 }
 
 .dashboard-sidebar__casillero-label {
-  color: var(--color-text-secondary);
-  font-size: 11px;
+  color: var(--color-text-primary);
+  font-size: 15px;
   margin-bottom: 12px;
   display: block;
   line-height: 1.4;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .dashboard-sidebar__directions-btn {
@@ -218,6 +221,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: none;
+  text-decoration: none;
+  display: inline-block;
   
   &:hover {
     background-color: var(--color-primary);
@@ -227,14 +232,16 @@
   }
 }
 
-/* MENU */
+/* ============================================
+   MENU - NUEVO DISEÑO TIPO CARDS
+   ============================================ */
 .dashboard-sidebar__menu {
   flex: 1;
-  padding: 16px;
+  padding: 20px 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0; /* ✅ Sin gap que pueda crear líneas visuales */
+  gap: 12px; /* ✅ Espacio entre cards */
   position: relative;
   z-index: 1;
   
@@ -254,24 +261,19 @@
       background: rgba(0, 0, 0, 0.2);
     }
   }
-  
-  /* ✅ NUEVO: Asegurar que no haya bordes en ningún hijo directo */
-  > * {
-    border-top: none;
-    border-bottom: none;
-  }
 }
 
-/* MENU ITEM - SIN LÍNEAS SEPARADORAS */
+/* MENU ITEM - DISEÑO CARD CON FONDO BLANCO */
 .dashboard-sidebar__menu-item {
   width: 100%;
   padding: 16px 20px;
-  background: none;
-  border: none; /* ✅ Sin bordes */
-  color: var(--color-text-secondary);
+  background: #FFFFFF; /* ✅ Fondo blanco */
+  border: none;
+  border-radius: 12px; /* ✅ Bordes redondeados */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* ✅ Sombra sutil */
+  color: #4A5568; /* ✅ Texto gris oscuro */
   text-align: left;
   cursor: pointer;
-  border-radius: 12px;
   transition: all 0.3s ease;
   display: flex;
   justify-content: space-between;
@@ -279,30 +281,62 @@
   font-size: 14px;
   font-weight: 500;
   position: relative;
-  flex-shrink: 0;
-  z-index: 2;
-  margin-bottom: 2px; /* ✅ Pequeño espacio entre items */
+  text-decoration: none;
   
   &:hover {
-    background-color: #F8F9FA;
-    color: var(--color-text-primary);
-    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    color: #2D3748;
   }
   
   &.active {
-    background-color: rgba(255, 69, 0, 0.08);
+    background: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(255, 69, 0, 0.15);
     color: var(--color-primary);
-    font-weight: 600;
+    
+    .dashboard-sidebar__menu-arrow {
+      color: var(--color-primary);
+    }
   }
 }
 
-/* SUBMENU - SIN LÍNEAS */
+/* TEXTO DEL MENU ITEM */
+.dashboard-sidebar__menu-text {
+  flex: 1;
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: inherit;
+}
+
+/* FLECHA - Color naranja */
+.dashboard-sidebar__menu-arrow {
+  font-size: 20px;
+  color: #FF6B35; /* ✅ Naranja como en la imagen */
+  transition: transform 0.3s ease, color 0.3s ease;
+  font-weight: 600;
+  line-height: 1;
+  
+  &.open {
+    transform: rotate(90deg);
+  }
+  
+  .dashboard-sidebar__menu-item:hover & {
+    color: #FF4500;
+  }
+}
+
+/* SUBMENU */
 .dashboard-sidebar__submenu {
   display: flex;
   flex-direction: column;
-  padding-left: 20px;
-  margin-top: 0; /* ✅ CAMBIO: Sin margen superior */
-  margin-bottom: 4px;
+  gap: 8px;
+  padding-left: 12px;
+  margin-top: 8px;
   animation: slideDown 0.3s ease;
   position: relative;
   z-index: 2;
@@ -320,73 +354,38 @@
 }
 
 .dashboard-sidebar__submenu-item {
-  padding: 10px 16px;
-  font-size: 14px;
+  padding: 12px 16px;
+  font-size: 13px;
   font-weight: 400;
-  color: var(--color-text-secondary);
-  background: transparent;
-  border: none; /* ✅ Sin bordes */
+  color: #718096;
+  background: #F7FAFC;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
   transition: all 0.2s ease;
-  margin-bottom: 2px;
-  position: relative;
-  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
   &:hover {
-    background-color: rgba(255, 180, 133, 0.1);
-    color: var(--color-text-primary);
+    background: #EDF2F7;
+    color: #4A5568;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transform: translateX(4px);
   }
 
   &.active {
-    background-color: rgba(255, 180, 133, 0.15);
+    background: rgba(255, 180, 133, 0.15);
     color: #FF6B35;
     font-weight: 500;
+    box-shadow: 0 2px 6px rgba(255, 107, 53, 0.15);
   }
 }
 
-/* Arrow rotation when submenu is open */
-.dashboard-sidebar__menu-arrow {
-  transition: transform 0.3s ease;
-  font-size: 20px;
-  
-  &.open {
-    transform: rotate(90deg);
-  }
-}
-
-/* Dark mode submenu */
-[data-theme="dark"] {
-  .dashboard-sidebar__submenu-item {
-    &:hover {
-      background-color: var(--color-surface);
-    }
-    
-    &.active {
-      background-color: rgba(255, 180, 133, 0.15);
-    }
-  }
-}
-
-
-
-.dashboard-sidebar__arrow {
-  font-size: 14px;
-  opacity: 0.5;
-  color: var(--color-primary);
-  transform: rotate(0deg);
-  transition: transform 0.2s ease;
-  
-  .dashboard-sidebar__menu-item:hover & {
-    transform: rotate(90deg);
-    opacity: 0.8;
-  }
-}
-
-/* SELECTOR DE IDIOMA - FIJO EN PARTE INFERIOR */
+/* ============================================
+   SELECTOR DE IDIOMA (Opcional - Comentado)
+   ============================================ */
 .dashboard-sidebar__language-selector {
-  flex-shrink: 0; /* No se comprime */
+  flex-shrink: 0;
   padding: 20px 24px 16px;
   border-top: 1px solid #E1E5E9;
   text-align: center;
@@ -435,9 +434,11 @@
   }
 }
 
-/* BOTÓN LOGOUT - FIJO EN LA PARTE INFERIOR */
+/* ============================================
+   BOTÓN LOGOUT
+   ============================================ */
 .dashboard-sidebar__logout-btn {
-  flex-shrink: 0; /* No se comprime */
+  flex-shrink: 0;
   margin: 0 24px 24px;
   padding: 14px 20px;
   background-color: transparent;
@@ -460,7 +461,9 @@
   }
 }
 
-/* RESPONSIVE */
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 @media (max-width: 768px) {
   .dashboard-sidebar {
     width: 100vw;
@@ -485,7 +488,18 @@
   }
   
   .dashboard-sidebar__menu {
-    padding: 0 12px;
+    padding: 16px 12px;
+    gap: 10px;
+  }
+  
+  .dashboard-sidebar__menu-item {
+    padding: 14px 16px;
+    font-size: 13px;
+  }
+  
+  .dashboard-sidebar__submenu-item {
+    padding: 10px 14px;
+    font-size: 12px;
   }
   
   .dashboard-sidebar__language-selector {
@@ -498,7 +512,9 @@
   }
 }
 
-/* DARK MODE */
+/* ============================================
+   DARK MODE
+   ============================================ */
 [data-theme="dark"] {
   .dashboard-sidebar {
     background-color: var(--color-background);
@@ -517,72 +533,54 @@
       border-color: var(--color-border);
       color: var(--color-text-primary);
     }
+  }
+  
+  /* Menu items en dark mode */
+  .dashboard-sidebar__menu-item {
+    background: #2D3748;
+    color: #E2E8F0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     
-    .dashboard-sidebar__menu-item {
-      &:hover {
-        background-color: var(--color-surface);
-      }
-      
-      &.active {
-        background-color: rgba(255, 180, 133, 0.15);
-      }
+    &:hover {
+      background: #374151;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
     
-    .dashboard-sidebar__language-selector {
-      border-top-color: var(--color-border);
-    }
-    
-    .dashboard-sidebar__language-btn {
-      border-color: var(--color-border);
-      
-      &:hover:not(.active) {
-        background-color: var(--color-surface);
-        border-color: var(--color-text-secondary);
-      }
-    }
-    
-    .dashboard-sidebar__logout-btn {
-      border-color: var(--color-border);
+    &.active {
+      background: rgba(255, 180, 133, 0.1);
+      color: #FF6B35;
     }
   }
+  
+  .dashboard-sidebar__submenu-item {
+    background: #1F2937;
+    color: #9CA3AF;
+    
+    &:hover {
+      background: #374151;
+      color: #E2E8F0;
+    }
+    
+    &.active {
+      background: rgba(255, 180, 133, 0.15);
+      color: #FF6B35;
+    }
+  }
+  
+  .dashboard-sidebar__language-selector {
+    border-top-color: var(--color-border);
+  }
+  
+  .dashboard-sidebar__language-btn {
+    border-color: var(--color-border);
+    
+    &:hover:not(.active) {
+      background-color: var(--color-surface);
+      border-color: var(--color-text-secondary);
+    }
+  }
+  
+  .dashboard-sidebar__logout-btn {
+    border-color: var(--color-border);
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

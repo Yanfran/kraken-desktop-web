@@ -39,8 +39,8 @@ const ShipmentsList = React.lazy(() => import('./pages/dashboard/ShipmentsList/S
 const Profile = React.lazy(() => import('./pages/profile/Profile/Profile'));
 const Billing = React.lazy(() => import('./pages/Billing/Billing'));
 const Security = React.lazy(() => import('./pages/Security/Security'));
-const Rastrear = React.lazy(() => import('./pages/Rastrear/Rastrear'));
-const MyGuides = React.lazy(() => import('./pages/MyGuides/MyGuides'));
+const Tracking = React.lazy(() => import('./pages/Tracking/Tracking'));
+const Guides = React.lazy(() => import('./pages/Guide/Guides'));
 const GuideDetail = React.lazy(() => import('./pages/GuideDetail/GuideDetail'));
 const AddressesPage = React.lazy(() => import('./pages/addresses/Addresses'));
 const PaymentPage = React.lazy(() => import('./pages/payment/PaymentPage'));
@@ -270,18 +270,18 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              <Route path="/rastrear" element={
+              <Route path="/tracking" element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <Rastrear />
+                    <Tracking />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
 
-              <Route path="/my-guides" element={
+              <Route path="/guide/guides" element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <MyGuides />
+                    <Guides />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />

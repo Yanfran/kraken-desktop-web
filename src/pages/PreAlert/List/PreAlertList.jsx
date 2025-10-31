@@ -173,7 +173,7 @@ const PreAlertList = () => {
   // Empty state
   const EmptyState = () => (
     <div className="pre-alert-list__empty">
-      <div className="pre-alert-list__empty-icon">📦</div>
+      {/* <div className="pre-alert-list__empty-icon">📦</div> */}
       <h3 className="pre-alert-list__empty-title">No hay pre-alertas</h3>
       <p className="pre-alert-list__empty-message">
         Aún no has creado ninguna pre-alerta. ¡Crea tu primera pre-alerta para empezar!
