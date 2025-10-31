@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
 
   const navigationItems = [
     {
-      path: '/dashboard',
+      path: '/home',
       label: 'Inicio',
       icon: '📊',
     },
@@ -20,12 +20,7 @@ const Layout = ({ children }) => {
       path: '/calculator',
       label: 'Calculadora',
       icon: '🧮',
-    },
-    {
-      path: '/dashboard/shipments',
-      label: 'Mis Envios',
-      icon: '📦',
-    },
+    },    
     {
       path: '/pre-alert',
       label: 'Pre-Alertar',

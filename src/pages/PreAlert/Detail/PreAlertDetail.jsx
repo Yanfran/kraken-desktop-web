@@ -105,7 +105,7 @@ const PreAlertDetail = () => {
   };
 
   const handleBack = () => {
-    navigate('/dashboard');
+    navigate('/home');
   };
 
   // Loading state

@@ -50,7 +50,7 @@ export const PublicRoute = ({ children }) => {
   }
 
   if (isSignedIn && localUser?.emailVerified && localUser?.profileComplete) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   if (isSignedIn && localUser && !localUser.emailVerified && !localUser.fromEmail) {

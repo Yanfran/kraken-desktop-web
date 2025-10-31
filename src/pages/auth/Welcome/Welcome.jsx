@@ -84,14 +84,14 @@ const Welcome = () => {
       
       // Navegar al dashboard
       console.log('🚀 [Welcome] Navegando al dashboard...');
-      navigate('/dashboard', { replace: true });
+      navigate('/home', { replace: true });
       
     } catch (error) {
       console.error('❌ [Welcome] Error navegando al dashboard:', error);
       
       // Fallback: navegar directamente
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        navigate('/home', { replace: true });
       }, 1000);
     } finally {
       setIsNavigating(false);

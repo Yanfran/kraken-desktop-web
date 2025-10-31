@@ -37,7 +37,7 @@ const SmartPlatformDetector = ({ children }) => {
         // Web → Mobile (React Router → Expo Router)
         webToMobile: {
           '/': '/home',
-          '/dashboard': '/home',
+          '/home': '/home',
           '/login': '/login',
           '/register': '/register',
           '/forgot-password': '/forgot',
@@ -53,7 +53,7 @@ const SmartPlatformDetector = ({ children }) => {
         },
         // Mobile → Web (Expo Router → React Router)
         mobileToWeb: {
-          '/home': '/dashboard',          
+          '/home': '/home',          
           '/login': '/login',
           '/register': '/register',
           '/forgot': '/forgot-password',
@@ -191,7 +191,7 @@ const SmartPlatformDetector = ({ children }) => {
           }
           // Fallback
           else {
-            webPath = token ? '/dashboard' : '/login';
+            webPath = token ? '/home' : '/login';
             console.warn('⚠️ Ruta no mapeada, usando fallback:', webPath);
           }
         }

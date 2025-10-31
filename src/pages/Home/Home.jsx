@@ -1,11 +1,11 @@
 // src/pages/dashboard/Home/Home.jsx - INTEGRACIÓN DE DIRECCIÓN
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import NewsCarousel from '../../../components/NewsCarousel/NewsCarousel';
-import { getLastShipment } from '../../../services/guiasService';
-import { getPreAlertasPendientes, deletePreAlerta } from '../../../services/preAlertService';
-import { getNovedades } from '../../../services/novedadesService';
+import NewsCarousel from '../../components/NewsCarousel/NewsCarousel';
+import { getLastShipment } from '../../services/guiasService';
+import { getPreAlertasPendientes, deletePreAlerta } from '../../services/preAlertService';
+import { getNovedades } from '../../services/novedadesService';
 import { useAddresses } from '@hooks/useAddresses'; 
 import './Home.styles.scss';
 
@@ -429,7 +429,7 @@ const Home = ({ onNavigateToShipments }) => {
                   {/* <span className="alert-icon">🚫</span> */}
                   <span className="alert-text">No pre-alertado</span>
                   <span className="alert-discount">Perdiste {lastShipment.discount}</span>
-                  <button className="alert-link" onClick={onNavigateToShipments}>
+                  <button className="alert-link" onClick={() => navigate('/guide/guides')}>
                     Ver todos
                   </button>
                 </div>

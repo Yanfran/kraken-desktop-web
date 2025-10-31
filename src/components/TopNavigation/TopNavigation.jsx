@@ -22,7 +22,7 @@ const TopNavigation = ({
       label: 'Inicio', 
       icon: iconPulpo,
       iconAlt: '🏠',
-      path: '/dashboard'
+      path: '/home'
     },
     { 
       id: 'calcular', 

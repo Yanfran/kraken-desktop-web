@@ -58,7 +58,7 @@ const EmailVerify = () => {
       setTimeout(() => {
         // Si el perfil está completo, ir al dashboard
         if (data.user.profileComplete) {
-          navigate('/dashboard');
+          navigate('/home');
         } else {
           // Si no, ir a completar perfil
           navigate('/complete-profile');

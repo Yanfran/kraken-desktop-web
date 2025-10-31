@@ -29,13 +29,12 @@ const Terms = React.lazy(() => import('./pages/legal/Terms/Terms'));
 const Privacy = React.lazy(() => import('./pages/legal/Privacy/Privacy'));
 
 // Protected pages
-const Dashboard = React.lazy(() => import('./pages/dashboard/Dashboard'));
+const Home = React.lazy(() => import('./pages/Home/Home'));
 const Calculator = React.lazy(() => import('./pages/calculator/Calculator/Calculator'));
 const PreAlertCreate = React.lazy(() => import('./pages/PreAlert/Create/PreAlertCreate'));
 const PreAlertList = React.lazy(() => import('./pages/PreAlert/List/PreAlertList'));
 const PreAlertDetail = React.lazy(() => import('./pages/PreAlert/Detail/PreAlertDetail'));
 const PreAlertEdit = React.lazy(() => import('./pages/PreAlert/Edit/PreAlertEdit'));
-const ShipmentsList = React.lazy(() => import('./pages/dashboard/ShipmentsList/ShipmentsList'));
 const Profile = React.lazy(() => import('./pages/profile/Profile/Profile'));
 const Billing = React.lazy(() => import('./pages/Billing/Billing'));
 const Security = React.lazy(() => import('./pages/Security/Security'));
@@ -89,7 +88,7 @@ function App() {
           <Suspense fallback={<Loading />}>
             <Routes>
               {/* ===== RUTA RAÍZ ===== */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<Navigate to="/home" replace />} />
 
               {/* ===== RUTAS PÚBLICAS ===== */}
               <Route path="/login" element={
@@ -160,10 +159,10 @@ function App() {
               } />
 
               {/* ===== RUTAS PROTEGIDAS ===== */}
-              <Route path="/dashboard" element={
+              <Route path="/home" element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <Dashboard />
+                    <Home />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
@@ -209,14 +208,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Envíos */}
-              <Route path="/dashboard/mis-envios" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <ShipmentsList />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
+             
 
               {/* Perfil - Ruta principal */}
               <Route path="/profile" element={

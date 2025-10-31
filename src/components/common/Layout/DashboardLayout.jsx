@@ -3,7 +3,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import Sidebar from '../../Sidebar/Sidebar';
 import TopNavigation from '../../TopNavigation/TopNavigation';
 // import MobileBlock from '../../MobileBlock/MobileBlock'; // ✅ NUEVO
-import '../../../pages/dashboard/Dashboard.styles.scss';
+import './Dashboard.styles.scss';
 import SmartPlatformDetector from '../../SmartPlatformDetector/SmartPlatformDetector';
 
 const DashboardLayout = ({ children }) => {

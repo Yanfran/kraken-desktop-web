@@ -125,7 +125,7 @@ const Register = () => {
         
         if (result.success) {
           toast.success('¡Bienvenido!');
-          navigate('/dashboard');
+          navigate('/home');
         } else {
           toast.error(result.message || 'Error con Google');
         }

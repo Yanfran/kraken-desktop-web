@@ -57,7 +57,7 @@ const Login = () => {
         
         if (result.success) {
           toast.success('¡Bienvenido!');
-          navigate('/dashboard');
+          navigate('/home');
         } else {
           toast.error(result.message || 'Error con Google');
         }
@@ -102,7 +102,7 @@ const Login = () => {
       
       if (result.success) {
         toast.success('¡Bienvenido de vuelta!');
-        navigate('/dashboard');
+        navigate('/home');
       } else {
         if (result.field) {
           setErrors({ [result.field]: result.message });

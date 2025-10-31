@@ -13,7 +13,7 @@ export const useAuth = () => {
   }
 
   // ===== FUNCIÓN DE LOGIN CON REDIRECCIÓN =====
-  const loginWithRedirect = useCallback(async (credentials, redirectTo = '/dashboard') => {
+  const loginWithRedirect = useCallback(async (credentials, redirectTo = '/home') => {
     const result = await context.signIn(credentials.email, credentials.password);
     
     if (result.success) {
