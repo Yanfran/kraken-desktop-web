@@ -71,8 +71,13 @@
     flex-direction: column;
     gap: var(--spacing-3);
     position: relative;
-    z-index: 1;
+    z-index: 1; // ✅ CAMBIAR: Reducir z-index base
     animation: slideInUp 0.5s ease forwards;
+
+    // ✅ NUEVO: Aumentar z-index cuando contiene un select abierto
+    &:has(.searchable-select--open) {
+      z-index: 1000 !important;
+    }
 
     &:has([class*="MultiSelect"]),
     &:has([class*="multi-select"]) {
@@ -919,7 +924,7 @@
     [class*="SearchableSelect"] {
       z-index: 1000 !important;
 
-      > div[class*="dropdown"],
+      // > div[class*="dropdown"],
       > div[class*="menu"],
       > div[class*="options"] {
         z-index: 1001 !important;

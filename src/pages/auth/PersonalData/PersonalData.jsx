@@ -115,10 +115,11 @@ const PersonalData = () => {
   // Operadores venezolanos
   const venezuelanOperators = [
     { label: "(0412)", value: "(0412)" },
+    { label: "(0422)", value: "(0422)" },
     { label: "(0414)", value: "(0414)" },
-    { label: "(0416)", value: "(0416)" },
     { label: "(0424)", value: "(0424)" },
-    { label: "(0426)", value: "(0426)" }
+    { label: "(0416)", value: "(0416)" },
+    { label: "(0426)", value: "(0426)" },
   ];
 
   // ===== FUNCIONES DE CARGA DE DATOS =====

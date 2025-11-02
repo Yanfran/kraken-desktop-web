@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        console.log('🔍 [Auth] Verificando sesión existente...');
+        // console.log('🔍 [Auth] Verificando sesión existente...');
         
         const token = localStorage.getItem('authToken') || Cookies.get('authToken');
         const userDataStr = localStorage.getItem('userData');
@@ -98,26 +98,26 @@ export const AuthProvider = ({ children }) => {
             // Validar token con el servidor (opcional pero recomendado)
             try {
               const validatedUser = await authService.validateToken(token);
-              console.log('✅ [Auth] Sesión válida:', validatedUser.email);
+              // console.log('✅ [Auth] Sesión válida:', validatedUser.email);
               dispatch({ type: 'LOGIN_SUCCESS', payload: validatedUser });
             } catch (error) {
               // Si falla la validación, usar datos del localStorage
-              console.warn('⚠️ [Auth] No se pudo validar token, usando datos locales');
+              // console.warn('⚠️ [Auth] No se pudo validar token, usando datos locales');
               dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
             }
           } catch (error) {
-            console.warn('⚠️ [Auth] Token inválido, limpiando sesión');
+            // console.warn('⚠️ [Auth] Token inválido, limpiando sesión');
             localStorage.removeItem('authToken');
             localStorage.removeItem('userData');
             Cookies.remove('authToken');
             dispatch({ type: 'LOGOUT' });
           }
         } else {
-          console.log('ℹ️ [Auth] No hay sesión previa');
+          // console.log('ℹ️ [Auth] No hay sesión previa');
           dispatch({ type: 'LOGOUT' });
         }
       } catch (error) {
-        console.error('❌ [Auth] Error al verificar autenticación:', error);
+        // console.error('❌ [Auth] Error al verificar autenticación:', error);
         dispatch({ type: 'LOGOUT' });
       }
     };
@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
  const signIn = useCallback(async (email, password) => {
     try {
       dispatch({ type: 'LOADING' });
-      console.log('🔐 [Auth] Iniciando sesión con email...');
+      // console.log('🔐 [Auth] Iniciando sesión con email...');
       
       const response = await authService.login({ email, password });
       
@@ -144,7 +144,7 @@ export const AuthProvider = ({ children }) => {
         queryClient.clear();
         
         dispatch({ type: 'LOGIN_SUCCESS', payload: response.user });
-        console.log('✅ [Auth] Login exitoso:', response.user.email);
+        // console.log('✅ [Auth] Login exitoso:', response.user.email);
         return { success: true };
       } else {
         dispatch({ type: 'ERROR', payload: response.message });
@@ -152,7 +152,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('❌ [Auth] Error en login:', error);
-      const errorMessage = error.message || 'Error de conexión. Intenta de nuevo.';
+      // const errorMessage = error.message || 'Error de conexión. Intenta de nuevo.';
       dispatch({ type: 'ERROR', payload: errorMessage });
       return { success: false, message: errorMessage };
     }
@@ -162,7 +162,7 @@ export const AuthProvider = ({ children }) => {
   const signUp = useCallback(async (userData) => {
     try {
       dispatch({ type: 'LOADING' });
-      console.log('📝 [Auth] Registrando nuevo usuario...');
+      // console.log('📝 [Auth] Registrando nuevo usuario...');
       
       const result = await authService.register({
         name: userData.name,
@@ -183,14 +183,14 @@ export const AuthProvider = ({ children }) => {
           dispatch({ type: 'SET_LOADING', payload: false });
         }
         
-        console.log('✅ [Auth] Registro exitoso:', result.user?.email);
+        // console.log('✅ [Auth] Registro exitoso:', result.user?.email);
         return { success: true, user: result.user };
       }
 
       dispatch({ type: 'SET_LOADING', payload: false });
       return result;
     } catch (error) {
-      console.error('❌ [Auth] Error en registro:', error);
+      // console.error('❌ [Auth] Error en registro:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
       return { 
         success: false, 
@@ -203,7 +203,7 @@ export const AuthProvider = ({ children }) => {
   const signInWithGoogle = useCallback(async (credentialResponse) => {
   try {
     dispatch({ type: 'LOADING' });
-    console.log('🔵 [Auth] Iniciando Google Sign-In...');
+    // console.log('🔵 [Auth] Iniciando Google Sign-In...');
     
     // Si recibimos el objeto completo de Google
     let credential = credentialResponse;
@@ -217,7 +217,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error('No se recibió credencial de Google');
     }
 
-    console.log('✅ [Auth] Credencial de Google obtenida');
+    // console.log('✅ [Auth] Credencial de Google obtenida');
 
     // Enviar credencial al backend
     const response = await authService.loginWithGoogle(credential);
@@ -266,8 +266,8 @@ export const AuthProvider = ({ children }) => {
       queryClient.clear();
       
       dispatch({ type: 'LOGIN_SUCCESS', payload: normalizedUser });
-      console.log('✅ [Auth] Google login exitoso:', normalizedUser.email);
-      console.log('✅ [Auth] Usuario normalizado:', { name: normalizedUser.name, lastName: normalizedUser.lastName });
+      // console.log('✅ [Auth] Google login exitoso:', normalizedUser.email);
+      // console.log('✅ [Auth] Usuario normalizado:', { name: normalizedUser.name, lastName: normalizedUser.lastName });
       
       return { success: true, user: normalizedUser };
     } else {
@@ -275,7 +275,7 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: response.message };
     }
   } catch (error) {
-    console.error('❌ [Auth] Error en Google Sign-In:', error);
+    // console.error('❌ [Auth] Error en Google Sign-In:', error);
     dispatch({ type: 'ERROR', payload: error.message });
     return { 
       success: false, 
@@ -287,10 +287,10 @@ export const AuthProvider = ({ children }) => {
   // ===== SIGN OUT =====
  const signOut = useCallback(async () => {
     try {
-      console.log('🚪 [Auth] Cerrando sesión...');
+      // console.log('🚪 [Auth] Cerrando sesión...');
       await authService.logout();
     } catch (error) {
-      console.warn('⚠️ [Auth] Error en logout del servidor:', error);
+      // console.warn('⚠️ [Auth] Error en logout del servidor:', error);
     } finally {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
@@ -301,7 +301,7 @@ export const AuthProvider = ({ children }) => {
       queryClient.clear();
       
       dispatch({ type: 'LOGOUT' });
-      console.log('✅ [Auth] Sesión cerrada y caché limpiado');
+      // console.log('✅ [Auth] Sesión cerrada y caché limpiado');
     }
   }, [queryClient]); 
 
@@ -318,7 +318,7 @@ export const AuthProvider = ({ children }) => {
         type: 'UPDATE_USER', 
         payload: { emailVerified: true, fromEmail: true } 
       });
-      console.log('✅ [Auth] Email confirmado');
+      // console.log('✅ [Auth] Email confirmado');
     }
   }, [state.user]);
 
@@ -326,7 +326,7 @@ export const AuthProvider = ({ children }) => {
   const setUserState = useCallback(async (userData, token = null) => {
     try {
       if (userData) {
-        console.log('🔄 [Auth] Actualizando estado de usuario...');
+        // console.log('🔄 [Auth] Actualizando estado de usuario...');
         
         // Guardar en localStorage
         localStorage.setItem('userData', JSON.stringify(userData));
@@ -339,7 +339,7 @@ export const AuthProvider = ({ children }) => {
         
         // Actualizar estado
         dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
-        console.log('✅ [Auth] Estado actualizado:', userData.email);
+        // console.log('✅ [Auth] Estado actualizado:', userData.email);
       } else {
         // Si userData es null, hacer logout
         await signOut();
@@ -352,11 +352,11 @@ export const AuthProvider = ({ children }) => {
   // ===== RESEND VERIFICATION EMAIL =====
   const resendVerificationEmail = useCallback(async (email) => {
     try {
-      console.log('📧 [Auth] Reenviando email de verificación...');
+      // console.log('📧 [Auth] Reenviando email de verificación...');
       const result = await authService.resendVerificationEmail(email);
       
       if (result.success) {
-        console.log('✅ [Auth] Email reenviado exitosamente');
+        // console.log('✅ [Auth] Email reenviado exitosamente');
       }
       
       return result;

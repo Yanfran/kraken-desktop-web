@@ -25,8 +25,8 @@ const fileToBase64 = (file) => {
         return;
       }
       
-      console.log(`✅ Archivo leído: ${file.name} (${result.length} caracteres)`);
-      console.log(`📋 Preview: ${result.substring(0, 50)}...`);
+      // console.log(`✅ Archivo leído: ${file.name} (${result.length} caracteres)`);
+      // console.log(`📋 Preview: ${result.substring(0, 50)}...`);
       
       resolve(result); // ✅ Incluye "data:image/png;base64,..." automáticamente
     };
@@ -82,7 +82,7 @@ const convertFilesToBase64 = async (files) => {
     try {
       // ✅ Validar que el archivo sea válido
       if (!(file instanceof File)) {
-        console.error('❌ No es un archivo File válido:', file);
+        // console.error('❌ No es un archivo File válido:', file);
         throw new Error('Objeto no es un archivo válido');
       }
 
@@ -104,7 +104,7 @@ const convertFilesToBase64 = async (files) => {
         throw new Error(`${fileName}: Máximo 5MB (tamaño: ${(fileSize / 1024 / 1024).toFixed(2)}MB)`);
       }
       
-      console.log(`🔄 Convirtiendo archivo: ${fileName} (${fileSize} bytes)`);
+      // console.log(`🔄 Convirtiendo archivo: ${fileName} (${fileSize} bytes)`);
       
       // ✅ Convertir a Base64 CON prefijo
       const base64String = await fileToBase64(file);
@@ -116,7 +116,7 @@ const convertFilesToBase64 = async (files) => {
       
       // ✅ VALIDAR que empiece con "data:"
       if (!base64String.startsWith('data:')) {
-        console.warn(`⚠️ Base64 sin prefijo "data:", agregándolo...`);
+        // console.warn(`⚠️ Base64 sin prefijo "data:", agregándolo...`);
         const mimeType = fileMimeType || getMimeTypeFromExtension(fileName);
         // Este caso no debería ocurrir, pero por si acaso
         throw new Error(`${fileName}: Base64 sin prefijo data:`);
@@ -131,7 +131,7 @@ const convertFilesToBase64 = async (files) => {
         tamaño: fileSize,
       });
       
-      console.log(`✅ Archivo convertido: ${fileName} (${fileSize} bytes, base64: ${base64String.length} chars)`);
+      // console.log(`✅ Archivo convertido: ${fileName} (${fileSize} bytes, base64: ${base64String.length} chars)`);
     } catch (error) {
       console.error(`❌ Error convirtiendo archivo ${file.name}:`, error);
       throw new Error(`Error procesando ${file.name}: ${error.message}`);
@@ -150,7 +150,7 @@ const processPayloadForBackend = async (payload) => {
   const processedPayload = { ...payload };
   
   if (payload.facturas && payload.facturas.length > 0) {
-    console.log('📁 Procesando archivos...');
+    // console.log('📁 Procesando archivos...');
     
     const archivosExistentes = [];
     const archivosNuevos = [];
@@ -165,7 +165,7 @@ const processPayloadForBackend = async (payload) => {
       );
       
       if (isExistingFile) {
-        console.log(`📄 Archivo existente: ${file.nombre || file.name}`);
+        // console.log(`📄 Archivo existente: ${file.nombre || file.name}`);
         
         // ✅ FIX: Obtener tipo de archivo de la extensión si no existe
         const fileName = file.nombre || file.name;
@@ -178,7 +178,7 @@ const processPayloadForBackend = async (payload) => {
           tamaño: 0
         });
       } else {
-        console.log(`📄 Archivo nuevo: ${file.name || file.nombre}`);
+        // console.log(`📄 Archivo nuevo: ${file.name || file.nombre}`);
         archivosNuevos.push(file);
       }
     });
@@ -186,14 +186,14 @@ const processPayloadForBackend = async (payload) => {
     // ✅ Convertir solo archivos nuevos a base64
     let archivosNuevosConvertidos = [];
     if (archivosNuevos.length > 0) {
-      console.log(`🔄 Convirtiendo ${archivosNuevos.length} archivo(s) nuevo(s)...`);
+      // console.log(`🔄 Convirtiendo ${archivosNuevos.length} archivo(s) nuevo(s)...`);
       
       const todosFile = archivosNuevos.every(f => f instanceof File);
       
       if (todosFile) {
         archivosNuevosConvertidos = await convertFilesToBase64(archivosNuevos);
       } else {
-        console.log('⚠️ Archivos ya procesados, usando formato existente');
+        // console.log('⚠️ Archivos ya procesados, usando formato existente');
         archivosNuevosConvertidos = archivosNuevos.map(f => ({
           nombre: f.nombre || f.name,
           uri: f.uri,
@@ -205,7 +205,7 @@ const processPayloadForBackend = async (payload) => {
     
     processedPayload.facturas = [...archivosExistentes, ...archivosNuevosConvertidos];
     
-    console.log(`✅ Archivos procesados: ${archivosExistentes.length} existentes + ${archivosNuevosConvertidos.length} nuevos`);
+    // console.log(`✅ Archivos procesados: ${archivosExistentes.length} existentes + ${archivosNuevosConvertidos.length} nuevos`);
   }
   
   return processedPayload;
@@ -223,11 +223,11 @@ export const getPreAlertas = async (userId) => {
       throw new Error('ID de usuario inválido');
     }
 
-    console.log(`📦 Obteniendo pre-alertas del usuario ${userId}...`);
+    // console.log(`📦 Obteniendo pre-alertas del usuario ${userId}...`);
     
     const response = await axiosInstance.get(`/PostPreAlert/getPreAlertas/${userId}`);
     
-    console.log('✅ Pre-alertas obtenidas:', response.data);
+    // console.log('✅ Pre-alertas obtenidas:', response.data);
     
     return {
       success: true,
@@ -252,11 +252,11 @@ export const getPreAlertas = async (userId) => {
  */
 export const getPreAlertasPendientes = async () => {
   try {
-    console.log('📦 Obteniendo pre-alertas pendientes...');
+    // console.log('📦 Obteniendo pre-alertas pendientes...');
     
     const response = await axiosInstance.get('/PostPreAlert/getPreAlertasPendientes');
     
-    console.log('✅ Pre-alertas pendientes obtenidas:', response.data);
+    // console.log('✅ Pre-alertas pendientes obtenidas:', response.data);
     
     return {
       success: true,
@@ -286,11 +286,11 @@ export const getPreAlertaById = async (id) => {
       throw new Error('ID de pre-alerta inválido');
     }
 
-    console.log(`📦 Obteniendo pre-alerta ID: ${id}...`);
+    // console.log(`📦 Obteniendo pre-alerta ID: ${id}...`);
     
     const response = await axiosInstance.get(`/PostPreAlert/${id}`);
     
-    console.log('✅ Pre-alerta obtenida:', response.data);
+    // console.log('✅ Pre-alerta obtenida:', response.data);
     
     return {
       success: true,
@@ -316,7 +316,7 @@ export const getPreAlertaById = async (id) => {
  */
 export const createPreAlerta = async (payload) => {
   try {
-    console.log('📤 Creando pre-alerta...', payload);
+    // console.log('📤 Creando pre-alerta...', payload);
     
     // Validar campos requeridos
     if (!payload.trackings || payload.trackings.length === 0) {
@@ -330,15 +330,15 @@ export const createPreAlerta = async (payload) => {
     // ✅ Procesar archivos a base64
     const processedPayload = await processPayloadForBackend(payload);
     
-    console.log('📋 Payload procesado:', {
-      ...processedPayload,
-      facturas: processedPayload.facturas?.map(f => ({
-        nombre: f.nombre,
-        tipo: f.tipo,
-        tamaño: f.tamaño,
-        base64Length: f.uri?.length || 0
-      }))
-    });
+    // console.log('📋 Payload procesado:', {
+    //   ...processedPayload,
+    //   facturas: processedPayload.facturas?.map(f => ({
+    //     nombre: f.nombre,
+    //     tipo: f.tipo,
+    //     tamaño: f.tamaño,
+    //     base64Length: f.uri?.length || 0
+    //   }))
+    // });
 
     // ✅ Enviar como JSON (NO FormData)
     const response = await axiosInstance.post('/PostPreAlert/create', processedPayload, {
@@ -347,7 +347,7 @@ export const createPreAlerta = async (payload) => {
       },
     });
     
-    console.log('✅ Pre-alerta creada:', response.data);
+    // console.log('✅ Pre-alerta creada:', response.data);
     
     return {
       success: true,
@@ -378,7 +378,7 @@ export const updatePreAlerta = async (id, payload) => {
       throw new Error('ID de pre-alerta inválido');
     }
 
-    console.log(`📤 Actualizando pre-alerta ID: ${id}`, payload);
+    // console.log(`📤 Actualizando pre-alerta ID: ${id}`, payload);
 
     // ✅ Procesar archivos a base64
     const processedPayload = await processPayloadForBackend(payload);
@@ -390,7 +390,7 @@ export const updatePreAlerta = async (id, payload) => {
       },
     });
     
-    console.log('✅ Pre-alerta actualizada:', response.data);
+    // console.log('✅ Pre-alerta actualizada:', response.data);
     
     return {
       success: true,
@@ -420,11 +420,11 @@ export const deletePreAlerta = async (id) => {
       throw new Error('ID de pre-alerta inválido');
     }
 
-    console.log(`🗑️ Eliminando pre-alerta ID: ${id}`);
+    // console.log(`🗑️ Eliminando pre-alerta ID: ${id}`);
 
     const response = await axiosInstance.post('/PostPreAlert/delete', { id });
     
-    console.log('✅ Pre-alerta eliminada:', response.data);
+    // console.log('✅ Pre-alerta eliminada:', response.data);
     
     return {
       success: true,
@@ -449,11 +449,11 @@ export const deletePreAlerta = async (id) => {
  */
 export const getPaquetesContenidos = async () => {
   try {
-    console.log('📦 Obteniendo contenidos de paquetes...');
+    // console.log('📦 Obteniendo contenidos de paquetes...');
     
     const response = await axiosInstance.get('/PaqueteContenidos/getContent');
     
-    console.log('✅ Contenidos obtenidos:', response.data);
+    // console.log('✅ Contenidos obtenidos:', response.data);
     
     return {
       success: true,

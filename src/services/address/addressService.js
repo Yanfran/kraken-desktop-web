@@ -185,7 +185,7 @@ export const getUserAddresses = async () => {
  * @returns {Promise<Object>}
  */
 export const registerAddress = async (payload) => {
-  try {
+  // try {
     const response = await axiosInstance.post('/Addresses/register-address', payload);
     
     return {
@@ -194,14 +194,14 @@ export const registerAddress = async (payload) => {
       requiresDefaultSelection: response.data.requiresDefaultSelection || false,
       data: response.data
     };
-  } catch (error) {
-    console.error('❌ Error en registerAddress:', error);
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al registrar dirección',
-      requiresDefaultSelection: false
-    };
-  }
+  // } catch (error) {
+  //   console.error('❌ Error en registerAddress:', error);
+  //   return {
+  //     success: false,
+  //     message: error.response?.data?.message || 'Error al registrar dirección',
+  //     requiresDefaultSelection: false
+  //   };
+  // }
 };
 
 /**

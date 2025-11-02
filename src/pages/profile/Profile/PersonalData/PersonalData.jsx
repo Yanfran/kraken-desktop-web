@@ -287,7 +287,9 @@ const PersonalData = () => {
         }
 
         toast.success(response.data.message || 'Datos actualizados exitosamente');
-        navigate(-1);
+        
+        // Volver al perfil
+        navigate('/home');
       } else {
         if (response.data.field) {
           setErrors({ [response.data.field]: response.data.message });
@@ -491,21 +493,15 @@ const PersonalData = () => {
             </div>
 
             {/* Botón de guardar */}
-            <div className="personal-data__actions">
-              <button
+            <div className="personal-data__actions">              
+              <Button
                 type="submit"
-                className="personal-data__save-btn"
+                variant="primary"
                 disabled={loading}
+                icon={loading ? null : <IoSaveOutline size={20} />}
               >
-                {loading ? (
-                  <LoadingSpinner size="small" />
-                ) : (
-                  <>
-                    <IoSaveOutline size={20} />
-                    <span>Guardar Cambios</span>
-                  </>
-                )}
-              </button>
+                {loading ? 'Guardarndo Cambios...' : 'Guardar Cambios'}
+              </Button>
             </div>
           </form>
         </div>

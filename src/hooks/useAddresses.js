@@ -10,16 +10,16 @@ export const useAddresses = () => {
     queryKey: ['userAddresses', userId], // ✅ Incluir userId en la key
     queryFn: async () => {
       if (!userId) {
-        console.warn('⚠️ No user ID available');
+        // console.warn('⚠️ No user ID available');
         return [];
       }
 
-      console.log('🔍 Fetching addresses for user:', userId);
+      // console.log('🔍 Fetching addresses for user:', userId);
       
       // ✅ Pasar el userId a la función
       const response = await getUserAddresses(parseInt(userId));
       
-      console.log('✅ Addresses response:', response);
+      // console.log('✅ Addresses response:', response);
       
       if (response.success) {
         return response.data || [];

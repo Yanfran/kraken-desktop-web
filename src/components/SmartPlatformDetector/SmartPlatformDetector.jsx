@@ -1,10 +1,11 @@
 // src/components/SmartPlatformDetector/SmartPlatformDetector.jsx
-// CORREGIDO: Mapeo correcto de rutas entre Web y Mobile
+// ACTUALIZADO: Usa URLs centralizadas desde config.js
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DeviceDetection from '../../utils/DeviceDetection';
 import TokenService from '../../utils/TokenService';
+import { APP_URLS, isDevelopment } from '../../utils/config'; // ✅ Importar URLs centralizadas
 import './SmartPlatformDetector.styles.scss';
 
 const SmartPlatformDetector = ({ children }) => {
@@ -18,21 +19,29 @@ const SmartPlatformDetector = ({ children }) => {
       const info = DeviceDetection.getDeviceInfo();
       setDeviceInfo(info);
 
-      console.log('📱 Device Info:', info);
+      // ═════════════════════════════════════
+      // OBTENER PUERTOS DESDE CONFIG
+      // ═════════════════════════════════════
+      const getPortFromUrl = (url) => {
+        try {
+          const urlObj = new URL(url);
+          return urlObj.port || (urlObj.protocol === 'https:' ? '443' : '80');
+        } catch {
+          return '80';
+        }
+      };
 
-      // =============================================
-      // CONFIGURACIÓN DE PUERTOS
-      // =============================================
-      const WEB_PORT = '3000';
-      const MOBILE_PORT = '8081';
-      
+      const webPort = getPortFromUrl(APP_URLS.WEB);
+      const mobilePort = getPortFromUrl(APP_URLS.MOBILE);
       const currentPort = window.location.port || '80';
-      const isWebPort = currentPort === WEB_PORT;
-      const isMobilePort = currentPort === MOBILE_PORT;
+      
+      const isWebPort = currentPort === webPort;
+      const isMobilePort = currentPort === mobilePort;
+      
 
-      // =============================================
+      // ═════════════════════════════════════
       // MAPEO DE RUTAS WEB ↔ MOBILE
-      // =============================================
+      // ═════════════════════════════════════
       const routeMap = {
         // Web → Mobile (React Router → Expo Router)
         webToMobile: {
@@ -44,12 +53,12 @@ const SmartPlatformDetector = ({ children }) => {
           '/calculator': '/',          
           '/profile/personal-data': '/profile?initialTab=Datos Personales',
           '/profile/addresses': '/profile?initialTab=Mis Direcciones',
+          '/profile/change-password': '/profile/change-password',
           '/addresses': '/addresses',          
           '/tracking': '/tracking',
           '/guide/guides': '/guide/guides',
           '/pre-alert/create': '/pre-alert/pre-alert',
           '/pre-alert/list': '/pre-alert/list',
-          // Agregar más rutas según necesites
         },
         // Mobile → Web (Expo Router → React Router)
         mobileToWeb: {
@@ -60,39 +69,39 @@ const SmartPlatformDetector = ({ children }) => {
           '/': '/calculator',          
           '/profile?initialTab=Datos Personales': '/profile/personal-data',
           '/profile?initialTab=Mis Direcciones': '/profile/addresses',
+          '/profile/change-password': '/profile/change-password',
           '/addresses': '/addresses',          
           '/tracking': '/tracking',
           '/guide/guides': '/guide/guides',
           '/pre-alert/pre-alert': '/pre-alert/create',
           '/pre-alert/list': '/pre-alert/list',
-          // Agregar más rutas según necesites
         }
       };
 
-      // =============================================
+      // ═════════════════════════════════════
       // LÓGICA DE REDIRECCIÓN
-      // =============================================
+      // ═════════════════════════════════════
 
-      // CASO 1: Web → Mobile
+      // CASO 1: Web → Mobile (pantalla pequeña)
       if (isWebPort && (info.isMobile || info.isNarrowScreen) && !info.isTablet) {
         console.log('🔄 Web → Mobile: Pantalla pequeña detectada');
         await redirectToMobile(info, routeMap.webToMobile);
         return;
       }
 
-      // CASO 2: Mobile → Web
+      // CASO 2: Mobile → Web (pantalla grande)
       if (isMobilePort && !info.isMobile && !info.isNarrowScreen) {
         console.log('🔄 Mobile → Web: Pantalla grande detectada');
         await redirectToWeb(info, routeMap.mobileToWeb);
         return;
       }
 
-      console.log('✅ Estás en el puerto correcto');
+      console.log('✅ Estás en el puerto/dominio correcto');
     };
 
-    // =============================================
+    // ═════════════════════════════════════
     // FUNCIÓN: REDIRIGIR A MOBILE
-    // =============================================
+    // ═════════════════════════════════════
     const redirectToMobile = async (info, routeMap) => {
       setIsRedirecting(true);
 
@@ -132,8 +141,8 @@ const SmartPlatformDetector = ({ children }) => {
 
         console.log('🎯 Ruta destino (Mobile):', mobilePath);
 
-        // Construir URL
-        const mobileUrl = `http://localhost:8081${mobilePath}`;
+        // ✅ Construir URL usando config
+        const mobileUrl = `${APP_URLS.MOBILE}${mobilePath}`;
         const url = new URL(mobileUrl);
 
         // Agregar token si existe
@@ -151,9 +160,9 @@ const SmartPlatformDetector = ({ children }) => {
       }
     };
 
-    // =============================================
+    // ═════════════════════════════════════
     // FUNCIÓN: REDIRIGIR A WEB
-    // =============================================
+    // ═════════════════════════════════════
     const redirectToWeb = async (info, routeMap) => {
       setIsRedirecting(true);
 
@@ -198,8 +207,8 @@ const SmartPlatformDetector = ({ children }) => {
 
         console.log('🎯 Ruta destino (Web):', webPath);
 
-        // Construir URL
-        const webUrl = `http://localhost:3000${webPath}`;
+        // ✅ Construir URL usando config
+        const webUrl = `${APP_URLS.WEB}${webPath}`;
         const url = new URL(webUrl);
 
         // Agregar token si existe
@@ -217,9 +226,9 @@ const SmartPlatformDetector = ({ children }) => {
       }
     };
 
-    // =============================================
+    // ═════════════════════════════════════
     // SINCRONIZAR TOKEN DESDE URL
-    // =============================================
+    // ═════════════════════════════════════
     const syncTokenFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const token = params.get('token');
@@ -242,9 +251,9 @@ const SmartPlatformDetector = ({ children }) => {
     syncTokenFromUrl();
     detectAndRedirect();
 
-    // =============================================
+    // ═════════════════════════════════════
     // LISTENER PARA RESIZE
-    // =============================================
+    // ═════════════════════════════════════
     let resizeTimeout;
     const handleResize = () => {
       clearTimeout(resizeTimeout);
@@ -261,9 +270,9 @@ const SmartPlatformDetector = ({ children }) => {
     };
   }, [location.pathname, location.search, location.hash, navigate]);
 
-  // =============================================
+  // ═════════════════════════════════════
   // PANTALLA DE REDIRECCIÓN
-  // =============================================
+  // ═════════════════════════════════════
   if (isRedirecting) {
     return (
       <div className="smart-platform-detector">
@@ -282,9 +291,9 @@ const SmartPlatformDetector = ({ children }) => {
     );
   }
 
-  // =============================================
+  // ═════════════════════════════════════
   // APLICAR CLASE CSS SEGÚN DISPOSITIVO
-  // =============================================
+  // ═════════════════════════════════════
   useEffect(() => {
     if (deviceInfo) {
       const appContainer = document.querySelector('.app');

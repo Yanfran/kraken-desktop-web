@@ -1,9 +1,9 @@
-// src/pages/dashboard/Home/Home.jsx - INTEGRACIÓN DE DIRECCIÓN
+// src/pages/dashboard/Home/Home.jsx - CON FUNCIONALIDAD DE CARGA DE FACTURA
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import NewsCarousel from '../../components/NewsCarousel/NewsCarousel';
-import { getLastShipment } from '../../services/guiasService';
+import { getLastShipment, uploadGuiaInvoice } from '../../services/guiasService';
 import { getPreAlertasPendientes, deletePreAlerta } from '../../services/preAlertService';
 import { getNovedades } from '../../services/novedadesService';
 import { useAddresses } from '@hooks/useAddresses'; 
@@ -23,7 +23,8 @@ import {
   IoTrashOutline,
   IoCardOutline,
   IoStorefrontOutline,
-  IoHomeOutline
+  IoHomeOutline,
+  IoDocumentTextOutline
 } from 'react-icons/io5';
 
 const Home = ({ onNavigateToShipments }) => {
@@ -37,18 +38,19 @@ const Home = ({ onNavigateToShipments }) => {
 
   // Debug: ver qué está pasando
   useEffect(() => {
-    console.log('📍 Address state:', {
-      defaultAddressText,
-      isLoadingAddress,
-      addressError
-    });
+    // console.log('📍 Address state:', {
+    //   defaultAddressText,
+    //   isLoadingAddress,
+    //   addressError
+    // });
   }, [defaultAddressText, isLoadingAddress, addressError]);
   
   // Loading states
   const [loading, setLoading] = useState({
     lastShipment: true,
     preAlerts: true,
-    news: true
+    news: true,
+    uploadingInvoice: false // 🆕 ESTADO PARA CARGA DE FACTURA
   });
 
   // Data states
@@ -67,10 +69,12 @@ const Home = ({ onNavigateToShipments }) => {
     news: null
   });
 
+  // 🆕 REF PARA INPUT DE ARCHIVO (INVISIBLE)
+  const fileInputRef = useRef(null);
+
   /**
-   * ✅ NUEVA: Formatear dirección desde el backend
+   * ✅ FUNCIÓN AUXILIAR: Formatear dirección
    */
-  // ✅ MEMOIZAR funciones auxiliares para evitar recrearlas
   const formatAddress = useCallback((direccion) => {
     if (!direccion) return 'Sin dirección';
     
@@ -94,7 +98,7 @@ const Home = ({ onNavigateToShipments }) => {
   }, []);
 
   /**
-   * ✅ NUEVA: Acortar texto para que no se salga del diseño
+   * ✅ FUNCIÓN AUXILIAR: Acortar texto
    */
   const truncateText = useCallback((text, maxLength = 40) => {
     if (!text || text.length <= maxLength) return text;
@@ -102,9 +106,156 @@ const Home = ({ onNavigateToShipments }) => {
   }, []);
 
   /**
-   * ✅ ACTUALIZADO: Cargar pre-alertas con dirección
+   * 🆕 FUNCIÓN: Verificar si la guía necesita factura
    */
-  // ✅ OPTIMIZAR: Agregar useCallback a TODAS las funciones de carga
+  const necesitaFactura = useCallback((shipment) => {
+    if (!shipment) return false;
+    
+    const estatus = shipment.status?.toLowerCase();
+    const idEstatusActual = shipment.idEstatusActual || 0;
+    
+    return (
+      estatus === 'pendiente de factura' || 
+      idEstatusActual === 3
+    );
+  }, []);
+
+  /**
+ * 🆕 FUNCIÓN: Verificar si se puede pagar
+ * ✅ CORREGIDO: Acceso seguro a calculationData
+ */
+  const sePuedePagar = useCallback((shipment) => {
+    if (!shipment) {
+      // console.log('❌ No hay shipment');
+      return false;
+    }
+    
+    // console.log('🔍 Evaluando sePuedePagar:', {
+    //   id: shipment.id,
+    //   trackingNumber: shipment.trackingNumber,
+    //   calculationData: shipment.calculationData
+    // });
+    
+    // ✅ ACCESO SEGURO con optional chaining
+    const tienePago = shipment.calculationData?.detallePago || false;
+    
+    if (tienePago) {
+      // console.log('❌ Ya tiene pago registrado');
+      return false;
+    }
+    
+    // ✅ Obtener valores desde calculationData (donde están los datos reales)
+    const fob = shipment.calculationData?.valorFOB || 0;
+    const idEstatusActual = shipment.calculationData?.idEstatus || 0;
+    
+    // console.log('💰 Valores para validación:', {
+    //   fob,
+    //   idEstatusActual,
+    //   tienePago
+    // });
+    
+    // Lógica de validación según FOB
+    let puedePagar = false;
+    
+    if (fob < 100) {
+      puedePagar = idEstatusActual >= 2;
+      // console.log(`📦 FOB < 100: ${puedePagar ? '✅ SÍ puede' : '❌ NO puede'} (requiere >= 2, actual: ${idEstatusActual})`);
+    } else {
+      puedePagar = idEstatusActual >= 8;
+      // console.log(`📦 FOB >= 100: ${puedePagar ? '✅ SÍ puede' : '❌ NO puede'} (requiere >= 8, actual: ${idEstatusActual})`);
+    }
+    
+    return puedePagar;
+  }, []);
+
+  /**
+   * 🆕 FUNCIÓN: Manejar carga de factura
+   */
+  const handleCargarFactura = useCallback(async (shipment) => {
+    if (!shipment) {
+      alert('No se puede cargar factura sin seleccionar una guía');
+      return;
+    }
+
+    // console.log('📄 Iniciando carga de factura para guía:', shipment.id);
+    
+    // Cerrar el menú
+    setVisibleMenus({});
+    
+    // Simular click en el input de archivo
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
+
+  /**
+   * 🆕 FUNCIÓN: Procesar archivo seleccionado
+   */
+  const handleFileChange = useCallback(async (event) => {
+    const file = event.target.files?.[0];
+    
+    if (!file) {
+      // console.log('📄 Usuario canceló la selección de archivo');
+      return;
+    }
+
+    if (!lastShipment) {
+      alert('No hay guía seleccionada');
+      event.target.value = ''; // Limpiar input
+      return;
+    }
+
+    // console.log('📄 Archivo seleccionado:', {
+    //   name: file.name,
+    //   size: file.size,
+    //   type: file.type
+    // });
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('El archivo es muy grande. El tamaño máximo es 5MB');
+      event.target.value = ''; // Limpiar input
+      return;
+    }
+
+    // Validar tipo de archivo
+    const isValidType = file.type.includes('pdf') || 
+                       file.type.includes('image') ||
+                       /\.(pdf|jpg|jpeg|png|gif)$/i.test(file.name);
+
+    if (!isValidType) {
+      alert('Tipo de archivo no válido. Solo se permiten archivos PDF o imágenes (JPG, PNG, GIF)');
+      event.target.value = ''; // Limpiar input
+      return;
+    }
+
+    // Iniciar carga
+    setLoading(prev => ({ ...prev, uploadingInvoice: true }));
+
+    try {
+      // console.log('📤 Subiendo factura al servidor...');
+      const uploadResult = await uploadGuiaInvoice(lastShipment.id, file);
+      
+      if (uploadResult.success) {
+        alert(`✅ Factura cargada exitosamente\n\nLa factura "${file.name}" se ha cargado correctamente para la guía ${lastShipment.trackingNumber}`);
+        
+        // Recargar datos
+        await loadLastShipment();
+      } else {
+        alert(`❌ Error al cargar factura\n\n${uploadResult.message || 'No se pudo cargar la factura. Inténtalo nuevamente.'}`);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando factura:', error);
+      alert('❌ Error al cargar factura\n\nNo se pudo cargar la factura. Inténtalo nuevamente.');
+    } finally {
+      setLoading(prev => ({ ...prev, uploadingInvoice: false }));
+      event.target.value = ''; // Limpiar input para permitir seleccionar el mismo archivo de nuevo
+    }
+  }, [lastShipment]);
+
+  /**
+   * Cargar pre-alertas
+   */
   const loadPreAlerts = useCallback(async () => {
     try {
       setLoading(prev => ({ ...prev, preAlerts: true }));
@@ -126,7 +277,7 @@ const Home = ({ onNavigateToShipments }) => {
           contenido: alert.contenido || 'Sin descripción'
         }));
         
-        console.log('Formatted pre-alerts:', formattedPreAlerts);
+        // console.log('Formatted pre-alerts:', formattedPreAlerts);
 
         setPreAlerts(formattedPreAlerts);
       } else {
@@ -144,10 +295,10 @@ const Home = ({ onNavigateToShipments }) => {
     } finally {
       setLoading(prev => ({ ...prev, preAlerts: false }));
     }
-  }, [formatAddress]); // ✅ Agregar dependencia
+  }, [formatAddress]);
 
   /**
-   * Load last shipment from API
+   * Cargar último envío
    */
   const loadLastShipment = useCallback(async () => {
     try {
@@ -155,10 +306,11 @@ const Home = ({ onNavigateToShipments }) => {
       setErrors(prev => ({ ...prev, lastShipment: null }));
       
       const response = await getLastShipment();
-      console.log('Last shipment response:', response);
+      // console.log('Last shipment response:', response);
       
       if (response.success && response.data) {
         setLastShipment(response.data);
+        // console.log('Último envío cargado:', response.data);
       } else {
         setErrors(prev => ({ 
           ...prev, 
@@ -174,10 +326,10 @@ const Home = ({ onNavigateToShipments }) => {
     } finally {
       setLoading(prev => ({ ...prev, lastShipment: false }));
     }
-  }, []); // ✅ Sin dependencias externas
+  }, []);
 
   /**
-   * Load news/novedades from API
+   * Cargar novedades
    */
   const loadNews = useCallback(async () => {
     try {
@@ -208,21 +360,22 @@ const Home = ({ onNavigateToShipments }) => {
     } finally {
       setLoading(prev => ({ ...prev, news: false }));
     }
-  }, []); // ✅ Sin dependencias externas
+  }, []);
 
-
-  // ✅ CARGAR TODO SOLO UNA VEZ cuando hay usuario
+  /**
+   * Cargar todo al inicio
+   */
   useEffect(() => {
     if (user) {
-      console.log('👤 User detected, loading data...');
+      // console.log('👤 User detected, loading data...');
       loadLastShipment();
       loadPreAlerts();
       loadNews();
     }
-  }, [user]); 
+  }, [user, loadLastShipment, loadPreAlerts, loadNews]);
 
   /**
-   * Close menu when clicking outside
+   * Cerrar menú al hacer click fuera
    */
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -249,43 +402,45 @@ const Home = ({ onNavigateToShipments }) => {
   };
 
   /**
-   * Menu handlers for last shipment
+   * Menu handlers para último envío
    */
   const handleViewDetailShipment = (shipment) => {
-    console.log('Ver detalle shipment:', shipment);
+    // console.log('Ver detalle shipment:', shipment);
     setVisibleMenus({});
     navigate(`/guide/detail/${shipment.id}`);
   };
 
   const handlePayShipment = (shipment) => {
-    console.log('Pagar shipment:', shipment);
+    // console.log('Pagar shipment:', shipment);
     setVisibleMenus({});
     navigate(`/payment/${shipment.id}`);
   };
 
   const handleHelpShipment = (shipment) => {
-    console.log('Ayuda shipment:', shipment);
+    // console.log('Ayuda shipment:', shipment);
     setVisibleMenus({});
+    alert('Para obtener ayuda, contacta nuestro soporte');
   };
 
   /**
-   * Menu handlers for pre-alerts
+   * Menu handlers para pre-alertas
    */
   const handleViewDetail = (alert) => {
-    console.log('Ver detalle:', alert);
+    // console.log('Ver detalle:', alert);
     setVisibleMenus({});
     navigate(`/pre-alert/${alert.id}`);
   };
 
   const handleEdit = (alert) => {
-    console.log('Editar:', alert);
+    // console.log('Editar:', alert);
     setVisibleMenus({});
     navigate(`/pre-alert/edit/${alert.id}`);
   };
 
   const handleHelp = (alert) => {
-    console.log('Ayuda:', alert);
+    // console.log('Ayuda:', alert);
     setVisibleMenus({});
+    alert('Para obtener ayuda, contacta nuestro soporte');
   };
 
   const handleDelete = async (alert) => {
@@ -306,7 +461,7 @@ const Home = ({ onNavigateToShipments }) => {
   };
 
   /**
-   * Get origin flag emoji
+   * Obtener bandera del país de origen
    */
   const getOriginFlag = (origin) => {
     const flags = {
@@ -319,11 +474,12 @@ const Home = ({ onNavigateToShipments }) => {
   };
 
   /**
-   * Get status badge class
+   * Obtener clase CSS según estatus
    */
   const getStatusClass = (status) => {
     const statusMap = {
       'Pendiente de Pago': 'pending',
+      'Pendiente de Factura': 'pending', // 🆕 AGREGAR ESTE
       'Recibido en Almacén': 'received',
       'Enviado a Venezuela': 'in-transit',
       'Disponible para entrega': 'ready',
@@ -332,8 +488,38 @@ const Home = ({ onNavigateToShipments }) => {
     return statusMap[status] || 'pending';
   };
 
+
+  const formatBolivarFromShipment = (shipment) => {
+    if (!shipment) return '0,00 Bs.';
+    const df = shipment.calculationData?.detalleFactura || {};
+    const tasa = shipment.calculationData?.tasaCambio || shipment.tasaCambio || 0;
+
+    let value = 0;
+    if (typeof df.precioBase === 'number') {
+      value = df.precioBase;
+    } else if (typeof df.precioBaseUSD === 'number' && tasa) {
+      value = df.precioBaseUSD * tasa;
+    } else if (typeof shipment.valorFOB === 'number' && tasa) {
+      value = shipment.valorFOB * tasa;
+    }
+
+    return Number(value || 0).toLocaleString('es-VE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }) + ' Bs.';
+  };
+
   return (
     <div className="dashboard-home">
+      {/* 🆕 INPUT DE ARCHIVO INVISIBLE */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png,.gif,image/*,application/pdf"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+
       {/* Dirección de entrega */}
       <div className="delivery-address">
         <span className="delivery-address__label">Tu dirección de entrega</span>
@@ -385,16 +571,14 @@ const Home = ({ onNavigateToShipments }) => {
               <div className="last-shipment-card__cell">
                 <span className="last-shipment-card__label">Estatus</span>
                 <div className="last-shipment-card__value">
-                  <span className={`last-shipment-card__badge ${getStatusClass(lastShipment.status)}`}>
-                    {lastShipment.status}
-                  </span>
+                  {lastShipment.status}
                   <span className="last-shipment-card__date">{lastShipment.date}</span>
                 </div>
               </div>
 
               <div className="last-shipment-card__cell">
                 <span className="last-shipment-card__label">Costo del envío</span>
-                <span className="last-shipment-card__price">{lastShipment.cost}</span>
+                <span className="last-shipment-card__price">{formatBolivarFromShipment(lastShipment)}</span>
               </div>
 
               <div className="last-shipment-card__menu" ref={el => menuRefs.current['lastShipment'] = el}>
@@ -402,21 +586,56 @@ const Home = ({ onNavigateToShipments }) => {
                   className="last-shipment-card__menu-button"
                   onClick={() => toggleMenu('lastShipment')}
                   aria-label="Más opciones"
+                  disabled={loading.uploadingInvoice}
                 >
                   ⋮
                 </button>
 
                 {visibleMenus['lastShipment'] && (
                   <div className="menu-dropdown">
-                    <button onClick={() => handleViewDetailShipment(lastShipment)} className="menu-dropdown__item">
+                    {/* Ver detalle */}
+                    <button 
+                      onClick={() => handleViewDetailShipment(lastShipment)} 
+                      className="menu-dropdown__item"
+                    >
                       <span className="menu-dropdown__icon"><IoEyeOutline size={18}/></span>
                       Ver detalle
                     </button>
-                    <button onClick={() => handlePayShipment(lastShipment)} className="menu-dropdown__item">
-                      <span className="menu-dropdown__icon"><IoCardOutline size={18}/></span>
-                      Pagar
-                    </button>
-                    <button onClick={() => handleHelpShipment(lastShipment)} className="menu-dropdown__item">
+
+                    {/* 🆕 OPCIÓN: Cargar Factura (solo si necesita factura) */}
+                    {necesitaFactura(lastShipment) && (
+                      <button 
+                        onClick={() => handleCargarFactura(lastShipment)} 
+                        className="menu-dropdown__item"
+                        disabled={loading.uploadingInvoice}
+                      >
+                        <span className="menu-dropdown__icon">
+                          {loading.uploadingInvoice ? (
+                            <div className="spinner-small"></div>
+                          ) : (
+                            <IoDocumentTextOutline size={18} style={{ color: '#f59e0b' }}/>
+                          )}
+                        </span>
+                        {loading.uploadingInvoice ? 'Cargando...' : 'Cargar Factura'}
+                      </button>
+                    )}
+
+                    {/* Pagar (solo si se puede pagar) */}
+                    {sePuedePagar(lastShipment) && (
+                      <button 
+                        onClick={() => handlePayShipment(lastShipment)} 
+                        className="menu-dropdown__item menu-dropdown__item--pagar"
+                      >
+                        <span className="menu-dropdown__icon"><IoCardOutline size={18}/></span>
+                        Pagar
+                      </button>
+                    )}
+
+                    {/* Ayuda */}
+                    <button 
+                      onClick={() => handleHelpShipment(lastShipment)} 
+                      className="menu-dropdown__item"
+                    >
                       <span className="menu-dropdown__icon"><IoHelpOutline size={18}/></span>
                       Ayuda
                     </button>
@@ -426,7 +645,6 @@ const Home = ({ onNavigateToShipments }) => {
 
               {!lastShipment.prealerted && lastShipment.discount && (
                 <div className="last-shipment-card__alert">
-                  {/* <span className="alert-icon">🚫</span> */}
                   <span className="alert-text">No pre-alertado</span>
                   <span className="alert-discount">Perdiste {lastShipment.discount}</span>
                   <button className="alert-link" onClick={() => navigate('/guide/guides')}>
@@ -438,7 +656,6 @@ const Home = ({ onNavigateToShipments }) => {
           </>
         ) : (
           <div className="last-shipment-card__empty">
-            {/* <span className="empty-icon">📦</span> */}
             <p>No tienes envíos registrados</p>
           </div>
         )}
@@ -477,12 +694,10 @@ const Home = ({ onNavigateToShipments }) => {
                     <span className="pre-alert-row__date">{alert.date}</span>
                   </div>
 
-                  {/* ✅ COLUMNA DE DIRECCIÓN ACTUALIZADA */}
                   <div 
                     className="pre-alert-row__delivery"
-                    title={alert.deliveryLocation} // Tooltip con texto completo
+                    title={alert.deliveryLocation}
                   >
-                    {/* Icono según tipo */}
                     <span className="pre-alert-row__delivery-icon">
                       {alert.direccion?.tipo === 'store' || alert.direccion?.idLocker ? (
                         <IoStorefrontOutline size={16} />
@@ -491,7 +706,6 @@ const Home = ({ onNavigateToShipments }) => {
                       )}
                     </span>
                     
-                    {/* Texto truncado de la dirección */}
                     <span className="pre-alert-row__delivery-text">
                       {truncateText(alert.deliveryLocation)}
                     </span>
@@ -539,7 +753,6 @@ const Home = ({ onNavigateToShipments }) => {
           </>
         ) : (
           <div className="pre-alerts-card__empty">
-            {/* <span className="empty-icon">📋</span> */}
             <p>No tienes pre-alertas pendientes</p>
           </div>
         )}

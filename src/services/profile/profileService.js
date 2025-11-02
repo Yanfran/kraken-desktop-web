@@ -314,6 +314,18 @@ export const documentTypeToId = (type) => {
   return typeMap[type] || 1;
 };
 
+
+export async function resetPasswordProfile(email, newPassword) {
+  const response = await fetchWithLang(`${API_URL}/Users/reset-password-profile`, {
+    method: 'POST',
+    body: JSON.stringify({ email, newPassword }),
+  });
+
+  const data = await response.json();
+  
+  return data;
+}
+
 export default {
   updateProfile,
   getProfile,
@@ -323,5 +335,6 @@ export default {
   validatePhone,
   validateName,
   detectDocumentTypeFromId,
-  documentTypeToId
+  documentTypeToId,
+  resetPasswordProfile
 };

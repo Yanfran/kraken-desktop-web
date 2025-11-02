@@ -34,13 +34,13 @@ const PreAlertDetail = () => {
     if (!id) return;
 
     try {
-      console.log('📥 Cargando pre-alerta ID:', id);
+      // console.log('📥 Cargando pre-alerta ID:', id);
       const response = await getPreAlertaById(Number(id));
       
       if (response.success) {
         setPreAlerta(response.data);
         setError('');
-        console.log('✅ Pre-alerta cargada:', response.data);
+        // console.log('✅ Pre-alerta cargada:', response.data);
       } else {
         setError(response.message || 'Error al cargar pre-alerta');
         toast.error(response.message || 'Error al cargar pre-alerta');

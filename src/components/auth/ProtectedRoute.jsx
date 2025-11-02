@@ -25,7 +25,7 @@ export const ProtectedRoute = ({ children }) => {
     return <Navigate to="/complete-profile" replace />;
   }
 
-  console.log('✅ [ProtectedRoute] Acceso permitido');
+  // console.log('✅ [ProtectedRoute] Acceso permitido');
   return children;
 };
 

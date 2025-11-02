@@ -55,7 +55,7 @@ const requestInterceptor = (config) => {
   }
   
   // Log para debugging
-  console.log(`🌐 ${config.method?.toUpperCase()} ${config.url}`);
+  // console.log(`🌐 ${config.method?.toUpperCase()} ${config.url}`);
   
   return config;
 };
@@ -64,7 +64,7 @@ const requestInterceptor = (config) => {
 // INTERCEPTOR DE RESPONSE (manejo de errores)
 // ============================================================
 const responseInterceptor = (response) => {
-  console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+  // console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
   return response;
 };
 
@@ -74,7 +74,7 @@ const responseInterceptor = (response) => {
 const errorInterceptor = (error) => {
   // 1. Error de timeout
   if (error.code === 'ECONNABORTED') {
-    console.error('⏱️ TIMEOUT:', error.config?.url);
+    // console.error('⏱️ TIMEOUT:', error.config?.url);
     
     // Crear error personalizado con información útil
     const customError = new Error('La operación tardó demasiado. Por favor, intenta nuevamente.');
@@ -87,7 +87,7 @@ const errorInterceptor = (error) => {
   
   // 2. Error de red (sin conexión)
   if (error.code === 'ECONNREFUSED' || error.code === 'ENETUNREACH') {
-    console.error('🌐 ERROR DE RED:', error.message);
+    // console.error('🌐 ERROR DE RED:', error.message);
     
     const customError = new Error('No se pudo conectar con el servidor. Verifica tu conexión a internet.');
     customError.code = 'NETWORK_ERROR';
@@ -100,8 +100,8 @@ const errorInterceptor = (error) => {
   if (error.response) {
     const { status, data } = error.response;
     
-    console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${status}`);
-    console.error('Respuesta:', data);
+    // console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${status}`);
+    // console.error('Respuesta:', data);
     
     // Crear error personalizado con información del servidor
     const customError = new Error(data?.message || `Error del servidor: ${status}`);

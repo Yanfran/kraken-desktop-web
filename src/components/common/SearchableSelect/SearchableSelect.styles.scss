@@ -1,7 +1,8 @@
 // src/components/common/SearchableSelect/SearchableSelect.styles.scss
 .searchable-select {
   position: relative;
-  width: 100%;
+  z-index: 1000; // ✅ Base z-index
+  // width: 100%;
 
   // Campo principal
   &__field {
@@ -108,7 +109,7 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     max-height: 280px;
     overflow: hidden;
-    z-index: 1000;
+    z-index: 99999 !important; // ✅ MÁXIMA PRIORIDAD
     animation: slideDown 0.2s ease-out;
 
     [data-theme="dark"] & {

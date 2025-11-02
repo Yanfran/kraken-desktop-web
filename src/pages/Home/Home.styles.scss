@@ -446,6 +446,10 @@
   color: #374151;
   font-weight: 400;
   transition: background-color 0.2s ease;
+
+  &--pagar {
+    color: #ff6b35;
+  }
   
   &:hover {
     background: #F3F4F6;
@@ -459,6 +463,10 @@
     }
   }
 }
+
+// .menu-dropdown__item.menu-dropdown__item--pagar {
+//   color: #ff6b35;
+// }
 
 .menu-dropdown__icon {
   margin-top: 10px;
@@ -600,4 +608,69 @@
     top: 0;
     right: 0;
   }
+}
+
+
+
+
+/* src/pages/dashboard/Home/Home.styles.scss - ESTILOS ADICIONALES PARA CARGA DE FACTURA */
+
+/* 🆕 Spinner pequeño para el botón de carga */
+.spinner-small {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #f3f4f6;
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 🆕 Estilos para el menú dropdown cuando está cargando */
+.last-shipment-card__menu-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-dropdown__item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  
+  &:hover {
+    background-color: transparent;
+  }
+}
+
+/* 🆕 Estilo especial para el item "Cargar Factura" */
+.menu-dropdown__item--upload {
+  color: #f59e0b;
+  
+  .menu-dropdown__icon {
+    color: #f59e0b;
+  }
+  
+  &:hover:not(:disabled) {
+    background-color: #fef3c7;
+  }
+}
+
+/* Mejorar el estilo del badge cuando está en "Pendiente de Factura" */
+.last-shipment-card__badge.pending {
+  background-color: #fef3c7;
+  color: #f59e0b;
+  border: 1px solid #fbbf24;
+}
+
+/* Asegurar que el spinner no rompa el layout */
+.menu-dropdown__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  min-height: 18px;
 }

@@ -218,7 +218,7 @@
     justify-content: space-between;
     padding: 12px 16px;
     border: 1px solid var(--color-border, #D0D0D0);
-    border-radius: 8px;
+    border-radius: 25px;
     background-color: var(--color-background, #FFFFFF);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -264,11 +264,22 @@
   }
 
   &__actions {
-    margin-top: 32px;
+    // margin-top: 32px;
+    // display: flex;
+    // justify-content: center;
+    // padding-top: 24px;
+    // border-top: 1px solid var(--color-separator, #EEEEEE);
+
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
     display: flex;
-    justify-content: center;
-    padding-top: 24px;
-    border-top: 1px solid var(--color-separator, #EEEEEE);
+    justify-content: flex-end;
+    gap: 1rem;
+
+    button {
+      min-width: 200px;
+    }
   }
 
   &__save-btn {
@@ -277,8 +288,9 @@
     justify-content: center;
     gap: 8px;
     padding: 14px 48px;
-    background-color: var(--color-primary, #FF4500);
-    color: white;
+    // background-color: var(--color-primary, #FF4500);
+    border: 2px solid var(--color-primary, #FF4500);
+    color: black;
     border: none;
     border-radius: 25px;
     font-size: 16px;

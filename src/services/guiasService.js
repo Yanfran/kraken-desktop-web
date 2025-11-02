@@ -73,7 +73,7 @@ export const getGuiaById = async (id) => {
  */
 export const calculateSingleGuiaPrice = async (guiaId) => {
   try {
-    console.log('💰 Calculando precio para guía:', guiaId);
+    // console.log('💰 Calculando precio para guía:', guiaId);
     const response = await axiosInstance.get(`/Guias/getGuiaDetail/${guiaId}`);
     
     return {
@@ -99,7 +99,7 @@ export const calculateSingleGuiaPrice = async (guiaId) => {
 export const getLastShipment = async () => {
   try {
     const response = await getGuias();
-    console.log('Fetched guias for last shipment:', response);
+    // console.log('Fetched guias for last shipment:', response);
     
     if (response.success && response.data && response.data.length > 0) {
       const sortedGuias = response.data.sort((a, b) => 
@@ -107,7 +107,7 @@ export const getLastShipment = async () => {
       );
       const lastGuia = sortedGuias[0];
       
-      console.log('📦 Last guia data:', lastGuia);
+      // console.log('📦 Last guia data:', lastGuia);
       
       // ✅ Extraer solo el string 'contenido' del primer objeto
       const primerContenido = Array.isArray(lastGuia.contenidos) && lastGuia.contenidos.length > 0
@@ -127,9 +127,9 @@ export const getLastShipment = async () => {
           costoEnvio = `$${parseFloat(precioOficina).toFixed(2)}`;
           costoCalculado = calculationResponse.data; // Guardar datos completos por si se necesitan
           
-          console.log('💵 Precio calculado:', costoEnvio);
+          // console.log('💵 Precio calculado:', costoEnvio);
         } else {
-          console.warn('⚠️ No se pudo calcular el precio, usando valor por defecto');
+          // console.warn('⚠️ No se pudo calcular el precio, usando valor por defecto');
           // Fallback al valorFOB si falla el cálculo
           costoEnvio = lastGuia.valorFOB 
             ? `$${parseFloat(lastGuia.valorFOB).toFixed(2)}` 
@@ -292,43 +292,101 @@ export const downloadAllInvoices = async (guiaId) => {
 };
 
 /**
- * Upload invoice for a specific guia
+ * ✅ CORREGIDO: Upload invoice for a specific guia (igual que pre-alertas)
  * @param {number} guiaId - Guia ID
  * @param {File} file - Invoice file to upload
  * @returns {Promise<ApiResponse>}
  */
 export const uploadGuiaInvoice = async (guiaId, file) => {
   try {
-    // Convert file to base64
+    // console.log('📤 uploadGuiaInvoice called with:', {
+    //   guiaId,
+    //   fileName: file.name,
+    //   fileSize: file.size,
+    //   fileType: file.type
+    // });
+
+    // ✅ CONVERTIR archivo a Base64 CON prefijo (igual que pre-alertas)
     const base64Data = await new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
+      
+      reader.onload = () => {
+        const result = reader.result;
+        
+        if (!result || typeof result !== 'string') {
+          reject(new Error('Error al leer el archivo'));
+          return;
+        }
+        
+        if (result.length < 50) {
+          reject(new Error('Archivo demasiado pequeño o corrupto'));
+          return;
+        }
+        
+        // console.log(`✅ Archivo convertido a Base64: ${file.name} (${result.length} chars)`);
+        // console.log(`📋 Preview: ${result.substring(0, 50)}...`);
+        
+        // ✅ RETORNAR CON PREFIJO COMPLETO "data:image/png;base64,..."
+        resolve(result);
+      };
+      
+      reader.onerror = (error) => {
+        console.error('❌ Error en FileReader:', error);
+        reject(error);
+      };
+      
+      // ✅ readAsDataURL automáticamente incluye el prefijo
       reader.readAsDataURL(file);
     });
 
+    // ✅ VALIDAR que el base64 sea válido
+    if (!base64Data || base64Data.length < 50) {
+      throw new Error('Base64 resultante inválido o vacío');
+    }
+
+    if (!base64Data.startsWith('data:')) {
+      throw new Error('Base64 sin prefijo data:');
+    }
+
+    // ✅ PREPARAR PAYLOAD IGUAL QUE EN PRE-ALERTAS
     const payload = {
       guiaId: guiaId,
       facturas: [{
         nombre: file.name,
-        uri: `data:${file.type};base64,${base64Data}`,
-        tipo: file.type,
+        uri: base64Data,  // ✅ CON prefijo "data:application/pdf;base64,..."
+        tipo: file.type || 'application/octet-stream',
         tamaño: file.size
       }]
     };
 
+    // console.log('📤 Sending payload to /Guias/uploadInvoice:', {
+    //   guiaId: payload.guiaId,
+    //   facturas: payload.facturas.map(f => ({
+    //     nombre: f.nombre,
+    //     tipo: f.tipo,
+    //     tamaño: f.tamaño,
+    //     uriLength: f.uri.length,
+    //     uriPreview: f.uri.substring(0, 50) + '...'
+    //   }))
+    // });
+
+    // ✅ ENVIAR AL BACKEND
     const response = await axiosInstance.post('/Guias/uploadInvoice', payload);
+    
+    // console.log('✅ Server response:', response.data);
     
     return {
       success: true,
       data: response.data.data || response.data,
-      message: 'Factura subida exitosamente'
+      message: response.data.message || 'Factura subida exitosamente'
     };
   } catch (error) {
-    console.error('Error uploading invoice:', error);
+    console.error('❌ Error uploading invoice:', error);
+    console.error('❌ Error response:', error.response?.data);
+    
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al subir factura',
+      message: error.response?.data?.message || error.message || 'Error al subir factura',
       errors: error.response?.data?.errors || [error.message],
       data: null
     };

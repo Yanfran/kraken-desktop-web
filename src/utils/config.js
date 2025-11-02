@@ -1,20 +1,49 @@
-// src/utils/config.js - CONFIGURACIÓN CON SWITCH MANUAL
+// src/utils/config.js - CONFIGURACIÓN CENTRALIZADA WEB
+// 🎯 Cambia este valor para alternar entre desarrollo y producción
 
-// 🎯 SWITCH MANUAL: Cambia este valor para alternar entre desarrollo y producción
-const USE_PRODUCTION = false; // 👈 Cambia a true para producción
+const USE_PRODUCTION = false; // 👈 true para producción, false para desarrollo
 
-// ===== FUNCIÓN PARA OBTENER API_URL =====
+// ═══════════════════════════════════════
+// 📡 URLs DEL BACKEND API
+// ═══════════════════════════════════════
 const getApiUrl = () => {
   if (USE_PRODUCTION) {
-    return 'https://api.krakencourier.com/api'; // ✅ Producción (HTTPS)
+    return 'https://api.krakencourier.com/api'; // ✅ Producción
   }
   
   // Desarrollo - Backend local
   return 'http://localhost:7031/api';
 };
 
-// ===== EXPORTS =====
+// ═══════════════════════════════════════
+// 🌐 URLs DE LAS APLICACIONES
+// ═══════════════════════════════════════
+const getAppUrls = () => {
+  if (USE_PRODUCTION) {
+    return {
+      WEB: 'https://app.krakencourier.com',      // ✅ App Web en producción
+      MOBILE: 'https://m.krakencourier.com',     // ✅ App Móvil en producción
+      API: 'https://api.krakencourier.com/api',  // ✅ API en producción
+    };
+  }
+  
+  // Desarrollo - URLs locales
+  return {
+    WEB: 'http://localhost:3000',     // Web local (puerto 3000)
+    MOBILE: 'http://localhost:8081',  // Mobile local (puerto 8081)
+    API: 'http://localhost:7031/api', // Backend local
+  };
+};
+
+// ═══════════════════════════════════════
+// 📤 EXPORTS PRINCIPALES
+// ═══════════════════════════════════════
 export const API_URL = getApiUrl();
+export const APP_URLS = getAppUrls();
+
+// Para compatibilidad con código existente
+export const WEB_URL = APP_URLS.WEB;
+export const MOBILE_URL = APP_URLS.MOBILE;
 
 export const API_CONFIG = {
   BASE_URL: API_URL,
@@ -22,7 +51,7 @@ export const API_CONFIG = {
   
   // ✅ ENDPOINTS REALES DE TU BACKEND
   ENDPOINTS: {
-    // Auth - EXACTOS DE TU BACKEND
+    // Auth
     AUTH: {
       LOGIN: '/Users/login',
       REGISTER: '/Users/register',
@@ -40,12 +69,17 @@ export const API_CONFIG = {
       RATES: '/calculator/rates',
     },
     
-    // Address - BASADO EN TU addressService
+    // Address
     ADDRESS: {
       LIST: '/Casilleros/list',
+      USER_ADDRESSES: '/Addresses/user-addresses',
+      STATES: (countryId) => `/Addresses/states/${countryId}`,
+      MUNICIPALITIES: (stateId) => `/Addresses/municipalities/${stateId}`,
+      PARISHES: (municipalityId) => `/Addresses/parishes/${municipalityId}`,
+      DELIVERY_DATA: '/Addresses/delivery-data',
     },
     
-    // Pre-alerts - BASADO EN TU preAlertService
+    // Pre-alerts
     PRE_ALERTS: {
       GET_ALL: (userId) => `/PostPreAlert/getPreAlertas/${userId}`,
       GET_PENDING: '/PostPreAlert/getPreAlertasPendientes',
@@ -54,17 +88,17 @@ export const API_CONFIG = {
       DELETE: (id) => `/PostPreAlert/delete/${id}`,
     },
     
-    // Packages - BASADO EN TU packegeContentService
+    // Packages
     PACKAGES: {
       CONTENTS: '/PaqueteContenidos/getContent',
     },
     
-    // Novedades - BASADO EN TU novedadesService
+    // Novedades
     NEWS: {
       LIST: '/Novedades/list',
     },
     
-    // Guides - BASADO EN TU guiasService
+    // Guides
     GUIDES: {
       LIST: '/guias',
       DETAIL: (id) => `/guias/${id}`,
@@ -74,7 +108,7 @@ export const API_CONFIG = {
       DOWNLOAD_ALL: (id) => `/guias/${id}/invoices/download-all`,
     },
     
-    // Payment - BASADO EN TU PaymentController
+    // Payment
     PAYMENT: {
       MERCANTIL_AUTH: '/payment/mercantil/auth',
       MERCANTIL_PAY: '/payment/mercantil/card/pay',
@@ -96,7 +130,7 @@ export const GOOGLE_CONFIG = {
 };
 
 export const APP_CONFIG = {
-  NAME: USE_PRODUCTION ? 'Kraken Courier' : 'Kraken Desktop (Dev)',
+  NAME: USE_PRODUCTION ? 'Kraken Courier' : 'Kraken Web (Dev)',
   VERSION: '1.0.0',
   ENVIRONMENT: USE_PRODUCTION ? 'production' : 'development',
   
@@ -104,6 +138,7 @@ export const APP_CONFIG = {
   STORAGE: {
     TOKEN_KEY: 'authToken',
     USER_KEY: 'userData',
+    REFRESH_TOKEN_KEY: 'refreshToken',
     LANGUAGE_KEY: 'userLanguage',
     THEME_KEY: 'userTheme',
   },
@@ -130,10 +165,14 @@ export const APP_CONFIG = {
   }
 };
 
-// ===== FUNCIÓN PARA VERIFICAR CONFIGURACIÓN =====
+// ═══════════════════════════════════════
+// 🛠️ FUNCIONES ÚTILES
+// ═══════════════════════════════════════
 export const validateConfig = () => {
   const required = [
     { key: 'API_URL', value: API_URL },
+    { key: 'WEB_URL', value: WEB_URL },
+    { key: 'MOBILE_URL', value: MOBILE_URL },
   ];
   
   const missing = required.filter(({ value }) => !value);
@@ -145,8 +184,8 @@ export const validateConfig = () => {
   return missing.length === 0;
 };
 
-// ===== LOGGING =====
 export const isDevelopment = () => !USE_PRODUCTION;
+export const isProduction = () => USE_PRODUCTION;
 
 export const log = (...args) => {
   if (isDevelopment()) {
@@ -158,20 +197,26 @@ export const logError = (...args) => {
   console.error('❌ [Kraken Error]', ...args);
 };
 
-// ===== DEBUG INFO =====
-console.log('═══════════════════════════════════════');
-console.log('🚀 CONFIGURACIÓN DE KRAKEN WEB');
-console.log('═══════════════════════════════════════');
-console.log('🔗 API_URL:', API_URL);
-console.log('🎯 Modo:', USE_PRODUCTION ? '🟢 PRODUCCIÓN' : '🔵 DESARROLLO');
-console.log('📱 App Name:', APP_CONFIG.NAME);
-console.log('📦 Version:', APP_CONFIG.VERSION);
-console.log('═══════════════════════════════════════');
+// ═══════════════════════════════════════
+// 📊 DEBUG INFO (solo en desarrollo)
+// ═══════════════════════════════════════
+if (isDevelopment()) {
+  console.log('═══════════════════════════════════════');
+  console.log('🚀 CONFIGURACIÓN DE KRAKEN WEB');
+  console.log('═══════════════════════════════════════');
+  console.log('🔗 API_URL:', API_URL);
+  console.log('🌐 WEB_URL:', WEB_URL);
+  console.log('📱 MOBILE_URL:', MOBILE_URL);
+  console.log('🎯 Modo:', USE_PRODUCTION ? '🟢 PRODUCCIÓN' : '🔵 DESARROLLO');
+  console.log('📱 App Name:', APP_CONFIG.NAME);
+  console.log('📦 Version:', APP_CONFIG.VERSION);
+  console.log('═══════════════════════════════════════');
+  console.log('💡 TIP: Para cambiar a producción, modifica USE_PRODUCTION = true');
+}
 
-// ✅ VERIFICACIÓN ADICIONAL
-if (!USE_PRODUCTION) {
-  console.log('💡 TIP: Para cambiar a producción, modifica USE_PRODUCTION = true en src/utils/config.js');
-} else {
-  console.log('⚠️ ADVERTENCIA: Estás en modo PRODUCCIÓN');
-  console.log('📡 Conectando a:', API_URL);
+if (isProduction()) {
+  console.log('⚠️ ADVERTENCIA: Modo PRODUCCIÓN activo');
+  console.log('📡 API:', API_URL);
+  console.log('🌐 Web:', WEB_URL);
+  console.log('📱 Mobile:', MOBILE_URL);
 }

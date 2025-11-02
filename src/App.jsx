@@ -35,7 +35,7 @@ const PreAlertCreate = React.lazy(() => import('./pages/PreAlert/Create/PreAlert
 const PreAlertList = React.lazy(() => import('./pages/PreAlert/List/PreAlertList'));
 const PreAlertDetail = React.lazy(() => import('./pages/PreAlert/Detail/PreAlertDetail'));
 const PreAlertEdit = React.lazy(() => import('./pages/PreAlert/Edit/PreAlertEdit'));
-const Profile = React.lazy(() => import('./pages/profile/Profile/Profile'));
+// const Profile = React.lazy(() => import('./pages/profile/Profile/Profile'));
 const Billing = React.lazy(() => import('./pages/Billing/Billing'));
 const Security = React.lazy(() => import('./pages/Security/Security'));
 const Tracking = React.lazy(() => import('./pages/Tracking/Tracking'));
@@ -47,6 +47,7 @@ const PaymentPage = React.lazy(() => import('./pages/payment/PaymentPage'));
 // ✅ RUTAS DE PERFIL
 const PersonalDataProfile = React.lazy(() => import('./pages/profile/Profile/PersonalData/PersonalData'));
 const Addresses = React.lazy(() => import('./pages/profile/Profile/Addresses/Addresses'));
+const ChangePassword = React.lazy(() => import('./pages/profile/Profile/ChangePassword/ChangePassword'));
 
 // Hook simplificado para compatibilidad
 export { useAuth } from './contexts/AuthContext';
@@ -211,13 +212,22 @@ function App() {
              
 
               {/* Perfil - Ruta principal */}
-              <Route path="/profile" element={
+              {/* <Route path="/profile" element={
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Profile />
                   </DashboardLayout>
                 </ProtectedRoute>
+              } /> */}
+
+              <Route path="/profile/change-password" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ChangePassword />
+                  </DashboardLayout>
+                </ProtectedRoute>
               } />
+              
 
               {/* ✅ RUTAS DE PERFIL */}
               <Route path="/profile/personal-data" element={

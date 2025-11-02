@@ -36,8 +36,13 @@ import {
   getParishesByMunicipality
 } from '@services/address/addressService';
 
+import { useCustomAlert } from '../../../../hooks/useCustomAlert';
+import CustomAlert from '../../../../components/common/CustomAlert/CustomAlert';
+
+
 const Addresses = () => {
   const navigate = useNavigate();
+  const alert = useCustomAlert();
   
   const [showForm, setShowForm] = useState(false);
   const [settingDefault, setSettingDefault] = useState(null);
@@ -167,14 +172,14 @@ const Addresses = () => {
   // Auto-seleccionar primera ciudad al abrir formulario
   useEffect(() => {
     if (showForm && selectedOption === 'store' && !selectedCity && availableCities.length > 0) {
-      console.log('🏙️ Auto-seleccionando primera ciudad:', availableCities[0].value);
+      // console.log('🏙️ Auto-seleccionando primera ciudad:', availableCities[0].value);
       setSelectedCity(availableCities[0].value);
     }
   }, [showForm, selectedOption, selectedCity, availableCities]);
 
   // Handler para cuando cambia la ciudad
   const handleCityChange = (newCityId) => {
-    console.log('🏙️ Ciudad cambiada a:', newCityId);
+    // console.log('🏙️ Ciudad cambiada a:', newCityId);
     setSelectedCity(newCityId);
     setSelectedLocker(''); // Limpiar tienda seleccionada
   };
@@ -304,26 +309,32 @@ const Addresses = () => {
   };
 
   const handleDelete = async (addressId, addressName) => {
-    if (!window.confirm(`¿Estás seguro de eliminar la dirección "${addressName}"?`)) {
-      return;
-    }
-
-    try {
-      setDeleting(addressId);
-      const response = await deleteAddress(addressId);
-      
-      if (response.success) {
-        toast.success('Dirección eliminada exitosamente');
-        await refetchAddresses();
-      } else {
-        toast.error(response.message || 'Error al eliminar la dirección');
+    alert.showDeleteConfirm(
+      addressName,
+      // onConfirm
+      async () => {
+        try {
+          setDeleting(addressId);
+          const response = await deleteAddress(addressId);
+          
+          if (response.success) {
+            toast.success('Dirección eliminada exitosamente');
+            await refetchAddresses();
+          } else {
+            toast.error(response.message || 'Error al eliminar la dirección');
+          }
+        } catch (error) {
+          console.error('Error deleting address:', error);
+          toast.error('Error al eliminar la dirección');
+        } finally {
+          setDeleting(null);
+        }
+      },
+      // onCancel (opcional)
+      () => {
+        console.log('Eliminación cancelada');
       }
-    } catch (error) {
-      console.error('Error deleting address:', error);
-      toast.error('Error al eliminar la dirección');
-    } finally {
-      setDeleting(null);
-    }
+    );
   };
 
   const handleSetDefault = async (addressId, addressName) => {
@@ -372,6 +383,7 @@ const Addresses = () => {
 
   return (
     <div className="addresses">
+      <CustomAlert {...alert.alertProps} />
       <div className="addresses__container">
         {/* Header */}
         <div className="addresses__header">
@@ -608,7 +620,7 @@ const Addresses = () => {
                     {/* Botones */}
                     <div className="addresses__form-actions">
                       <Button
-                        variant="secondary"
+                        variant="primary"
                         onClick={() => {
                           setShowForm(false);
                           resetForm();

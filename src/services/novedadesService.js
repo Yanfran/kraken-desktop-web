@@ -33,11 +33,11 @@ import axiosInstance from './axiosInstance';
  */
 export const getNovedades = async () => {
   try {
-    console.log('📰 Obteniendo novedades desde el backend...');
+    // console.log('📰 Obteniendo novedades desde el backend...');
     
     const response = await axiosInstance.get('/Novedades/list');
     
-    console.log('✅ Respuesta del backend:', response.data);
+    // console.log('✅ Respuesta del backend:', response.data);
     
     // El backend retorna: { success: true, message: "...", data: [...] }
     if (response.data.success) {
@@ -82,7 +82,7 @@ export const getNovedadById = async (id) => {
       throw new Error('ID de novedad inválido');
     }
 
-    console.log(`📰 Obteniendo novedad con ID: ${id}`);
+    // console.log(`📰 Obteniendo novedad con ID: ${id}`);
     
     const response = await axiosInstance.get(`/Novedades/${id}`);
     
@@ -119,7 +119,7 @@ export const getNovedadById = async (id) => {
  */
 export const formatNovedadesForCarousel = (novedades) => {
   if (!Array.isArray(novedades)) {
-    console.warn('⚠️ formatNovedadesForCarousel: Input is not an array');
+    // console.warn('⚠️ formatNovedadesForCarousel: Input is not an array');
     return [];
   }
   
