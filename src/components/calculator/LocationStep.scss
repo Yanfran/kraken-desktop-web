@@ -20,9 +20,15 @@
     gap: 16px; /* Espacio entre los grupos (vertical) */
     width: 100%;
     margin-top: 16px; /* Separación entre el grid de países y el grid de estados */
+    position: relative;
 
     &:first-of-type {
         margin-top: 0;
+        z-index: 10;
+    }
+
+    &:nth-of-type(2) {
+      z-index: 5; // Más bajo que el primero
     }
 
     @media (min-width: 600px) {

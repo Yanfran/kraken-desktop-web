@@ -158,11 +158,11 @@ const PackageStep = ({
                 <label className="package-step__label">
                   Dimensiones del paquete
                 </label>
-                <span className="package-step__dimension-note">
+                {/* <span className="package-step__dimension-note">
                   {originCountry === 'CN' 
                     ? '🇨🇳 Alto valor desde China: Dimensiones para cálculo volumétrico'
                     : '📦 Alto valor: Dimensiones para cálculo volumétrico'}
-                </span>
+                </span> */}
               </div>
               
               <div className="package-step__dimensions-grid">

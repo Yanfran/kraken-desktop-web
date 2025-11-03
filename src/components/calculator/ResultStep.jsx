@@ -64,22 +64,41 @@ const ResultStep = ({
       return <p className="result-step__no-data">No hay detalles disponibles</p>;
     }
 
-    // ✅ Calcular suma sin Descuento Prealerta
-    let sumaSinPromoPrealerta = 0;
-    
+    // ✅ Calcular SUBTOTAL excluyendo SOLO el Descuento Prealerta (Tarifa Full)
+    let subtotalSinDescuentoPrealerta = 0;
+     
     breakdown.detalles.forEach((detalle) => {
       const isPromoPrealerta = detalle.descripcionItem === 'Descuento Prealerta';
       const isSubtotal = detalle.categoria === 'SUBTOTAL';
       const isTotal = detalle.categoria === 'TOTAL_BS';
+      const isCargoPostSubtotal = ['CARGO_UNICO', 'IMPUESTO'].includes(detalle.categoria);
       
-      if (!isPromoPrealerta && !isSubtotal && !isTotal) {
+      // Sumamos todo EXCEPTO Descuento Prealerta, subtotal, total y cargos post-subtotal
+      if (!isPromoPrealerta && !isSubtotal && !isTotal && !isCargoPostSubtotal) {
         const montoBs = extractNumericValue(detalle.montoBs);
-        const montoUSD = extractNumericValue(detalle.montoUSD);
-        const valor = selectedCurrency === 'BS' ? montoBs : montoUSD;
-        sumaSinPromoPrealerta += valor;
-        console.log('Añadiendo al subtotal:', sumaSinPromoPrealerta);
+        subtotalSinDescuentoPrealerta += montoBs;
       }
     });
+
+    console.log('Subtotal sin Descuento Prealerta (Tarifa Full):', subtotalSinDescuentoPrealerta);
+
+    // ✅ Calcular IVA de Tarifa Full
+    const seguroDetalle = breakdown.detalles.find(d => d.descripcionItem === 'Seguro');
+    const franqueoDetalle = breakdown.detalles.find(d => d.descripcionItem === 'Franqueo Postal');
+    const arancelDetalle = breakdown.detalles.find(d => d.descripcionItem === 'Arancel');
+    
+    const seguroBs = extractNumericValue(seguroDetalle?.montoBs);
+    const franqueoBs = extractNumericValue(franqueoDetalle?.montoBs);
+    const arancelBs = extractNumericValue(arancelDetalle?.montoBs);
+    
+    const baseImponibleFull = subtotalSinDescuentoPrealerta + seguroBs + franqueoBs + arancelBs;
+    const ivaFullBs = baseImponibleFull * 0.16;
+    
+    const totalFullBs = baseImponibleFull + ivaFullBs;
+
+    console.log('Base Imponible Full:', baseImponibleFull);
+    console.log('IVA Full:', ivaFullBs);
+    console.log('Total Full:', totalFullBs);
 
     return (
       <div className="result-step__detalles-completos">
@@ -102,32 +121,36 @@ const ResultStep = ({
             const isSubtotal = detalle.categoria === 'SUBTOTAL';
             const isTotal = detalle.categoria === 'TOTAL_BS';
             const isDescuento = detalle.esDescuento || detalle.categoria === 'DESCUENTO';
+            const isIVA = detalle.descripcionItem === 'IVA';
+            const isDescuentoPrealerta = detalle.descripcionItem === 'Descuento Prealerta';
 
             const montoBs = extractNumericValue(detalle.montoBs);
             const montoUSD = extractNumericValue(detalle.montoUSD);
-            const precio = selectedCurrency === 'BS' ? montoBs : montoUSD;
+            const precioConPrealerta = selectedCurrency === 'BS' ? montoBs : montoUSD;
 
             // ✅ NO mostrar si AMBOS valores son 0 Y NO es subtotal ni total
             if (montoBs === 0 && montoUSD === 0 && !isSubtotal && !isTotal) {
               return null;
             }
 
-            // ✅ Calcular Tarifa Full
+            // ✅ Calcular TARIFA FULL según el tipo de ítem
             let precioTarifaFull = 0;
             
-            if (detalle.descripcionItem === 'Descuento Prealerta') {
+            if (isDescuentoPrealerta) {
+              // En Tarifa Full NO existe el Descuento Prealerta
               precioTarifaFull = 0;
             } else if (isSubtotal) {
-              precioTarifaFull = sumaSinPromoPrealerta;
+              // Subtotal = suma de servicios y descuentos EXCEPTO Descuento Prealerta
+              precioTarifaFull = subtotalSinDescuentoPrealerta;
+            } else if (isIVA) {
+              // IVA recalculado para Tarifa Full
+              precioTarifaFull = ivaFullBs;
             } else if (isTotal) {
-              const subtotalDetalle = breakdown.detalles.find(d => d.categoria === 'SUBTOTAL');
-              const subtotalConDescuentos = extractNumericValue(
-                selectedCurrency === 'BS' ? subtotalDetalle?.montoBs : subtotalDetalle?.montoUSD
-              );
-              const diferencia = precio - subtotalConDescuentos;
-              precioTarifaFull = sumaSinPromoPrealerta + diferencia;              
+              // Total completo de Tarifa Full
+              precioTarifaFull = totalFullBs;
             } else {
-              precioTarifaFull = precio;
+              // Para todos los demás ítems (servicios, descuento lanzamiento, impuestos, etc.)
+              precioTarifaFull = montoBs;
             }
 
             const rowClass = `result-step__detalle-row ${
@@ -157,9 +180,11 @@ const ResultStep = ({
                       ? 'result-step__detalle-value--total'
                       : isSubtotal
                       ? 'result-step__detalle-value--bold'
+                      : isDescuento && !isDescuentoPrealerta
+                      ? 'result-step__detalle-value--descuento'
                       : 'result-step__detalle-value'
                   }>
-                    {detalle.descripcionItem === 'Descuento Prealerta'
+                    {isDescuentoPrealerta
                       ? '-'
                       : selectedCurrency === 'BS'
                       ? `${formatNumberWithThousands(precioTarifaFull)} Bs.`
@@ -180,8 +205,8 @@ const ResultStep = ({
                       : 'result-step__detalle-value'
                   }>
                     {selectedCurrency === 'BS'
-                      ? `${formatNumberWithThousands(precio)} Bs.`
-                      : `${formatNumberWithThousands(precio / exchangeRate)} USD`
+                      ? `${formatNumberWithThousands(precioConPrealerta)} Bs.`
+                      : `${formatNumberWithThousands(precioConPrealerta / exchangeRate)} USD`
                     }
                   </span>
                 </div>
@@ -194,86 +219,102 @@ const ResultStep = ({
   };
 
   const renderCard = (title, breakdown, key) => {
-    const isExpanded = expandedCards[key];
+  const isExpanded = expandedCards[key];
+  
+  // ✅ DECLARAR la variable tarifaFullTotal
+  let tarifaFullTotal = 0;
+  
+  if (breakdown?.detalles) {
+    // Variable para acumular el subtotal
+    let subtotalSinDescuentoPrealerta = 0;
     
-    // ✅ Calcular Tarifa Full para el header
-    let tarifaFullTotal = 0;
-    if (breakdown?.detalles) {
-      breakdown.detalles.forEach((detalle) => {
-        const isPromoPrealerta = detalle.descripcionItem === 'Descuento Prealerta';
-        const isSubtotal = detalle.categoria === 'SUBTOTAL';
-        const isTotal = detalle.categoria === 'TOTAL_BS';
-        
-        if (!isPromoPrealerta && !isSubtotal && !isTotal) {
-          const montoBs = extractNumericValue(detalle.montoBs);
-          tarifaFullTotal += montoBs;
-        }
-      });
+    // Sumar servicios y descuentos EXCEPTO Descuento Prealerta
+    breakdown.detalles.forEach((detalle) => {
+      const isDescuentoPrealerta = detalle.descripcionItem === 'Descuento Prealerta';
+      const isSubtotal = detalle.categoria === 'SUBTOTAL';
+      const isTotal = detalle.categoria === 'TOTAL_BS';
+      const isCargoPostSubtotal = ['CARGO_UNICO', 'IMPUESTO'].includes(detalle.categoria);
       
-      const totalDetalle = breakdown.detalles.find(d => d.categoria === 'TOTAL_BS');
-      const subtotalDetalle = breakdown.detalles.find(d => d.categoria === 'SUBTOTAL');
-      
-      if (totalDetalle && subtotalDetalle) {
-        const totalBs = extractNumericValue(totalDetalle.montoBs);
-        const subtotalBs = extractNumericValue(subtotalDetalle.montoBs);
-        const diferencia = totalBs - subtotalBs;
-        tarifaFullTotal += diferencia;
+      if (!isDescuentoPrealerta && !isSubtotal && !isTotal && !isCargoPostSubtotal) {
+        const montoBs = extractNumericValue(detalle.montoBs);
+        subtotalSinDescuentoPrealerta += montoBs;
       }
-    }
+    });
     
-    const totalBs = extractNumericValue(breakdown?.totalBs);
-    const totalUSD = extractNumericValue(breakdown?.total);
+    // Agregar cargos post-subtotal (Seguro, Franqueo, Arancel)
+    const seguroDetalle = breakdown.detalles.find(d => d.descripcionItem === 'Seguro');
+    const franqueoDetalle = breakdown.detalles.find(d => d.descripcionItem === 'Franqueo Postal');
+    const arancelDetalle = breakdown.detalles.find(d => d.descripcionItem === 'Arancel');
     
-    const fullPriceBs = tarifaFullTotal || totalBs / 0.9;
-    const fullPriceUSD = (tarifaFullTotal || totalUSD) / exchangeRate;
+    const seguroBs = extractNumericValue(seguroDetalle?.montoBs);
+    const franqueoBs = extractNumericValue(franqueoDetalle?.montoBs);
+    const arancelBs = extractNumericValue(arancelDetalle?.montoBs);
+    
+    const baseImponibleFull = subtotalSinDescuentoPrealerta + seguroBs + franqueoBs + arancelBs;
+    const ivaFullBs = baseImponibleFull * 0.16;
+    
+    tarifaFullTotal = baseImponibleFull + ivaFullBs;
+    
+    console.log('Header - Subtotal sin Descuento Prealerta:', subtotalSinDescuentoPrealerta);
+    console.log('Header - Base Imponible Full:', baseImponibleFull);
+    console.log('Header - IVA Full:', ivaFullBs);
+    console.log('Header - Total Full:', tarifaFullTotal);
+  }
+  
+  const totalBs = extractNumericValue(breakdown?.totalBs);
+  const totalUSD = extractNumericValue(breakdown?.total);
+  
+  // Usar el cálculo correcto, o fallback al cálculo aproximado
+  const fullPriceBs = tarifaFullTotal || totalBs / 0.9;
+  const fullPriceUSD = fullPriceBs / exchangeRate;
 
-    return (
-      <div className="result-step__card" key={key}>
-        <div className="result-step__card-header" onClick={() => toggleCard(key)}>
-          <div className="result-step__header-left">
-            <div className="result-step__delivery-type">
-              <span className="result-step__delivery-type-text">{title}</span>
-            </div>
+  return (
+    <div className="result-step__card" key={key}>
+      <div className="result-step__card-header" onClick={() => toggleCard(key)}>
+        <div className="result-step__header-left">
+          <div className="result-step__delivery-type">
+            <span className="result-step__delivery-type-text">{title}</span>
           </div>
-          
-          {/* ✅ DOS COLUMNAS DE PRECIOS */}
-          <div className="result-step__prices-container">
-            <div className="result-step__price-column result-step__price-column--full">
-              <span className="result-step__price-value">
-                {selectedCurrency === 'BS' 
-                  ? `${formatNumberWithThousands(fullPriceBs)} Bs.`
-                  : `${formatNumberWithThousands(fullPriceUSD)} USD`
-                }
-              </span>
-            </div>
-            
-            <div className="result-step__price-column result-step__price-column--discount">
-              <span className="result-step__price-value">
-                {selectedCurrency === 'BS' 
-                  ? `${formatNumberWithThousands(totalBs)} Bs.`
-                  : `${formatNumberWithThousands(totalUSD)} USD`
-                }
-              </span>
-            </div>
-          </div>
-          
-          <button 
-            type="button"
-            className="result-step__eye-button"
-            aria-label={isExpanded ? "Ocultar detalles" : "Ver detalles"}
-          >
-            {isExpanded ? <IoEyeOffOutline size={24} /> : <IoEyeOutline size={24} />}
-          </button>
         </div>
-
-        {isExpanded && (
-          <div className="result-step__card-content">
-            {renderDetallesCompletos(breakdown)}
+        
+        {/* ✅ DOS COLUMNAS DE PRECIOS - Ahora con cálculo correcto */}
+        <div className="result-step__prices-container">
+          <div className="result-step__price-column result-step__price-column--full">
+            <span className="result-step__price-value">
+              {selectedCurrency === 'BS' 
+                ? `${formatNumberWithThousands(fullPriceBs)} Bs.`
+                : `${formatNumberWithThousands(fullPriceUSD)} USD`
+              }
+            </span>
           </div>
-        )}
+          
+          <div className="result-step__price-column result-step__price-column--discount">
+            <span className="result-step__price-value">
+              {selectedCurrency === 'BS' 
+                ? `${formatNumberWithThousands(totalBs)} Bs.`
+                : `${formatNumberWithThousands(totalUSD)} USD`
+              }
+            </span>
+          </div>
+        </div>
+        
+        <button 
+          type="button"
+          className="result-step__eye-button"
+          aria-label={isExpanded ? "Ocultar detalles" : "Ver detalles"}
+        >
+          {isExpanded ? <IoEyeOffOutline size={24} /> : <IoEyeOutline size={24} />}
+        </button>
       </div>
-    );
-  };
+
+      {isExpanded && (
+        <div className="result-step__card-content">
+          {renderDetallesCompletos(breakdown)}
+        </div>
+      )}
+    </div>
+  );
+};
 
   const isOptionAvailable = (optionType) => {
     return result?.data?.deliveryOptions?.some(option => option.type === optionType);
