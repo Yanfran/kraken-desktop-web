@@ -1,73 +1,27 @@
-// src/pages/auth/Register/Register.jsx - IMPLEMENTACIÓN COMPLETA CON TU DISEÑO
+// src/pages/auth/Register/Register.jsx - CON BANNER LATERAL
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Usar el nuevo AuthContext
+import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
-import toast from 'react-hot-toast'; // ✅ AGREGADO: Para notificaciones
+import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import './Register.styles.scss';
-// AGREGAR después de tus imports existentes:
 import PasswordValidator, { validatePassword } from '../../../components/auth/PasswordValidator/PasswordValidator';
 import logoImage from '../../../assets/images/logo.jpg'; 
+import PromoBanner from '../../../components/auth/PromoBanner/PromoBanner';
 
 // Icons actualizados
 import { 
-  IoEyeOutline,        // Para el ojo 👁️
-  IoEyeOffOutline,     // Para el ojo cerrado 🙈
-  IoCreateOutline,
-  IoCubeOutline,        // Para paquetes 📦
-  IoCarOutline,         // Para delivery 🚚
-  IoLocationOutline,    // Para ubicación 📍
-  IoClipboardOutline,   // Para información 📋
-  IoInformationCircleOutline, // Para el status box ℹ️
-  IoArrowBack,         // Para el botón de volver
-  IoDocumentTextOutline // Para facturas 📄
+  IoEyeOutline,
+  IoEyeOffOutline,
 } from 'react-icons/io5';
-
-// Componente toggle para cambio de tema (mantener igual)
-const ThemeToggle = () => {
-  const { actualTheme, toggleTheme } = useTheme();
-  
-  return (
-    <button
-      className="theme-toggle-button"
-      onClick={toggleTheme}
-      aria-label={`Cambiar a modo ${actualTheme === 'light' ? 'oscuro' : 'claro'}`}
-      style={{
-        position: 'absolute',
-        top: '20px',
-        right: '20px',
-        background: 'none',
-        border: 'none',
-        fontSize: '24px',
-        cursor: 'pointer',
-        zIndex: 20,
-        padding: '8px',
-        borderRadius: '50%',
-        transition: 'background-color 0.2s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.backgroundColor = actualTheme === 'light' 
-          ? 'rgba(0, 0, 0, 0.1)' 
-          : 'rgba(255, 255, 255, 0.1)';
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.backgroundColor = 'transparent';
-      }}
-    >
-      {actualTheme === 'light' ? '🌙' : '☀️'}
-    </button>
-  );
-};
 
 const Register = () => {
   const navigate = useNavigate();
-  const { signUp, signInWithGoogle, isLoading } = useAuth(); // ✅ FUNCIONALIDAD REAL
+  const { signUp, signInWithGoogle, isLoading } = useAuth();
   const { colors, actualTheme } = useTheme();
   
-
-  
-  // ✅ ESTADOS DEL FORMULARIO
+  // Estados del formulario
   const [formData, setFormData] = useState({
     name: '',
     lastName: '',
@@ -76,10 +30,10 @@ const Register = () => {
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordValidator, setShowPasswordValidator] = useState(false); // ← AGREGAR
+  const [showPasswordValidator, setShowPasswordValidator] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // ✅ MANEJAR CAMBIOS EN INPUTS
+  // Manejar cambios en inputs
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
@@ -92,7 +46,7 @@ const Register = () => {
       });
     }
 
-    // ✅ AGREGAR ESTE BLOQUE:
+    // Mostrar/ocultar validador de contraseña
     if (field === 'password') {
       setShowPasswordValidator(value.length > 0);
       
@@ -109,14 +63,13 @@ const Register = () => {
     }
   };
 
-  // 🔥 CONFIGURAR GOOGLE LOGIN CON HOOK
+  // Configurar Google Login
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
       try {
         console.log('🔵 Token recibido de Google');
         
-        // Crear credential response
         const credentialResponse = {
           credential: tokenResponse.access_token
         };
@@ -143,40 +96,7 @@ const Register = () => {
     },
   });
 
-  // ✅ VALIDACIÓN DEL FORMULARIO
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es requerido';
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'El nombre debe tener al menos 2 caracteres';
-    }
-    
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'El apellido es requerido';
-    } else if (formData.lastName.trim().length < 2) {
-      newErrors.lastName = 'El apellido debe tener al menos 2 caracteres';
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // ✅ MANEJAR SUBMIT DEL FORMULARIO
-  // ✅ MANEJAR SUBMIT DEL FORMULARIO
+  // Manejar submit del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -200,7 +120,7 @@ const Register = () => {
     if (!formData.password) {
       newErrors.password = 'La contraseña es requerida';
     } else {
-      // ✅ Validar contraseña segura
+      // Validar contraseña segura
       const passwordValidation = validatePassword(formData.password);
       if (!passwordValidation.isValid) {
         newErrors.password = passwordValidation.errors[0];
@@ -243,154 +163,152 @@ const Register = () => {
     }
   };
 
- 
-
   return (
-    <div className="kraken-register" data-theme={actualTheme}>
-      {/* Theme Toggle */}
-      {/* <ThemeToggle /> */}
-
-      {/* Logo */}
-      <div className="kraken-register__logo">
-        <img 
-          src={logoImage }
-          alt="Kraken Logo" 
-          className="kraken-register__logo-image"
-        />
-      </div>
-
-      {/* Título */}
-      <h1 className="kraken-register__title">Crear cuenta</h1>
-
-  
-
-      {/* 🔥 BOTÓN GOOGLE PERSONALIZADO */}
-      <button
-        type="button"
-        className="kraken-register__google-button"
-        onClick={() => googleLogin()}
-        disabled={isLoading || googleLoading}
-      >
-        <img
-          src="https://www.google.com/favicon.ico"
-          alt="Google"
-          className="kraken-register__google-icon"
-        />
-        <span>Continuar con Google</span>
-      </button>
-
-      {/* Separador */}
-      <div className="kraken-register__separator">
-        <div className="kraken-register__separator-line"></div>
-        <span className="kraken-register__separator-text">o</span>
-        <div className="kraken-register__separator-line"></div>
-      </div>
-
-      {/* Formulario */}
-      <form onSubmit={handleSubmit} className="kraken-register__form">
-        {/* Nombre */}
-        <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Nombre</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder="Ingresa tu nombre"
-            className={`kraken-input-field__input ${errors.name ? 'kraken-input-field__input--error' : ''}`}
-            disabled={isLoading}
-            autoComplete="given-name"
+    <div className="kraken-register-wrapper">
+      {/* ✨ BANNER PROMOCIONAL - LADO IZQUIERDO */}
+      <PromoBanner />
+      
+      {/* CONTENIDO DEL REGISTRO - LADO DERECHO */}
+      <div className="kraken-register" data-theme={actualTheme}>
+        {/* Logo */}
+        <div className="kraken-register__logo">
+          <img 
+            src={logoImage}
+            alt="Kraken Logo" 
+            className="kraken-register__logo-image"
           />
-          {errors.name && (
-            <span className="kraken-input-field__error">{errors.name}</span>
-          )}
         </div>
 
-        {/* Apellido */}
-        <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Apellido</label>
-          <input
-            type="text"
-            value={formData.lastName}
-            onChange={(e) => handleInputChange('lastName', e.target.value)}
-            placeholder="Ingresa tu apellido"
-            className={`kraken-input-field__input ${errors.lastName ? 'kraken-input-field__input--error' : ''}`}
-            disabled={isLoading}
-            autoComplete="family-name"
+        {/* Título */}
+        <h1 className="kraken-register__title">Crear cuenta</h1>
+
+        {/* Botón Google */}
+        <button
+          type="button"
+          className="kraken-register__google-button"
+          onClick={() => googleLogin()}
+          disabled={isLoading || googleLoading}
+        >
+          <img
+            src="https://www.google.com/favicon.ico"
+            alt="Google"
+            className="kraken-register__google-icon"
           />
-          {errors.lastName && (
-            <span className="kraken-input-field__error">{errors.lastName}</span>
-          )}
+          <span>Continuar con Google</span>
+        </button>
+
+        {/* Separador */}
+        <div className="kraken-register__separator">
+          <div className="kraken-register__separator-line"></div>
+          <span className="kraken-register__separator-text">o</span>
+          <div className="kraken-register__separator-line"></div>
         </div>
 
-        {/* Email */}
-        <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Email</label>
-          <input
-            type="email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            placeholder="Ingresa tu email"
-            className={`kraken-input-field__input ${errors.email ? 'kraken-input-field__input--error' : ''}`}
-            disabled={isLoading}
-            autoComplete="email"
-          />
-          {errors.email && (
-            <span className="kraken-input-field__error">{errors.email}</span>
-          )}
-        </div>
-
-        {/* Password */}
-        <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Contraseña</label>
-          <div className="kraken-input-field__password-container">
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="kraken-register__form">
+          {/* Nombre */}
+          <div className="kraken-input-field">
+            <label className="kraken-input-field__label">Nombre</label>
             <input
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              placeholder="Ingresa tu contraseña"
-              className={`kraken-input-field__input ${errors.password ? 'kraken-input-field__input--error' : ''}`}
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              placeholder="Ingresa tu nombre"
+              className={`kraken-input-field__input ${errors.name ? 'kraken-input-field__input--error' : ''}`}
               disabled={isLoading}
-              autoComplete="new-password"
+              autoComplete="given-name"
             />
-            <button
-              type="button"
-              className="kraken-input-field__eye-button"
-              onClick={() => setShowPassword(!showPassword)}
-              tabIndex="-1"
-            >
-              {showPassword ? <IoEyeOffOutline size={18} /> : <IoEyeOutline size={18}/>}
-            </button>
+            {errors.name && (
+              <span className="kraken-input-field__error">{errors.name}</span>
+            )}
           </div>
-          {errors.password && (
-            <span className="kraken-input-field__error">{errors.password}</span>
+
+          {/* Apellido */}
+          <div className="kraken-input-field">
+            <label className="kraken-input-field__label">Apellido</label>
+            <input
+              type="text"
+              value={formData.lastName}
+              onChange={(e) => handleInputChange('lastName', e.target.value)}
+              placeholder="Ingresa tu apellido"
+              className={`kraken-input-field__input ${errors.lastName ? 'kraken-input-field__input--error' : ''}`}
+              disabled={isLoading}
+              autoComplete="family-name"
+            />
+            {errors.lastName && (
+              <span className="kraken-input-field__error">{errors.lastName}</span>
+            )}
+          </div>
+
+          {/* Email */}
+          <div className="kraken-input-field">
+            <label className="kraken-input-field__label">Email</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="Ingresa tu email"
+              className={`kraken-input-field__input ${errors.email ? 'kraken-input-field__input--error' : ''}`}
+              disabled={isLoading}
+              autoComplete="email"
+            />
+            {errors.email && (
+              <span className="kraken-input-field__error">{errors.email}</span>
+            )}
+          </div>
+
+          {/* Password */}
+          <div className="kraken-input-field">
+            <label className="kraken-input-field__label">Contraseña</label>
+            <div className="kraken-input-field__password-container">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                placeholder="Ingresa tu contraseña"
+                className={`kraken-input-field__input ${errors.password ? 'kraken-input-field__input--error' : ''}`}
+                disabled={isLoading}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                className="kraken-input-field__eye-button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex="-1"
+              >
+                {showPassword ? <IoEyeOffOutline size={18} /> : <IoEyeOutline size={18}/>}
+              </button>
+            </div>
+            {errors.password && (
+              <span className="kraken-input-field__error">{errors.password}</span>
+            )}
+
+            {/* Validador de contraseña */}
+            <PasswordValidator 
+              password={formData.password} 
+              visible={showPasswordValidator}
+            />
+          </div>
+
+          {/* Error general */}
+          {errors.submit && (
+            <div style={{ 
+              color: colors.error, 
+              fontSize: '14px', 
+              textAlign: 'center', 
+              marginBottom: '16px',
+              padding: '8px',
+              backgroundColor: actualTheme === 'light' 
+                ? 'rgba(244, 67, 54, 0.05)' 
+                : 'rgba(255, 180, 171, 0.1)',
+              borderRadius: '8px',
+              border: `1px solid ${colors.error}`
+            }}>
+              {errors.submit}
+            </div>
           )}
 
-          {/* ✅ AGREGAR ESTO: */}
-          <PasswordValidator 
-            password={formData.password} 
-            visible={showPasswordValidator}
-          />
-        </div>
-
-        {/* Error general */}
-        {errors.submit && (
-          <div style={{ 
-            color: colors.error, 
-            fontSize: '14px', 
-            textAlign: 'center', 
-            marginBottom: '16px',
-            padding: '8px',
-            backgroundColor: actualTheme === 'light' 
-              ? 'rgba(244, 67, 54, 0.05)' 
-              : 'rgba(255, 180, 171, 0.1)',
-            borderRadius: '8px',
-            border: `1px solid ${colors.error}`
-          }}>
-            {errors.submit}
-          </div>
-        )}
-
-        {/* Botón Submit */}
+          {/* Botón Submit */}
           <button
             type="submit"
             className="kraken-register__submit-button"
@@ -399,53 +317,54 @@ const Register = () => {
               (formData.password && !validatePassword(formData.password).isValid)
             }
           >
-          {isLoading ? (
-            <div className="kraken-register__loading">
-              <div className="kraken-register__spinner"></div>
-              Registrando...
-            </div>
-          ) : (
-            'Registro con e-mail'
-          )}
-        </button>
-      </form>
+            {isLoading ? (
+              <div className="kraken-register__loading">
+                <div className="kraken-register__spinner"></div>
+                Registrando...
+              </div>
+            ) : (
+              'Registro con e-mail'
+            )}
+          </button>
+        </form>
 
-      {/* Link de login */}
-      <div className="kraken-register__login">
-        <span className="kraken-register__login-text">
-          ¿Ya tienes cuenta? 
-        </span>
-        <button
-          type="button"
-          className="kraken-register__login-link"
-          onClick={() => navigate('/login')}
-        >
-          Inicia sesión aquí
-        </button>
-      </div>
+        {/* Link de login */}
+        <div className="kraken-register__login">
+          <span className="kraken-register__login-text">
+            ¿Ya tienes cuenta? 
+          </span>
+          <button
+            type="button"
+            className="kraken-register__login-link"
+            onClick={() => navigate('/login')}
+          >
+            Inicia sesión aquí
+          </button>
+        </div>
 
-      {/* Términos y condiciones */}
-      <div className="kraken-register__terms">
-        <p className="kraken-register__terms-text">
-          Al continuar, aceptas nuestros{' '}
-          <a 
-            href="/terms" 
-            className="kraken-register__terms-link"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Términos y Condiciones
-          </a>
-          {' '}y{' '}
-          <a 
-            href="/privacy" 
-            className="kraken-register__terms-link"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Política de Privacidad
-          </a>
-        </p>
+        {/* Términos y condiciones */}
+        <div className="kraken-register__terms">
+          <p className="kraken-register__terms-text">
+            Al continuar, aceptas nuestros{' '}
+            <a 
+              href="/terms" 
+              className="kraken-register__terms-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Términos y Condiciones
+            </a>
+            {' '}y{' '}
+            <a 
+              href="/privacy" 
+              className="kraken-register__terms-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Política de Privacidad
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

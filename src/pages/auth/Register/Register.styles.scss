@@ -1,9 +1,7 @@
 // src/pages/auth/Register/Register.styles.scss
-// KRAKEN REGISTER - Basado en Login.styles.scss con adaptaciones para registro
+// ACTUALIZADO: Layout split-screen con banner lateral
 
-/* Variables base que serán sobrescritas por el ThemeProvider */
 :root {
-  /* Estas variables se actualizan dinámicamente desde ThemeContext */
   --color-primary: #FF4500;
   --color-primary-light: #FF7F50;
   --color-secondary: #0175c8;
@@ -19,11 +17,35 @@
   --color-separator: #EEEEEE;
 }
 
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  overflow-x: hidden;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ✨ WRAPPER PRINCIPAL CON SPLIT SCREEN */
+.kraken-register-wrapper {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  position: relative;
+  
+  @media (max-width: 767px) {
+    flex-direction: column;
+  }
+}
+
 /* CONTENEDOR PRINCIPAL REGISTER */
 .kraken-register {
   min-height: 100vh;
-  width: 100vw;
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -31,55 +53,62 @@
   padding: 0 20px;
   background-color: var(--color-background);
   transition: background-color 0.3s ease;
+  position: relative;
+  z-index: 2;
   
-  /* Fondo de imagen para modo claro */
-  // &[data-theme="light"] {
-  //   background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
-  //   background-size: cover;
-  //   background-position: center;
-  //   background-repeat: no-repeat;
-    
-  //   @media (min-width: 768px) {
-  //     background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
-  //     justify-content: center;
-  //     padding: 40px 20px;
-  //   }
-  // }
+  // 🖥️ DESKTOP: Ocupa el 50% restante
+  @media (min-width: 1024px) {
+    width: 50vw;
+    margin-left: 50vw;
+    justify-content: center;
+    padding: 40px;
+  }
   
-  /* Fondo para modo oscuro */
+  // 📱 TABLET: Ocupa el espacio restante después del banner de 280px
+  @media (min-width: 768px) and (max-width: 1023px) {
+    width: calc(100vw - 280px);
+    margin-left: 280px;
+    justify-content: center;
+    padding: 40px 30px;
+  }
+  
+  // 📱 MOBILE: Ocupa todo el ancho
+  @media (max-width: 767px) {
+    width: 100vw;
+    margin-left: 0;
+  }
+  
   &[data-theme="dark"] {
     background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
-    
-    @media (min-width: 768px) {
-      justify-content: center;
-      padding: 40px 20px;
-    }
   }
 }
 
-/* LOGO - MISMA ALTURA QUE LOGIN */
+/* LOGO */
 .kraken-register__logo {
-  margin-top: 30px!important;
+  margin-top: 60px;
   text-align: center;
   margin-bottom: 52px;
   z-index: 10;
   position: relative;
-  margin-top: 60px;
   
   @media (min-width: 768px) {
     margin-top: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
+  }
+  
+  @media (max-width: 767px) {
+    margin-top: 60px;
+    margin-bottom: 30px;
   }
 }
 
 .kraken-register__logo-image {
-  width: 200px; /* Misma medida que en Login */
+  width: 200px;
   height: auto;
-  max-height: 100px; /* Misma medida que en Login */
+  max-height: 100px;
   object-fit: contain;
   transition: filter 0.3s ease;
   
-  /* Filtro para modo oscuro */
   [data-theme="dark"] & {
     filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 180, 133, 0.3));
   }
@@ -112,7 +141,6 @@
 
 /* BOTÓN GOOGLE */
 .kraken-register__google-button {
-  width: 100%;
   height: 48px;
   border: 1px solid var(--color-border);
   border-radius: 50px;
@@ -124,7 +152,7 @@
   justify-content: center;
   gap: 12px;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--color-text-primary);
   margin-bottom: 20px;
@@ -149,15 +177,23 @@
     }
   }
   
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
+  
+  span {
+    line-height: 1;
+  }
 }
 
 .kraken-register__google-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   object-fit: contain;
 }
@@ -167,47 +203,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: -8px 0;
-  position: relative;
-  
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--color-separator);
-    transition: background-color 0.3s ease;
-  }
+  margin: 20px 0;
+  gap: 16px;
 }
 
-.kraken-register__separator-dot {
-  width: auto;
-  height: auto;
-  background: none;
-  border-radius: 50%;
-  margin: 0 16px;
-  position: relative;
-  opacity: 0.8;
-  transition: background-color 0.3s ease, opacity 0.3s ease;
-  font-size: 16px;
+.kraken-register__separator-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-separator);
+  transition: background-color 0.3s ease;
+}
+
+.kraken-register__separator-text {
+  font-size: 14px;
   color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 14px;
-    height: 14px;
-    background: var(--color-background);
-    border-radius: 50%;
-    z-index: -1;
-    transition: background-color 0.3s ease;
-  }
+  font-weight: 500;
+  padding: 0 8px;
 }
 
 /* FORMULARIO */
@@ -216,7 +227,7 @@
   flex-direction: column;
 }
 
-/* CAMPOS DE INPUT (Reutilizando del Login) */
+/* CAMPOS DE INPUT */
 .kraken-input-field {
   margin-bottom: 16px;
   width: 100%;
@@ -276,32 +287,31 @@
   }
 }
 
+/* CONTENEDOR DE CONTRASEÑA */
 .kraken-input-field__password-container {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .kraken-input-field__eye-button {
   position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 12px;
   background: none;
   border: none;
   cursor: pointer;
+  padding: 8px;
   color: var(--color-text-secondary);
-  opacity: 0.6;
-  transition: all 0.2s ease;
-  padding: 4px;
   font-size: 16px;
-  border-radius: 50%;
+  transition: color 0.2s ease;
   
   &:hover {
-    opacity: 1;
-    background-color: rgba(0, 0, 0, 0.05);
-    
-    [data-theme="dark"] & {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
+    color: var(--color-text-primary);
+  }
+  
+  &:focus {
+    outline: none;
+    color: var(--color-primary);
   }
 }
 
@@ -312,7 +322,6 @@
   margin-top: 4px;
   margin-left: 5px;
   font-weight: 500;
-  transition: color 0.3s ease;
 }
 
 /* BOTÓN SUBMIT */
@@ -344,7 +353,7 @@
     }
     
     [data-theme="dark"] & {
-      background-color: #FFCAB0;
+      background-color: #FF6B35;
     }
   }
   
@@ -385,7 +394,7 @@
 /* ENLACES DE LOGIN */
 .kraken-register__login {
   text-align: center;
-  margin-bottom: 0px;
+  margin-bottom: 20px;
 }
 
 .kraken-register__login-text {
@@ -440,7 +449,6 @@
   transition: all 0.2s ease;
   
   &:hover {
-    text-decoration: underline;
     opacity: 0.8;
   }
 }
@@ -472,12 +480,18 @@
     height: 44px;
     font-size: 15px;
   }
+  
+  .kraken-register__google-button {
+    height: 44px;
+    font-size: 14px;
+  }
 }
 
-/* ANIMACIONES SUAVES PARA CAMBIO DE TEMA */
-* {
-  transition: background-color 0.3s ease, 
-              color 0.3s ease, 
-              border-color 0.3s ease,
-              box-shadow 0.3s ease;
+/* ANIMACIONES */
+.kraken-register *,
+.kraken-register *::before,
+.kraken-register *::after {
+  transition-property: background-color, color, border-color, box-shadow;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
 }

@@ -1,5 +1,5 @@
 // src/pages/auth/Login/Login.styles.scss
-// KRAKEN LOGIN con soporte completo para modo oscuro y claro
+// ACTUALIZADO: Layout split-screen con banner lateral
 
 :root {
   --color-primary: #FF4500;
@@ -31,11 +31,22 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* CONTENEDOR PRINCIPAL */
-.kraken-login {
+/* ✨ WRAPPER PRINCIPAL CON SPLIT SCREEN */
+.kraken-login-wrapper {
   min-height: 100vh;
   width: 100vw;
+  display: flex;
   position: relative;
+  
+  // 📱 MOBILE: Sin banner, layout normal
+  @media (max-width: 767px) {
+    flex-direction: column;
+  }
+}
+
+/* CONTENEDOR PRINCIPAL DEL LOGIN */
+.kraken-login {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -43,14 +54,33 @@ body {
   padding: 0 20px;
   background-color: var(--color-background);
   transition: background-color 0.3s ease;
+  position: relative;
+  z-index: 2;
+  
+  // 🖥️ DESKTOP: Ocupa el 50% restante
+  @media (min-width: 1024px) {
+    width: 50vw;
+    margin-left: 50vw; // Empuja el contenido a la derecha
+    justify-content: center;
+    padding: 40px;
+  }
+  
+  // 📱 TABLET: Ocupa el espacio restante después del banner de 280px
+  @media (min-width: 768px) and (max-width: 1023px) {
+    width: calc(100vw - 280px);
+    margin-left: 280px;
+    justify-content: center;
+    padding: 40px 30px;
+  }
+  
+  // 📱 MOBILE: Ocupa todo el ancho
+  @media (max-width: 767px) {
+    width: 100vw;
+    margin-left: 0;
+  }
   
   &[data-theme="dark"] {
     background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
-    
-    @media (min-width: 768px) {
-      justify-content: center;
-      padding: 40px 20px;
-    }
   }
 }
 
@@ -64,7 +94,12 @@ body {
   
   @media (min-width: 768px) {
     margin-top: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
+  }
+  
+  @media (max-width: 767px) {
+    margin-top: 60px;
+    margin-bottom: 30px;
   }
 }
 

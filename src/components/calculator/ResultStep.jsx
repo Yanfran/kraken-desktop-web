@@ -64,11 +64,11 @@ const ResultStep = ({
       return <p className="result-step__no-data">No hay detalles disponibles</p>;
     }
 
-    // ✅ Calcular suma sin Promo Prealerta
+    // ✅ Calcular suma sin Descuento Prealerta
     let sumaSinPromoPrealerta = 0;
     
     breakdown.detalles.forEach((detalle) => {
-      const isPromoPrealerta = detalle.descripcionItem === 'Promo Prealerta';
+      const isPromoPrealerta = detalle.descripcionItem === 'Descuento Prealerta';
       const isSubtotal = detalle.categoria === 'SUBTOTAL';
       const isTotal = detalle.categoria === 'TOTAL_BS';
       
@@ -77,6 +77,7 @@ const ResultStep = ({
         const montoUSD = extractNumericValue(detalle.montoUSD);
         const valor = selectedCurrency === 'BS' ? montoBs : montoUSD;
         sumaSinPromoPrealerta += valor;
+        console.log('Añadiendo al subtotal:', sumaSinPromoPrealerta);
       }
     });
 
@@ -114,7 +115,7 @@ const ResultStep = ({
             // ✅ Calcular Tarifa Full
             let precioTarifaFull = 0;
             
-            if (detalle.descripcionItem === 'Promo Prealerta') {
+            if (detalle.descripcionItem === 'Descuento Prealerta') {
               precioTarifaFull = 0;
             } else if (isSubtotal) {
               precioTarifaFull = sumaSinPromoPrealerta;
@@ -124,7 +125,7 @@ const ResultStep = ({
                 selectedCurrency === 'BS' ? subtotalDetalle?.montoBs : subtotalDetalle?.montoUSD
               );
               const diferencia = precio - subtotalConDescuentos;
-              precioTarifaFull = sumaSinPromoPrealerta + diferencia;
+              precioTarifaFull = sumaSinPromoPrealerta + diferencia;              
             } else {
               precioTarifaFull = precio;
             }
@@ -158,7 +159,7 @@ const ResultStep = ({
                       ? 'result-step__detalle-value--bold'
                       : 'result-step__detalle-value'
                   }>
-                    {detalle.descripcionItem === 'Promo Prealerta'
+                    {detalle.descripcionItem === 'Descuento Prealerta'
                       ? '-'
                       : selectedCurrency === 'BS'
                       ? `${formatNumberWithThousands(precioTarifaFull)} Bs.`
@@ -199,7 +200,7 @@ const ResultStep = ({
     let tarifaFullTotal = 0;
     if (breakdown?.detalles) {
       breakdown.detalles.forEach((detalle) => {
-        const isPromoPrealerta = detalle.descripcionItem === 'Promo Prealerta';
+        const isPromoPrealerta = detalle.descripcionItem === 'Descuento Prealerta';
         const isSubtotal = detalle.categoria === 'SUBTOTAL';
         const isTotal = detalle.categoria === 'TOTAL_BS';
         

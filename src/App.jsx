@@ -220,7 +220,7 @@ function App() {
                 </ProtectedRoute>
               } /> */}
 
-              <Route path="/profile/change-password" element={
+              <Route path="/change-password" element={
                 <ProtectedRoute>
                   <DashboardLayout>
                     <ChangePassword />

@@ -98,7 +98,7 @@ export const authService = {
         password: credentials.password
       });
 
-      console.log('✅ [AuthService] Login response completa:', response.data);
+      // console.log('✅ [AuthService] Login response completa:', response.data);
 
       if (response.data.success) {
         const userData = {

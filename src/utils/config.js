@@ -201,22 +201,22 @@ export const logError = (...args) => {
 // 📊 DEBUG INFO (solo en desarrollo)
 // ═══════════════════════════════════════
 if (isDevelopment()) {
-  console.log('═══════════════════════════════════════');
-  console.log('🚀 CONFIGURACIÓN DE KRAKEN WEB');
-  console.log('═══════════════════════════════════════');
-  console.log('🔗 API_URL:', API_URL);
-  console.log('🌐 WEB_URL:', WEB_URL);
-  console.log('📱 MOBILE_URL:', MOBILE_URL);
-  console.log('🎯 Modo:', USE_PRODUCTION ? '🟢 PRODUCCIÓN' : '🔵 DESARROLLO');
-  console.log('📱 App Name:', APP_CONFIG.NAME);
-  console.log('📦 Version:', APP_CONFIG.VERSION);
-  console.log('═══════════════════════════════════════');
-  console.log('💡 TIP: Para cambiar a producción, modifica USE_PRODUCTION = true');
+  // console.log('═══════════════════════════════════════');
+  // console.log('🚀 CONFIGURACIÓN DE KRAKEN WEB');
+  // console.log('═══════════════════════════════════════');
+  // console.log('🔗 API_URL:', API_URL);
+  // console.log('🌐 WEB_URL:', WEB_URL);
+  // console.log('📱 MOBILE_URL:', MOBILE_URL);
+  // console.log('🎯 Modo:', USE_PRODUCTION ? '🟢 PRODUCCIÓN' : '🔵 DESARROLLO');
+  // console.log('📱 App Name:', APP_CONFIG.NAME);
+  // console.log('📦 Version:', APP_CONFIG.VERSION);
+  // console.log('═══════════════════════════════════════');
+  // console.log('💡 TIP: Para cambiar a producción, modifica USE_PRODUCTION = true');
 }
 
 if (isProduction()) {
-  console.log('⚠️ ADVERTENCIA: Modo PRODUCCIÓN activo');
-  console.log('📡 API:', API_URL);
-  console.log('🌐 Web:', WEB_URL);
-  console.log('📱 Mobile:', MOBILE_URL);
+  // console.log('⚠️ ADVERTENCIA: Modo PRODUCCIÓN activo');
+  // console.log('📡 API:', API_URL);
+  // console.log('🌐 Web:', WEB_URL);
+  // console.log('📱 Mobile:', MOBILE_URL);
 }

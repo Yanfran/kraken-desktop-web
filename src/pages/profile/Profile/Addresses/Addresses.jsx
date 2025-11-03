@@ -129,13 +129,17 @@ const Addresses = () => {
   const filteredTiendas = useMemo(() => {
     if (!deliveryData?.tiendas) return [];
     
-    return deliveryData.tiendas
-      .filter((t) => {
-        const isTipo2 = t.idTiendaTipo === 2;
+    return deliveryData.tiendas      
+         .filter((t) => {
+          // ✅ Aceptar tipo 2 (Lockers Kraken) Y tipo 3 (Aliados como MRW)
+        const isTipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3;
+        
+        // Filtrar por ciudad seleccionada
         const matchesCity = selectedCity 
           ? t.idZonaCiudad === parseInt(selectedCity)
           : true;
-        return isTipo2 && matchesCity;
+        
+        return isTipoValido && matchesCity;
       })
       .map((t) => ({ label: t.nombre, value: t.id.toString() }));
   }, [deliveryData, selectedCity]); // ⬅️ ¡Agregar selectedCity!

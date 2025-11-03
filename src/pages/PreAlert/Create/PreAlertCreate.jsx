@@ -148,15 +148,16 @@ const PreAlertCreate = () => {
     if (!deliveryData?.tiendas) return [];
     
     return deliveryData.tiendas
-      .filter((t) => {
-        const isTipo2 = t.idTiendaTipo === 2;
+        .filter((t) => {
+          // ✅ Aceptar tipo 2 (Lockers Kraken) Y tipo 3 (Aliados como MRW)
+        const isTipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3;
         
         // Filtrar por ciudad seleccionada
         const matchesCity = addressState.selectedCity 
           ? t.idZonaCiudad === parseInt(addressState.selectedCity)
           : true;
         
-        return isTipo2 && matchesCity;
+        return isTipoValido && matchesCity;
       })
       .map((t) => ({ label: t.nombre, value: t.id.toString() }));
   }, [deliveryData, addressState.selectedCity]); // ⬅️ ¡Agregar dependencia!

@@ -1,7 +1,7 @@
 // src/pages/auth/DeliveryOption/DeliveryOption.jsx
 // TU CÓDIGO ORIGINAL + Funcionalidad del backend
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
 import axiosInstance from '../../../services/axiosInstance';
@@ -135,7 +135,35 @@ const DeliveryOption = () => {
   // ✅ DATOS REALES DEL BACKEND
   const [availableCities, setAvailableCities] = useState([]);
   const [allStores, setAllStores] = useState([]);
-  const [filteredStores, setFilteredStores] = useState([]);
+
+  // ✅ AÑADE ESTE useMemo (esta es la lógica de Addresses.jsx)
+const filteredStores = useMemo(() => {
+    // Si no hay tiendas cargadas, devuelve un array vacío
+    if (!allStores || allStores.length === 0) return [];
+
+    return allStores
+        .filter((t) => {
+            // 1. Lógica de tipo: Aceptar tipo 2 (Lockers) o 3 (Aliados)
+            const isTipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3;
+
+            // 2. Lógica de ciudad: Filtrar si hay ciudad seleccionada
+            //    Si no hay ciudad (storeData.city es ''), 'matchesCity' es true
+            const matchesCity = storeData.city
+                ? t.idZonaCiudad === parseInt(storeData.city)
+                : true; // Muestra todos los tipos válidos si no hay ciudad
+
+            return isTipoValido && matchesCity;
+        })
+        .map((t) => ({ 
+            label: t.nombre, 
+            value: t.id.toString(),
+            // Mantenemos estos datos por si los usas en el payload del formulario
+            idEstado: t.idEstado,
+            idZonaCiudad: t.idZonaCiudad
+        }));
+}, [allStores, storeData.city]);
+
+
 
   const userData = JSON.parse(localStorage.getItem('userData') || '{}');
   const userEmail = userData.email;
@@ -154,7 +182,7 @@ const DeliveryOption = () => {
       if (deliveryRes.data.success) {
         const { ciudad, ciudadesDisponibles, tiendas } = deliveryRes.data.data;
         
-        setAllStores(tiendas);
+        setAllStores(tiendas || []);
         
         // ✅ CAMBIO 1: Usar ciudadesDisponibles si está disponible
         if (ciudadesDisponibles && ciudadesDisponibles.length > 0) {
@@ -170,19 +198,7 @@ const DeliveryOption = () => {
             value: ciudad.id.toString()
           }]);
         }
-        
-        // ✅ CAMBIO 2: Ya NO filtrar aquí, se filtrará dinámicamente
-        // Solo guardar todas las tiendas tipo 2
-        const storesType2 = tiendas
-          .filter(t => t.idTiendaTipo === 2)
-          .map(t => ({
-            label: t.nombre,
-            value: t.id.toString(),
-            idEstado: t.idEstado,
-            idZonaCiudad: t.idZonaCiudad // ⬅️ Importante: agregar este campo
-          }));
-        
-        setFilteredStores(storesType2);
+                
       }
         
         // 2. Cargar estados usando location-data (COMO TU APP)
@@ -207,39 +223,6 @@ const DeliveryOption = () => {
     loadInitialData();
   }, []);
 
-  // ✅ CAMBIO 3: Filtrar tiendas cuando cambia la ciudad seleccionada
-useEffect(() => {
-  if (!storeData.city || !allStores.length) {
-    // Si no hay ciudad seleccionada, mostrar todas las tiendas tipo 2
-    const storesType2 = allStores
-      .filter(t => t.idTiendaTipo === 2)
-      .map(t => ({
-        label: t.nombre,
-        value: t.id.toString(),
-        idEstado: t.idEstado,
-        idZonaCiudad: t.idZonaCiudad
-      }));
-    setFilteredStores(storesType2);
-    return;
-  }
-
-  // Filtrar tiendas de la ciudad seleccionada
-  const filtered = allStores
-      .filter(t => 
-        t.idTiendaTipo === 2 && 
-        t.idZonaCiudad === parseInt(storeData.city)
-      )
-      .map(t => ({
-        label: t.nombre,
-        value: t.id.toString(),
-        idEstado: t.idEstado,
-        idZonaCiudad: t.idZonaCiudad
-      }));
-    
-    console.log('🏙️ Filtrando tiendas para ciudad:', storeData.city, 'Resultado:', filtered);
-    setFilteredStores(filtered);
-    
-  }, [storeData.city, allStores]);
 
   // ✅ CARGAR MUNICIPIOS cuando cambia el estado (USANDO location-data)
   useEffect(() => {
