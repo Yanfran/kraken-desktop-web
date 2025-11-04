@@ -1,5 +1,5 @@
 // src/App.jsx - ACTUALIZADO SIN BrowserRouter (ya está en main.jsx)
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute, PublicRoute, SemiProtectedRoute } from './components/auth/ProtectedRoute';
@@ -50,10 +50,61 @@ const PersonalDataProfile = React.lazy(() => import('./pages/profile/Profile/Per
 const Addresses = React.lazy(() => import('./pages/profile/Profile/Addresses/Addresses'));
 const ChangePassword = React.lazy(() => import('./pages/profile/Profile/ChangePassword/ChangePassword'));
 
+
+
+
 // Hook simplificado para compatibilidad
 export { useAuth } from './contexts/AuthContext';
 
+
+
+
 function App() {
+
+
+   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    const userDataFromUrl = urlParams.get('userData');
+    const refreshTokenFromUrl = urlParams.get('refreshToken');
+
+    if (tokenFromUrl) {
+      console.log('🔑 [Web] Token recibido desde URL de la app móvil');
+      
+      try {
+        // Guardar en localStorage
+        localStorage.setItem('authToken', tokenFromUrl);
+        console.log('✅ [Web] Token guardado en localStorage');
+        
+        if (userDataFromUrl) {
+          // Decodificar y guardar userData
+          const decodedUserData = decodeURIComponent(userDataFromUrl);
+          localStorage.setItem('userData', decodedUserData);
+          console.log('✅ [Web] UserData guardado en localStorage');
+        }
+        
+        if (refreshTokenFromUrl) {
+          localStorage.setItem('refreshToken', refreshTokenFromUrl);
+          console.log('✅ [Web] RefreshToken guardado en localStorage');
+        }
+
+        // Limpiar URL de los parámetros
+        window.history.replaceState({}, document.title, window.location.pathname);
+        console.log('🧹 [Web] URL limpiada');
+        
+        // Forzar recarga para que AuthContext tome los nuevos datos
+        console.log('🔄 [Web] Recargando página para aplicar autenticación...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+        
+      } catch (error) {
+        console.error('❌ [Web] Error guardando token:', error);
+      }
+    }
+  }, []);
+
+  
   return (
     // ⚠️ NO USAR BrowserRouter AQUÍ - Ya está en main.jsx
     <SmartPlatformDetector>
