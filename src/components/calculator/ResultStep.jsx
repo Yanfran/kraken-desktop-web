@@ -336,11 +336,11 @@ const ResultStep = ({
 
         <div className="result-step__cards">
 
-          {isOptionAvailable('domicilio') && result?.data?.breakdowns?.domicilio && 
-            renderCard('Entrega a Domicilio', result.data.breakdowns.domicilio, 'domicilio')}
-
           {isOptionAvailable('oficina') && result?.data?.breakdowns?.oficina && 
-            renderCard('Retiro en Oficina', result.data.breakdowns.oficina, 'oficina')}                    
+            renderCard('Retiro en Oficina', result.data.breakdowns.oficina, 'oficina')}   
+
+          {isOptionAvailable('domicilio') && result?.data?.breakdowns?.domicilio && 
+            renderCard('Entrega a Domicilio', result.data.breakdowns.domicilio, 'domicilio')}                           
           
           {(!result?.data?.deliveryOptions || result.data.deliveryOptions.length === 0) && (
             <div className="result-step__no-options">

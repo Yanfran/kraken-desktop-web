@@ -17,6 +17,7 @@ import DashboardLayout from './components/common/Layout/DashboardLayout';
 const Login = React.lazy(() => import('./pages/auth/Login/Login'));
 const Register = React.lazy(() => import('./pages/auth/Register/Register'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword/ResetPassword'));
 const EmailConfirmation = React.lazy(() => import('./pages/auth/EmailConfirmation/EmailConfirmation'));
 const CompleteProfile = React.lazy(() => import('./pages/auth/CompleteProfile/CompleteProfile'));
 const PersonalData = React.lazy(() => import('./pages/auth/PersonalData/PersonalData'));
@@ -110,6 +111,12 @@ function App() {
                 </PublicRoute>
               } />
 
+              <Route path="/reset-password" element={
+                <PublicRoute>
+                  <ResetPassword />
+                </PublicRoute>
+              } />
+
               <Route path="/terms" element={
                 <PublicRoute>
                   <Terms />
@@ -120,6 +127,19 @@ function App() {
                 <PublicRoute>
                   <Privacy />
                 </PublicRoute>
+              } />
+
+              {/* ✅ NUEVAS RUTAS PÚBLICAS: Calculator y Tracking */}
+              <Route path="/calculator" element={
+                <DashboardLayout>
+                  <Calculator />
+                </DashboardLayout>
+              } />
+
+              <Route path="/tracking" element={
+                <DashboardLayout>
+                  <Tracking />
+                </DashboardLayout>
               } />
 
               {/* ===== RUTAS SEMI-PROTEGIDAS ===== */}
@@ -168,13 +188,13 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              <Route path="/calculator" element={
+              {/* <Route path="/calculator" element={
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Calculator />
                   </DashboardLayout>
                 </ProtectedRoute>
-              } />
+              } /> */}
 
               {/* Pre-Alertas */}
               <Route path="/pre-alert/create" element={
@@ -272,13 +292,13 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              <Route path="/tracking" element={
+              {/* <Route path="/tracking" element={
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Tracking />
                   </DashboardLayout>
                 </ProtectedRoute>
-              } />
+              } /> */}
 
               <Route path="/guide/guides" element={
                 <ProtectedRoute>
