@@ -140,7 +140,18 @@ const PersonalData = () => {
             iso2: item.iso2,
             name: item.name
           }));
-          setCountryOptions(phoneCodes);
+
+          // ✅ ORDENAR: Venezuela primero (por código o nombre), luego el resto alfabéticamente
+          const sortedPhoneCodes = phoneCodes.sort((a, b) => {
+            const isVenezuelaA = a.value === "+58" || a.name.toLowerCase().includes("venezuela");
+            const isVenezuelaB = b.value === "+58" || b.name.toLowerCase().includes("venezuela");
+            
+            if (isVenezuelaA && !isVenezuelaB) return -1;
+            if (!isVenezuelaA && isVenezuelaB) return 1;
+            return a.label.localeCompare(b.label);
+          });
+
+          setCountryOptions(sortedPhoneCodes);
         }
 
         // Cargar tipos de documento

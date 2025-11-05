@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
 import axiosInstance from '../../../services/axiosInstance';
 import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
+import toast from 'react-hot-toast'; // ✅ IMPORTAR TOAST
 import './DeliveryOption.styles.scss';
 import { useAuth } from '../../../contexts/AuthContext';
 import logoImage from '../../../assets/images/logo.jpg'; 
@@ -214,7 +215,7 @@ const filteredStores = useMemo(() => {
         }
         
       } catch (error) {
-        console.error("❌ Error cargando datos:", error);
+        toast.error('Error al cargar los datos iniciales. Por favor, recarga la página.');
       } finally {
         setIsLoadingData(false);
       }
@@ -251,6 +252,7 @@ const filteredStores = useMemo(() => {
         setParishesList([]);
       } catch (error) {
         console.error("❌ Error cargando municipios:", error);
+        toast.error('Error al cargar los municipios. Intenta nuevamente.');
       } finally {
         setLoadingMunicipalities(false);
       }
@@ -284,6 +286,7 @@ const filteredStores = useMemo(() => {
         setFormData(prev => ({ ...prev, parish: '' }));
       } catch (error) {
         console.error("❌ Error cargando parroquias:", error);
+        toast.error('Error al cargar las parroquias. Intenta nuevamente.');
       } finally {
         setLoadingParishes(false);
       }
@@ -404,6 +407,9 @@ const filteredStores = useMemo(() => {
       const response = await axiosInstance.post('/Addresses/register', payload);
       
       if (response.data.success) {
+
+        toast.success('¡Dirección guardada exitosamente!');
+
         // Guardar token
         if (response.data.token) {
           localStorage.setItem('authToken', response.data.token);
@@ -441,10 +447,34 @@ const filteredStores = useMemo(() => {
       
     } catch (error) {
       console.error('❌ Error:', error);
-      const errorMsg = error.response?.data?.message || 
-                       error.response?.data?.title ||
-                       'Error al guardar la dirección';
-      alert(errorMsg);
+       // ✅ MANEJO DETALLADO DE ERRORES
+      let errorMessage = 'Error al guardar la dirección';
+      
+      if (error.response) {
+        // Error de respuesta del servidor
+        const { status, data } = error.response;
+        
+        if (status === 400) {
+          errorMessage = data.message || data.title || 'Datos inválidos';
+        } else if (status === 401) {
+          errorMessage = 'Sesión expirada. Inicia sesión nuevamente';
+          setTimeout(() => navigate('/login'), 2000);
+        } else if (status === 404) {
+          errorMessage = 'Servicio no disponible';
+        } else if (status === 500) {
+          errorMessage = 'Error en el servidor. Intenta más tarde';
+        } else {
+          errorMessage = data.message || data.title || errorMessage;
+        }
+      } else if (error.request) {
+        // Error de red
+        errorMessage = 'Error de conexión. Verifica tu internet';
+      } else {
+        // Otro tipo de error
+        errorMessage = error.message || errorMessage;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
