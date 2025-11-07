@@ -36,14 +36,14 @@ const AddressBlock = ({
     return (
       <div className="address-block__wrapper">
         {casilleroName && <Row label="Tu Casillero Kraken:" value={casilleroName} />}
-        <Row label="Full Name:" value={name} />
-        <Row label="Address Line 1:" value={line1} />      
-        <Row label="Address Line 2:" value={line2} />
-        <Row label="City:" value={city} />
-        <Row label="State:" value={state} />
-        <Row label="ZIP:" value={zip} />
-        <Row label="Country:" value={country} />
-        <Row label="Phone Number:" value={phone} />
+        {name && <Row label="Full Name:" value={name} />}
+        {line1 && <Row label="Address Line 1:" value={line1} />}
+        {line2 && <Row label="Address Line 2:" value={line2} />}
+        {city && <Row label="City:" value={city} />}
+        {state && <Row label="State:" value={state} />}
+        {zip && <Row label="ZIP:" value={zip} />}
+        {country && <Row label="Country:" value={country} />}
+        {phone && <Row label="Phone Number:" value={phone} />}
       </div>
     );
   }
@@ -52,12 +52,12 @@ const AddressBlock = ({
   return (
     <div className="address-block__wrapper">
       {casilleroName && <Row label="Tu Casillero Kraken:" value={casilleroName} />}
-      <Row label="Country:" value={country} />
-      <Row label="Province:" value={state} />
-      <Row label="City:" value={city} />
-      <Row label="Detailed Address:" value={line1} />
-      <Row label="Postal Code:" value={zip} />
-      <Row label="Full Name:" value={name} />
+      {country && <Row label="Country:" value={country} />}
+      {state && <Row label="Province:" value={state} />}
+      {city && <Row label="City:" value={city} />}
+      {line1 && <Row label="Detailed Address:" value={line1} />}
+      {zip && <Row label="Postal Code:" value={zip} />}
+      {name && <Row label="Full Name:" value={name} />}
       {phone && <Row label="Phone:" value={phone} />}
     </div>
   );
@@ -105,82 +105,93 @@ export default function AddressesPage() {
 
   const copyUSAAddress = async () => {
     if (!usaAddress) return;
+    
     const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
     const userCode = user?.codCliente || "KVXXXXXXXX";
     const casilleroName = usaAddress.nombre || usaAddress.addressLine1;
+
+    let address = "🇺🇸 DIRECCIÓN USA\n";
     
-    const address = `🇺🇸 DIRECCIÓN USA
-Tu Casillero Kraken: ${casilleroName}
-Full Name: ${userName}
-Address Line 1: ${usaAddress.addressLine1}
-Address Line 2: (${userCode})
-City: ${usaAddress.city}
-State: ${usaAddress.stateProvince}
-ZIP: ${usaAddress.zip}
-Country: ${usaAddress.country}
-Phone Number: ${usaAddress.phoneNumber}`;
+    if (casilleroName) address += `Tu Casillero Kraken: ${casilleroName}\n`;
+    if (userName) address += `Full Name: ${userName}\n`;
+    if (usaAddress.addressLine1) address += `Address Line 1: ${usaAddress.addressLine1}\n`;
+    if (userCode) address += `Address Line 2: (${userCode})\n`;
+    if (usaAddress.city) address += `City: ${usaAddress.city}\n`;
+    if (usaAddress.stateProvince) address += `State: ${usaAddress.stateProvince}\n`;
+    if (usaAddress.zip) address += `ZIP: ${usaAddress.zip}\n`;
+    if (usaAddress.country) address += `Country: ${usaAddress.country}\n`;
+    if (usaAddress.phoneNumber) address += `Phone Number: ${usaAddress.phoneNumber}`;
     
     await copyToClipboard(address);
   };
 
   const copyChinaAddress = async () => {
     if (!chinaAddress) return;
+    
     const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
     const userCode = user?.codCliente || "KVXXXXXXXX";
     const casilleroName = chinaAddress.nombre || chinaAddress.addressLine1;
+
+    let address = "🇨🇳 DIRECCIÓN CHINA\n";
     
-    const address = `🇨🇳 DIRECCIÓN CHINA
-Tu Casillero Kraken: ${casilleroName}
-Country: ${chinaAddress.country}
-Province: ${chinaAddress.stateProvince}
-City: ${chinaAddress.city}
-Detailed Address: ${chinaAddress.addressLine1} (${userCode})
-Postal Code: ${chinaAddress.zip}
-Full Name: ${userName}`;
+    if (casilleroName) address += `Tu Casillero Kraken: ${casilleroName}\n`;
+    if (chinaAddress.country) address += `Country: ${chinaAddress.country}\n`;
+    if (chinaAddress.stateProvince) address += `Province: ${chinaAddress.stateProvince}\n`;
+    if (chinaAddress.city) address += `City: ${chinaAddress.city}\n`;
+    if (chinaAddress.addressLine1) address += `Detailed Address: ${chinaAddress.addressLine1} (${userCode})\n`;
+    if (chinaAddress.zip) address += `Postal Code: ${chinaAddress.zip}\n`;
+    if (userName) address += `Full Name: ${userName}\n`;
+    if (chinaAddress.phoneNumber) address += `Phone: ${chinaAddress.phoneNumber}`;
     
     await copyToClipboard(address);
   };
 
   const shareAddresses = async () => {
-    if (!usaAddress || !chinaAddress) return;
-    
     const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
     const userCode = user?.codCliente || "KVXXXXXXXX";
-    const usaCasillero = usaAddress.nombre || usaAddress.addressLine1;
-    const chinaCasillero = chinaAddress.nombre || chinaAddress.addressLine1;
+    
+    let text = "📦 DIRECCIONES PARA ENVIAR COMPRAS\n\n";
 
-    const text = `📦 DIRECCIONES PARA ENVIAR COMPRAS
+    if (usaAddress) {
+      const usaCasillero = usaAddress.nombre || usaAddress.addressLine1;
+      text += "🇺🇸 USA\n";
+      if (usaCasillero) text += `Tu Casillero Kraken: ${usaCasillero}\n`;
+      if (userName) text += `Full Name: ${userName}\n`;
+      if (usaAddress.addressLine1) text += `Address Line 1: ${usaAddress.addressLine1}\n`;
+      if (userCode) text += `Address Line 2: (${userCode})\n`;
+      if (usaAddress.city) text += `City: ${usaAddress.city}\n`;
+      if (usaAddress.stateProvince) text += `State: ${usaAddress.stateProvince}\n`;
+      if (usaAddress.zip) text += `ZIP: ${usaAddress.zip}\n`;
+      if (usaAddress.country) text += `Country: ${usaAddress.country}\n`;
+      if (usaAddress.phoneNumber) text += `Phone Number: ${usaAddress.phoneNumber}\n`;
+      text += "\n";
+    }
 
-🇺🇸 USA
-Tu Casillero Kraken: ${usaCasillero}
-Full Name: ${userName}
-Address Line 1: ${usaAddress.addressLine1}
-Address Line 2: (${userCode})
-City: ${usaAddress.city}
-State: ${usaAddress.stateProvince}
-ZIP: ${usaAddress.zip}
-Country: ${usaAddress.country}
-Phone Number: ${usaAddress.phoneNumber}
+    if (chinaAddress) {
+      const chinaCasillero = chinaAddress.nombre || chinaAddress.addressLine1;
+      text += "🇨🇳 CHINA\n";
+      if (chinaCasillero) text += `Tu Casillero Kraken: ${chinaCasillero}\n`;
+      if (chinaAddress.country) text += `Country: ${chinaAddress.country}\n`;
+      if (chinaAddress.stateProvince) text += `Province: ${chinaAddress.stateProvince}\n`;
+      if (chinaAddress.city) text += `City: ${chinaAddress.city}\n`;
+      if (chinaAddress.addressLine1) text += `Detailed Address: ${chinaAddress.addressLine1} (${userCode})\n`;
+      if (chinaAddress.zip) text += `Postal Code: ${chinaAddress.zip}\n`;
+      if (userName) text += `Full Name: ${userName}\n`;
+      if (chinaAddress.phoneNumber) text += `Phone: ${chinaAddress.phoneNumber}`;
+    }
 
-🇨🇳 CHINA
-Tu Casillero Kraken: ${chinaCasillero}
-Country: ${chinaAddress.country}
-Province: ${chinaAddress.stateProvince}
-City: ${chinaAddress.city}
-Detailed Address: ${chinaAddress.addressLine1} (${userCode})
-Postal Code: ${chinaAddress.zip}
-Full Name: ${userName}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Mis Direcciones Kraken', text });
-      } catch (error) {
-        console.error('Error sharing:', error);
-        toast.error('Error al compartir.');
+    if (usaAddress || chinaAddress) {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Mis Direcciones Kraken', text });
+        } catch (error) {
+          console.error('Error sharing:', error);
+          toast.error('Error al compartir.');
+        }
+      } else {
+        await copyToClipboard(text);
+        toast.info('Direcciones copiadas al portapapeles para compartir.');
       }
-    } else {
-      await copyToClipboard(text);
-      toast.info('Direcciones copiadas al portapapeles para compartir.');
     }
   };
 
@@ -193,7 +204,8 @@ Full Name: ${userName}`;
     );
   }
 
-  if (!usaAddress || !chinaAddress) {
+  // Cambio aquí: mostrar si hay al menos una dirección
+  if (!usaAddress && !chinaAddress) {
     return (
       <div className="addresses-page__loading">
         <p>No se encontraron direcciones.</p>
@@ -212,7 +224,7 @@ Full Name: ${userName}`;
         {/* User Number */}
         <div className="addresses-page__section">
           <div className="addresses-page__row">
-            <p className="addresses-page__label">N° de usuario</p>
+            <p className="addresses-page__label">Nº de Casillero</p>
             <div className="addresses-page__badge">
               <p className="addresses-page__badge-text">
                 {user.codCliente || "KVXXXXXXXX"}
@@ -232,50 +244,54 @@ Full Name: ${userName}`;
 
         {/* Addresses Grid */}
         <div className="addresses-page__addresses-grid"> 
-          {/* USA Address */}
-          <div className="addresses-page__section">
-            <div className="addresses-page__row">
-              <img src={usaFlag} alt="USA Flag" className="addresses-page__flag-icon" />
-              <h2 className="addresses-page__country-title">USA</h2>
-              <button onClick={copyUSAAddress} className="addresses-page__copy-button">
-                <Copy size={18} />
-              </button>
+          {/* USA Address - Solo mostrar si existe */}
+          {usaAddress && (
+            <div className="addresses-page__section">
+              <div className="addresses-page__row">
+                <img src={usaFlag} alt="USA Flag" className="addresses-page__flag-icon" />
+                <h2 className="addresses-page__country-title">USA</h2>
+                <button onClick={copyUSAAddress} className="addresses-page__copy-button">
+                  <Copy size={18} />
+                </button>
+              </div>
+              <AddressBlock
+                casilleroName={usaAddress.nombre || usaAddress.addressLine1}
+                name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}            
+                line1={usaAddress.addressLine1}
+                line2={`(${user.codCliente || "KVXXXXXXXX"})`}
+                city={usaAddress.city}
+                state={usaAddress.stateProvince}
+                zip={usaAddress.zip}
+                country={usaAddress.country}
+                phone={usaAddress.phoneNumber}
+                isChina={false}
+              />
             </div>
-            <AddressBlock
-              casilleroName={usaAddress.nombre || usaAddress.addressLine1}
-              name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}            
-              line1={usaAddress.addressLine1}
-              line2={`(${user.codCliente || "KVXXXXXXXX"})`}
-              city={usaAddress.city}
-              state={usaAddress.stateProvince}
-              zip={usaAddress.zip}
-              country={usaAddress.country}
-              phone={usaAddress.phoneNumber}
-              isChina={false}
-            />
-          </div>
+          )}
 
-          {/* China Address */}
-          <div className="addresses-page__section">
-            <div className="addresses-page__row">
-              <img src={chinaFlag} alt="China Flag" className="addresses-page__flag-icon" />
-              <h2 className="addresses-page__country-title">CHINA</h2>
-              <button onClick={copyChinaAddress} className="addresses-page__copy-button">
-                <Copy size={18} />
-              </button>
+          {/* China Address - Solo mostrar si existe */}
+          {chinaAddress && (
+            <div className="addresses-page__section">
+              <div className="addresses-page__row">
+                <img src={chinaFlag} alt="China Flag" className="addresses-page__flag-icon" />
+                <h2 className="addresses-page__country-title">CHINA</h2>
+                <button onClick={copyChinaAddress} className="addresses-page__copy-button">
+                  <Copy size={18} />
+                </button>
+              </div>
+              <AddressBlock
+                casilleroName={chinaAddress.nombre || chinaAddress.addressLine1}
+                country={chinaAddress.country}
+                state={chinaAddress.stateProvince}
+                city={chinaAddress.city}
+                line1={`${chinaAddress.addressLine1} (${user.codCliente || "KVXXXXXXXX"})`}
+                zip={chinaAddress.zip}
+                name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}
+                phone={chinaAddress.phoneNumber}
+                isChina={true}
+              />
             </div>
-            <AddressBlock
-              casilleroName={chinaAddress.nombre || chinaAddress.addressLine1}
-              country={chinaAddress.country}
-              state={chinaAddress.stateProvince}
-              city={chinaAddress.city}
-              line1={`${chinaAddress.addressLine1} (${user.codCliente || "KVXXXXXXXX"})`}
-              zip={chinaAddress.zip}
-              name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}
-              // phone={chinaAddress.phoneNumber}
-              isChina={true}
-            />
-          </div>
+          )}
         </div>
 
         {/* Help */}
@@ -286,13 +302,15 @@ Full Name: ${userName}`;
           </p>
         </button>
 
-        {/* Share */}
-        <div className="addresses-page__share-section">
-          <p className="addresses-page__share-title">COMPARTIR</p>
-          <button onClick={shareAddresses} className="addresses-page__share-button">
-            <Share2 size={20} />
-          </button>
-        </div>
+        {/* Share - Solo mostrar si hay al menos una dirección */}
+        {(usaAddress || chinaAddress) && (
+          <div className="addresses-page__share-section">
+            <p className="addresses-page__share-title">COMPARTIR</p>
+            <button onClick={shareAddresses} className="addresses-page__share-button">
+              <Share2 size={20} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

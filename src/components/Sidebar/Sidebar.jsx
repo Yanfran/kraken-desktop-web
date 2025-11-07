@@ -43,7 +43,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       hasSubMenu: true,
       subItems: [
         { id: 'datos-personales', label: 'Datos Personales', path: '/profile/personal-data' },
-        { id: 'direcciones', label: 'Direcciones', path: '/profile/addresses' },
+        { id: 'direcciones', label: 'Mis Direcciones', path: '/profile/addresses' },
         { id: 'change-password', label: 'Cambiar Contraseña', path: '/change-password'}
         
       ]

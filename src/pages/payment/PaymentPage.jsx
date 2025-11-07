@@ -386,7 +386,7 @@ export default function PaymentPage() {
   };
 
   const handleBackToGuides = () => {
-    navigate('/my-guides');
+    navigate('/guide/guides');
   };
 
   const handleRetry = () => {
@@ -407,7 +407,7 @@ export default function PaymentPage() {
       <IoCloseCircleOutline size={64} color="#F44336" />
       <h2>Error al Cargar</h2>
       <p>{dataError}</p>
-      <button onClick={() => navigate('/my-guides')} className={styles.btn_primary}>
+      <button onClick={() => navigate('/guide/guides')} className={styles.btn_primary}>
         Volver a Guías
       </button>
     </div>
