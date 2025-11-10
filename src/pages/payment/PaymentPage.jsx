@@ -1,4 +1,4 @@
-// src/pages/Payment/PaymentPage.jsx
+// src/pages/Payment/PaymentPage.jsx - CON SOPORTE PARA PAGOS MÚLTIPLES
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,18 +17,21 @@ import {
   IoCheckmark,
   IoChevronDown,
   IoChevronUp,
-  IoAlertCircleOutline,
   IoShieldCheckmarkOutline,
+  IoReceiptOutline,
 } from 'react-icons/io5';
 
 // Services
-import { getGuiaById } from '@/services/guiasService';
+import { 
+  getGuiaById, 
+  getMultipleGuiasPaymentData // 🆕 NUEVO
+} from '@/services/guiasService';
 import { 
   processMercantilPayment, 
-  processCardPaymentUnified // ✅ FUNCIÓN CON 2FA
+  processCardPaymentUnified
 } from '@/services/payment/paymentService';
 
-// Constantes
+// Constantes (igual que antes)
 const PHONE_CODES = [
   { code: '0412', carrier: 'Digitel' },
   { code: '0422', carrier: 'Digitel' },
@@ -63,38 +66,37 @@ export default function PaymentPage() {
   const [dataError, setDataError] = useState('');
   const [error, setError] = useState('');
 
-  // Pago múltiple
+  // 🆕 Pago múltiple
   const multipleIds = searchParams.get('multiple');
   const isMultiplePayment = !!multipleIds;
+  const [guiasDetails, setGuiasDetails] = useState([]); // Lista de guías con detalles
 
-  // Estados del formulario
+  // Estados del formulario (igual que antes)
   const [idType, setIdType] = useState('V');
   const [idNumber, setIdNumber] = useState('');
   const [phoneCode, setPhoneCode] = useState('0414');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
-  const [twofactorAuth, setTwofactorAuth] = useState(''); // ✅ CÓDIGO 2FA
+  const [twofactorAuth, setTwofactorAuth] = useState('');
   
-  // Tarjeta
   const [cardNumber, setCardNumber] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [cardholderName, setCardholderName] = useState('');
 
-  // Dropdowns
   const [showIdTypes, setShowIdTypes] = useState(false);
   const [showPhoneCodes, setShowPhoneCodes] = useState(false);
 
-  // Resultado
   const [paymentReference, setPaymentReference] = useState('');
   const [authorizationCode, setAuthorizationCode] = useState('');
 
-  // Aplicar tema
+  // 🆕 Estado para mostrar/ocultar detalles
+  const [showGuiasDetails, setShowGuiasDetails] = useState(false);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', actualTheme);
   }, [actualTheme]);
 
-  // Cargar datos
   useEffect(() => {
     if (!isSignedIn) {
       navigate('/login');
@@ -103,26 +105,57 @@ export default function PaymentPage() {
     loadPaymentData();
   }, [id, isSignedIn, navigate]);
 
+  // 🆕 CARGAR DATOS - SOPORTA SIMPLE Y MÚLTIPLE
   const loadPaymentData = async () => {
     try {
       setDataLoading(true);
       setDataError('');
 
       if (isMultiplePayment) {
+        // ✅ PAGO MÚLTIPLE
         const guiaIds = multipleIds.split(',').map(Number);
-        toast.info('Función de pago múltiple en desarrollo');
+        console.log('📦 Cargando datos para pagos múltiples:', guiaIds);
+
+        const response = await getMultipleGuiasPaymentData(guiaIds);
+        
+        if (response.success && response.data) {
+          const data = response.data;
+          
+          // Construir paymentData consolidado
+          setPaymentData({
+            isMultiple: true,
+            guiaIds: guiaIds,
+            trackingNumbers: data.trackingNumbers || [],
+            amount: data.amount || 0,
+            amount_usd: data.amount_usd || 0,
+            tasaCambio: data.detalle?.tasaCambio || 102.16,
+            detalle: data.detalle,
+            aranceles: data.aranceles,
+          });
+
+          // Guardar detalles de cada guía
+          setGuiasDetails(data.detalle?.guias || []);
+          
+          setAmount(data.amount?.toFixed(2) || '0.00');
+          setStep('method');
+        } else {
+          setDataError(response.message || 'Error al cargar datos de pago múltiple');
+          setStep('loading');
+        }
       } else {
+        // ✅ PAGO INDIVIDUAL
         const response = await getGuiaById(parseInt(id));
         
         if (response.success) {
           setPaymentData({
+            isMultiple: false,
             idGuia: response.data.idGuia,
             trackingNumber: response.data.nGuia,
-            amount: response.data.detalleFactura.precioBase,
-            detalle: response.data.detalleFactura,
+            amount: response.data.detalleFactura.precioTotal,
             tasaCambio: response.data.detalleFactura.tasaCambio || 102.16,
+            detalle: response.data.detalleFactura,
           });
-          setAmount(response.data.detalleFactura.precioBase.toFixed(2));
+          setAmount(response.data.detalleFactura.precioTotal.toFixed(2));
           setStep('method');
         } else {
           setDataError(response.message || 'Error al cargar datos de pago');
@@ -148,7 +181,7 @@ export default function PaymentPage() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Formateo
+  // Formateo (igual que antes)
   const formatBolivar = (amount) => {
     if (isNaN(amount)) return '0,00 Bs.';
     return amount.toLocaleString('es-VE', {
@@ -180,7 +213,7 @@ export default function PaymentPage() {
     return cleaned;
   };
 
-  // Validaciones
+  // Validaciones (igual que antes)
   const validateForm = () => {
     const customerId = `${idType}${idNumber}`;
     
@@ -200,7 +233,6 @@ export default function PaymentPage() {
         return false;
       }
       
-      // ✅ VALIDAR CÓDIGO 2FA PARA PAGO MÓVIL
       if (!twofactorAuth || twofactorAuth.length < 4) {
         toast.error('Ingresa el código de autenticación (mínimo 4 dígitos)');
         return false;
@@ -225,12 +257,6 @@ export default function PaymentPage() {
         toast.error('Ingresa el nombre completo del tarjetahabiente');
         return false;
       }
-      
-      // // ✅ VALIDAR CÓDIGO 2FA PARA TARJETA
-      // if (!twofactorAuth || twofactorAuth.length < 4) {
-      //   toast.error('Ingresa el código de autenticación (mínimo 4 dígitos)');
-      //   return false;
-      // }
     }
 
     return true;
@@ -241,9 +267,7 @@ export default function PaymentPage() {
     return `58${cleanCode}${phoneNumber}`;
   };
 
-  // ============================================================
-  // PAGO MÓVIL (CON CÓDIGO 2FA)
-  // ============================================================
+  // 🆕 PAGO MÓVIL - ACTUALIZADO PARA MÚLTIPLES
   const handlePayment = async () => {
     if (!validateForm()) return;
 
@@ -257,13 +281,14 @@ export default function PaymentPage() {
         customerId,
         originMobileNumber: formatPhoneForMercantil(phoneCode, phoneNumber),
         tasa: paymentData.tasaCambio,
-        twofactorAuth: twofactorAuth, // ✅ CÓDIGO INGRESADO POR EL USUARIO
-        idGuia: isMultiplePayment ? multipleIds.split(',').map(Number)[0] : paymentData.idGuia,
-        guiasIds: isMultiplePayment 
-          ? multipleIds.split(',').map(Number) 
-          : [paymentData.idGuia],
-        isMultiplePayment: isMultiplePayment || false,
+        twofactorAuth: twofactorAuth,
+        // ✅ SOPORTE PARA MÚLTIPLES GUÍAS
+        idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
+        guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
+        isMultiplePayment: isMultiplePayment,
       };
+
+      console.log('📤 Enviando pago:', paymentRequest);
 
       const response = await processMercantilPayment(paymentRequest);
 
@@ -287,9 +312,7 @@ export default function PaymentPage() {
     }
   };
 
-  // ============================================================
-  // ✅ PAGO CON TARJETA (CON CÓDIGO 2FA INGRESADO POR USUARIO)
-  // ============================================================
+  // 🆕 PAGO CON TARJETA - ACTUALIZADO PARA MÚLTIPLES
   const handleCardPayment = async () => {
     if (!validateForm()) return;
 
@@ -299,46 +322,28 @@ export default function PaymentPage() {
       setIsLoading(true);
       setError('');
 
-      console.log('💳 Procesando pago con tarjeta...');
-
-      // Mostrar mensaje al usuario
       toast.loading('Procesando pago... Esto puede tardar hasta 2 minutos', {
         duration: 120000,
         id: 'processing-payment'
       });
 
-      // ✅ LLAMADA CON CÓDIGO 2FA INGRESADO POR USUARIO
       const paymentData_request = {
         customerId,
         cardNumber: cardNumber.replace(/\s/g, ''),
         expirationDate,
         cvv,
-        // twofactorAuth: twofactorAuth, // ✅ CÓDIGO INGRESADO POR EL USUARIO
         amount: parseFloat(amount),
         paymentMethod: 'tdd',
         tasa: paymentData.tasaCambio,
-        idGuia: isMultiplePayment 
-          ? multipleIds.split(',').map(Number)[0] 
-          : paymentData.idGuia,
-        guiasIds: isMultiplePayment 
-          ? multipleIds.split(',').map(Number) 
-          : [paymentData.idGuia],
-        isMultiplePayment: isMultiplePayment || false,
+        // ✅ SOPORTE PARA MÚLTIPLES GUÍAS
+        idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
+        guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
+        isMultiplePayment: isMultiplePayment,
       };
-
-      // console.log('📤 Enviando datos de pago:', {
-      //   customerId: paymentData_request.customerId,
-      //   cardNumber: paymentData_request.cardNumber.substring(0, 6) + '****',
-      //   amount: paymentData_request.amount,
-      //   has2FA: !!paymentData_request.twofactorAuth
-      // });
 
       const paymentResult = await processCardPaymentUnified(paymentData_request);
 
-      // Cerrar el toast de loading
       toast.dismiss('processing-payment');
-
-      console.log('📥 Respuesta del servidor:', paymentResult);
 
       if (!paymentResult.success) {
         if (paymentResult.isTimeout) {
@@ -357,9 +362,6 @@ export default function PaymentPage() {
         return;
       }
 
-      // PAGO EXITOSO
-      console.log('✅ Pago exitoso:', paymentResult.data);
-      
       setPaymentReference(paymentResult.data?.paymentReference || paymentResult.data?.payment_reference || 'N/A');
       setAuthorizationCode(paymentResult.data?.authorizationCode || paymentResult.data?.authorization_code || 'N/A');
       
@@ -394,7 +396,77 @@ export default function PaymentPage() {
     setStep('form');
   };
 
-  // Renders
+  // 🆕 RENDER INFO DE GUÍA(S) - ACTUALIZADO
+  const renderGuiaInfo = () => (
+    <div className={styles.guiaInfo}>
+      <div className={styles.amountCard}>
+        <p className={styles.amountLabel}>
+          {isMultiplePayment ? 'Total a pagar:' : 'Monto a pagar:'}
+        </p>
+        <h2 className={styles.amountValue}>{formatBolivar(parseFloat(amount))}</h2>
+        {/* <p className={styles.usdReference}>{formatUSDReference(parseFloat(amount))}</p> */}
+        {/* <p className={styles.exchangeRate}>
+          Tasa: {paymentData?.tasaCambio?.toFixed(2)} Bs/$
+        </p> */}
+
+        {isMultiplePayment && (
+          <>
+            <div className={styles.multipleNote}>
+              <IoReceiptOutline size={16} />
+              {` Pago por ${paymentData.guiaIds.length} guías`}
+            </div>
+
+            {/* 🆕 Botón para ver detalles */}
+            <button
+              className={styles.toggleDetailsBtn}
+              onClick={() => setShowGuiasDetails(!showGuiasDetails)}
+            >
+              {showGuiasDetails ? 'Ocultar detalles' : 'Ver detalles de cada guía'}
+              {showGuiasDetails ? <IoChevronUp /> : <IoChevronDown />}
+            </button>
+
+            {/* 🆕 Lista de guías */}
+            {showGuiasDetails && guiasDetails.length > 0 && (
+              <div className={styles.guiasDetailsList}>
+                {guiasDetails.map((guia, index) => (
+                  <div key={index} className={styles.guiaDetailItem}>
+                    <div className={styles.guiaDetailHeader}>
+                      <span className={styles.guiaDetailTrack}>
+                        {guia.trackingNumber || `Guía ${guia.guiaId}`}
+                      </span>
+                      <span className={styles.guiaDetailAmount}>
+                        {formatBolivar(guia.amount)}
+                      </span>
+                    </div>
+                    {/* <div className={styles.guiaDetailBreakdown}>
+                      <div className={styles.guiaDetailRow}>
+                        <span>Flete:</span>
+                        <span>{formatBolivar(guia.detalle.flete)}</span>
+                      </div>
+                      {guia.detalle.totalAranceles > 0 && (
+                        <div className={styles.guiaDetailRow}>
+                          <span>Aranceles:</span>
+                          <span>{formatBolivar(guia.detalle.totalAranceles)}</span>
+                        </div>
+                      )}
+                      {guia.detalle.iva > 0 && (
+                        <div className={styles.guiaDetailRow}>
+                          <span>IVA:</span>
+                          <span>{formatBolivar(guia.detalle.iva)}</span>
+                        </div>
+                      )}
+                    </div> */}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  // Los demás renders permanecen igual...
   const renderLoadingState = () => (
     <div className={styles.loadingContainer}>
       <div className={styles.spinner}></div>
@@ -413,28 +485,12 @@ export default function PaymentPage() {
     </div>
   );
 
-  const renderGuiaInfo = () => (
-    <div className={styles.guiaInfo}>
-      <div className={styles.amountCard}>
-        <p className={styles.amountLabel}>
-          {isMultiplePayment ? 'Total a pagar:' : 'Monto a pagar:'}
-        </p>
-        <h2 className={styles.amountValue}>{formatBolivar(parseFloat(amount))}</h2>
-        {isMultiplePayment && (
-          <p className={styles.multipleNote}>
-            Pago por {multipleIds.split(',').length} guías
-          </p>
-        )}
-      </div>
-    </div>
-  );
-
   const renderMethodSelection = () => (
     <div className={styles.methodContainer}>
       <h3 className={styles.stepTitle}>Selecciona el Método de Pago</h3>
       <p className={styles.stepDescription}>
         {isMultiplePayment
-          ? `Elige cómo deseas realizar el pago para ${multipleIds.split(',').length} guías`
+          ? `Elige cómo deseas realizar el pago para ${paymentData.guiaIds.length} guías`
           : 'Elige cómo deseas realizar el pago para tu guía'}
       </p>
 
@@ -470,7 +526,7 @@ export default function PaymentPage() {
         Continuar <IoArrowForward />
       </button>
     </div>
-  );
+  );  
 
   const renderPaymentForm = () => (
     <div className={styles.formContainer}>
@@ -740,7 +796,9 @@ export default function PaymentPage() {
     </div>
   );
 
-  // Render principal
+  // renderPaymentForm, renderSuccess, renderError permanecen igual...
+  // (Los mantienes como estaban)
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>

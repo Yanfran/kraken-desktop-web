@@ -182,24 +182,24 @@ export const getLastShipment = async () => {
  * @param {number[]} guiaIds - Array of Guia IDs
  * @returns {Promise<ApiResponse>}
  */
-export const calculateMultipleGuiasPrice = async (guiaIds) => {
-  try {
-    const response = await axiosInstance.post('/Guias/calculateMultiplePrice', { guiaIds });
-    return {
-      success: true,
-      data: response.data.data || response.data,
-      message: 'Cálculo realizado exitosamente'
-    };
-  } catch (error) {
-    console.error('Error calculating guias price:', error);
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al calcular precio',
-      errors: error.response?.data?.errors || [error.message],
-      data: null
-    };
-  }
-};
+// export const calculateMultipleGuiasPrice = async (guiaIds) => {
+//   try {
+//     const response = await axiosInstance.post('/Guias/calculateMultiplePrice', { guiaIds });
+//     return {
+//       success: true,
+//       data: response.data.data || response.data,
+//       message: 'Cálculo realizado exitosamente'
+//     };
+//   } catch (error) {
+//     console.error('Error calculating guias price:', error);
+//     return {
+//       success: false,
+//       message: error.response?.data?.message || 'Error al calcular precio',
+//       errors: error.response?.data?.errors || [error.message],
+//       data: null
+//     };
+//   }
+// };
 
 /**
  * Get invoices for a specific guia
@@ -393,15 +393,47 @@ export const uploadGuiaInvoice = async (guiaId, file) => {
   }
 };
 
+/**
+ * 🆕 Obtener datos de pago para múltiples guías
+ * @param {number[]} guiaIds - Array de IDs de guías
+ * @returns {Promise<ApiResponse>}
+ */
+export const getMultipleGuiasPaymentData = async (guiaIds) => {
+  try {
+    console.log('📦 Obteniendo datos de pago para múltiples guías:', guiaIds);
+    
+    const response = await axiosInstance.post('/Payment/multiple/data', {
+      guiaIds: guiaIds
+    });
+
+    console.log('✅ Datos de pago múltiple obtenidos:', response.data);
+    
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: 'Datos de pago obtenidos exitosamente'
+    };
+  } catch (error) {
+    console.error('❌ Error obteniendo datos de pago múltiple:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al obtener datos de pago múltiple',
+      errors: error.response?.data?.errors || [error.message],
+      data: null
+    };
+  }
+};
+
 // Export default object with all functions
 export default {
   getGuias,
   getGuiaById,
   getLastShipment,
   calculateSingleGuiaPrice,
-  calculateMultipleGuiasPrice,
+  // calculateMultipleGuiasPrice,
   getGuiaInvoices,
   downloadInvoice,
   downloadAllInvoices,
-  uploadGuiaInvoice
+  uploadGuiaInvoice,
+  getMultipleGuiasPaymentData
 };

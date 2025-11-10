@@ -518,3 +518,235 @@
     right: -8px; // Ajustar para que no se salga de la pantalla
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ============================================
+// 🆕 MODO SELECCIÓN MÚLTIPLE
+// ============================================
+.selectionModeBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+
+  &.active {
+    border-color: #10b981;
+    background: #10b981;
+    color: white;
+  }
+}
+
+.selectAllBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #10b981;
+  }
+}
+
+.checkboxCell {
+  width: 50px;
+  text-align: center;
+  padding: 12px 8px !important;
+}
+
+.checkboxBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+// Fila seleccionada
+.tableRow.selected {
+  background: #f0fdf4 !important;
+  border-left: 3px solid #10b981;
+  
+  &:hover {
+    background: #e6f7f0 !important;
+  }
+}
+
+// Card seleccionado
+.guiaCard.selected {
+  border: 2px solid #10b981;
+  background: #f0fdf4;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  
+  &:hover {
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+  }
+}
+
+.cardCheckbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  background: white;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  .guiaCard.selected & {
+    background: #10b981;
+    
+    button {
+      color: white !important;
+    }
+  }
+}
+
+// ============================================
+// 🆕 BOTÓN FLOTANTE DE PAGO
+// ============================================
+.floatingPayButton {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  animation: slideUp 0.3s ease;
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+.payBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.5);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// ============================================
+// RESPONSIVE PARA SELECCIÓN MÚLTIPLE
+// ============================================
+@media (max-width: 768px) {
+  .selectionModeBtn {
+    font-size: 13px;
+    padding: 6px 12px;
+    gap: 4px;
+    
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+  
+  .floatingPayButton {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .payBtn {
+    width: 100%;
+    justify-content: center;
+    font-size: 15px;
+    padding: 14px 24px;
+  }
+  
+  .checkboxCell {
+    width: 40px;
+    padding: 8px 4px !important;
+  }
+  
+  .checkboxBtn {
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+  
+  .cardCheckbox {
+    top: 6px;
+    left: 6px;
+    padding: 2px;
+    
+    button svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+}

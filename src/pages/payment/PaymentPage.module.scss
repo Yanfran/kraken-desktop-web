@@ -642,3 +642,96 @@ $transition-base: 0.3s ease;
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+// ===== 🆕 DETALLES DE GUÍAS MÚLTIPLES =====
+.toggleDetailsBtn {
+  margin-top: 1rem;
+  padding: 0.625rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: $radius-sm;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all $transition-fast;
+  width: 100%;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.guiasDetailsList {
+  margin-top: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: $radius-sm;
+  padding: 0.5rem;
+}
+
+.guiaDetailItem {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-sm;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.guiaDetailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
+  .guiaDetailTrack {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .guiaDetailAmount {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+}
+
+.guiaDetailBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.guiaDetailRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  opacity: 0.9;
+
+  span:first-child {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  span:last-child {
+    font-weight: 600;
+  }
+}

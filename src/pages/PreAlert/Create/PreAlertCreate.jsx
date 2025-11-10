@@ -475,6 +475,20 @@ const PreAlertCreate = () => {
         if (defaultAddr) {
           direccion.idDireccion = defaultAddr.id;
           direccion.tipo = defaultAddr.tipoDireccion;
+          
+          // ✅ SOLUCIÓN: Agregar ciudad y tienda cuando es tipo store
+          if (defaultAddr.tipoDireccion === 'store') {
+            direccion.ciudad = defaultAddr.idCiudad?.toString() ?? '';
+            direccion.tienda = defaultAddr.idLocker?.toString() ?? '';
+          } else if (defaultAddr.tipoDireccion === 'home') {
+            // También enviar datos de domicilio si es necesario
+            direccion.estado = defaultAddr.idEstado?.toString() ?? '';
+            direccion.municipio = defaultAddr.idMunicipio?.toString() ?? '';
+            direccion.parroquia = defaultAddr.idParroquia?.toString() ?? '';
+            direccion.direccion = defaultAddr.direccionCompleta ?? '';
+            direccion.referencia = defaultAddr.referencia ?? '';
+            direccion.nombreDireccion = defaultAddr.nombreDireccion ?? '';
+          }
         } else {
           // Fallback: si no hay predeterminada pero está en modo 'default',
           // crear nueva dirección con los datos actuales
@@ -516,10 +530,23 @@ const PreAlertCreate = () => {
         );
         direccion.idDireccion = addressId;
 
-        // Buscar el tipo de dirección
+       // Buscar la dirección y enviar sus datos completos
         const selectedAddr = userAddresses?.find((a) => a.id === addressId);
         if (selectedAddr) {
           direccion.tipo = selectedAddr.tipoDireccion;
+          
+          // ✅ Agregar datos según el tipo
+          if (selectedAddr.tipoDireccion === 'store') {
+            direccion.ciudad = selectedAddr.idCiudad?.toString() ?? '';
+            direccion.tienda = selectedAddr.idLocker?.toString() ?? '';
+          } else {
+            direccion.estado = selectedAddr.idEstado?.toString() ?? '';
+            direccion.municipio = selectedAddr.idMunicipio?.toString() ?? '';
+            direccion.parroquia = selectedAddr.idParroquia?.toString() ?? '';
+            direccion.direccion = selectedAddr.direccionCompleta ?? '';
+            direccion.referencia = selectedAddr.referencia ?? '';
+            direccion.nombreDireccion = selectedAddr.nombreDireccion ?? '';
+          }
         }
       }
 

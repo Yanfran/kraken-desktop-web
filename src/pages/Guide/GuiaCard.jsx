@@ -1,4 +1,4 @@
-// src/pages/MyGuides/GuiaCard.jsx - CON COSTO CALCULADO
+// src/pages/MyGuides/GuiaCard.jsx - CON CHECKBOX PARA SELECCIÓN MÚLTIPLE
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,20 +7,12 @@ import clsx from 'clsx';
 
 // Icons
 import { 
-  IoChevronBack,
-  IoCallOutline,
-  IoCalendarOutline,
-  IoPersonOutline,  
-  IoSaveOutline,
-  IoLocationOutline,
   IoEyeOutline,
-  IoCreateOutline,
   IoHelpOutline,
-  IoTrashOutline,
   IoCardOutline,
-  IoStorefrontOutline,
-  IoHomeOutline,
-  IoDocumentTextOutline
+  IoDocumentTextOutline,
+  IoCheckboxOutline,
+  IoSquareOutline
 } from 'react-icons/io5';
 
 export default function GuiaCard({ 
@@ -33,12 +25,21 @@ export default function GuiaCard({
   openMenuId,
   setOpenMenuId,
   calculatedCost,
-  isCalculatingCost = false
+  isCalculatingCost = false,
+  // 🆕 PROPS PARA SELECCIÓN
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelection
 }) {
   const navigate = useNavigate();
 
-  console.log('Navegando a detalle de guía:', guia);
   const handleNavigate = () => {
+    // 🆕 Si está en modo selección, toggle en lugar de navegar
+    if (selectionMode) {
+      onToggleSelection();
+      return;
+    }
+
     if (guia && guia.idGuia) {
       navigate(`/guide/detail/${guia.idGuia}`);
     }
@@ -59,7 +60,6 @@ export default function GuiaCard({
   const isPaid = guia.tienePago || guia.estaPagado;
   const isMenuOpen = openMenuId === guia.idGuia;
 
-  // 🆕 Obtener costo a mostrar
   const getCosto = () => {
     if (isCalculatingCost) {
       return '...';
@@ -69,37 +69,35 @@ export default function GuiaCard({
       return calculatedCost;
     }
     
-    // Fallback a valorFOB
     return guia.valorFOB 
       ? `$${parseFloat(guia.valorFOB).toFixed(2)}` 
       : '$0.00';
   };
 
-  const formatBolivarFromShipment = (shipment) => {
-    if (!shipment) return '0,00 Bs.';
-    const df = shipment.calculationData?.detalleFactura || {};
-    const tasa = shipment.calculationData?.tasaCambio || shipment.tasaCambio || 0;
-
-    let value = 0;
-    if (typeof df.precioBase === 'number') {
-      value = df.precioBase;
-    } else if (typeof df.precioBaseUSD === 'number' && tasa) {
-      value = df.precioBaseUSD * tasa;
-    } else if (typeof shipment.valorFOB === 'number' && tasa) {
-      value = shipment.valorFOB * tasa;
-    }
-
-    return Number(value || 0).toLocaleString('es-VE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }) + ' Bs.';
-  };
-
-
   // MODO LISTA (TABLA)
   if (viewMode === 'list') {
     return (
-      <tr className={styles.tableRow} onClick={handleNavigate}>
+      <tr 
+        className={clsx(styles.tableRow, isSelected && styles.selected)} 
+        onClick={handleNavigate}
+      >
+        {/* 🆕 CELDA CHECKBOX */}
+        {selectionMode && (
+          <td className={styles.checkboxCell} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={styles.checkboxBtn}
+              onClick={onToggleSelection}
+              disabled={!sePuedePagar}
+            >
+              {isSelected ? (
+                <IoCheckboxOutline size={24} style={{ color: '#10b981' }} />
+              ) : (
+                <IoSquareOutline size={24} style={{ color: '#999' }} />
+              )}
+            </button>
+          </td>
+        )}
+
         <td className={styles.bookmarkCell}>
           <button className={styles.bookmarkBtn} onClick={(e) => e.stopPropagation()}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -118,9 +116,9 @@ export default function GuiaCard({
           <div className={styles.dateText}>{guia.fecha || 'Feb 7, 2025 • 09:30'}</div>
         </td>
         
-        {/* <td className={styles.costCell}>
+        <td className={styles.costCell}>
           {getCosto()}
-        </td> */}
+        </td>
         
         <td className={styles.originCell}>
           {guia.origen || 'USA'}
@@ -189,7 +187,30 @@ export default function GuiaCard({
 
   // MODO GRID (CARD)
   return (
-    <div className={styles.guiaCard} onClick={handleNavigate}>
+    <div 
+      className={clsx(styles.guiaCard, isSelected && styles.selected)} 
+      onClick={handleNavigate}
+    >
+      {/* 🆕 CHECKBOX EN GRID */}
+      {selectionMode && (
+        <div 
+          className={styles.cardCheckbox}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className={styles.checkboxBtn}
+            onClick={onToggleSelection}
+            disabled={!sePuedePagar}
+          >
+            {isSelected ? (
+              <IoCheckboxOutline size={28} style={{ color: '#10b981' }} />
+            ) : (
+              <IoSquareOutline size={28} style={{ color: '#999' }} />
+            )}
+          </button>
+        </div>
+      )}
+
       <div className={styles.cardHeader}>
         <div className={styles.cardHeaderLeft}>
           <button className={styles.bookmarkBtn} onClick={(e) => e.stopPropagation()}>
@@ -270,10 +291,10 @@ export default function GuiaCard({
           <span className={styles.cardLabel}>Contenido:</span>
           <span className={styles.guiaSubtext}>{guia.contenido || 'TV'}</span>
         </div>
-        {/* <div className={styles.cardRow}>
+        <div className={styles.cardRow}>
           <span className={styles.cardLabel}>Costo:</span>
           <span className={styles.costText}>{getCosto()}</span>
-        </div> */}
+        </div>
         <div className={styles.cardRow}>
           <span className={styles.cardLabel}>Origen:</span>
           <span>{guia.origen || 'USA'}</span>

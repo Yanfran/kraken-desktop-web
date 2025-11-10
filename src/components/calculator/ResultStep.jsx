@@ -91,10 +91,10 @@ const ResultStep = ({
     const franqueoBs = extractNumericValue(franqueoDetalle?.montoBs);
     const arancelBs = extractNumericValue(arancelDetalle?.montoBs);
     
-    const baseImponibleFull = subtotalSinDescuentoPrealerta + seguroBs + franqueoBs + arancelBs;
+    const baseImponibleFull = subtotalSinDescuentoPrealerta;
     const ivaFullBs = baseImponibleFull * 0.16;
     
-    const totalFullBs = baseImponibleFull + ivaFullBs;
+    const totalFullBs = baseImponibleFull + ivaFullBs + seguroBs + franqueoBs + arancelBs;
 
     console.log('Base Imponible Full:', baseImponibleFull);
     console.log('IVA Full:', ivaFullBs);
@@ -250,10 +250,10 @@ const ResultStep = ({
     const franqueoBs = extractNumericValue(franqueoDetalle?.montoBs);
     const arancelBs = extractNumericValue(arancelDetalle?.montoBs);
     
-    const baseImponibleFull = subtotalSinDescuentoPrealerta + seguroBs + franqueoBs + arancelBs;
+    const baseImponibleFull = subtotalSinDescuentoPrealerta;
     const ivaFullBs = baseImponibleFull * 0.16;
     
-    tarifaFullTotal = baseImponibleFull + ivaFullBs;
+    tarifaFullTotal = baseImponibleFull + ivaFullBs + seguroBs + franqueoBs + arancelBs;
     
     console.log('Header - Subtotal sin Descuento Prealerta:', subtotalSinDescuentoPrealerta);
     console.log('Header - Base Imponible Full:', baseImponibleFull);

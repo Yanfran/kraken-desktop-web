@@ -1,17 +1,23 @@
-// src/pages/MyGuides/MyGuides.jsx - VERSIÓN FINAL CORREGIDA
+// src/pages/MyGuides/MyGuides.jsx - CON SELECCIÓN MÚLTIPLE
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom'; // 🆕 AGREGAR
 import { fetchGuias, uploadGuiaInvoice, calculateSingleGuiaPrice } from '../../services/guiasService';
 import styles from './Guides.module.scss';
 import GuiaCard from './GuiaCard';
 import clsx from 'clsx';
 import Loading from '../../components/common/Loading/Loading';
+import toast from 'react-hot-toast'; // 🆕 AGREGAR (si no lo tienes)
+
+// 🆕 AGREGAR ICONOS
+import { IoCheckboxOutline, IoSquareOutline, IoCardOutline } from 'react-icons/io5';
 
 export default function Guides() {
+  const navigate = useNavigate(); // 🆕 AGREGAR
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('list'); // 'grid' or 'list'
-  const [activeTab, setActiveTab] = useState('activos'); // 'activos' o 'historial'
+  const [viewMode, setViewMode] = useState('list');
+  const [activeTab, setActiveTab] = useState('activos');
   
   // Estados para carga de factura
   const [uploadingInvoice, setUploadingInvoice] = useState({});
@@ -19,27 +25,27 @@ export default function Guides() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const fileInputRef = useRef(null);
 
-  // 🆕 Estado para costos calculados
+  // Estado para costos calculados
   const [calculatedCosts, setCalculatedCosts] = useState({});
   const [calculatingCosts, setCalculatingCosts] = useState({});
+
+  // 🆕 ESTADOS PARA SELECCIÓN MÚLTIPLE
+  const [selectedGuias, setSelectedGuias] = useState([]); // Array de IDs
+  const [selectionMode, setSelectionMode] = useState(false); // Modo selección activo
 
   const { data: guias = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['guias'],
     queryFn: fetchGuias,
   });
 
-  /**
-   * 🆕 CALCULAR COSTO PARA UNA GUÍA
-   */
+  // Calcular costo para una guía (igual que antes)
   const calculateCost = useCallback(async (guia) => {
     if (!guia || !guia.idGuia) return null;
     
-    // Si ya está calculado, retornar
     if (calculatedCosts[guia.idGuia]) {
       return calculatedCosts[guia.idGuia];
     }
 
-    // Si ya está calculando, esperar
     if (calculatingCosts[guia.idGuia]) {
       return null;
     }
@@ -60,7 +66,6 @@ export default function Guides() {
         
         return costoFormateado;
       } else {
-        // Fallback a valorFOB
         const fallback = guia.valorFOB 
           ? `$${parseFloat(guia.valorFOB).toFixed(2)}` 
           : '$0.00';
@@ -74,7 +79,6 @@ export default function Guides() {
       }
     } catch (error) {
       console.error('Error calculando costo:', error);
-      // Fallback a valorFOB
       const fallback = guia.valorFOB 
         ? `$${parseFloat(guia.valorFOB).toFixed(2)}` 
         : '$0.00';
@@ -90,12 +94,8 @@ export default function Guides() {
     }
   }, [calculatedCosts, calculatingCosts]);
 
-  /**
-   * 🆕 CALCULAR COSTOS AL CARGAR GUÍAS
-   */
   React.useEffect(() => {
     if (guias.length > 0) {
-      // Calcular costo para las primeras 10 guías visibles
       guias.slice(0, 10).forEach(guia => {
         if (!calculatedCosts[guia.idGuia] && !calculatingCosts[guia.idGuia]) {
           calculateCost(guia);
@@ -104,9 +104,7 @@ export default function Guides() {
     }
   }, [guias, calculateCost, calculatedCosts, calculatingCosts]);
 
-  /**
-   * Verificar si necesita factura (estatus 3)
-   */
+  // Verificar si necesita factura
   const necesitaFactura = (guia) => {
     if (!guia) return false;
     const estatus = guia.estatus?.toLowerCase();
@@ -114,9 +112,7 @@ export default function Guides() {
     return estatus === 'pendiente de factura' || idEstatusActual === 3;
   };
 
-  /**
-   * Verificar si se puede pagar
-   */
+  // Verificar si se puede pagar
   const sePuedePagar = (guia) => {
     if (!guia) return false;
     const fob = guia.valorFOB || 0;
@@ -132,9 +128,60 @@ export default function Guides() {
     }
   };
 
-  /**
-   * Convertir File a Base64 con prefijo
-   */
+  // 🆕 FUNCIONES DE SELECCIÓN MÚLTIPLE
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    if (!selectionMode) {
+      setSelectedGuias([]); // Limpiar selección al activar
+    }
+  };
+
+  const toggleGuiaSelection = (guiaId, guia) => {
+    // Solo permitir seleccionar guías que se pueden pagar
+    if (!sePuedePagar(guia)) {
+      toast.error('Esta guía no está disponible para pago');
+      return;
+    }
+
+    setSelectedGuias(prev => {
+      if (prev.includes(guiaId)) {
+        return prev.filter(id => id !== guiaId);
+      } else {
+        return [...prev, guiaId];
+      }
+    });
+  };
+
+  const selectAllPayableGuias = () => {
+    const payableGuias = filteredGuias
+      .filter(guia => sePuedePagar(guia))
+      .map(guia => guia.idGuia);
+    
+    if (selectedGuias.length === payableGuias.length) {
+      setSelectedGuias([]); // Deseleccionar todas
+    } else {
+      setSelectedGuias(payableGuias); // Seleccionar todas las pagables
+    }
+  };
+
+  // 🆕 NAVEGAR A PAGO MÚLTIPLE
+  const handleMultiplePayment = () => {
+    if (selectedGuias.length === 0) {
+      toast.error('Selecciona al menos una guía para pagar');
+      return;
+    }
+
+    if (selectedGuias.length === 1) {
+      // Pago individual
+      navigate(`/payment/${selectedGuias[0]}`);
+    } else {
+      // Pago múltiple
+      const idsParam = selectedGuias.join(',');
+      navigate(`/payment/multiple?multiple=${idsParam}`);
+    }
+  };
+
+  // Convertir File a Base64
   const fileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -151,9 +198,7 @@ export default function Guides() {
     });
   };
 
-  /**
-   * Iniciar carga de factura
-   */
+  // Iniciar carga de factura
   const handleCargarFactura = (guia, e) => {
     if (e) e.stopPropagation();
     
@@ -170,9 +215,7 @@ export default function Guides() {
     }
   };
 
-  /**
-   * Procesar archivo seleccionado
-   */
+  // Procesar archivo seleccionado
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     
@@ -184,14 +227,12 @@ export default function Guides() {
       return;
     }
 
-    // Validar tamaño (máximo 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('El archivo es muy grande. El tamaño máximo es 5MB');
       event.target.value = '';
       return;
     }
 
-    // Validar tipo
     const isValidType = file.type.includes('pdf') || 
                        file.type.includes('image') ||
                        /\.(pdf|jpg|jpeg|png|gif)$/i.test(file.name);
@@ -251,62 +292,13 @@ export default function Guides() {
     return result;
   }, [guias, searchQuery, activeTab]);
 
-
-  // src/pages/MyGuides/GuiaCard.jsx
-
-const formatBolivarFromShipment = (shipment) => {
-  if (!shipment) return '0,00 Bs.';
-  
-  const df = shipment.detalleFactura || {};
-  const tasa = shipment.tasaCambio || df.tasaCambio || 0;
-
-  let value = 0;
-  
-  // ✅ NUEVO: Si hay array de detalles, buscar el "Total a Pagar (Bs)"
-  if (df.detalles && Array.isArray(df.detalles) && df.detalles.length > 0) {
-    const totalLinea = df.detalles.find(
-      d => d.categoria === 'TOTAL_BS' || 
-           d.descripcionItem?.includes('Total a Pagar')
-    );
-    
-    if (totalLinea && totalLinea.montoBs) {
-      value = typeof totalLinea.montoBs === 'number' 
-        ? totalLinea.montoBs 
-        : parseFloat(totalLinea.montoBs);
-    }
-  }
-  
-  // ✅ FALLBACK 1: usar precioTotal (precio base + aranceles)
-  if (value === 0 && typeof df.precioTotal === 'number' && df.precioTotal > 0) {
-    value = df.precioTotal;
-  }
-  
-  // ✅ FALLBACK 2: usar precioBase directo
-  if (value === 0 && typeof df.precioBase === 'number' && df.precioBase > 0) {
-    value = df.precioBase;
-  }
-  
-  // ✅ FALLBACK 3: calcular desde precioBaseUSD
-  if (value === 0 && typeof df.precioBaseUSD === 'number' && df.precioBaseUSD > 0 && tasa > 0) {
-    // Sumar precioBaseUSD + totalAranceles (si existe) y convertir
-    const totalUSD = df.precioBaseUSD + (df.totalArancelesUSD || 0);
-    value = totalUSD * tasa;
-  }
-  
-  // ✅ FALLBACK 4: usar valorFOB (último recurso)
-  if (value === 0 && typeof shipment.valorFOB === 'number' && tasa > 0) {
-    value = shipment.valorFOB * tasa;
-  }
-
-  return Number(value || 0).toLocaleString('es-VE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }) + ' Bs.';
-};
+  // 🆕 CONTADOR DE GUÍAS PAGABLES
+  const payableGuiasCount = useMemo(() => {
+    return filteredGuias.filter(guia => sePuedePagar(guia)).length;
+  }, [filteredGuias]);
 
   return (
     <div className={styles.container}>
-      {/* INPUT INVISIBLE */}
       <input
         ref={fileInputRef}
         type="file"
@@ -319,7 +311,6 @@ const formatBolivarFromShipment = (shipment) => {
         <div className={styles.headerTop}>
           <h1>Listado de Envíos</h1>
           
-          {/* Tabs */}
           <div className={styles.tabsContainer}>
             <button
               className={clsx(styles.tabButton, activeTab === 'activos' && styles.tabButtonActive)}
@@ -327,12 +318,6 @@ const formatBolivarFromShipment = (shipment) => {
             >
               Activos
             </button>
-            {/* <button
-              className={clsx(styles.tabButton, activeTab === 'historial' && styles.tabButtonActive)}
-              onClick={() => setActiveTab('historial')}
-            >
-              Historial
-            </button> */}
           </div>
         </div>
 
@@ -346,6 +331,17 @@ const formatBolivarFromShipment = (shipment) => {
               className={styles.searchInput}
             />
           </div>
+
+          {/* 🆕 BOTÓN MODO SELECCIÓN */}
+          <button
+            className={clsx(styles.selectionModeBtn, selectionMode && styles.active)}
+            onClick={toggleSelectionMode}
+            title={selectionMode ? 'Cancelar selección' : 'Seleccionar múltiples'}
+          >
+            {selectionMode ? <IoCheckboxOutline size={20} /> : <IoSquareOutline size={20} />}
+            {selectionMode ? 'Cancelar' : 'Seleccionar'}
+          </button>
+
           <div className={styles.viewToggle}>
             <button 
               onClick={() => setViewMode('list')} 
@@ -369,11 +365,26 @@ const formatBolivarFromShipment = (shipment) => {
         {!isLoading && !isError && (
           <>
             {viewMode === 'list' ? (
-              // MODO LISTA - TABLA
               <div className={styles.tableContainer}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
+                      {/* 🆕 COLUMNA CHECKBOX */}
+                      {selectionMode && (
+                        <th style={{ width: '50px' }}>
+                          <button
+                            className={styles.selectAllBtn}
+                            onClick={selectAllPayableGuias}
+                            title="Seleccionar todas las pagables"
+                          >
+                            {selectedGuias.length === payableGuiasCount && payableGuiasCount > 0 ? (
+                              <IoCheckboxOutline size={20} />
+                            ) : (
+                              <IoSquareOutline size={20} />
+                            )}
+                          </button>
+                        </th>
+                      )}
                       <th></th>
                       <th>N° Guía</th>
                       <th>Estatus</th>
@@ -397,11 +408,15 @@ const formatBolivarFromShipment = (shipment) => {
                           setOpenMenuId={setOpenMenuId}
                           calculatedCost={calculatedCosts[guia.idGuia]}
                           isCalculatingCost={calculatingCosts[guia.idGuia]}
+                          // 🆕 PROPS PARA SELECCIÓN
+                          selectionMode={selectionMode}
+                          isSelected={selectedGuias.includes(guia.idGuia)}
+                          onToggleSelection={() => toggleGuiaSelection(guia.idGuia, guia)}
                         />
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="6" className={styles.emptyCell}>
+                        <td colSpan={selectionMode ? "7" : "6"} className={styles.emptyCell}>
                           <div className={styles.emptyState}>
                             <p className={styles.emptyTitle}>
                               {activeTab === 'activos' 
@@ -423,7 +438,6 @@ const formatBolivarFromShipment = (shipment) => {
                 </table>
               </div>
             ) : (
-              // MODO GRID - CARDS
               <div className={styles.guidesList}>
                 {filteredGuias.length > 0 ? (
                   filteredGuias.map(guia => (
@@ -439,6 +453,10 @@ const formatBolivarFromShipment = (shipment) => {
                       setOpenMenuId={setOpenMenuId}
                       calculatedCost={calculatedCosts[guia.idGuia]}
                       isCalculatingCost={calculatingCosts[guia.idGuia]}
+                      // 🆕 PROPS PARA SELECCIÓN
+                      selectionMode={selectionMode}
+                      isSelected={selectedGuias.includes(guia.idGuia)}
+                      onToggleSelection={() => toggleGuiaSelection(guia.idGuia, guia)}
                     />
                   ))
                 ) : (
@@ -462,6 +480,16 @@ const formatBolivarFromShipment = (shipment) => {
           </>
         )}
       </div>
+
+      {/* 🆕 BOTÓN FLOTANTE PARA PAGAR SELECCIONADAS */}
+      {selectionMode && selectedGuias.length > 0 && (
+        <div className={styles.floatingPayButton}>
+          <button onClick={handleMultiplePayment} className={styles.payBtn}>
+            <IoCardOutline size={20} />
+            Pagar {selectedGuias.length} guía{selectedGuias.length > 1 ? 's' : ''}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
