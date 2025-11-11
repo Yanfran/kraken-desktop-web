@@ -183,146 +183,185 @@ const PreAlertEdit = () => {
   }, [contenidosData]);
 
   // Effect to populate form when preAlertaData is loaded
-  useEffect(() => {
-    if (preAlertaData) {
-      setFormState({
-        trackings: preAlertaData.trackings || [preAlertaData.tracking].filter(Boolean) || [''],
-        contenidos: preAlertaData.contenidos?.map(c => c.id.toString()) || [],
-        valorDeclarado: formatDecimalFromDB(preAlertaData.valorDeclarado) || '',
-        currency: preAlertaData.valorDeclarado?.moneda || 'USD',
-        tipoContenido: preAlertaData.tipoContenido?.split(', ').filter(Boolean) || [],
-        facturas: preAlertaData.archivosActuales?.map(file => ({
-          name: file.nombreArchivo,
-          uri: file.rutaArchivo, // Assuming URI is available for existing files
-          type: file.tipoArchivo, // Assuming type is available
-          size: file.tamaño,
-        })) || [],
-      });
+ useEffect(() => {
+  if (preAlertaData) {
+    setFormState({
+      trackings: preAlertaData.trackings || [preAlertaData.tracking].filter(Boolean) || [''],
+      contenidos: preAlertaData.contenidos?.map(c => c.id.toString()) || [],
+      valorDeclarado: formatDecimalFromDB(preAlertaData.valorDeclarado) || '',
+      currency: preAlertaData.valorDeclarado?.moneda || 'USD',
+      tipoContenido: preAlertaData.tipoContenido?.split(', ').filter(Boolean) || [],
+      facturas: preAlertaData.archivosActuales?.map(file => ({
+        name: file.nombreArchivo,
+        uri: file.rutaArchivo,
+        type: file.tipoArchivo,
+        size: file.tamaño,
+      })) || [],
+    });
 
-      // Populate address state
-      if (preAlertaData.direccionTipo === 'store') {
+    // ✅ MEJORADO: Formato de texto de dirección
+    if (preAlertaData.direccionTipo === 'store') {
+      setAddressState(prev => ({
+        ...prev,
+        deliveryMethod: 'store',
+        selectedCity: preAlertaData.idCiudad?.toString() || '',
+        selectedLocker: preAlertaData.idLocker?.toString() || '',
+        selectedOption: 'store',
+      }));
+      
+      // ✅ Formato para tienda
+      setDefaultAddressText(`Retiro en tienda: ${preAlertaData.nombreLocker || 'Locker'}`);
+      
+    } else if (preAlertaData.direccionTipo === 'home') {
+      // Check if it's a saved address
+      const savedAddress = userAddresses?.find(addr => addr.id === preAlertaData.idDireccion);
+      
+      if (savedAddress) {
         setAddressState(prev => ({
           ...prev,
-          deliveryMethod: 'store',
-          selectedCity: preAlertaData.idCiudad?.toString() || '',
-          selectedLocker: preAlertaData.idLocker?.toString() || '',
-          selectedOption: 'store',
+          deliveryMethod: 'home',
+          selectedState: savedAddress.idEstado?.toString() || '',
+          selectedMunicipality: savedAddress.idMunicipio?.toString() || '',
+          selectedParish: savedAddress.idParroquia?.toString() || '',
+          address: savedAddress.direccionCompleta || '',
+          reference: savedAddress.referencia || '',
+          addressName: savedAddress.nombreDireccion || '',
+          selectedOption: `addr-${savedAddress.id}`,
         }));
-        setDefaultAddressText(`Retiro en tienda: ${preAlertaData.nombreLocker || 'Locker'}`);
-      } else if (preAlertaData.direccionTipo === 'home') {
-        // Check if it's a saved address
-        const savedAddress = userAddresses?.find(addr => addr.id === preAlertaData.idDireccion);
-        if (savedAddress) {
-          setAddressState(prev => ({
-            ...prev,
-            deliveryMethod: 'home',
-            selectedState: savedAddress.idEstado?.toString() || '',
-            selectedMunicipality: savedAddress.idMunicipio?.toString() || '',
-            selectedParish: savedAddress.idParroquia?.toString() || '',
-            address: savedAddress.direccionCompleta || '',
-            reference: savedAddress.referencia || '',
-            addressName: savedAddress.nombreDireccion || '',
-            selectedOption: `addr-${savedAddress.id}`,
-          }));
-        } else {
-          // It's a new address or not found in saved addresses
-          setAddressState(prev => ({
-            ...prev,
-            deliveryMethod: 'home',
-            selectedState: preAlertaData.idEstado?.toString() || '',
-            selectedMunicipality: preAlertaData.idMunicipio?.toString() || '',
-            selectedParish: preAlertaData.idParroquia?.toString() || '',
-            address: preAlertaData.direccion || '',
-            reference: preAlertaData.referencia || '',
-            addressName: preAlertaData.nombreDireccion || '',
-            selectedOption: 'new',
-          }));
-        }
-
-        const parts = [
-          preAlertaData.direccion,
-          preAlertaData.nombreParroquia,
-          preAlertaData.nombreMunicipio,
-          preAlertaData.nombreEstado,
-        ].filter(Boolean);
-        setDefaultAddressText(preAlertaData.nombreDireccion || parts.join(', '));
-      }
-      setAddressState(prev => ({ ...prev, showChangeAddress: true })); // Always show change address section for editing
-    }
-  }, [preAlertaData, userAddresses]);
-
-  useEffect(() => {    
-    // Esperar a que ambos datos estén listos
-    if (!userAddresses || !deliveryData) {    
-      return;
-    }
-    
-
-    // Buscar dirección predeterminada
-    const defaultAddr = userAddresses.find(
-      (a) => a.esPredeterminada === true || a.EsPredeterminada === true
-    );
-
-    // Si NO hay dirección predeterminada, usar tienda por defecto
-    if (!defaultAddr) {      
-      const defaultStore =
-        deliveryData.tiendas?.find((t) =>
-          t.nombre.toLowerCase().includes('chacao')
-        ) || deliveryData.tiendas?.[0];
-
-      if (defaultStore && deliveryData.ciudad) {
-        setAddressState((prev) => ({
+      } else {
+        // It's a new address or not found in saved addresses
+        setAddressState(prev => ({
           ...prev,
-          deliveryMethod: 'store',
-          selectedCity: deliveryData.ciudad.id.toString(),
-          selectedLocker: defaultStore.id.toString(),
-          selectedOption: 'default',
+          deliveryMethod: 'home',
+          selectedState: preAlertaData.idEstado?.toString() || '',
+          selectedMunicipality: preAlertaData.idMunicipio?.toString() || '',
+          selectedParish: preAlertaData.idParroquia?.toString() || '',
+          address: preAlertaData.direccion || '',
+          reference: preAlertaData.referencia || '',
+          addressName: preAlertaData.nombreDireccion || '',
+          selectedOption: 'new',
         }));
-        setDefaultAddressText(`Retiro en tienda: ${defaultStore.nombre}`);
       }
-      return;
+
+      // ✅ MEJORADO: Formato completo para domicilio (igual que la app móvil)
+      const parts = [];
+      
+      // 1. Nombre de la dirección (si existe)
+      if (preAlertaData.nombreDireccion) {
+        parts.push(preAlertaData.nombreDireccion);
+      }
+      
+      // 2. Dirección completa
+      if (preAlertaData.direccion) {
+        parts.push(preAlertaData.direccion);
+      }
+      
+      // 3. Parroquia
+      if (preAlertaData.nombreParroquia) {
+        parts.push(preAlertaData.nombreParroquia);
+      }
+      
+      // 4. Municipio
+      if (preAlertaData.nombreMunicipio) {
+        parts.push(preAlertaData.nombreMunicipio);
+      }
+      
+      // 5. Estado
+      if (preAlertaData.nombreEstado) {
+        parts.push(preAlertaData.nombreEstado);
+      }
+      
+      // Construir el texto base
+      let addressText = `Entrega a domicilio: ${parts.join(', ')}`;
+      
+      // 6. Agregar referencia al final (si existe)
+      if (preAlertaData.referencia) {
+        addressText += `, Ref: ${preAlertaData.referencia}`;
+      }
+      
+      setDefaultAddressText(addressText);
     }
     
+    setAddressState(prev => ({ ...prev, showChangeAddress: true }));
+  }
+}, [preAlertaData, userAddresses]);
 
-    // Configurar según tipo
-    if (defaultAddr.tipoDireccion === 'store') {      
+ useEffect(() => {    
+  // ✅ CRÍTICO: Solo ejecutar este useEffect en modo CREATE, no en EDIT
+  if (id) {
+    console.log('⏩ Modo EDIT - No cargar dirección predeterminada');
+    return;
+  }
 
+  // Esperar a que ambos datos estén listos
+  if (!userAddresses || !deliveryData) {    
+    return;
+  }
+
+  console.log('🏠 Modo CREATE - Cargando dirección predeterminada');
+
+  // Buscar dirección predeterminada
+  const defaultAddr = userAddresses.find(
+    (a) => a.esPredeterminada === true || a.EsPredeterminada === true
+  );
+
+  // Si NO hay dirección predeterminada, usar tienda por defecto
+  if (!defaultAddr) {      
+    const defaultStore =
+      deliveryData.tiendas?.find((t) =>
+        t.nombre.toLowerCase().includes('chacao')
+      ) || deliveryData.tiendas?.[0];
+
+    if (defaultStore && deliveryData.ciudad) {
       setAddressState((prev) => ({
         ...prev,
         deliveryMethod: 'store',
-        selectedCity: defaultAddr.idCiudad?.toString() ?? '',
-        selectedLocker: defaultAddr.idLocker?.toString() ?? '',
+        selectedCity: deliveryData.ciudad.id.toString(),
+        selectedLocker: defaultStore.id.toString(),
         selectedOption: 'default',
       }));
-
-      const texto = `Retiro en tienda: ${defaultAddr.nombreLocker ?? 'Locker'}`;
-      setDefaultAddressText(defaultAddr.nombreDireccion || texto);
-    } else {      
-
-      setAddressState((prev) => ({
-        ...prev,
-        deliveryMethod: 'home',
-        selectedState: defaultAddr.idEstado?.toString() ?? '',
-        selectedMunicipality: defaultAddr.idMunicipio?.toString() ?? '',
-        selectedParish: defaultAddr.idParroquia?.toString() ?? '',
-        address: defaultAddr.direccionCompleta ?? '',
-        reference: defaultAddr.referencia ?? '',
-        addressName: defaultAddr.nombreDireccion ?? '',
-        selectedOption: 'default',
-      }));
-
-      const parts = [
-        defaultAddr.direccionCompleta,
-        defaultAddr.nombreParroquia,
-        defaultAddr.nombreMunicipio,
-        defaultAddr.nombreEstado,
-      ].filter(Boolean);
-
-      const texto = parts.join(', ');
-      setDefaultAddressText(defaultAddr.nombreDireccion || texto);
+      setDefaultAddressText(`Retiro en tienda: ${defaultStore.nombre}`);
     }
-    
-  }, [userAddresses, deliveryData]);
+    return;
+  }
+
+  // Configurar según tipo
+  if (defaultAddr.tipoDireccion === 'store') {      
+    setAddressState((prev) => ({
+      ...prev,
+      deliveryMethod: 'store',
+      selectedCity: defaultAddr.idCiudad?.toString() ?? '',
+      selectedLocker: defaultAddr.idLocker?.toString() ?? '',
+      selectedOption: 'default',
+    }));
+
+    const texto = `Retiro en tienda: ${defaultAddr.nombreLocker ?? 'Locker'}`;
+    setDefaultAddressText(defaultAddr.nombreDireccion || texto);
+  } else {      
+    setAddressState((prev) => ({
+      ...prev,
+      deliveryMethod: 'home',
+      selectedState: defaultAddr.idEstado?.toString() ?? '',
+      selectedMunicipality: defaultAddr.idMunicipio?.toString() ?? '',
+      selectedParish: defaultAddr.idParroquia?.toString() ?? '',
+      address: defaultAddr.direccionCompleta ?? '',
+      reference: defaultAddr.referencia ?? '',
+      addressName: defaultAddr.nombreDireccion ?? '',
+      selectedOption: 'default',
+    }));
+
+    const parts = [
+      defaultAddr.direccionCompleta,
+      defaultAddr.nombreParroquia,
+      defaultAddr.nombreMunicipio,
+      defaultAddr.nombreEstado,
+    ].filter(Boolean);
+
+    const texto = parts.join(', ');
+    setDefaultAddressText(defaultAddr.nombreDireccion || texto);
+  }
+  
+}, [userAddresses, deliveryData, id]); // ✅ Agregar 'id' como dependencia
 
   // Handlers
   const updateFormState = useCallback((key, value) => {
@@ -542,103 +581,95 @@ const PreAlertEdit = () => {
   });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error('Complete todos los campos requeridos');
-      return;
+  if (!validateForm()) {
+    toast.error('Complete todos los campos requeridos');
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    const direccion = {};
+
+    // ✅ CASO 1: Usar dirección predeterminada
+    if (addressState.selectedOption === 'default') {
+      const defaultAddr = userAddresses?.find((a) => a.esPredeterminada === true);
+
+      if (defaultAddr) {
+        // 🔥 CRÍTICO: Usar PascalCase
+        direccion.IdDireccion = defaultAddr.id;
+        direccion.Tipo = defaultAddr.tipoDireccion;
+        
+        if (defaultAddr.tipoDireccion === 'store') {
+          direccion.Ciudad = defaultAddr.idCiudad?.toString() ?? '';
+          direccion.Tienda = defaultAddr.idLocker?.toString() ?? '';
+        } else if (defaultAddr.tipoDireccion === 'home') {
+          direccion.Estado = defaultAddr.idEstado?.toString() ?? '';
+          direccion.Municipio = defaultAddr.idMunicipio?.toString() ?? '';
+          direccion.Parroquia = defaultAddr.idParroquia?.toString() ?? '';
+          direccion.Direccion = defaultAddr.direccionCompleta ?? '';
+          direccion.Referencia = defaultAddr.referencia ?? '';
+          direccion.NombreDireccion = defaultAddr.nombreDireccion ?? '';
+        }
+      } else {
+        // Fallback
+        if (addressState.deliveryMethod === 'store') {
+          direccion.Tipo = 'store';
+          direccion.Ciudad = addressState.selectedCity;
+          direccion.Tienda = addressState.selectedLocker;
+        } else {
+          direccion.Tipo = 'home';
+          direccion.Estado = addressState.selectedState;
+          direccion.Municipio = addressState.selectedMunicipality;
+          direccion.Parroquia = addressState.selectedParish;
+          direccion.Direccion = addressState.address;
+          direccion.Referencia = addressState.reference;
+          direccion.NombreDireccion = addressState.addressName;
+        }
+      }
+    }
+    // ✅ CASO 2: Nueva tienda
+    else if (addressState.selectedOption === 'store') {
+      direccion.Tipo = 'store';
+      direccion.Ciudad = addressState.selectedCity;
+      direccion.Tienda = addressState.selectedLocker;
+    }
+    // ✅ CASO 3: Nuevo domicilio
+    else if (addressState.selectedOption === 'new') {
+      direccion.Tipo = 'home';
+      direccion.Estado = addressState.selectedState;
+      direccion.Municipio = addressState.selectedMunicipality;
+      direccion.Parroquia = addressState.selectedParish;
+      direccion.Direccion = addressState.address;
+      direccion.Referencia = addressState.reference;
+      direccion.NombreDireccion = addressState.addressName;
+    }
+    // ✅ CASO 4: Dirección guardada seleccionada
+    else if (addressState.selectedOption?.startsWith('addr-')) {
+      const addressId = parseInt(addressState.selectedOption.replace('addr-', ''));
+      direccion.IdDireccion = addressId;
+
+      const selectedAddr = userAddresses?.find((a) => a.id === addressId);
+      if (selectedAddr) {
+        direccion.Tipo = selectedAddr.tipoDireccion;
+        
+        if (selectedAddr.tipoDireccion === 'store') {
+          direccion.Ciudad = selectedAddr.idCiudad?.toString() ?? '';
+          direccion.Tienda = selectedAddr.idLocker?.toString() ?? '';
+        } else {
+          direccion.Estado = selectedAddr.idEstado?.toString() ?? '';
+          direccion.Municipio = selectedAddr.idMunicipio?.toString() ?? '';
+          direccion.Parroquia = selectedAddr.idParroquia?.toString() ?? '';
+          direccion.Direccion = selectedAddr.direccionCompleta ?? '';
+          direccion.Referencia = selectedAddr.referencia ?? '';
+          direccion.NombreDireccion = selectedAddr.nombreDireccion ?? '';
+        }
+      }
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const direccion = {};
-
-      // ✅ CASO 1: Usar dirección predeterminada (selectedOption === 'default')
-      if (addressState.selectedOption === 'default') {
-        const defaultAddr = userAddresses?.find(
-          (a) => a.esPredeterminada === true
-        );
-
-        if (defaultAddr) {          
-          direccion.idDireccion = defaultAddr.id;
-          direccion.tipo = defaultAddr.tipoDireccion;
-          
-          // ✅ SOLUCIÓN: Agregar ciudad y tienda cuando es tipo store
-          if (defaultAddr.tipoDireccion === 'store') {
-            direccion.ciudad = defaultAddr.idCiudad?.toString() ?? '';
-            direccion.tienda = defaultAddr.idLocker?.toString() ?? '';
-          } else if (defaultAddr.tipoDireccion === 'home') {
-            // También enviar datos de domicilio si es necesario
-            direccion.estado = defaultAddr.idEstado?.toString() ?? '';
-            direccion.municipio = defaultAddr.idMunicipio?.toString() ?? '';
-            direccion.parroquia = defaultAddr.idParroquia?.toString() ?? '';
-            direccion.direccion = defaultAddr.direccionCompleta ?? '';
-            direccion.referencia = defaultAddr.referencia ?? '';
-            direccion.nombreDireccion = defaultAddr.nombreDireccion ?? '';
-          }
-        } else {
-          // Fallback: si no hay predeterminada pero está en modo 'default',
-          // crear nueva dirección con los datos actuales          
-          if (addressState.deliveryMethod === 'store') {
-            direccion.tipo = 'store';
-            direccion.ciudad = addressState.selectedCity;
-            direccion.tienda = addressState.selectedLocker;
-          } else {
-            direccion.tipo = 'home';
-            direccion.estado = addressState.selectedState;
-            direccion.municipio = addressState.selectedMunicipality;
-            direccion.parroquia = addressState.selectedParish;
-            direccion.direccion = addressState.address;
-            direccion.referencia = addressState.reference;
-            direccion.nombreDireccion = addressState.addressName;
-          }
-        }
-      }
-      // ✅ CASO 2: Nueva tienda
-      else if (addressState.selectedOption === 'store') {        
-        direccion.tipo = 'store';
-        direccion.ciudad = addressState.selectedCity;
-        direccion.tienda = addressState.selectedLocker;
-      }
-      // ✅ CASO 3: Nuevo domicilio
-      else if (addressState.selectedOption === 'new') {        
-        direccion.tipo = 'home';
-        direccion.estado = addressState.selectedState;
-        direccion.municipio = addressState.selectedMunicipality;
-        direccion.parroquia = addressState.selectedParish;
-        direccion.direccion = addressState.address;
-        direccion.referencia = addressState.reference;
-        direccion.nombreDireccion = addressState.addressName;
-      }
-      // ✅ CASO 4: Dirección guardada seleccionada (addr-{id})
-      else if (addressState.selectedOption?.startsWith('addr-')) {
-        const addressId = parseInt(
-          addressState.selectedOption.replace('addr-', '')
-        );        
-        direccion.idDireccion = addressId;
-
-        // Buscar la dirección y enviar sus datos completos
-        const selectedAddr = userAddresses?.find((a) => a.id === addressId);
-        if (selectedAddr) {
-          direccion.tipo = selectedAddr.tipoDireccion;
-          
-          // ✅ Agregar datos según el tipo
-          if (selectedAddr.tipoDireccion === 'store') {
-            direccion.ciudad = selectedAddr.idCiudad?.toString() ?? '';
-            direccion.tienda = selectedAddr.idLocker?.toString() ?? '';
-          } else {
-            direccion.estado = selectedAddr.idEstado?.toString() ?? '';
-            direccion.municipio = selectedAddr.idMunicipio?.toString() ?? '';
-            direccion.parroquia = selectedAddr.idParroquia?.toString() ?? '';
-            direccion.direccion = selectedAddr.direccionCompleta ?? '';
-            direccion.referencia = selectedAddr.referencia ?? '';
-            direccion.nombreDireccion = selectedAddr.nombreDireccion ?? '';
-          }
-        }
-      }
-
-      const formatValueForBackend = (value) => {
+    const formatValueForBackend = (value) => {
       if (!value) return '0';
       return value.toString().replace(/\./g, '').replace(',', '.');
     };
@@ -652,32 +683,32 @@ const PreAlertEdit = () => {
       tipoContenido: Array.isArray(formState.tipoContenido)
         ? formState.tipoContenido.join(', ')
         : formState.tipoContenido || '',
-      ...(valorParaBackend &&
-        valorParaBackend !== '0' && {
-          valorDeclarado: {
-            monto: valorParaBackend,
-            moneda: formState.currency,
-          },
-        }),
-      // ✅ CAMBIO CRÍTICO: Enviar los archivos File directos (sin URL.createObjectURL)
+      ...(valorParaBackend && valorParaBackend !== '0' && {
+        valorDeclarado: {
+          monto: valorParaBackend,
+          moneda: formState.currency,
+        },
+      }),
       ...(formState.facturas.length > 0 && {
-        facturas: formState.facturas // ✅ Array de objetos File nativos del navegador
+        facturas: formState.facturas,
       }),
     };
-      
 
-      if (id) {
-        await updateMutation.mutateAsync(payload);
-      } else {
-        await createMutation.mutateAsync(payload);
-      }
-    } catch (error) {
-      console.error('Error en submit:', error);
-      toast.error(error.message || 'Error al enviar');
-    } finally {
-      setIsSubmitting(false);
+    // 🔍 LOG PARA DEBUG
+    console.log('📦 Payload enviado:', JSON.stringify(payload, null, 2));
+
+    if (id) {
+      await updateMutation.mutateAsync(payload);
+    } else {
+      await createMutation.mutateAsync(payload);
     }
-  };
+  } catch (error) {
+    console.error('Error en submit:', error);
+    toast.error(error.message || 'Error al enviar');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const isFormValid = useMemo(() => {
     const hasValidTracking = formState.trackings.some(
@@ -1027,22 +1058,7 @@ const PreAlertEdit = () => {
                   <div className="prealert-edit__address-form">
                     <h4 className="prealert-edit__form-title">
                       Entrega a Domicilio
-                    </h4>
-
-                    <div className="prealert-edit__col">
-                      <label className="prealert-edit__label">
-                        Nombre de la Dirección
-                      </label>
-                      <input
-                        type="text"
-                        className="prealert-edit__input"
-                        placeholder="Ej: Casa, Oficina, etc."
-                        value={addressState.addressName}
-                        onChange={(e) =>
-                          updateAddressState('addressName', e.target.value)
-                        }
-                      />
-                    </div>
+                    </h4>                    
 
                     <div className="prealert-edit__row prealert-edit__row--three">
                       <div className="prealert-edit__col">
@@ -1133,6 +1149,22 @@ const PreAlertEdit = () => {
                         }
                       />
                     </div>
+
+                    {/* <div className="prealert-edit__col">
+                      <label className="prealert-edit__label">
+                        Nombre de la Dirección
+                      </label>
+                      <input
+                        type="text"
+                        className="prealert-edit__input"
+                        placeholder="Ej: Casa, Oficina, etc."
+                        value={addressState.addressName}
+                        onChange={(e) =>
+                          updateAddressState('addressName', e.target.value)
+                        }
+                      />
+                    </div> */}
+
                   </div>
                 )}
               </div>

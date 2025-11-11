@@ -63,6 +63,8 @@ const PreAlertCreate = () => {
     addressName: '',
     selectedOption: 'default', // 'default', 'store', 'new', o 'addr-{id}'
     showChangeAddress: false, // Nuevo: controla si se muestra el cambio de dirección
+    shouldSaveAddress: false, // Guardar para futuros envíos
+    setAsDefaultAddress: false, // Establecer como predeterminada
   });
 
   const [defaultAddressText, setDefaultAddressText] = useState(
@@ -453,138 +455,147 @@ const PreAlertCreate = () => {
     },
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error('Complete todos los campos requeridos');
-      return;
-    }
+  if (!validateForm()) {
+    toast.error('Complete todos los campos requeridos');
+    return;
+  }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    try {
-      const direccion = {};
+  try {
+    const direccion = {};
 
-      // ✅ CASO 1: Usar dirección predeterminada (selectedOption === 'default')
-      if (addressState.selectedOption === 'default') {
-        const defaultAddr = userAddresses?.find(
-          (a) => a.esPredeterminada === true
-        );
+    // ✅ CASO 1: Usar dirección predeterminada
+    if (addressState.selectedOption === 'default') {
+      const defaultAddr = userAddresses?.find((a) => a.esPredeterminada === true);
 
-        if (defaultAddr) {
-          direccion.idDireccion = defaultAddr.id;
-          direccion.tipo = defaultAddr.tipoDireccion;
-          
-          // ✅ SOLUCIÓN: Agregar ciudad y tienda cuando es tipo store
-          if (defaultAddr.tipoDireccion === 'store') {
-            direccion.ciudad = defaultAddr.idCiudad?.toString() ?? '';
-            direccion.tienda = defaultAddr.idLocker?.toString() ?? '';
-          } else if (defaultAddr.tipoDireccion === 'home') {
-            // También enviar datos de domicilio si es necesario
-            direccion.estado = defaultAddr.idEstado?.toString() ?? '';
-            direccion.municipio = defaultAddr.idMunicipio?.toString() ?? '';
-            direccion.parroquia = defaultAddr.idParroquia?.toString() ?? '';
-            direccion.direccion = defaultAddr.direccionCompleta ?? '';
-            direccion.referencia = defaultAddr.referencia ?? '';
-            direccion.nombreDireccion = defaultAddr.nombreDireccion ?? '';
-          }
+      if (defaultAddr) {
+        // 🔥 CRÍTICO: Usar PascalCase
+        direccion.IdDireccion = defaultAddr.id;
+        direccion.Tipo = defaultAddr.tipoDireccion;
+        
+        if (defaultAddr.tipoDireccion === 'store') {
+          direccion.Ciudad = defaultAddr.idCiudad?.toString() ?? '';
+          direccion.Tienda = defaultAddr.idLocker?.toString() ?? '';
+        } else if (defaultAddr.tipoDireccion === 'home') {
+          direccion.Estado = defaultAddr.idEstado?.toString() ?? '';
+          direccion.Municipio = defaultAddr.idMunicipio?.toString() ?? '';
+          direccion.Parroquia = defaultAddr.idParroquia?.toString() ?? '';
+          direccion.Direccion = defaultAddr.direccionCompleta ?? '';
+          direccion.Referencia = defaultAddr.referencia ?? '';
+          direccion.NombreDireccion = defaultAddr.nombreDireccion ?? '';
+        }
+      } else {
+        // Fallback
+        if (addressState.deliveryMethod === 'store') {
+          direccion.Tipo = 'store';
+          direccion.Ciudad = addressState.selectedCity;
+          direccion.Tienda = addressState.selectedLocker;
         } else {
-          // Fallback: si no hay predeterminada pero está en modo 'default',
-          // crear nueva dirección con los datos actuales
-          if (addressState.deliveryMethod === 'store') {
-            direccion.tipo = 'store';
-            direccion.ciudad = addressState.selectedCity;
-            direccion.tienda = addressState.selectedLocker;
-          } else {
-            direccion.tipo = 'home';
-            direccion.estado = addressState.selectedState;
-            direccion.municipio = addressState.selectedMunicipality;
-            direccion.parroquia = addressState.selectedParish;
-            direccion.direccion = addressState.address;
-            direccion.referencia = addressState.reference;
-            direccion.nombreDireccion = addressState.addressName;
-          }
+          direccion.Tipo = 'home';
+          direccion.Estado = addressState.selectedState;
+          direccion.Municipio = addressState.selectedMunicipality;
+          direccion.Parroquia = addressState.selectedParish;
+          direccion.Direccion = addressState.address;
+          direccion.Referencia = addressState.reference;
+          direccion.NombreDireccion = addressState.addressName;
         }
       }
-      // ✅ CASO 2: Nueva tienda
-      else if (addressState.selectedOption === 'store') {
-        direccion.tipo = 'store';
-        direccion.ciudad = addressState.selectedCity;
-        direccion.tienda = addressState.selectedLocker;
-      }
-      // ✅ CASO 3: Nuevo domicilio
-      else if (addressState.selectedOption === 'new') {
-        direccion.tipo = 'home';
-        direccion.estado = addressState.selectedState;
-        direccion.municipio = addressState.selectedMunicipality;
-        direccion.parroquia = addressState.selectedParish;
-        direccion.direccion = addressState.address;
-        direccion.referencia = addressState.reference;
-        direccion.nombreDireccion = addressState.addressName;
-      }
-      // ✅ CASO 4: Dirección guardada seleccionada (addr-{id})
-      else if (addressState.selectedOption?.startsWith('addr-')) {
-        const addressId = parseInt(
-          addressState.selectedOption.replace('addr-', '')
-        );
-        direccion.idDireccion = addressId;
-
-       // Buscar la dirección y enviar sus datos completos
-        const selectedAddr = userAddresses?.find((a) => a.id === addressId);
-        if (selectedAddr) {
-          direccion.tipo = selectedAddr.tipoDireccion;
-          
-          // ✅ Agregar datos según el tipo
-          if (selectedAddr.tipoDireccion === 'store') {
-            direccion.ciudad = selectedAddr.idCiudad?.toString() ?? '';
-            direccion.tienda = selectedAddr.idLocker?.toString() ?? '';
-          } else {
-            direccion.estado = selectedAddr.idEstado?.toString() ?? '';
-            direccion.municipio = selectedAddr.idMunicipio?.toString() ?? '';
-            direccion.parroquia = selectedAddr.idParroquia?.toString() ?? '';
-            direccion.direccion = selectedAddr.direccionCompleta ?? '';
-            direccion.referencia = selectedAddr.referencia ?? '';
-            direccion.nombreDireccion = selectedAddr.nombreDireccion ?? '';
-          }
-        }
-      }
-
-      const formatValueForBackend = (value) => {
-        if (!value) return '0';
-        return value.toString().replace(/\./g, '').replace(',', '.');
-      };
-
-      const valorParaBackend = formatValueForBackend(formState.valorDeclarado);
-
-      const payload = {
-        trackings: formState.trackings.filter((t) => t.trim().length > 0),
-        contenidos: formState.contenidos,
-        direccion,
-        tipoContenido: Array.isArray(formState.tipoContenido)
-          ? formState.tipoContenido.join(', ')
-          : formState.tipoContenido || '',
-        ...(valorParaBackend &&
-          valorParaBackend !== '0' && {
-            valorDeclarado: {
-              monto: valorParaBackend,
-              moneda: formState.currency,
-            },
-          }),
-        // ✅ CAMBIO CRÍTICO: Enviar los archivos File directos (sin URL.createObjectURL)
-        ...(formState.facturas.length > 0 && {
-          facturas: formState.facturas, // ✅ Array de objetos File nativos del navegador
-        }),
-      };
-
-      await createMutation.mutateAsync(payload);
-    } catch (error) {
-      console.error('Error en submit:', error);
-      toast.error(error.message || 'Error al enviar');
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+    // ✅ CASO 2: Nueva tienda
+    else if (addressState.selectedOption === 'store') {
+      direccion.Tipo = 'store';
+      direccion.Ciudad = addressState.selectedCity;
+      direccion.Tienda = addressState.selectedLocker;
+      
+      // Agregar flags si quiere guardar
+      if (addressState.shouldSaveAddress) {
+        direccion.NombreDireccion = addressState.addressName || 'Tienda sin nombre';
+        direccion.GuardarDireccion = true;
+        direccion.EstablecerPredeterminada = addressState.setAsDefaultAddress;
+      }
+    }
+    // ✅ CASO 3: Nuevo domicilio
+    else if (addressState.selectedOption === 'new') {
+      direccion.Tipo = 'home';
+      direccion.Estado = addressState.selectedState;
+      direccion.Municipio = addressState.selectedMunicipality;
+      direccion.Parroquia = addressState.selectedParish;
+      direccion.Direccion = addressState.address;
+      direccion.Referencia = addressState.reference;
+      
+      // Agregar flags si quiere guardar
+      if (addressState.shouldSaveAddress) {
+        direccion.NombreDireccion = addressState.addressName || 'Domicilio sin nombre';
+        direccion.GuardarDireccion = true;
+        direccion.EstablecerPredeterminada = addressState.setAsDefaultAddress;
+      }
+    }
+    // ✅ CASO 4: Dirección guardada seleccionada
+    else if (addressState.selectedOption?.startsWith('addr-')) {
+      const addressId = parseInt(addressState.selectedOption.replace('addr-', ''));
+      direccion.IdDireccion = addressId;
+
+      const selectedAddr = userAddresses?.find((a) => a.id === addressId);
+      if (selectedAddr) {
+        direccion.Tipo = selectedAddr.tipoDireccion;
+        
+        if (selectedAddr.tipoDireccion === 'store') {
+          direccion.Ciudad = selectedAddr.idCiudad?.toString() ?? '';
+          direccion.Tienda = selectedAddr.idLocker?.toString() ?? '';
+        } else {
+          direccion.Estado = selectedAddr.idEstado?.toString() ?? '';
+          direccion.Municipio = selectedAddr.idMunicipio?.toString() ?? '';
+          direccion.Parroquia = selectedAddr.idParroquia?.toString() ?? '';
+          direccion.Direccion = selectedAddr.direccionCompleta ?? '';
+          direccion.Referencia = selectedAddr.referencia ?? '';
+          direccion.NombreDireccion = selectedAddr.nombreDireccion ?? '';
+        }
+      }
+    }
+
+    const formatValueForBackend = (value) => {
+      if (!value) return '0';
+      return value.toString().replace(/\./g, '').replace(',', '.');
+    };
+
+    const valorParaBackend = formatValueForBackend(formState.valorDeclarado);
+
+    const payload = {
+      trackings: formState.trackings.filter((t) => t.trim().length > 0),
+      contenidos: formState.contenidos,
+      direccion,
+      tipoContenido: Array.isArray(formState.tipoContenido)
+        ? formState.tipoContenido.join(', ')
+        : formState.tipoContenido || '',
+      ...(valorParaBackend && valorParaBackend !== '0' && {
+        valorDeclarado: {
+          monto: valorParaBackend,
+          moneda: formState.currency,
+        },
+      }),
+      ...(formState.facturas.length > 0 && {
+        facturas: formState.facturas,
+      }),
+    };
+
+    // 🔍 LOG PARA DEBUG
+    console.log('📦 Payload enviado:', JSON.stringify(payload, null, 2));
+
+    await createMutation.mutateAsync(payload);
+  } catch (error) {
+    console.error('Error en submit:', error);
+    toast.error(error.message || 'Error al enviar');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+
 
   const isFormValid = useMemo(() => {
     const hasValidTracking = formState.trackings.some(
@@ -916,7 +927,7 @@ const PreAlertCreate = () => {
                       Entrega a Domicilio
                     </h4>
 
-                    <div className="prealert-create__col">
+                    {/* <div className="prealert-create__col">
                       <label className="prealert-create__label">
                         Nombre de la Dirección
                       </label>
@@ -929,7 +940,7 @@ const PreAlertCreate = () => {
                           updateAddressState('addressName', e.target.value)
                         }
                       />
-                    </div>
+                    </div> */}
 
                     <div className="prealert-create__row prealert-create__row--three">
                       <div className="prealert-create__col">
@@ -1020,6 +1031,54 @@ const PreAlertCreate = () => {
                         }
                       />
                     </div>
+
+
+
+                     {/* ✅ NUEVO: CHECKBOXES PARA GUARDAR DIRECCIÓN */}
+                    <div className="prealert-create__save-options">
+                      <label className="prealert-create__checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={addressState.shouldSaveAddress}
+                          onChange={(e) =>
+                            updateAddressState('shouldSaveAddress', e.target.checked)
+                          }
+                        />
+                        <span>Guardar esta dirección para futuros envíos</span>
+                      </label>
+
+                      {/* ✅ Mostrar input de nombre solo si shouldSaveAddress está activo */}
+                      {addressState.shouldSaveAddress && (
+                        <>
+                          <div className="prealert-create__col" style={{ marginTop: '12px' }}>
+                            <label className="prealert-create__label">
+                              Nombre para guardar
+                            </label>
+                            <input
+                              type="text"
+                              className="prealert-create__input"
+                              placeholder="Ej: Casa, Oficina, etc."
+                              value={addressState.addressName}
+                              onChange={(e) =>
+                                updateAddressState('addressName', e.target.value)
+                              }
+                            />
+                          </div>
+
+                          <label className="prealert-create__checkbox-label" style={{ marginTop: '12px' }}>
+                            <input
+                              type="checkbox"
+                              checked={addressState.setAsDefaultAddress}
+                              onChange={(e) =>
+                                updateAddressState('setAsDefaultAddress', e.target.checked)
+                              }
+                            />
+                            <span>Establecer como dirección predeterminada</span>
+                          </label>
+                        </>
+                      )}
+                    </div>
+
                   </div>
                 )}
               </div>

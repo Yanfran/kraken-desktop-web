@@ -125,32 +125,51 @@ const PreAlertList = () => {
   };
 
   // Delete pre-alert
-  const handleDelete = (preAlerta) => {
-    closeAllMenus();
-    showAlert(
-      'warning',
-      'Confirmar eliminación',
-      `¿Está seguro de eliminar la pre-alerta con tracking "${formatTrackingNumber(preAlerta.trackings)}"?`,
-      () => confirmDelete(preAlerta.id)
-    );
+  // const handleDelete = (preAlerta) => {
+  //   closeAllMenus();
+  //   showAlert(
+  //     'warning',
+  //     'Confirmar eliminación',
+  //     `¿Está seguro de eliminar la pre-alerta con tracking "${formatTrackingNumber(preAlerta.trackings)}"?`,
+  //     () => confirmDelete(preAlerta.id)
+  //   );
+  // };
+
+  // const confirmDelete = async (preAlertaId) => {
+  //   try {
+  //     const response = await deletePreAlerta(preAlertaId);
+      
+  //     if (response.success) {
+  //       toast.success('Pre-alerta eliminada exitosamente');
+  //       setPreAlertas(prev => prev.filter(p => p.id !== preAlertaId));
+  //     } else {
+  //       showAlert('error', 'Error', response.message || 'Error al eliminar pre-alerta');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error deleting pre-alert:', error);
+  //     showAlert('error', 'Error', error.message || 'Error al eliminar pre-alerta');
+  //   }
+  //   hideAlert();
+  // };
+
+
+  const handleDelete = async (preAlerta) => {
+    if (window.confirm(`¿Estás seguro de eliminar la pre-alerta ${formatTrackingNumber(preAlerta.trackings)}?`)) {
+      setVisibleMenus({});
+      try {
+        const response = await deletePreAlerta(preAlerta.id);
+        if (response.success) {          
+          setPreAlertas(prev => prev.filter(p => p.id !== preAlerta.id));
+        } else {
+          alert('Error al eliminar la pre-alerta');
+        }
+      } catch (error) {
+        console.error('Error deleting pre-alert:', error);
+        alert('Error de conexión al eliminar la pre-alerta');
+      }
+    }
   };
 
-  const confirmDelete = async (preAlertaId) => {
-    try {
-      const response = await deletePreAlerta(preAlertaId);
-      
-      if (response.success) {
-        toast.success('Pre-alerta eliminada exitosamente');
-        setPreAlertas(prev => prev.filter(p => p.id !== preAlertaId));
-      } else {
-        showAlert('error', 'Error', response.message || 'Error al eliminar pre-alerta');
-      }
-    } catch (error) {
-      console.error('Error deleting pre-alert:', error);
-      showAlert('error', 'Error', error.message || 'Error al eliminar pre-alerta');
-    }
-    hideAlert();
-  };
 
   // Format date
   const formatDate = (dateString) => {
@@ -178,12 +197,12 @@ const PreAlertList = () => {
       <p className="pre-alert-list__empty-message">
         Aún no has creado ninguna pre-alerta. ¡Crea tu primera pre-alerta para empezar!
       </p>
-      <Button
+      {/* <Button
         variant="primary"
                     onClick={() => navigate('/pre-alert/create')}        className="pre-alert-list__empty-btn"
       >
         Crear Pre-Alerta
-      </Button>
+      </Button> */}
     </div>
   );
 

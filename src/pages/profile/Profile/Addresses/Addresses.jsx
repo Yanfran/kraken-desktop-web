@@ -682,7 +682,7 @@ const Addresses = () => {
                   <div className="address-card__content-wrapper">
                     <div className="address-card__title-row">
                       <h3 className="address-card__alias">
-                        {address.tipoDireccion === 'store' ? 'Retiro en Tienda' : 'Domicilio'}: {address.nombreDireccion || 'Sin nombre'}
+                        {address.nombreDireccion || 'Sin nombre'}
                       </h3>
                       {address.esPredeterminada && (
                         <span className="address-card__default-badge">
