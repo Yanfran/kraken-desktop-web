@@ -89,12 +89,12 @@ axiosPaymentInstance.interceptors.response.use(null, errorInterceptor);
  */
 export const processMercantilPayment = async (paymentData) => {
   try {
-    console.log('💳 Procesando pago móvil Mercantil...');
-    console.log('📦 Datos del pago:', paymentData);
+    // console.log('💳 Procesando pago móvil Mercantil...');
+    // console.log('📦 Datos del pago:', paymentData);
 
     const response = await axiosInstance.post('/Payment/mercantil/comprar', paymentData);
 
-    console.log('✅ Respuesta del pago:', response.data);
+    // console.log('✅ Respuesta del pago:', response.data);
 
     return {
       success: true,
@@ -133,18 +133,18 @@ export const processMercantilPayment = async (paymentData) => {
  */
 export const processMercantilDebitCardPayment = async (paymentData) => {
   try {
-    console.log('💳 Procesando pago con tarjeta (auth integrada en backend)...');
-    console.log('📦 Datos del pago:', {
-      customerId: paymentData.customerId,
-      cardNumber: `****${paymentData.cardNumber.slice(-4)}`,
-      expirationDate: paymentData.expirationDate,
-      cvv: '***',
-      amount: paymentData.amount,
-      hasIdGuia: !!paymentData.idGuia,
-      hasGuiasIds: !!paymentData.guiasIds,
-      guiasCount: paymentData.guiasIds?.length || 0,
-      isMultiple: paymentData.isMultiplePayment
-    });
+    // console.log('💳 Procesando pago con tarjeta (auth integrada en backend)...');
+    // console.log('📦 Datos del pago:', {
+    //   customerId: paymentData.customerId,
+    //   cardNumber: `****${paymentData.cardNumber.slice(-4)}`,
+    //   expirationDate: paymentData.expirationDate,
+    //   cvv: '***',
+    //   amount: paymentData.amount,
+    //   hasIdGuia: !!paymentData.idGuia,
+    //   hasGuiasIds: !!paymentData.guiasIds,
+    //   guiasCount: paymentData.guiasIds?.length || 0,
+    //   isMultiple: paymentData.isMultiplePayment
+    // });
 
     // ✅ ENDPOINT UNIFICADO - El backend maneja auth + pago internamente
     const response = await axiosPaymentInstance.post('/PaymentTDD/mercantil/card/pay', {
@@ -160,7 +160,7 @@ export const processMercantilDebitCardPayment = async (paymentData) => {
       isMultiplePayment: paymentData.isMultiplePayment || false,
     });
 
-    console.log('✅ Respuesta del servidor:', response.data);
+    // console.log('✅ Respuesta del servidor:', response.data);
 
     return {
       success: true,
@@ -246,7 +246,7 @@ export const processCardPaymentUnified = async (paymentData) => {
  */
 export const getPaymentInfo = async (guiaId) => {
   try {
-    console.log('📄 Obteniendo información de pago para guía:', guiaId);
+    // console.log('📄 Obteniendo información de pago para guía:', guiaId);
 
     const response = await axiosInstance.get(`/Payment/getPaymentInfo/${guiaId}`);
 
@@ -273,7 +273,7 @@ export const getPaymentInfo = async (guiaId) => {
  */
 export const calculateMultiplePayment = async (guiaIds) => {
   try {
-    console.log('📊 Calculando pago múltiple para guías:', guiaIds);
+    // console.log('📊 Calculando pago múltiple para guías:', guiaIds);
 
     const response = await axiosInstance.post('/Guias/calculateMultiplePrice', { guiaIds });
 

@@ -55,9 +55,7 @@ export const getNovedades = async () => {
       data: []
     };
     
-  } catch (error) {
-    console.error('❌ Error fetching novedades:', error);
-    
+  } catch (error) {        
     // Manejo de errores detallado
     const errorMessage = error.response?.data?.message 
       || error.message 

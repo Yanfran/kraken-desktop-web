@@ -131,7 +131,7 @@ const PersonalData = () => {
         
         // Cargar países (códigos de teléfono)
         const addressRes = await axiosInstance.get('/Addresses/countries');
-        console.log('📍 Countries response:', addressRes.data);
+        // console.log('📍 Countries response:', addressRes.data);
         
         if (addressRes.data.success) {
           const phoneCodes = addressRes.data.data.map((item) => ({
@@ -156,7 +156,7 @@ const PersonalData = () => {
 
         // Cargar tipos de documento
         const docTypesRes = await axiosInstance.get('/Addresses/document-types');
-        console.log('📄 Document types response:', docTypesRes.data);
+        // console.log('📄 Document types response:', docTypesRes.data);
         
         if (docTypesRes.data.success) {
           setDocumentTypeDB(docTypesRes.data.data);
@@ -394,7 +394,7 @@ const PersonalData = () => {
         })
       };
 
-      console.log('📤 Enviando datos:', submitData);
+      // console.log('📤 Enviando datos:', submitData);
       
       // Navegar a delivery-option con los datos
       navigate('/delivery-option', { state: submitData });

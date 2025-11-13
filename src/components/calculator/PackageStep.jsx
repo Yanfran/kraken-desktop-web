@@ -49,10 +49,7 @@ const PackageStep = ({
   const shouldShowDimensions = () => {
     const fobValue = parseFormattedValue(declaredValue);
     // ✅ Condición: Debe ser China Y el valor mayor a 100
-    const showDims = originCountry === 'CN';
-
-    console.log(`📦 País: ${originCountry}, FOB: ${fobValue}, Mostrar dimensiones: ${showDims}`);
-
+    const showDims = originCountry === 'CN';    
     return showDims;
   };
 

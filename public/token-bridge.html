@@ -59,11 +59,8 @@
                     ];
 
                     // Enviar a todos los orígenes (el receptor verificará el origen)
-                    window.parent.postMessage(message, '*');
-
-                    console.log('✅ Token enviado al dominio padre');
-                } else {
-                    console.log('⚠️ No hay token disponible para compartir');
+                    window.parent.postMessage(message, '*');                    
+                } else {                    
                     
                     // Enviar mensaje vacío para que el padre sepa que no hay token
                     if (window.parent !== window) {

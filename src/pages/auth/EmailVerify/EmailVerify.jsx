@@ -38,7 +38,7 @@ const EmailVerify = () => {
       // ✅ CORRECTO: Con axios, usar response.data (NO response.json())
       const data = response.data;
 
-      console.log('📥 Respuesta del backend:', data);
+      // console.log('📥 Respuesta del backend:', data);
 
       // ✅ Validar respuesta
       if (!data.success) {

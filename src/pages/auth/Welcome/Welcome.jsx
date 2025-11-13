@@ -73,17 +73,17 @@ const Welcome = () => {
   }, []);
 
   const handleGoToDashboard = async () => {
-    console.log('🏠 [Welcome] Iniciando navegación al dashboard...');
+    // console.log('🏠 [Welcome] Iniciando navegación al dashboard...');
     setIsNavigating(true);
     
     try {
-      console.log('👤 [Welcome] Usuario actual:', user);
+      // console.log('👤 [Welcome] Usuario actual:', user);
       
       // Pequeña pausa para mejor UX
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Navegar al dashboard
-      console.log('🚀 [Welcome] Navegando al dashboard...');
+      // console.log('🚀 [Welcome] Navegando al dashboard...');
       navigate('/home', { replace: true });
       
     } catch (error) {

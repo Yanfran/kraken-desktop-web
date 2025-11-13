@@ -177,7 +177,7 @@ const filteredStores = useMemo(() => {
         
         // 1. Cargar delivery data (ciudades y tiendas)
         const deliveryRes = await axiosInstance.get('/Addresses/delivery-data');
-        console.log('🏪 Delivery data:', deliveryRes.data);
+        // console.log('🏪 Delivery data:', deliveryRes.data);
         
        // Dentro de loadInitialData
       if (deliveryRes.data.success) {
@@ -204,7 +204,7 @@ const filteredStores = useMemo(() => {
         
         // 2. Cargar estados usando location-data (COMO TU APP)
         const statesRes = await axiosInstance.get('/Addresses/location-data?countryId=1');
-        console.log('📍 States:', statesRes.data);
+        // console.log('📍 States:', statesRes.data);
         
         if (statesRes.data.success) {
           const states = statesRes.data.data.map(item => ({
@@ -305,7 +305,7 @@ const filteredStores = useMemo(() => {
 
   // Handlers
   const handleOptionChange = (value) => {
-    console.log('🔄 Opción seleccionada:', value);
+    // console.log('🔄 Opción seleccionada:', value);
     setSelectedOption(value);
     
     if (value !== 'home') {
@@ -402,7 +402,7 @@ const filteredStores = useMemo(() => {
         setAsDefault: true
       };
       
-      console.log('📤 Enviando payload:', payload);
+      // console.log('📤 Enviando payload:', payload);
       
       const response = await axiosInstance.post('/Addresses/register', payload);
       

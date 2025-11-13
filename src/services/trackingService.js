@@ -9,7 +9,7 @@ import axiosInstance from './axiosInstance';
  */
 export const searchTrackingNumber = async (trackingNumber) => {
   try {
-    console.log('🔍 Buscando tracking:', trackingNumber);
+    // console.log('🔍 Buscando tracking:', trackingNumber);
 
     // Limpiar el tracking number
     const cleanTrackingNumber = trackingNumber.trim().toUpperCase();
@@ -18,7 +18,7 @@ export const searchTrackingNumber = async (trackingNumber) => {
       `/Tracking/search/${encodeURIComponent(cleanTrackingNumber)}`
     );
 
-    console.log('✅ Respuesta de búsqueda de tracking:', response.data);
+    // console.log('✅ Respuesta de búsqueda de tracking:', response.data);
     
     return response.data;
   } catch (error) {
@@ -39,7 +39,7 @@ export const searchTrackingNumber = async (trackingNumber) => {
  */
 export const searchTrackingInGuias = async (trackingNumber) => {
   try {
-    console.log('🔍 Buscando en guías existentes:', trackingNumber);
+    // console.log('🔍 Buscando en guías existentes:', trackingNumber);
 
     // Importar el servicio de guías existente
     const { getGuias } = await import('./packages/packagesService');
@@ -87,9 +87,7 @@ export const searchTrackingInGuias = async (trackingNumber) => {
         message: 'Error al cargar las guías',
       };
     }
-  } catch (error) {
-    console.error('❌ Error en searchTrackingInGuias:', error);
-    
+  } catch (error) {        
     return {
       success: false,
       message: error.message || 'Error de conexión',
@@ -104,13 +102,13 @@ export const searchTrackingInGuias = async (trackingNumber) => {
  */
 export const searchMultipleTrackings = async (trackingNumbers) => {
   try {
-    console.log('🔍 Buscando múltiples trackings:', trackingNumbers);
+    // console.log('🔍 Buscando múltiples trackings:', trackingNumbers);
 
     const response = await axiosInstance.post('/Tracking/search-multiple', {
       trackingNumbers
     });
 
-    console.log('✅ Respuesta de búsqueda múltiple:', response.data);
+    // console.log('✅ Respuesta de búsqueda múltiple:', response.data);
     
     return response.data;
   } catch (error) {

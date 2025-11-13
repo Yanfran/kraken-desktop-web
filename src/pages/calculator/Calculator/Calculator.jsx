@@ -109,8 +109,7 @@ const Calculator = () => {
         }));
         setContentOptions(lista);
       }
-    } catch (error) {
-      console.error('Error al cargar datos iniciales:', error);
+    } catch (error) {      
       toast.error('No se pudo cargar los datos iniciales');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
@@ -140,8 +139,7 @@ const Calculator = () => {
           parish: ''
         }
       }));
-    } catch (error) {
-      console.error('Error al cargar municipios:', error);
+    } catch (error) {      
       toast.error('No se pudo cargar los municipios');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
@@ -170,8 +168,7 @@ const Calculator = () => {
           parish: ''
         }
       }));
-    } catch (error) {
-      console.error('Error al cargar parroquias:', error);
+    } catch (error) {      
       toast.error('No se pudo cargar las parroquias');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
@@ -230,9 +227,7 @@ const Calculator = () => {
           width: parseFloat(state.calculation.dimensions.width) || 0,
           height: parseFloat(state.calculation.dimensions.height) || 0,
         },
-      };
-      
-      console.log('📤 Enviando cálculo:', calculationForAPI);
+      };            
       
       const response = await axiosInstance.post(`${API_URL}/Calculator/calculate`, calculationForAPI);
       
@@ -246,8 +241,7 @@ const Calculator = () => {
       } else {
         throw new Error(response.data?.message || 'Error al calcular');
       }
-    } catch (error) {
-      console.error('Error en cálculo:', error);
+    } catch (error) {      
       toast.error(error.response?.data?.message || 'Error al calcular el envío');
     } finally {
       setIsCalculating(false);
@@ -272,9 +266,7 @@ const Calculator = () => {
   };
 
   // 🆕 Handler para cambio de país de origen
-  const handleOriginCountryChange = (newCountry) => {
-    console.log(`🌍 País de origen cambiado a: ${newCountry}`);
-    
+  const handleOriginCountryChange = (newCountry) => {      
     // Limpiar dimensiones al cambiar de país
     setState(prev => ({
       ...prev,

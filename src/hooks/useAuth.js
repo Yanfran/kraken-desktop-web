@@ -71,7 +71,7 @@ export const useAuth = () => {
   // ===== ACTUALIZAR PERFIL DEL USUARIO =====
   const updateProfile = useCallback(async (updatedData) => {
     try {
-      console.log('🔄 Actualizando usuario en contexto...', updatedData);
+      // console.log('🔄 Actualizando usuario en contexto...', updatedData);
       
       // Actualizar el usuario en localStorage
       const currentUser = JSON.parse(localStorage.getItem('userData') || '{}');
@@ -83,7 +83,7 @@ export const useAuth = () => {
         await context.setUserState(mergedUser);
       }
       
-      console.log('✅ Usuario actualizado en contexto');
+      // console.log('✅ Usuario actualizado en contexto');
       return { success: true, user: mergedUser };
     } catch (error) {
       console.error('❌ Error updating profile in context:', error);

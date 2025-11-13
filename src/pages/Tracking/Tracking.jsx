@@ -8,14 +8,17 @@ import {
   generateStepsFromStatus 
 } from '../../services/trackingService';
 import iconImage from '../../../src/assets/images/icon-kraken-web-rastrear-_1.png'; 
-
+import { useCustomAlert } from '../../hooks/useCustomAlert';
+import CustomAlert from '../../components/common/CustomAlert/CustomAlert';
 import Tooltip from '../../components/common/Tooltip/Tooltip';
+import toast from 'react-hot-toast';
 
 export default function Tracking() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [trackingResult, setTrackingResult] = useState(null);
   const navigate = useNavigate();
+  const alert = useCustomAlert();
 
   // Función principal de búsqueda con validación
   const handleTrackPackage = async () => {
@@ -33,7 +36,7 @@ export default function Tracking() {
 
       // Si falla, intentar buscar en las guías existentes como fallback
       if (!response.success) {
-        console.log('Intentando búsqueda en guías existentes...');
+        // console.log('Intentando búsqueda en guías existentes...');
         response = await searchTrackingInGuias(trackingNumber.trim());
       }
 
@@ -51,40 +54,17 @@ export default function Tracking() {
         };
         setTrackingResult(result);
       } else {
-        window.alert(
-          'Paquete no encontrado: No se encontró información para este número de rastreo. Verifica que sea correcto.'
-        );
-        showMockResult(); // Mostrar resultado mock si no se encuentra
+        alert.showError("Paquete no encontrado", "No se encontró información para este número de rastreo. Verifica que sea correcto.");        
+        // toast.error(`Paquete no encontrado: "${trackingNumber}" No se encontró información para este número de rastreo. Verifica que sea correcto.`);        
       }
     } catch (error) {
       console.error('Error buscando tracking:', error);
-      window.alert(
-        'Error de conexión: No se pudo conectar al servidor. Intenta nuevamente.'
-      );
-      showMockResult(); // Mostrar resultado mock en caso de error
+      alert.showError("Error de conexión", "No se pudo conectar al servidor. Intenta nuevamente.");              
+      // toast.error(`Error de conexión: No se pudo conectar al servidor. Intenta nuevamente.`);              
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Función para mostrar un resultado de ejemplo
-  const showMockResult = () => {
-    const mockResult = {
-      trackingNumber: trackingNumber.toUpperCase() || 'K202509116385 1W3A',
-      origin: 'USA',
-      status: 'Avance! Comprobado',
-      steps: [
-        { name: 'Recibido', date: 'Sep 11, 2025 • 16:38', completed: true },
-        { name: 'Procesado', date: 'Sep 16, 2025 • 10:54', completed: true },
-        { name: 'Rumbo a Venezuela', date: 'Oct 1, 2025 • 1:07', completed: true },
-        { name: 'Llegó a Venezuela', date: 'Oct 5, 2025 • 7:45', completed: true },
-        { name: 'Avance! Comprobado', date: 'Oct 6, 2025 • 08:50', completed: true, current: true }
-      ],
-      guiaId: null,
-      idGuia: null
-    };
-    setTrackingResult(mockResult);
-  };
+  }; 
 
   // Resetear búsqueda
   const resetSearch = () => {
@@ -110,7 +90,7 @@ export default function Tracking() {
       if (response.success && response.data) {
         const foundGuiaId = response.data.idGuia || response.data.id;
         if (foundGuiaId) {
-          console.log('✅ Guía encontrada con ID:', foundGuiaId);
+          // console.log('✅ Guía encontrada con ID:', foundGuiaId);
           navigate(`/guide/detail/${foundGuiaId}`);
         } else {
           throw new Error('ID de guía no disponible');
@@ -119,7 +99,7 @@ export default function Tracking() {
         throw new Error('Guía no encontrada en el sistema');
       }
     } catch (error) {
-      console.log('❌ Error buscando detalles de la guía:', error);
+      // console.log('❌ Error buscando detalles de la guía:', error);
       window.alert(
         `Información del Paquete\n\n` +
         `Número de rastreo: ${trackingResult.trackingNumber}\n` +
@@ -175,6 +155,7 @@ export default function Tracking() {
 
   return (
     <div className={styles.container}>
+      <CustomAlert {...alert.alertProps} />
       <div className={styles.scrollContainer}>
         <div className={styles.content}>
           <div className={styles.trackingSection}>

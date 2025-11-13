@@ -16,7 +16,7 @@ export const googleService = {
       script.defer = true;
       
       script.onload = () => {
-        console.log('✅ [Google] Script cargado exitosamente');
+        // console.log('✅ [Google] Script cargado exitosamente');
         resolve();
       };
       
@@ -45,7 +45,7 @@ export const googleService = {
           client_id: GOOGLE_CLIENT_ID,
           callback: (response) => {
             if (response.credential) {
-              console.log('✅ [Google] Credencial recibida');
+              // console.log('✅ [Google] Credencial recibida');
               resolve({
                 success: true,
                 token: response.credential, // Este es el JWT token
@@ -62,7 +62,7 @@ export const googleService = {
         // Mostrar el popup de Google
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            console.log('⚠️ [Google] Popup no mostrado');
+            // console.log('⚠️ [Google] Popup no mostrado');
             reject(new Error('Google Sign-In cancelado o no disponible'));
           }
         });

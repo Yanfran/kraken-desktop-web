@@ -438,6 +438,38 @@
     &:hover span {
       color: #1f2937 !important;
     }
+
+     &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      input[type="checkbox"] {
+        cursor: not-allowed;
+      }
+    }
+  }
+
+   &__limit-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    margin-top: 8px;
+    
+    svg {
+      flex-shrink: 0;
+      color: #856404;
+      margin-top: 2px;
+    }
+    
+    span {
+      font-size: 13px;
+      color: #856404;
+      line-height: 1.5;
+    }
   }
 
   // ═══════════════════════════════════════
@@ -915,51 +947,73 @@
   }
 
   // ═══════════════════════════════════════
-  // ESTILOS GLOBALES PARA COMPONENTES
+  // ESTILOS PARA COMPONENTES SELECT (SCOPED - Solo PreAlertCreate)
   // ═══════════════════════════════════════
-  :global {
-    [class*="multi-select"],
-    [class*="MultiSelect"],
-    [class*="searchable-select"],
-    [class*="SearchableSelect"] {
-      z-index: 1000 !important;
 
-      // > div[class*="dropdown"],
-      > div[class*="menu"],
-      > div[class*="options"] {
-        z-index: 1001 !important;
-        background: white !important;
-        border: 2px solid #e5e7eb !important;
-        color: #1a1a1a !important;
-      }
+  // ✅ Estilos para Multi-Select (componente de múltiple selección)
+  [class*="multi-select"],
+  [class*="MultiSelect"] {
+    z-index: 1000 !important;
 
-      ul, li {
-        background: white !important;
-        color: #1a1a1a !important;
-      }
+    > div[class*="menu"],
+    > div[class*="options"] {
+      z-index: 1001 !important;
+      background: white !important;
+      border: 2px solid #e5e7eb !important;
+      color: #1a1a1a !important;
+    }
 
-      input {
-        background: white !important;
-        color: #1a1a1a !important;
-        border-color: #e5e7eb !important;
-      }
+    ul, li {
+      background: white !important;
+      color: #1a1a1a !important;
+    }
 
-      [class*="tag"],
-      [class*="chip"],
-      [class*="selected"] {
-        background: #fff7ed !important;
-        color: #ff4500 !important;
-        border-color: #ff4500 !important;
-      }
+    // ✅ Input específico para multi-select (excluye searchable-select)
+    input:not([class*="searchable-select__input"]) {
+      background: white !important;
+      color: #1a1a1a !important;
+      border-color: #e5e7eb !important;
+    }
 
-      li:hover,
-      [class*="option"]:hover {
-        background: #fff7ed !important;
-        color: #ff4500 !important;
-      }
+    [class*="tag"],
+    [class*="chip"],
+    [class*="selected"] {
+      background: #fff7ed !important;
+      color: #ff4500 !important;
+      border-color: #ff4500 !important;
+    }
+
+    li:hover,
+    [class*="option"]:hover {
+      background: #fff7ed !important;
+      color: #ff4500 !important;
     }
   }
 
+  // ✅ Estilos para Searchable-Select (componente de búsqueda)
+  // Solo estilos de posicionamiento y z-index, SIN bordes en input
+  [class*="searchable-select"],
+  [class*="SearchableSelect"] {
+    z-index: 1000 !important;
+
+    > div[class*="dropdown"],
+    > div[class*="menu"] {
+      z-index: 1001 !important;
+      // ❌ NO forzar background/border aquí - el componente maneja sus propios estilos
+    }
+
+    // ✅ Solo estilos de hover/selección para opciones
+    [class*="option"]:hover,
+    [class*="option"][class*="highlighted"] {
+      background: #fff7ed !important;
+      color: #ff4500 !important;
+    }
+
+    [class*="option"][class*="selected"] {
+      background: #ffe0d5 !important;
+      color: #ff4500 !important;
+    }
+  }
   // ═══════════════════════════════════════
   // RESPONSIVE
   // ═══════════════════════════════════════

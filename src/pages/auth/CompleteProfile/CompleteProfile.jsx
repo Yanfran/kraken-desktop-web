@@ -50,15 +50,15 @@ const CompleteProfile = () => {
 
   // Completar perfil con loading visible
   const handleCompleteProfile = async () => {
-    console.log('🔄 [CompleteProfile] Iniciando proceso...');
+    // console.log('🔄 [CompleteProfile] Iniciando proceso...');
     setIsCompleting(true);
     
     try {
       // Simular llamada a API - puedes reemplazar esto con tu lógica real
-      console.log('⏳ [CompleteProfile] Procesando...');
+      // console.log('⏳ [CompleteProfile] Procesando...');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      console.log('✅ [CompleteProfile] Proceso completado, redirigiendo...');
+      // console.log('✅ [CompleteProfile] Proceso completado, redirigiendo...');
       // Redirigir a personal-data
       navigate('/personal-data', { replace: true });
       

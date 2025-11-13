@@ -66,7 +66,7 @@ export default function GuideDetail() {
   }, [idGuia]);
 
   useEffect(() => {
-    console.log('GuideDetail useEffect: Running loadGuiaDetail');
+    // console.log('GuideDetail useEffect: Running loadGuiaDetail');
     if (isSignedIn && idGuia) {
       loadGuiaDetail();
     }
@@ -147,7 +147,7 @@ export default function GuideDetail() {
         return;
       }
 
-      console.log('📄 Facturas encontradas:', facturasDisponibles);
+      // console.log('📄 Facturas encontradas:', facturasDisponibles);
 
       // Si solo hay una factura, descargarla directamente
       if (facturasDisponibles.length === 1) {

@@ -423,7 +423,7 @@ const Addresses = () => {
             <div className="addresses__max-limit-text">
               <p className="addresses__max-limit-title">Límite de direcciones alcanzado</p>
               <p className="addresses__max-limit-message">
-                Has alcanzado el máximo de 3 direcciones guardadas. Elimina una dirección existente para agregar una nueva.
+                Has alcanzado el máximo de 4 direcciones guardadas. Elimina una dirección existente para agregar una nueva.
               </p>
             </div>
           </div>

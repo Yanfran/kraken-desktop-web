@@ -92,7 +92,7 @@ const EmailConfirmation = () => {
 
     try {
       setIsResending(true);
-      console.log('📧 Enviando email a:', email); // Debug
+      // console.log('📧 Enviando email a:', email); // Debug
       
       const result = await resendVerificationEmail(email);
       

@@ -10,6 +10,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import Tooltip from '../../../components/common/Tooltip/Tooltip';
 import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png';
+import { IoAlertCircleOutline } from 'react-icons/io5';
 
 // Services
 import {
@@ -173,7 +174,7 @@ const PreAlertCreate = () => {
   }, [contenidosData]);
 
   const handleCityChange = (newCityId) => {
-    console.log('🏙️ Ciudad cambiada a:', newCityId);
+    // console.log('🏙️ Ciudad cambiada a:', newCityId);
     setAddressState(prev => ({
       ...prev,
       selectedCity: newCityId,
@@ -583,7 +584,7 @@ const PreAlertCreate = () => {
     };
 
     // 🔍 LOG PARA DEBUG
-    console.log('📦 Payload enviado:', JSON.stringify(payload, null, 2));
+    // console.log('📦 Payload enviado:', JSON.stringify(payload, null, 2));
 
     await createMutation.mutateAsync(payload);
   } catch (error) {
@@ -594,6 +595,11 @@ const PreAlertCreate = () => {
   }
 };
 
+
+  // ✅ VERIFICAR SI YA TIENE 4 DIRECCIONES (LÍMITE MÁXIMO)
+  const hasReachedMaxAddresses = useMemo(() => {
+    return userAddresses && userAddresses.length >= 4;
+  }, [userAddresses]);
 
 
 
@@ -1036,16 +1042,31 @@ const PreAlertCreate = () => {
 
                      {/* ✅ NUEVO: CHECKBOXES PARA GUARDAR DIRECCIÓN */}
                     <div className="prealert-create__save-options">
-                      <label className="prealert-create__checkbox-label">
+                      {/* ✅ Deshabilitar si alcanzó el límite */}
+                      <label 
+                        className={`prealert-create__checkbox-label ${hasReachedMaxAddresses ? 'disabled' : ''}`}
+                      >
                         <input
                           type="checkbox"
                           checked={addressState.shouldSaveAddress}
                           onChange={(e) =>
                             updateAddressState('shouldSaveAddress', e.target.checked)
                           }
+                          disabled={hasReachedMaxAddresses} // ⬅️ Deshabilitar si alcanzó límite
                         />
                         <span>Guardar esta dirección para futuros envíos</span>
                       </label>
+
+                      {/* ✅ Mensaje de límite alcanzado */}
+                      {hasReachedMaxAddresses && (
+                        <div className="prealert-create__limit-warning">
+                          <IoAlertCircleOutline size={18} />
+                          <span>
+                            Has alcanzado el límite de 4 direcciones guardadas. 
+                            Elimina una dirección desde tu perfil para poder guardar nuevas.
+                          </span>
+                        </div>
+                      )}
 
                       {/* ✅ Mostrar input de nombre solo si shouldSaveAddress está activo */}
                       {addressState.shouldSaveAddress && (

@@ -88,7 +88,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     try {
       setIsUpdatingAvatar(true);
-      console.log('🎨 Iniciando cambio de avatar a:', newAvatarId);
+      // console.log('🎨 Iniciando cambio de avatar a:', newAvatarId);
 
       if (!user || !user.email) {
         toast.error('Usuario no válido. Por favor, inicia sesión nuevamente.');
@@ -99,7 +99,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       const response = await updateAvatar(newAvatarId, user.email);
 
       if (response.success) {
-        console.log('✅ Avatar actualizado en backend');
+        // console.log('✅ Avatar actualizado en backend');
         
         // ✅ PASO 2: Actualizar el usuario en el contexto
         const updatedUser = { 
@@ -109,11 +109,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         
         // ✅ PASO 3: Guardar en localStorage
         localStorage.setItem('userData', JSON.stringify(updatedUser));
-        console.log('💾 Avatar guardado en localStorage');
+        // console.log('💾 Avatar guardado en localStorage');
         
         // ✅ PASO 4: Actualizar contexto usando setUserState
         await setUserState(updatedUser);
-        console.log('🔄 Contexto actualizado');
+        // console.log('🔄 Contexto actualizado');
         
         // ✅ PASO 5: Cerrar modal y mostrar éxito
         setAvatarSelectorVisible(false);

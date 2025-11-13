@@ -68,7 +68,7 @@ const Register = () => {
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
       try {
-        console.log('🔵 Token recibido de Google');
+        // console.log('🔵 Token recibido de Google');
         
         const credentialResponse = {
           credential: tokenResponse.access_token

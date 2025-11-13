@@ -114,7 +114,7 @@ export default function PaymentPage() {
       if (isMultiplePayment) {
         // ✅ PAGO MÚLTIPLE
         const guiaIds = multipleIds.split(',').map(Number);
-        console.log('📦 Cargando datos para pagos múltiples:', guiaIds);
+        // console.log('📦 Cargando datos para pagos múltiples:', guiaIds);
 
         const response = await getMultipleGuiasPaymentData(guiaIds);
         
@@ -288,7 +288,7 @@ export default function PaymentPage() {
         isMultiplePayment: isMultiplePayment,
       };
 
-      console.log('📤 Enviando pago:', paymentRequest);
+      // console.log('📤 Enviando pago:', paymentRequest);
 
       const response = await processMercantilPayment(paymentRequest);
 

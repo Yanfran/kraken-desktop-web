@@ -49,7 +49,7 @@ class TokenService {
         this.sendToNativeApp('saveToken', { token, userData, refreshToken });
       }
 
-      console.log('✅ Token guardado exitosamente en todos los storages');
+      // console.log('✅ Token guardado exitosamente en todos los storages');
       return true;
     } catch (error) {
       console.error('❌ Error saving token:', error);
@@ -68,10 +68,10 @@ class TokenService {
       sessionStorage.getItem(this.TOKEN_KEY) ||
       null;
 
-      console.log('🔍 Obteniendo token desde storages... yayayayyayay', token);
+      // console.log('🔍 Obteniendo token desde storages... yayayayyayay', token);
 
     if (token) {
-      console.log('✅ Token encontrado:', token.substring(0, 20) + '...');
+      // console.log('✅ Token encontrado:', token.substring(0, 20) + '...');
     } else {
       console.warn('⚠️ No se encontró token en ningún storage');
     }
@@ -122,7 +122,7 @@ class TokenService {
         this.sendToNativeApp('clearToken', {});
       }
 
-      console.log('✅ Token eliminado de todos los storages');
+      // console.log('✅ Token eliminado de todos los storages');
     } catch (error) {
       console.error('Error clearing token:', error);
     }
@@ -158,13 +158,13 @@ class TokenService {
   async syncTokenFromDomain(sourceUrl) {
     // ✅ En localhost, no intentar sincronizar (no funcionará)
     if (this.isLocalhost) {
-      console.warn('⚠️ [Localhost] Sincronización cross-domain no disponible en desarrollo');
-      console.log('💡 Solución: Usa el mismo puerto para web y mobile, o espera a producción');
+      // console.warn('⚠️ [Localhost] Sincronización cross-domain no disponible en desarrollo');
+      // console.log('💡 Solución: Usa el mismo puerto para web y mobile, o espera a producción');
       return false;
     }
 
     try {
-      console.log('🔄 Intentando sincronizar token desde:', sourceUrl);
+      // console.log('🔄 Intentando sincronizar token desde:', sourceUrl);
 
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
@@ -181,7 +181,7 @@ class TokenService {
 
           const { token, userData, refreshToken } = event.data;
           if (token) {
-            console.log('✅ Token sincronizado exitosamente');
+            // console.log('✅ Token sincronizado exitosamente');
             this.saveToken(token, userData, refreshToken);
             resolve(true);
           } else {

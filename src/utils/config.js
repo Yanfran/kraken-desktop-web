@@ -189,7 +189,7 @@ export const isProduction = () => USE_PRODUCTION;
 
 export const log = (...args) => {
   if (isDevelopment()) {
-    console.log('🔗 [Kraken]', ...args);
+    // console.log('🔗 [Kraken]', ...args);
   }
 };
 

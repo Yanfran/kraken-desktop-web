@@ -400,13 +400,13 @@ export const uploadGuiaInvoice = async (guiaId, file) => {
  */
 export const getMultipleGuiasPaymentData = async (guiaIds) => {
   try {
-    console.log('📦 Obteniendo datos de pago para múltiples guías:', guiaIds);
+    // console.log('📦 Obteniendo datos de pago para múltiples guías:', guiaIds);
     
     const response = await axiosInstance.post('/Payment/multiple/data', {
       guiaIds: guiaIds
     });
 
-    console.log('✅ Datos de pago múltiple obtenidos:', response.data);
+    // console.log('✅ Datos de pago múltiple obtenidos:', response.data);
     
     return {
       success: true,

@@ -40,7 +40,7 @@ const Login = () => {
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
       try {
-        console.log('🔵 Token recibido de Google');
+        // console.log('🔵 Token recibido de Google');
         
         // Crear credential response
         const credentialResponse = {

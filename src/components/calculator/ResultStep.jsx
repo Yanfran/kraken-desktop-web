@@ -80,7 +80,7 @@ const ResultStep = ({
       }
     });
 
-    console.log('Subtotal sin Descuento Prealerta (Tarifa Full):', subtotalSinDescuentoPrealerta);
+    // console.log('Subtotal sin Descuento Prealerta (Tarifa Full):', subtotalSinDescuentoPrealerta);
 
     // ✅ Calcular IVA de Tarifa Full
     const seguroDetalle = breakdown.detalles.find(d => d.descripcionItem === 'Seguro');
@@ -96,9 +96,9 @@ const ResultStep = ({
     
     const totalFullBs = baseImponibleFull + ivaFullBs + seguroBs + franqueoBs + arancelBs;
 
-    console.log('Base Imponible Full:', baseImponibleFull);
-    console.log('IVA Full:', ivaFullBs);
-    console.log('Total Full:', totalFullBs);
+    // console.log('Base Imponible Full:', baseImponibleFull);
+    // console.log('IVA Full:', ivaFullBs);
+    // console.log('Total Full:', totalFullBs);
 
     return (
       <div className="result-step__detalles-completos">
@@ -255,10 +255,10 @@ const ResultStep = ({
     
     tarifaFullTotal = baseImponibleFull + ivaFullBs + seguroBs + franqueoBs + arancelBs;
     
-    console.log('Header - Subtotal sin Descuento Prealerta:', subtotalSinDescuentoPrealerta);
-    console.log('Header - Base Imponible Full:', baseImponibleFull);
-    console.log('Header - IVA Full:', ivaFullBs);
-    console.log('Header - Total Full:', tarifaFullTotal);
+    // console.log('Header - Subtotal sin Descuento Prealerta:', subtotalSinDescuentoPrealerta);
+    // console.log('Header - Base Imponible Full:', baseImponibleFull);
+    // console.log('Header - IVA Full:', ivaFullBs);
+    // console.log('Header - Total Full:', tarifaFullTotal);
   }
   
   const totalBs = extractNumericValue(breakdown?.totalBs);

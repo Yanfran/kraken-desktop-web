@@ -128,7 +128,7 @@ export const authService = {
         };
 
         localStorage.setItem('userId', userData.id.toString());
-        console.log('✅ [AuthService] Usuario completo guardado:', userData);
+        // console.log('✅ [AuthService] Usuario completo guardado:', userData);
 
         return {
           success: true,
@@ -179,7 +179,7 @@ export const authService = {
         last: userData.lastName
       });
 
-      console.log('✅ [AuthService] Register response:', response.data);
+      // console.log('✅ [AuthService] Register response:', response.data);
 
       if (response.data.success) {
         const user = {
@@ -280,7 +280,7 @@ export const authService = {
   // ===== 🔥 GOOGLE AUTH - SIN THIS =====
   async loginWithGoogle(tokenOrCredential) {
   try {
-    console.log('🔵 [AuthService] Procesando Google auth...');
+    // console.log('🔵 [AuthService] Procesando Google auth...');
     
     let userEmail, firstName, lastName, userId;
     
@@ -289,7 +289,7 @@ export const authService = {
     
     if (isJWT) {
       // Es un ID Token JWT - decodificar
-      console.log('🔵 [AuthService] Procesando ID Token JWT...');
+      // console.log('🔵 [AuthService] Procesando ID Token JWT...');
       const decoded = decodeJWT(tokenOrCredential);
       userEmail = decoded.email;
       firstName = decoded.given_name || decoded.name?.split(' ')[0] || decoded.name;
@@ -297,7 +297,7 @@ export const authService = {
       userId = decoded.sub;
     } else {
       // Es un Access Token - obtener info del usuario de Google
-      console.log('🔵 [AuthService] Procesando Access Token, obteniendo info del usuario...');
+      // console.log('🔵 [AuthService] Procesando Access Token, obteniendo info del usuario...');
       
       try {
         const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -309,7 +309,7 @@ export const authService = {
         }
         
         const userInfo = await userInfoResponse.json();
-        console.log('👤 [AuthService] Info del usuario obtenida:', userInfo.email);
+        // console.log('👤 [AuthService] Info del usuario obtenida:', userInfo.email);
         
         userEmail = userInfo.email;
         firstName = userInfo.given_name || userInfo.name?.split(' ')[0] || userInfo.name;
@@ -325,7 +325,7 @@ export const authService = {
 
     // Intentar REGISTRO primero
     try {
-      console.log('🔵 [AuthService] Intentando REGISTRO con Google...');
+      // console.log('🔵 [AuthService] Intentando REGISTRO con Google...');
       const registerResponse = await authAPI.post('/Users/google', {
         name: firstName,
         email: userEmail,
@@ -334,7 +334,7 @@ export const authService = {
       });
 
       if (registerResponse.data.success && registerResponse.data.token && registerResponse.data.user) {
-        console.log('✅ [AuthService] Usuario REGISTRADO con Google');
+        // console.log('✅ [AuthService] Usuario REGISTRADO con Google');
         
         const userData = mapUserData(registerResponse.data.user);
         localStorage.setItem('userId', userData.id.toString());
@@ -346,11 +346,11 @@ export const authService = {
         };
       }
     } catch (registerError) {
-      console.log('⚠️ [AuthService] Registro falló, intentando LOGIN...');
+      // console.log('⚠️ [AuthService] Registro falló, intentando LOGIN...');
     }
 
     // Si el registro falla, intentar LOGIN
-    console.log('🔵 [AuthService] Intentando LOGIN con Google...');
+    // console.log('🔵 [AuthService] Intentando LOGIN con Google...');
     const loginResponse = await authAPI.post('/Users/google', {
       name: firstName,
       email: userEmail,
@@ -359,7 +359,7 @@ export const authService = {
     });
 
     if (loginResponse.data.success && loginResponse.data.token && loginResponse.data.user) {
-      console.log('✅ [AuthService] Usuario LOGUEADO con Google');
+      // console.log('✅ [AuthService] Usuario LOGUEADO con Google');
       
       const userData = mapUserData(loginResponse.data.user);
       localStorage.setItem('userId', userData.id.toString());

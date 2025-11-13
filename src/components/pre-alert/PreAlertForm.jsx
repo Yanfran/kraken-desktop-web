@@ -206,7 +206,7 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
     queryKey: ['lockers'],
     queryFn: getDeliveryData,
     select: (response) => {
-      console.log("PreAlertForm: Delivery data (lockers) response:", response);
+      // console.log("PreAlertForm: Delivery data (lockers) response:", response);
       return response.data?.tiendas
         .filter(t => t.idTiendaTipo === 2)
         .map(t => ({ label: t.nombre, value: t.id.toString() }));
@@ -291,7 +291,7 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
   const isSubmitting = createMutation.isLoading || updateMutation.isLoading;
 
   const onSubmit = async (data) => {
-    console.log('Form data:', data);
+    // console.log('Form data:', data);
     const formData = new FormData();
 
     // Append trackings

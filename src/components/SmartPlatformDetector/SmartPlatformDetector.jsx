@@ -26,24 +26,24 @@ const SmartPlatformDetector = ({ children }) => {
       const currentHostname = window.location.hostname;
       const currentPort = window.location.port || '80';
       
-      console.log('═══════════════════════════════════════════════');
-      console.log('🔍 SMART PLATFORM DETECTOR - WEB');
-      console.log('═══════════════════════════════════════════════');
-      console.log('📱 Device Info:', {
-        isMobile: info.isMobile,
-        isTablet: info.isTablet,
-        isNarrowScreen: info.isNarrowScreen,
-        screenWidth: info.screenWidth,
-        screenHeight: info.screenHeight
-      });
-      console.log('🌐 Current URL:', currentUrl);
-      console.log('🌐 Hostname:', currentHostname);
-      console.log('🔌 Port:', currentPort);
-      console.log('🎯 APP_URLS:', APP_URLS);
+      // console.log('═══════════════════════════════════════════════');
+      // console.log('🔍 SMART PLATFORM DETECTOR - WEB');
+      // console.log('═══════════════════════════════════════════════');
+      // console.log('📱 Device Info:', {
+      //   isMobile: info.isMobile,
+      //   isTablet: info.isTablet,
+      //   isNarrowScreen: info.isNarrowScreen,
+      //   screenWidth: info.screenWidth,
+      //   screenHeight: info.screenHeight
+      // });
+      // console.log('🌐 Current URL:', currentUrl);
+      // console.log('🌐 Hostname:', currentHostname);
+      // console.log('🔌 Port:', currentPort);
+      // console.log('🎯 APP_URLS:', APP_URLS);
       
       // Determinar si estamos en producción o desarrollo
       const isProduction = currentHostname.includes('krakencourier.com');
-      console.log('🎯 Entorno:', isProduction ? 'PRODUCCIÓN' : 'DESARROLLO');
+      // console.log('🎯 Entorno:', isProduction ? 'PRODUCCIÓN' : 'DESARROLLO');
       
       // ═══════════════════════════════════════════════
       // DETERMINAR EN QUÉ APP ESTAMOS
@@ -61,10 +61,10 @@ const SmartPlatformDetector = ({ children }) => {
         isOnMobileApp = currentPort === '8081';
       }
       
-      console.log('📍 Ubicación actual:', {
-        isOnWebApp,
-        isOnMobileApp
-      });
+      // console.log('📍 Ubicación actual:', {
+      //   isOnWebApp,
+      //   isOnMobileApp
+      // });
 
       // ═══════════════════════════════════════════════
       // MAPEO DE RUTAS
@@ -109,29 +109,29 @@ const SmartPlatformDetector = ({ children }) => {
 
       // CASO 1: Web → Mobile (pantalla pequeña)
       if (isOnWebApp && (info.isMobile || info.isNarrowScreen) && !info.isTablet) {
-        console.log('🔄 REDIRECCIÓN NECESARIA: Web → Mobile');
-        console.log('   Razón: Pantalla pequeña detectada en app web');
+        // console.log('🔄 REDIRECCIÓN NECESARIA: Web → Mobile');
+        // console.log('   Razón: Pantalla pequeña detectada en app web');
         await redirectToMobile(routeMap.webToMobile);
         return;
       }
 
       // CASO 2: Mobile → Web (pantalla grande)
       if (isOnMobileApp && !info.isMobile && !info.isNarrowScreen) {
-        console.log('🔄 REDIRECCIÓN NECESARIA: Mobile → Web');
-        console.log('   Razón: Pantalla grande detectada en app mobile');
+        // console.log('🔄 REDIRECCIÓN NECESARIA: Mobile → Web');
+        // console.log('   Razón: Pantalla grande detectada en app mobile');
         await redirectToWeb(routeMap.mobileToWeb);
         return;
       }
 
-      console.log('✅ Estás en la app correcta para tu dispositivo');
-      console.log('═══════════════════════════════════════════════');
+      // console.log('✅ Estás en la app correcta para tu dispositivo');
+      // console.log('═══════════════════════════════════════════════');
     };
 
     // ═══════════════════════════════════════════════
     // FUNCIÓN: REDIRIGIR A MOBILE
     // ═══════════════════════════════════════════════
     const redirectToMobile = async (routeMap) => {
-      console.log('🚀 Iniciando redirección a MOBILE...');
+      // console.log('🚀 Iniciando redirección a MOBILE...');
       setIsRedirecting(true);
 
       try {
@@ -140,7 +140,7 @@ const SmartPlatformDetector = ({ children }) => {
         const refreshToken = TokenService.getRefreshToken();
 
         const currentPath = location.pathname;
-        console.log('📍 Ruta actual (Web):', currentPath);
+        // console.log('📍 Ruta actual (Web):', currentPath);
 
         // Mapear ruta
         let mobilePath = routeMap[currentPath];
@@ -164,7 +164,7 @@ const SmartPlatformDetector = ({ children }) => {
           }
         }
 
-        console.log('🎯 Ruta destino (Mobile):', mobilePath);
+        // console.log('🎯 Ruta destino (Mobile):', mobilePath);
 
         // Construir URL
         const mobileUrl = `${APP_URLS.MOBILE}${mobilePath}`;
@@ -177,7 +177,7 @@ const SmartPlatformDetector = ({ children }) => {
           if (refreshToken) url.searchParams.set('refreshToken', refreshToken);
         }
 
-        console.log('🚀 Redirigiendo a:', url.toString());
+        // console.log('🚀 Redirigiendo a:', url.toString());
         
         // Pequeño delay para ver los logs
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -193,7 +193,7 @@ const SmartPlatformDetector = ({ children }) => {
     // FUNCIÓN: REDIRIGIR A WEB
     // ═══════════════════════════════════════════════
     const redirectToWeb = async (routeMap) => {
-      console.log('🚀 Iniciando redirección a WEB...');
+      // console.log('🚀 Iniciando redirección a WEB...');
       setIsRedirecting(true);
 
       try {
@@ -202,7 +202,7 @@ const SmartPlatformDetector = ({ children }) => {
         const refreshToken = TokenService.getRefreshToken();
 
         const currentPath = location.pathname;
-        console.log('📍 Ruta actual (Mobile):', currentPath);
+        // console.log('📍 Ruta actual (Mobile):', currentPath);
 
         // Mapear ruta
         let webPath = routeMap[currentPath];
@@ -231,7 +231,7 @@ const SmartPlatformDetector = ({ children }) => {
           }
         }
 
-        console.log('🎯 Ruta destino (Web):', webPath);
+        // console.log('🎯 Ruta destino (Web):', webPath);
 
         // Construir URL
         const webUrl = `${APP_URLS.WEB}${webPath}`;
@@ -244,7 +244,7 @@ const SmartPlatformDetector = ({ children }) => {
           if (refreshToken) url.searchParams.set('refreshToken', refreshToken);
         }
 
-        console.log('🚀 Redirigiendo a:', url.toString());
+        // console.log('🚀 Redirigiendo a:', url.toString());
         
         // Pequeño delay para ver los logs
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -266,14 +266,14 @@ const SmartPlatformDetector = ({ children }) => {
       const refreshToken = params.get('refreshToken');
 
       if (token) {
-        console.log('✅ Token recibido desde URL, sincronizando...');
+        // console.log('✅ Token recibido desde URL, sincronizando...');
         const userData = userDataStr ? JSON.parse(userDataStr) : null;
         TokenService.saveToken(token, userData, refreshToken);
 
         // Limpiar URL
         const cleanUrl = window.location.pathname + window.location.hash;
         window.history.replaceState({}, document.title, cleanUrl);
-        console.log('✅ Token sincronizado, URL limpiada');
+        // console.log('✅ Token sincronizado, URL limpiada');
       }
     };
 
@@ -288,7 +288,7 @@ const SmartPlatformDetector = ({ children }) => {
     const handleResize = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        console.log('🔄 Resize detectado, re-evaluando...');
+        // console.log('🔄 Resize detectado, re-evaluando...');
         detectAndRedirect();
       }, 500);
     };

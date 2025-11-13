@@ -41,23 +41,45 @@
 }
 
 // ==========================================
-// 2. BORDES REDONDEADOS PARA TODOS LOS INPUTS
+// 2. BORDES REDONDEADOS PARA TODOS LOS INPUTS (EXCEPTO SEARCHABLE-SELECT)
 // ==========================================
 .package-step__input,
-input[type="text"],
-input[type="number"],
-select,
+input[type="text"]:not(.searchable-select__input),
+input[type="number"]:not(.searchable-select__input),
+select:not([class*="searchable-select"]),
 textarea {
-  border-radius: 25px !important; // ✅ Todos los inputs redondeados
-  
-  &:focus {
-    outline: none !important;
-    border-color: #FF4500 !important; // Color naranja de tu marca
-    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1) !important;
-  }
+  border-radius: 25px !important;
   
   &:hover:not(:disabled) {
     border-color: #FF4500 !important;
+  }
+}
+
+// ✅ Focus SOLO para inputs que NO son del SearchableSelect
+.package-step__input:focus,
+input[type="text"]:not(.searchable-select__input):focus,
+input[type="number"]:not(.searchable-select__input):focus,
+select:not([class*="searchable-select"]):focus,
+textarea:focus {
+  outline: none !important;
+  border-color: #FF4500 !important;
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1) !important;
+}
+
+// ✅ CRÍTICO: Resetear TODOS los estilos del input del SearchableSelect
+.searchable-select__input {
+  border: none !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  
+  &:focus,
+  &:hover,
+  &:active {
+    border: none !important;
+    border-width: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
   }
 }
 
@@ -66,6 +88,8 @@ textarea {
 .searchable-select__field {
   border-radius: 25px !important;
 }
+
+
 
 // ==========================================
 // 3. ELIMINAR ESTILOS AZULES DE TABS

@@ -74,7 +74,7 @@ const LocationStep = ({
               onChange={handleOriginCountryChangeInternal}
               placeholder="Seleccione un país"
               disabled={isLoading}
-              className="location-step__select"
+              // className="location-step__select"
             />
           </div>
 

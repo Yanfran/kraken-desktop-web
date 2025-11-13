@@ -289,7 +289,7 @@ const PreAlertEdit = () => {
  useEffect(() => {    
   // ✅ CRÍTICO: Solo ejecutar este useEffect en modo CREATE, no en EDIT
   if (id) {
-    console.log('⏩ Modo EDIT - No cargar dirección predeterminada');
+    // console.log('⏩ Modo EDIT - No cargar dirección predeterminada');
     return;
   }
 
@@ -298,7 +298,7 @@ const PreAlertEdit = () => {
     return;
   }
 
-  console.log('🏠 Modo CREATE - Cargando dirección predeterminada');
+  // console.log('🏠 Modo CREATE - Cargando dirección predeterminada');
 
   // Buscar dirección predeterminada
   const defaultAddr = userAddresses.find(
@@ -695,7 +695,7 @@ const PreAlertEdit = () => {
     };
 
     // 🔍 LOG PARA DEBUG
-    console.log('📦 Payload enviado:', JSON.stringify(payload, null, 2));
+    // console.log('📦 Payload enviado:', JSON.stringify(payload, null, 2));
 
     if (id) {
       await updateMutation.mutateAsync(payload);
@@ -719,7 +719,7 @@ const PreAlertEdit = () => {
   }, [formState.trackings, formState.contenidos]);
 
   const handleCityChange = (newCityId) => {
-    console.log('🏙️ Ciudad cambiada a:', newCityId);
+    // console.log('🏙️ Ciudad cambiada a:', newCityId);
     setAddressState(prev => ({
       ...prev,
       selectedCity: newCityId,
