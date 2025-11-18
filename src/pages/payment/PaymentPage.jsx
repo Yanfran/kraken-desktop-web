@@ -44,10 +44,35 @@ const PHONE_CODES = [
 const ID_TYPES = [
   { code: 'V', name: 'Venezolano' },
   { code: 'E', name: 'Extranjero' },
-  { code: 'J', name: 'RIF Jurídico' },
-  { code: 'G', name: 'RIF Gubernamental' },
-  { code: 'P', name: 'Pasaporte' },
-  { code: 'C', name: 'RIF Consorcio' },
+];
+
+// Después de ID_TYPES, antes del componente
+const BANCOS_VENEZUELA = [
+  { code: '0102', name: 'Banco de Venezuela' },
+  { code: '0104', name: 'Venezolano de Crédito' },
+  { code: '0105', name: 'Banco Mercantil' },
+  { code: '0108', name: 'BBVA Provincial' },
+  { code: '0114', name: 'Bancaribe' },
+  { code: '0115', name: 'Banco Exterior' },
+  { code: '0128', name: 'Banco Caroní' },
+  { code: '0134', name: 'Banesco' },
+  { code: '0137', name: 'Banco Sofitasa' },
+  { code: '0138', name: 'Banco Plaza' },
+  { code: '0146', name: 'Bangente' },
+  { code: '0151', name: 'Banco Fondo Común' },
+  { code: '0156', name: '100% Banco' },
+  { code: '0157', name: 'Delsur' },
+  { code: '0163', name: 'Banco del Tesoro' },
+  { code: '0168', name: 'Bancrecer' },
+  { code: '0169', name: 'R4 Banco' },
+  { code: '0171', name: 'Banco Activo' },
+  { code: '0172', name: 'Bancamiga' },
+  { code: '0173', name: 'Banco Internacional' },
+  { code: '0174', name: 'Banplus' },
+  { code: '0175', name: 'Banco Digital' },
+  { code: '0177', name: 'Banfanb' },
+  { code: '0178', name: 'N58 Banco' },
+  { code: '0191', name: 'Banco Nacional de Crédito' },
 ];
 
 export default function PaymentPage() {
@@ -92,6 +117,10 @@ export default function PaymentPage() {
 
   // 🆕 Estado para mostrar/ocultar detalles
   const [showGuiasDetails, setShowGuiasDetails] = useState(false);
+
+  // Después de los otros estados (línea ~55 aprox)
+  const [selectedBank, setSelectedBank] = useState('0105'); // Default Mercantil
+  const [showBanks, setShowBanks] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', actualTheme);
@@ -176,6 +205,7 @@ export default function PaymentPage() {
     const handleClickOutside = () => {
       setShowIdTypes(false);
       setShowPhoneCodes(false);
+      setShowBanks(false);
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -228,6 +258,12 @@ export default function PaymentPage() {
     }
 
     if (paymentMethod === 'mobile') {
+
+      if (!selectedBank) {
+        toast.error('Debes seleccionar el banco emisor');
+        return false;
+      }
+
       if (!phoneNumber || phoneNumber.length !== 7) {
         toast.error('El número de teléfono debe tener 7 dígitos');
         return false;
@@ -282,13 +318,13 @@ export default function PaymentPage() {
         originMobileNumber: formatPhoneForMercantil(phoneCode, phoneNumber),
         tasa: paymentData.tasaCambio,
         twofactorAuth: twofactorAuth,
-        // ✅ SOPORTE PARA MÚLTIPLES GUÍAS
+        destinationBankId: selectedBank,
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
         guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
         isMultiplePayment: isMultiplePayment,
       };
 
-      // console.log('📤 Enviando pago:', paymentRequest);
+      console.log('📤 Enviando pago:', paymentRequest);
 
       const response = await processMercantilPayment(paymentRequest);
 
@@ -518,7 +554,7 @@ export default function PaymentPage() {
             <IoCardOutline size={32} />
           </div>
           <h4>Tarjeta de Débito</h4>
-          <p>Paga directamente con tu tarjeta de débito</p>
+          <p>Paga directamente con tu tarjeta de débito Mercantil</p>
         </div>
       </div>
 
@@ -537,9 +573,9 @@ export default function PaymentPage() {
         Completa la información para realizar el pago a través de Mercantil
       </p>
 
-      {/* Cédula/RIF */}
+      {/* Cédula */}
       <div className={styles.inputGroup}>
-        <label>Cédula de Identidad / RIF</label>
+        <label>Cédula de Identidad</label>
         <div className={styles.combinedInput}>
           <div
             className={styles.dropdown}
@@ -576,8 +612,7 @@ export default function PaymentPage() {
               </div>
             ))}
           </div>
-        )}
-        <small>Resultado: {idType}{idNumber}</small>
+        )}        
       </div>
 
       {/* Campos específicos según método */}
@@ -592,6 +627,7 @@ export default function PaymentPage() {
                   e.stopPropagation();
                   setShowPhoneCodes(!showPhoneCodes);
                   setShowIdTypes(false);
+                  setShowBanks(false);
                 }}
               >
                 <span>{phoneCode}</span>
@@ -622,22 +658,60 @@ export default function PaymentPage() {
                 ))}
               </div>
             )}
+            <small>Asociado al pago móvil</small>
           </div>
 
-          {/* ✅ NUEVO: INPUT CÓDIGO DE AUTENTICACIÓN 2FA PARA PAGO MÓVIL */}
+          {/* ✅ NUEVO SELECT DE BANCO */}
+          <div className={styles.inputGroup}>
+            <label>Banco Emisor</label>
+            <div
+              className={styles.bankSelect}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowBanks(!showBanks);
+                setShowIdTypes(false);
+                setShowPhoneCodes(false);
+              }}
+            >
+              <span className={styles.bankSelected}>
+                {BANCOS_VENEZUELA.find(b => b.code === selectedBank)?.name || 'Selecciona un banco'}
+              </span>
+              {showBanks ? <IoChevronUp /> : <IoChevronDown />}
+            </div>
+            {showBanks && (
+              <div className={styles.dropdownMenu}>
+                {BANCOS_VENEZUELA.map((banco) => (
+                  <div
+                    key={banco.code}
+                    className={styles.dropdownItem}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedBank(banco.code);
+                      setShowBanks(false);
+                    }}
+                  >
+                    {banco.code} - {banco.name}
+                  </div>
+                ))}
+              </div>
+            )}
+            <small>Banco desde donde realizarás el pago móvil</small>
+          </div>
+
+          {/* ✅ NUEVO: INPUT Clave de pago 2FA PARA PAGO MÓVIL */}
           <div className={styles.inputGroup}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <IoShieldCheckmarkOutline size={18} />
-              Código de Autenticación
+              Clave de pago
             </label>
             <input
               type="text"
-              placeholder="123456"
+              placeholder="12345678"
               value={twofactorAuth}
               onChange={(e) => setTwofactorAuth(e.target.value.replace(/[^0-9]/g, ''))}
-              maxLength={10}
+              maxLength={8}
             />
-            <small>💡 Código de 10 dígitos enviado por tu banco</small>
+            <small>Código (C2P) de 8 dígitos enviado por tu banco</small>
           </div>
         </>
       ) : (

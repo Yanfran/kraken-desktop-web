@@ -735,3 +735,42 @@ $transition-base: 0.3s ease;
     font-weight: 600;
   }
 }
+
+
+
+// ===== SELECT DE BANCO =====
+.bankSelect {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid $kraken-border;
+  border-radius: $radius-sm;
+  background-color: $kraken-input-bg;
+  color: $kraken-text-primary;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color $transition-fast;
+  
+  [data-theme="dark"] & {
+    background-color: #211F26;
+    border-color: #49454F;
+    color: #E6E0E9;
+  }
+
+  &:hover {
+    border-color: $kraken-primary;
+  }
+
+  .bankSelected {
+    font-weight: 500;
+  }
+
+  svg {
+    color: $kraken-primary;
+    
+    [data-theme="dark"] & {
+      color: #FFB085;
+    }
+  }
+}

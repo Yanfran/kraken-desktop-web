@@ -408,3 +408,46 @@
     }
   }
 }
+
+
+
+
+
+// ✅ ESTILOS PARA EL BANNER PROMOCIONAL
+.result-step__promotional-banner {
+  width: 100%;
+  display: flex;
+  justify-content: center; // Alinea a la derecha
+  margin-top: 24px;
+  padding: 0 8px;
+
+  @media (max-width: 768px) {
+    justify-content: center; // En móvil se centra
+    padding: 0;
+  }
+}
+
+.result-step__banner-image {
+  max-width: 400px; // Ancho máximo para que no se estire demasiado
+  width: 100%;
+  height: auto; // Mantiene la proporción
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  // Efecto hover opcional
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  @media (max-width: 768px) {
+    max-width: 100%; // En móvil ocupa todo el ancho disponible
+    border-radius: 8px;
+  }
+
+  @media (max-width: 480px) {
+    max-width: 100%;
+    margin-top: 8px;
+  }
+}

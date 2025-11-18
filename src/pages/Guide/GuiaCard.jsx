@@ -116,9 +116,9 @@ export default function GuiaCard({
           <div className={styles.dateText}>{guia.fecha || 'Feb 7, 2025 • 09:30'}</div>
         </td>
         
-        <td className={styles.costCell}>
+        {/* <td className={styles.costCell}>
           {getCosto()}
-        </td>
+        </td> */}
         
         <td className={styles.originCell}>
           {guia.origen || 'USA'}
@@ -291,10 +291,10 @@ export default function GuiaCard({
           <span className={styles.cardLabel}>Contenido:</span>
           <span className={styles.guiaSubtext}>{guia.contenido || 'TV'}</span>
         </div>
-        <div className={styles.cardRow}>
+        {/* <div className={styles.cardRow}>
           <span className={styles.cardLabel}>Costo:</span>
           <span className={styles.costText}>{getCosto()}</span>
-        </div>
+        </div> */}
         <div className={styles.cardRow}>
           <span className={styles.cardLabel}>Origen:</span>
           <span>{guia.origen || 'USA'}</span>

@@ -1,6 +1,8 @@
 // src/components/calculator/ResultStep.jsx
 import React, { useState } from 'react';
 import './ResultStep.scss';
+import bannerCalculadora from '@/assets/images/banneer-calculadora.gif';
+
 
 // Icons actualizados
 import { 
@@ -335,12 +337,13 @@ const ResultStep = ({
         </div>
 
         <div className="result-step__cards">
-
-          {isOptionAvailable('oficina') && result?.data?.breakdowns?.oficina && 
-            renderCard('Retiro en Oficina', result.data.breakdowns.oficina, 'oficina')}   
+          
 
           {isOptionAvailable('domicilio') && result?.data?.breakdowns?.domicilio && 
             renderCard('Entrega a Domicilio', result.data.breakdowns.domicilio, 'domicilio')}                           
+
+          {isOptionAvailable('oficina') && result?.data?.breakdowns?.oficina && 
+            renderCard('Retiro en Tienda', result.data.breakdowns.oficina, 'oficina')}   
           
           {(!result?.data?.deliveryOptions || result.data.deliveryOptions.length === 0) && (
             <div className="result-step__no-options">
@@ -354,8 +357,18 @@ const ResultStep = ({
           className="result-step__new-calculation-button"
           onClick={onNewCalculation}
         >
-          Nueva Cotización
+          Nuevo Cálculo
         </button>
+
+        {/* ✅ NUEVO: Banner promocional alineado a la derecha */}
+        <div className="result-step__promotional-banner">
+          <img 
+            src={bannerCalculadora} 
+            alt="Banner promocional - Descuento 50%" 
+            className="result-step__banner-image"
+          />
+        </div>
+        
       </div>
     </div>
   );

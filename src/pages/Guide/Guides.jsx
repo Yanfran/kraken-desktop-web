@@ -388,7 +388,7 @@ export default function Guides() {
                       <th></th>
                       <th>N° Guía</th>
                       <th>Estatus</th>
-                      <th>Costo del envío</th>
+                      {/* <th>Costo del envío</th> */}
                       <th>Origen</th>
                       <th></th>
                     </tr>

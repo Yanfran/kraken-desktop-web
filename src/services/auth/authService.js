@@ -142,7 +142,7 @@ export const authService = {
         message: response.data.message || 'Error en el login'
       };
     } catch (error) {
-      console.error('❌ [AuthService] Login error:', error);
+      // console.error('❌ [AuthService] Login error:', error);
       
       if (error.response?.data?.code) {
         const errorCode = error.response.data.code;

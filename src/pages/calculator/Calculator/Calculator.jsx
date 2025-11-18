@@ -206,6 +206,20 @@ const Calculator = () => {
       toast.error('Por favor complete todos los campos obligatorios');
       return;
     }
+
+    // ✅ PARSING Y VALIDACIÓN DE DIMENSIONES CORREGIDA
+    const lengthNum = parseFormattedValue(state.calculation.dimensions.length);
+    const widthNum = parseFormattedValue(state.calculation.dimensions.width);
+    const heightNum = parseFormattedValue(state.calculation.dimensions.height);
+    
+    console.log('Dimensiones parseadas:', lengthNum, widthNum, heightNum); // Debug
+    
+    // ✅ Validación corregida: Solo si es China Y faltan dimensiones
+    if (state.calculation.originCountry === 'CN' && (lengthNum <= 0 || widthNum <= 0 || heightNum <= 0)) {
+      toast.error('Para paquetes desde China, todas las dimensiones son requeridas y deben ser mayores a 0');
+      return;
+    }
+     
     
     try {
       setIsCalculating(true);
