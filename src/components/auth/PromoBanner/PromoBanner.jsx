@@ -1,7 +1,7 @@
 // src/components/auth/PromoBanner/PromoBanner.jsx
 import React from 'react';
 import './PromoBanner.scss';
-import bannerImage from '../../../../src/assets/images/banner-lanzamiento-DESKTOP_ff4503.gif';
+import bannerImage from '../../../../src/assets/images/banner-BlackFriday-DESKTOP_003aaa.gif';
 
 const PromoBanner = () => {
   return (

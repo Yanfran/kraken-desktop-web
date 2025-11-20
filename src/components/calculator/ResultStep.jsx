@@ -1,7 +1,7 @@
 // src/components/calculator/ResultStep.jsx
 import React, { useState } from 'react';
 import './ResultStep.scss';
-import bannerCalculadora from '@/assets/images/banneer-calculadora.gif';
+import bannerCalculadora from '@/assets/images/banner-BlackFriday-calculadora.gif';
 
 
 // Icons actualizados
