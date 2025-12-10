@@ -60,16 +60,22 @@ const TopNavigation = ({
         </button>
         
         {/* Logo Kraken pegado a la izquierda */}
-        <div className="top-navigation__logo-container">
-          <img 
-            src={iconLogo} 
-            alt="Kraken Logo" 
-            className="top-navigation__logo-image"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.parentNode.innerHTML = '<div class="top-navigation__logo-fallback">KRAKEN<br><small>COURIER & CARGO</small></div>';
-            }}
-          />
+        <div className="top-navigation__logo-container">          
+          <a 
+            href="https://krakencourier.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            <img 
+              src={iconLogo} 
+              alt="Kraken Logo" 
+              className="top-navigation__logo-imag"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentNode.innerHTML = '<div class="top-navigation__logo-fallback">KRAKEN<br><small>COURIER & CARGO</small></div>';
+              }}
+            />
+          </a>
         </div>
       </div>
 

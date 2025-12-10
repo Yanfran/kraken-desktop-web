@@ -68,12 +68,18 @@ const ForgotPassword = () => {
 
   return (
     <div className="kraken-forgot-password" data-theme={actualTheme}>
-      <div className="kraken-forgot-password__logo">
-        <img
-          src={logoImage}
-          alt="Kraken Logo"
-          className="kraken-forgot-password__logo-image"
-        />
+      <div className="kraken-forgot-password__logo">        
+        <a 
+          href="https://krakencourier.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+        >
+          <img 
+            src={logoImage} 
+            alt="Kraken Logo" 
+            className="kraken-forgot-password__logo-image"
+          />
+        </a>
       </div>
 
       <h1 className="kraken-forgot-password__title">Recuperar contraseña</h1>

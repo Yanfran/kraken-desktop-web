@@ -50,8 +50,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 0 20px;
+  justify-content: flex-start; // ✅ Mantener flex-start
+  padding: 0; // ✅ CAMBIADO: Sin padding inicial
   background-color: var(--color-background);
   transition: background-color 0.3s ease;
   position: relative;
@@ -60,17 +60,13 @@ body {
   // 🖥️ DESKTOP: Ocupa el 50% restante
   @media (min-width: 1024px) {
     width: 50vw;
-    margin-left: 50vw; // Empuja el contenido a la derecha
-    justify-content: center;
-    padding: 40px;
+    margin-left: 50vw;
   }
   
   // 📱 TABLET: Ocupa el espacio restante después del banner de 280px
   @media (min-width: 768px) and (max-width: 1023px) {
     width: calc(100vw - 280px);
     margin-left: 280px;
-    justify-content: center;
-    padding: 40px 30px;
   }
   
   // 📱 MOBILE: Ocupa todo el ancho
@@ -84,21 +80,40 @@ body {
   }
 }
 
+/* ✅ NUEVO: Contenedor interno con padding */
+.kraken-login__content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
+  flex: 1;
+  justify-content: center;
+  
+  @media (min-width: 768px) {
+    padding: 40px;
+  }
+  
+  @media (max-width: 767px) {
+    padding: 0 16px;
+  }
+}
+
 /* LOGO */
 .kraken-login__logo {
-  margin-top: 60px;
+  margin-top: 40px;
   text-align: center;
   margin-bottom: 52px;
   z-index: 10;
   position: relative;
   
   @media (min-width: 768px) {
-    margin-top: 10px;
+    margin-top: 30px;
     margin-bottom: 40px;
   }
   
   @media (max-width: 767px) {
-    margin-top: 60px;
+    margin-top: 30px;
     margin-bottom: 30px;
   }
 }
@@ -476,7 +491,7 @@ body {
 
 /* RESPONSIVE */
 @media (max-width: 480px) {
-  .kraken-login {
+  .kraken-login__content {
     padding: 0 16px;
   }
   

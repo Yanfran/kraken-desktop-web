@@ -131,15 +131,21 @@ const EmailConfirmation = () => {
     <div className="kraken-email-confirmation" data-theme={actualTheme}>
       {/* <ThemeToggle /> */}
       
-      <div className="kraken-email-confirmation__logo">
-        <img
-          src={logoImage}
-          alt="Kraken Logo"
-          className="kraken-email-confirmation__logo-image"
-          onError={(e) => {
-            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='%23FF4500' text-anchor='middle' dy='0.3em'%3EKRAKEN%3C/text%3E%3C/svg%3E";
-          }}
-        />
+      <div className="kraken-email-confirmation__logo">        
+        <a 
+          href="https://krakencourier.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+        >
+          <img 
+            src={logoImage} 
+            alt="Kraken Logo" 
+            className="kraken-email-confirmation__logo-image"
+            onError={(e) => {
+              e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='%23FF4500' text-anchor='middle' dy='0.3em'%3EKRAKEN%3C/text%3E%3C/svg%3E";
+            }}
+          />
+        </a>
       </div>
 
       <div className="kraken-email-confirmation__content">

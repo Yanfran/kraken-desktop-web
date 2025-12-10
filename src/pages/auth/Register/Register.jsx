@@ -171,12 +171,18 @@ const Register = () => {
       {/* CONTENIDO DEL REGISTRO - LADO DERECHO */}
       <div className="kraken-register" data-theme={actualTheme}>
         {/* Logo */}
-        <div className="kraken-register__logo">
-          <img 
-            src={logoImage}
-            alt="Kraken Logo" 
-            className="kraken-register__logo-image"
-          />
+        <div className="kraken-register__logo">          
+          <a 
+            href="https://krakencourier.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            <img 
+              src={logoImage} 
+              alt="Kraken Logo" 
+              className="kraken-register__logo-image"
+            />
+          </a>
         </div>
 
         {/* Título */}

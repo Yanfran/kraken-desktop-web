@@ -87,12 +87,18 @@ const EmailVerify = () => {
       <div className="kraken-email-verify__container">
         
         {/* Logo */}
-        <div className="kraken-email-verify__logo">
-          <img
-            src={logoImage}
-            alt="Kraken Logo"
-            className="kraken-email-verify__logo-image"
-          />
+        <div className="kraken-email-verify__logo">          
+          <a 
+            href="https://krakencourier.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            <img 
+              src={logoImage} 
+              alt="Kraken Logo" 
+              className="kraken-email-verify__logo-image"
+            />
+          </a>
         </div>
 
         {/* Loading State */}

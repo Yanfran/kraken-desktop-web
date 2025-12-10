@@ -275,10 +275,26 @@ export default function Guides() {
   const filteredGuias = useMemo(() => {
     let result = guias;
 
+    // if (activeTab === 'activos') {
+    //   result = result.filter(guia => !guia.tienePago && !guia.estaPagado);
+    // } else if (activeTab === 'historial') {
+    //   result = result.filter(guia => guia.tienePago || guia.estaPagado);
+    // }
+
     if (activeTab === 'activos') {
-      result = result.filter(guia => !guia.tienePago && !guia.estaPagado);
+      // Activos: guías NO entregadas (independiente del pago)
+      const estatusHistorial = ['entregado', 'completado'];
+      result = result.filter(guia => {
+        const estatus = guia.estatus?.toLowerCase();
+        return !estatusHistorial.includes(estatus);
+      });
     } else if (activeTab === 'historial') {
-      result = result.filter(guia => guia.tienePago || guia.estaPagado);
+      // Historial: guías entregadas
+      const estatusHistorial = ['entregado', 'completado'];
+      result = result.filter(guia => {
+        const estatus = guia.estatus?.toLowerCase();
+        return estatusHistorial.includes(estatus);
+      });
     }
 
     if (searchQuery) {
@@ -317,6 +333,12 @@ export default function Guides() {
               onClick={() => setActiveTab('activos')}
             >
               Activos
+            </button>
+            <button
+              className={clsx(styles.tabButton, activeTab === 'historial' && styles.tabButtonActive)}
+              onClick={() => setActiveTab('historial')}
+            >
+              Historial
             </button>
           </div>
         </div>

@@ -148,8 +148,8 @@ export const getLastShipment = async () => {
         data: {
           id: lastGuia.idGuia,
           trackingNumber: lastGuia.nGuia || lastGuia.trackings?.[0] || 'N/A',
-          status: lastGuia.estatus || 'Desconocido',
-          date: lastGuia.fecha || '',
+          status: lastGuia.estatus || 'Desconocido',          
+          date: formatDateTime(lastGuia.fechaEstatus || ''),
           origin: lastGuia.origen || 'USA',
           cost: costoEnvio,
           prealerted: lastGuia.prealertado || false,
@@ -175,6 +175,32 @@ export const getLastShipment = async () => {
       data: null 
     };
   }
+};
+
+
+// Helper: formatear ISO date a "10 dic 2025 • 15:54"
+const formatDateTime = (isoString) => {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d)) return isoString; // fallback: devolver el string original si no es una fecha válida
+
+  // Opciones para formato en Español (día mes-año • hora:minuto)
+  const datePart = d.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }); // e.g. "10 dic 2025"
+
+  const timePart = d.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }); // e.g. "15:54"
+
+  // Capitalizar la primera letra del mes si lo deseas:
+  const capitalizedDate = datePart.replace(/\b([a-zñáéíóúü])/g, (m) => m.toUpperCase());
+
+  return `${capitalizedDate} • ${timePart}`; // "10 Dic 2025 • 15:54"
 };
 
 /**

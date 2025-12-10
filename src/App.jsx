@@ -325,7 +325,7 @@ function App() {
               } />
 
               {/* ===== RUTA 404 ===== */}
-              <Route path="*" element={
+              {/* <Route path="*" element={
                 <div className="error-page">
                   <h1>404 - Página no encontrada</h1>
                   <p>La página que buscas no existe.</p>
@@ -333,8 +333,12 @@ function App() {
                     Volver atrás
                   </button>
                 </div>
-              } />
-            </Routes>
+              } /> */}
+
+              {/* ===== RUTA 404 - REDIRECCIÓN AUTOMÁTICA ===== */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+
+            </Routes>            
           </Suspense>
         </div>
       </ThemeProvider>

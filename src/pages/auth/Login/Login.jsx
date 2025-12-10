@@ -8,6 +8,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import './Login.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg'; 
 import PromoBanner from '../../../components/auth/PromoBanner/PromoBanner';
+import InfoBanner from '../../../components/auth/InfoBanner/InfoBanner';
 
 // Icons actualizados
 import { 
@@ -119,13 +120,22 @@ const Login = () => {
       
       {/* CONTENIDO DEL LOGIN - LADO DERECHO */}
       <div className="kraken-login" data-theme={actualTheme}>
+
+        <InfoBanner />
+        
         {/* Logo */}
-        <div className="kraken-login__logo">
-          <img 
-            src={logoImage} 
-            alt="Kraken Logo" 
-            className="kraken-login__logo-image"
-          />
+        <div className="kraken-login__logo">          
+          <a 
+            href="https://krakencourier.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            <img 
+              src={logoImage} 
+              alt="Kraken Logo" 
+              className="kraken-login__logo-image"
+            />
+          </a>
         </div>
 
         {/* Título */}

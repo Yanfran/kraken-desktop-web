@@ -203,12 +203,18 @@ const ResetPassword = () => {
 
   return (
     <div className="kraken-reset-password" data-theme={actualTheme}>
-      <div className="kraken-reset-password__logo">
-        <img
-          src={logoImage}
-          alt="Kraken Logo"
-          className="kraken-reset-password__logo-image"
-        />
+      <div className="kraken-reset-password__logo">        
+        <a 
+          href="https://krakencourier.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+        >
+          <img 
+            src={logoImage} 
+            alt="Kraken Logo" 
+            className="kraken-reset-password__logo-image"
+          />
+        </a>
       </div>
 
       <h1 className="kraken-reset-password__title">Restablecer contraseña</h1>
