@@ -5,7 +5,7 @@ import handIcon from '../../../assets/images/mano.png';
 
 const InfoBanner = () => {
   const handleClick = () => {
-    window.open('https://krakencourier.com/', '_blank');
+    window.open('https://krakencourier.com/traelo-facil', '_blank');
   };
 
   return (

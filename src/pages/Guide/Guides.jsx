@@ -290,7 +290,7 @@ export default function Guides() {
       });
     } else if (activeTab === 'historial') {
       // Historial: guías entregadas
-      const estatusHistorial = ['entregado', 'completado'];
+      const estatusHistorial = ['entregado'];
       result = result.filter(guia => {
         const estatus = guia.estatus?.toLowerCase();
         return estatusHistorial.includes(estatus);

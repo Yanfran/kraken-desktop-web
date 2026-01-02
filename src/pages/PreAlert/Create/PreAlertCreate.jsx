@@ -673,13 +673,13 @@ const PreAlertCreate = () => {
               <p className="prealert-create__error">{errors.tracking}</p>
             )}
 
-            <button
+            {/* <button
               type="button"
               onClick={handleAddTracking}
               className="prealert-create__add-btn"
             >
               + Añadir Tracking
-            </button>
+            </button> */}
           </div>
 
           {/* SECCIÓN CONTENIDOS */}

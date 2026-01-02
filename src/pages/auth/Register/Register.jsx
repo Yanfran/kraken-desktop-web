@@ -9,6 +9,7 @@ import './Register.styles.scss';
 import PasswordValidator, { validatePassword } from '../../../components/auth/PasswordValidator/PasswordValidator';
 import logoImage from '../../../assets/images/logo.jpg'; 
 import PromoBanner from '../../../components/auth/PromoBanner/PromoBanner';
+import InfoBanner from '../../../components/auth/InfoBanner/InfoBanner';
 
 // Icons actualizados
 import { 
@@ -170,6 +171,9 @@ const Register = () => {
       
       {/* CONTENIDO DEL REGISTRO - LADO DERECHO */}
       <div className="kraken-register" data-theme={actualTheme}>
+
+        <InfoBanner />
+
         {/* Logo */}
         <div className="kraken-register__logo">          
           <a 

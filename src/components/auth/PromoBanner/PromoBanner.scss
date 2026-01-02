@@ -5,36 +5,82 @@
   top: 0;
   left: 0;
   height: 100vh;
-  background-color: #003aaa;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  
-  // 🖥️ DESKTOP: Ocupa el 50% del ancho
-  @media (min-width: 1024px) {
-    width: 50vw;
-    border-top-right-radius: 25px;
-    border-bottom-right-radius: 25px;
-  }
-  
-  // 📱 TABLET: Ancho fijo de 280px
-  @media (min-width: 768px) and (max-width: 1023px) {
-    width: 280px;
-    border-top-right-radius: 25px;
-    border-bottom-right-radius: 25px;
-  }
-  
-  // 📱 MOBILE: Oculto
-  @media (max-width: 767px) {
-    display: none;
-  }
-}
 
-.promo-banner__image {       
-    width: 90%;
+  display: flex;
+  align-items: flex-end; 
+  justify-content: center;
+  
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: cover;
+  
+  border-radius: 0 0 50px 0;
+  overflow: hidden;
+
+  /* =========================================
+     MEDIA QUERIES
+     ========================================= */
+
+  // 🖥️ DESKTOP (>= 1024px)
+  @media (min-width: 1024px) {
+    width: 50%;
+    min-width: 600px;
+    // AQUI USAMOS LA VARIABLE
+    background-image: var(--bg-desktop);
+  }
+
+  // 📱 TABLET / MOBILE (< 1024px)
+  @media (max-width: 1023px) {
+    width: 280px; 
+    .promo-banner__image {
+      // width: 320px; 
+      margin-bottom: 1.1vw;
+    }
+    // AQUI USAMOS LA VARIABLE
+    background-image: var(--bg-tablet); 
+  }
+  
+  @media (max-width: 767px) {
+     // display: none; 
+  }
+
+  /* =========================================
+     BAMBALINAS
+     ========================================= */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; 
+    left: 20px;
+    width: 120px;
+    height: 160px;
+    
+    // AQUI USAMOS LA VARIABLE TAMBIÉN (para asegurar que cargue)
+    background-image: var(--bg-bambalinas);
+    background-repeat: no-repeat;
+    background-size: contain; 
+    
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  /* =========================================
+     IMAGEN INTERNA
+     ========================================= */
+  &__picture {
+    width: 100%;
     height: 90%;
-    object-fit: contain; // ✅ Cambiado de 'cover' a 'contain' para mostrar la imagen completa
-    object-position: center;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-bottom: 1.1vw;
+  }
+
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+    object-position: center bottom;
+  }
 }

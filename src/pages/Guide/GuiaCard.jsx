@@ -74,6 +74,31 @@ export default function GuiaCard({
       : '$0.00';
   };
 
+  // Helper: formatear ISO date a "10 dic 2025 • 15:54"
+  const formatDateTime = (isoString) => {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    if (isNaN(d)) return isoString; // fallback: devolver el string original si no es una fecha válida
+
+    // Opciones para formato en Español (día mes-año • hora:minuto)
+    const datePart = d.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }); // e.g. "10 dic 2025"
+
+    const timePart = d.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }); // e.g. "15:54"
+
+    // Capitalizar la primera letra del mes si lo deseas:
+    const capitalizedDate = datePart.replace(/\b([a-zñáéíóúü])/g, (m) => m.toUpperCase());
+
+    return `${capitalizedDate} • ${timePart}`; // "10 Dic 2025 • 15:54"
+  };
+
   // MODO LISTA (TABLA)
   if (viewMode === 'list') {
     return (
@@ -108,12 +133,12 @@ export default function GuiaCard({
         
         <td className={styles.guiaCell}>
           <div className={styles.guiaNumber}>{guia.nGuia || 'Sin Número'}</div>
-          <div className={styles.guiaSubtext}>{guia.contenido || 'TV'}</div>
+          <div className={styles.guiaSubtext}>{guia.contenido || ''}</div>
         </td>
         
         <td className={styles.statusCell}>
-          <div className={styles.statusText}>{guia.estatus || 'Pendiente de Pago'}</div>
-          <div className={styles.dateText}>{guia.fecha || 'Feb 7, 2025 • 09:30'}</div>
+          <div className={styles.statusText}>{guia.estatus || ''}</div>
+          <div className={styles.dateText}>{ formatDateTime(guia.fechaEstatus || '') }</div>
         </td>
         
         {/* <td className={styles.costCell}>
@@ -285,7 +310,7 @@ export default function GuiaCard({
         </div>
         <div className={styles.cardRow}>
           <span className={styles.cardLabel}>Fecha:</span>
-          <span className={styles.dateText}>{guia.fecha || 'Feb 7, 2025 • 09:30'}</span>
+          <span className={styles.dateText}>{ formatDateTime(guia.fechaEstatus || '') }</span>
         </div>
         <div className={styles.cardRow}>
           <span className={styles.cardLabel}>Contenido:</span>
