@@ -424,6 +424,26 @@
       background: #dbeafe;
     }
   }
+
+  // Item "Cargar MSDS" (info/azul)
+  &_info {
+    color: #3b82f6;
+    font-weight: 500;
+    
+    &:hover:not(:disabled) {
+      background: #dbeafe;
+    }
+  }
+  
+  // Item "Cargar NONDG" (success/verde)
+  &_success {
+    color: #10b981;
+    font-weight: 500;
+    
+    &:hover:not(:disabled) {
+      background: #d1fae5;
+    }
+  }
 }
 
 // ============================================

@@ -1,4 +1,4 @@
-// src/pages/MyGuides/GuiaCard.jsx - CON CHECKBOX PARA SELECCIÓN MÚLTIPLE
+// src/pages/MyGuides/GuiaCard.jsx - CON MSDS Y NONDG
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,21 +12,28 @@ import {
   IoCardOutline,
   IoDocumentTextOutline,
   IoCheckboxOutline,
-  IoSquareOutline
+  IoSquareOutline,
+  IoShieldCheckmarkOutline,  // 🆕 ICONO PARA MSDS
+  IoWarningOutline           // 🆕 ICONO PARA NONDG
 } from 'react-icons/io5';
 
 export default function GuiaCard({ 
   guia, 
   viewMode,
   necesitaFactura = false,
+  necesitaMSDS = false,        // 🆕 PROP
+  necesitaNONDG = false,       // 🆕 PROP
   sePuedePagar = false,
   isUploadingInvoice = false,
+  isUploadingMSDS = false,     // 🆕 PROP
+  isUploadingNONDG = false,    // 🆕 PROP
   onCargarFactura,
+  onCargarMSDS,                // 🆕 HANDLER
+  onCargarNONDG,               // 🆕 HANDLER
   openMenuId,
   setOpenMenuId,
   calculatedCost,
   isCalculatingCost = false,
-  // 🆕 PROPS PARA SELECCIÓN
   selectionMode = false,
   isSelected = false,
   onToggleSelection
@@ -34,7 +41,6 @@ export default function GuiaCard({
   const navigate = useNavigate();
 
   const handleNavigate = () => {
-    // 🆕 Si está en modo selección, toggle en lugar de navegar
     if (selectionMode) {
       onToggleSelection();
       return;
@@ -78,25 +84,23 @@ export default function GuiaCard({
   const formatDateTime = (isoString) => {
     if (!isoString) return '';
     const d = new Date(isoString);
-    if (isNaN(d)) return isoString; // fallback: devolver el string original si no es una fecha válida
+    if (isNaN(d)) return isoString;
 
-    // Opciones para formato en Español (día mes-año • hora:minuto)
     const datePart = d.toLocaleDateString('es-ES', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
-    }); // e.g. "10 dic 2025"
+    });
 
     const timePart = d.toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
-    }); // e.g. "15:54"
+    });
 
-    // Capitalizar la primera letra del mes si lo deseas:
     const capitalizedDate = datePart.replace(/\b([a-zñáéíóúü])/g, (m) => m.toUpperCase());
 
-    return `${capitalizedDate} • ${timePart}`; // "10 Dic 2025 • 15:54"
+    return `${capitalizedDate} • ${timePart}`;
   };
 
   // MODO LISTA (TABLA)
@@ -106,7 +110,6 @@ export default function GuiaCard({
         className={clsx(styles.tableRow, isSelected && styles.selected)} 
         onClick={handleNavigate}
       >
-        {/* 🆕 CELDA CHECKBOX */}
         {selectionMode && (
           <td className={styles.checkboxCell} onClick={(e) => e.stopPropagation()}>
             <button
@@ -141,10 +144,6 @@ export default function GuiaCard({
           <div className={styles.dateText}>{ formatDateTime(guia.fechaEstatus || '') }</div>
         </td>
         
-        {/* <td className={styles.costCell}>
-          {getCosto()}
-        </td> */}
-        
         <td className={styles.originCell}>
           {guia.origen || 'USA'}
         </td>
@@ -171,6 +170,9 @@ export default function GuiaCard({
                   Ver detalle
                 </button>
                 
+                {/* ============================================ */}
+                {/* 🆕 BOTÓN CARGAR FACTURA */}
+                {/* ============================================ */}
                 {necesitaFactura && (
                   <button 
                     className={clsx(styles.menuItem, styles.menuItem_warning)}
@@ -179,6 +181,34 @@ export default function GuiaCard({
                   >
                     <IoDocumentTextOutline size={18} style={{ color: '#f59e0b' }}/>
                     {isUploadingInvoice ? 'Cargando...' : 'Cargar Factura'}
+                  </button>
+                )}
+
+                {/* ============================================ */}
+                {/* 🆕 BOTÓN CARGAR MSDS */}
+                {/* ============================================ */}
+                {necesitaMSDS && (
+                  <button 
+                    className={clsx(styles.menuItem, styles.menuItem_info)}
+                    onClick={(e) => onCargarMSDS(guia, e)}
+                    disabled={isUploadingMSDS}
+                  >
+                    <IoShieldCheckmarkOutline size={18} style={{ color: '#3b82f6' }}/>
+                    {isUploadingMSDS ? 'Cargando...' : 'Cargar MSDS'}
+                  </button>
+                )}
+
+                {/* ============================================ */}
+                {/* 🆕 BOTÓN CARGAR NONDG */}
+                {/* ============================================ */}
+                {necesitaNONDG && (
+                  <button 
+                    className={clsx(styles.menuItem, styles.menuItem_success)}
+                    onClick={(e) => onCargarNONDG(guia, e)}
+                    disabled={isUploadingNONDG}
+                  >
+                    <IoWarningOutline size={18} style={{ color: '#10b981' }}/>
+                    {isUploadingNONDG ? 'Cargando...' : 'Cargar NONDG'}
                   </button>
                 )}
                 
@@ -216,7 +246,6 @@ export default function GuiaCard({
       className={clsx(styles.guiaCard, isSelected && styles.selected)} 
       onClick={handleNavigate}
     >
-      {/* 🆕 CHECKBOX EN GRID */}
       {selectionMode && (
         <div 
           className={styles.cardCheckbox}
@@ -267,6 +296,9 @@ export default function GuiaCard({
                 Ver detalle
               </button>
               
+              {/* ============================================ */}
+              {/* 🆕 BOTONES PARA GRID MODE */}
+              {/* ============================================ */}
               {necesitaFactura && (
                 <button 
                   className={clsx(styles.menuItem, styles.menuItem_warning)}
@@ -275,6 +307,28 @@ export default function GuiaCard({
                 >
                   <IoDocumentTextOutline size={18} style={{ color: '#f59e0b' }}/>
                   {isUploadingInvoice ? 'Cargando...' : 'Cargar Factura'}
+                </button>
+              )}
+
+              {necesitaMSDS && (
+                <button 
+                  className={clsx(styles.menuItem, styles.menuItem_info)}
+                  onClick={(e) => onCargarMSDS(guia, e)}
+                  disabled={isUploadingMSDS}
+                >
+                  <IoShieldCheckmarkOutline size={18} style={{ color: '#3b82f6' }}/>
+                  {isUploadingMSDS ? 'Cargando...' : 'Cargar MSDS'}
+                </button>
+              )}
+
+              {necesitaNONDG && (
+                <button 
+                  className={clsx(styles.menuItem, styles.menuItem_success)}
+                  onClick={(e) => onCargarNONDG(guia, e)}
+                  disabled={isUploadingNONDG}
+                >
+                  <IoWarningOutline size={18} style={{ color: '#10b981' }}/>
+                  {isUploadingNONDG ? 'Cargando...' : 'Cargar NONDG'}
                 </button>
               )}
               
@@ -316,10 +370,6 @@ export default function GuiaCard({
           <span className={styles.cardLabel}>Contenido:</span>
           <span className={styles.guiaSubtext}>{guia.contenido || 'TV'}</span>
         </div>
-        {/* <div className={styles.cardRow}>
-          <span className={styles.cardLabel}>Costo:</span>
-          <span className={styles.costText}>{getCosto()}</span>
-        </div> */}
         <div className={styles.cardRow}>
           <span className={styles.cardLabel}>Origen:</span>
           <span>{guia.origen || 'USA'}</span>

@@ -450,6 +450,122 @@ export const getMultipleGuiasPaymentData = async (guiaIds) => {
   }
 };
 
+
+// ============================================
+// 🆕 NUEVAS FUNCIONES PARA MSDS Y NONDG
+// ============================================
+// Agregar estas funciones en tu archivo src/services/guiasService.js
+// ANTES del export default
+
+
+/**
+ * Upload MSDS document for a guide
+ */
+export const uploadGuiaMSDS = async (guiaId, file) => {
+  try {
+    // Convertir archivo a Base64
+    const base64Data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+        const result = reader.result;
+        if (!result || typeof result !== 'string') {
+          reject(new Error('Error al leer el archivo'));
+          return;
+        }
+        resolve(result); // CON prefijo "data:application/pdf;base64,..."
+      };
+      
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      
+      reader.readAsDataURL(file);
+    });
+
+    // Preparar payload
+    const payload = {
+      guiaId: guiaId,
+      facturas: [{  // ✅ DEBE LLAMARSE "facturas" (no "documentos")
+        nombre: file.name,
+        uri: base64Data,
+        tipo: file.type || 'application/pdf',
+        tamaño: file.size
+      }]
+    };
+
+    // Enviar al backend
+    const response = await axiosInstance.post('/Guias/uploadMSDS', payload);
+    
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'MSDS subido exitosamente'
+    };
+  } catch (error) {
+    console.error('❌ Error uploading MSDS:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Error al subir MSDS',
+      errors: error.response?.data?.errors || [error.message]
+    };
+  }
+};
+
+/**
+ * Upload NONDG document for a guide
+ */
+export const uploadGuiaNONDG = async (guiaId, file) => {
+  try {
+    // Convertir archivo a Base64
+    const base64Data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+        const result = reader.result;
+        if (!result || typeof result !== 'string') {
+          reject(new Error('Error al leer el archivo'));
+          return;
+        }
+        resolve(result);
+      };
+      
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      
+      reader.readAsDataURL(file);
+    });
+
+    // Preparar payload
+    const payload = {
+      guiaId: guiaId,
+      facturas: [{  // ✅ DEBE LLAMARSE "facturas" (no "documentos")
+        nombre: file.name,
+        uri: base64Data,
+        tipo: file.type || 'application/pdf',
+        tamaño: file.size
+      }]
+    };
+
+    // Enviar al backend
+    const response = await axiosInstance.post('/Guias/uploadNONDG', payload);
+    
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'NONDG subido exitosamente'
+    };
+  } catch (error) {
+    console.error('❌ Error uploading NONDG:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Error al subir NONDG',
+      errors: error.response?.data?.errors || [error.message]
+    };
+  }
+};
+
 // Export default object with all functions
 export default {
   getGuias,
@@ -461,5 +577,7 @@ export default {
   downloadInvoice,
   downloadAllInvoices,
   uploadGuiaInvoice,
+  uploadGuiaMSDS,       
+  uploadGuiaNONDG,       
   getMultipleGuiasPaymentData
 };

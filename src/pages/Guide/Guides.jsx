@@ -1,44 +1,58 @@
-// src/pages/MyGuides/MyGuides.jsx - CON SELECCIÓN MÚLTIPLE
+// src/pages/MyGuides/MyGuides.jsx - CON MSDS Y NONDG
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom'; // 🆕 AGREGAR
-import { fetchGuias, uploadGuiaInvoice, calculateSingleGuiaPrice } from '../../services/guiasService';
+import { useNavigate } from 'react-router-dom';
+import { 
+  fetchGuias, 
+  uploadGuiaInvoice, 
+  uploadGuiaMSDS,      // 🆕 IMPORTAR
+  uploadGuiaNONDG,     // 🆕 IMPORTAR
+  calculateSingleGuiaPrice 
+} from '../../services/guiasService';
 import styles from './Guides.module.scss';
 import GuiaCard from './GuiaCard';
 import clsx from 'clsx';
 import Loading from '../../components/common/Loading/Loading';
-import toast from 'react-hot-toast'; // 🆕 AGREGAR (si no lo tienes)
+import toast from 'react-hot-toast';
 
-// 🆕 AGREGAR ICONOS
 import { IoCheckboxOutline, IoSquareOutline, IoCardOutline } from 'react-icons/io5';
 
 export default function Guides() {
-  const navigate = useNavigate(); // 🆕 AGREGAR
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('list');
   const [activeTab, setActiveTab] = useState('activos');
   
-  // Estados para carga de factura
+  // Estados para carga de documentos
   const [uploadingInvoice, setUploadingInvoice] = useState({});
+  const [uploadingMSDS, setUploadingMSDS] = useState({});        // 🆕 ESTADO MSDS
+  const [uploadingNONDG, setUploadingNONDG] = useState({});      // 🆕 ESTADO NONDG
+  
   const [selectedGuiaForUpload, setSelectedGuiaForUpload] = useState(null);
+  const [uploadType, setUploadType] = useState(null);  // 🆕 'invoice' | 'msds' | 'nondg'
+  
   const [openMenuId, setOpenMenuId] = useState(null);
+  
+  // Refs para cada tipo de documento
   const fileInputRef = useRef(null);
+  const msdsInputRef = useRef(null);   // 🆕 REF MSDS
+  const nondgInputRef = useRef(null);  // 🆕 REF NONDG
 
   // Estado para costos calculados
   const [calculatedCosts, setCalculatedCosts] = useState({});
   const [calculatingCosts, setCalculatingCosts] = useState({});
 
-  // 🆕 ESTADOS PARA SELECCIÓN MÚLTIPLE
-  const [selectedGuias, setSelectedGuias] = useState([]); // Array de IDs
-  const [selectionMode, setSelectionMode] = useState(false); // Modo selección activo
+  // Estados para selección múltiple
+  const [selectedGuias, setSelectedGuias] = useState([]);
+  const [selectionMode, setSelectionMode] = useState(false);
 
   const { data: guias = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['guias'],
     queryFn: fetchGuias,
   });
 
-  // Calcular costo para una guía (igual que antes)
+  // Calcular costo para una guía
   const calculateCost = useCallback(async (guia) => {
     if (!guia || !guia.idGuia) return null;
     
@@ -112,6 +126,18 @@ export default function Guides() {
     return estatus === 'pendiente de factura' || idEstatusActual === 3;
   };
 
+  // 🆕 Verificar si necesita MSDS
+  const necesitaMSDS = (guia) => {
+    if (!guia) return false;
+    return guia.msds === true;
+  };
+
+  // 🆕 Verificar si necesita NONDG
+  const necesitaNONDG = (guia) => {
+    if (!guia) return false;
+    return guia.nondg === true;
+  };
+
   // Verificar si se puede pagar
   const sePuedePagar = (guia) => {
     if (!guia) return false;
@@ -128,16 +154,15 @@ export default function Guides() {
     }
   };
 
-  // 🆕 FUNCIONES DE SELECCIÓN MÚLTIPLE
+  // Funciones de selección múltiple
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode);
     if (!selectionMode) {
-      setSelectedGuias([]); // Limpiar selección al activar
+      setSelectedGuias([]);
     }
   };
 
   const toggleGuiaSelection = (guiaId, guia) => {
-    // Solo permitir seleccionar guías que se pueden pagar
     if (!sePuedePagar(guia)) {
       toast.error('Esta guía no está disponible para pago');
       return;
@@ -158,13 +183,12 @@ export default function Guides() {
       .map(guia => guia.idGuia);
     
     if (selectedGuias.length === payableGuias.length) {
-      setSelectedGuias([]); // Deseleccionar todas
+      setSelectedGuias([]);
     } else {
-      setSelectedGuias(payableGuias); // Seleccionar todas las pagables
+      setSelectedGuias(payableGuias);
     }
   };
 
-  // 🆕 NAVEGAR A PAGO MÚLTIPLE
   const handleMultiplePayment = () => {
     if (selectedGuias.length === 0) {
       toast.error('Selecciona al menos una guía para pagar');
@@ -172,10 +196,8 @@ export default function Guides() {
     }
 
     if (selectedGuias.length === 1) {
-      // Pago individual
       navigate(`/payment/${selectedGuias[0]}`);
     } else {
-      // Pago múltiple
       const idsParam = selectedGuias.join(',');
       navigate(`/payment/multiple?multiple=${idsParam}`);
     }
@@ -198,16 +220,21 @@ export default function Guides() {
     });
   };
 
+  // ============================================
+  // 🆕 HANDLERS PARA CARGAR DOCUMENTOS
+  // ============================================
+  
   // Iniciar carga de factura
   const handleCargarFactura = (guia, e) => {
     if (e) e.stopPropagation();
     
     if (!guia) {
-      alert('No se puede cargar factura sin seleccionar una guía');
+      toast.error('No se puede cargar factura sin seleccionar una guía');
       return;
     }
 
     setSelectedGuiaForUpload(guia);
+    setUploadType('invoice');
     setOpenMenuId(null);
     
     if (fileInputRef.current) {
@@ -215,59 +242,119 @@ export default function Guides() {
     }
   };
 
-  // Procesar archivo seleccionado
-  const handleFileChange = async (event) => {
-    const file = event.target.files?.[0];
+  // 🆕 Iniciar carga de MSDS
+  const handleCargarMSDS = (guia, e) => {
+    if (e) e.stopPropagation();
     
+    if (!guia) {
+      toast.error('No se puede cargar MSDS sin seleccionar una guía');
+      return;
+    }
+
+    setSelectedGuiaForUpload(guia);
+    setUploadType('msds');
+    setOpenMenuId(null);
+    
+    if (msdsInputRef.current) {
+      msdsInputRef.current.click();
+    }
+  };
+
+  // 🆕 Iniciar carga de NONDG
+  const handleCargarNONDG = (guia, e) => {
+    if (e) e.stopPropagation();
+    
+    if (!guia) {
+      toast.error('No se puede cargar NONDG sin seleccionar una guía');
+      return;
+    }
+
+    setSelectedGuiaForUpload(guia);
+    setUploadType('nondg');
+    setOpenMenuId(null);
+    
+    if (nondgInputRef.current) {
+      nondgInputRef.current.click();
+    }
+  };
+
+  // ============================================
+  // 🆕 PROCESAR ARCHIVOS SELECCIONADOS
+  // ============================================
+
+  // Handler genérico para archivos
+  // ============================================
+// 🔧 PROCESAR ARCHIVOS SELECCIONADOS (CORREGIDO)
+// ============================================
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
     if (!file) return;
 
-    if (!selectedGuiaForUpload) {
-      alert('No hay guía seleccionada');
-      event.target.value = '';
+    // Validar que haya una guía seleccionada
+    if (!selectedGuiaForUpload || !selectedGuiaForUpload.idGuia) {
+      toast.error('No se ha seleccionado una guía válida');
       return;
     }
 
+    // Validar tipo
+    if (file.type !== 'application/pdf') {
+      toast.error('Solo se permiten archivos PDF');
+      return;
+    }
+
+    // Validar tamaño (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('El archivo es muy grande. El tamaño máximo es 5MB');
-      event.target.value = '';
-      return;
-    }
-
-    const isValidType = file.type.includes('pdf') || 
-                       file.type.includes('image') ||
-                       /\.(pdf|jpg|jpeg|png|gif)$/i.test(file.name);
-
-    if (!isValidType) {
-      alert('Tipo de archivo no válido. Solo se permiten PDF o imágenes (JPG, PNG, GIF)');
-      event.target.value = '';
+      toast.error('El archivo no debe superar 5MB');
       return;
     }
 
     const guiaId = selectedGuiaForUpload.idGuia;
-    setUploadingInvoice(prev => ({ ...prev, [guiaId]: true }));
 
     try {
-      const base64String = await fileToBase64(file);
+      let response;
       
-      if (!base64String || !base64String.startsWith('data:')) {
-        throw new Error('Base64 inválido');
+      // ✅ CORRECCIÓN: Setear estado correctamente (como objeto)
+      if (uploadType === 'msds') {
+        setUploadingMSDS(prev => ({ ...prev, [guiaId]: true }));
+        response = await uploadGuiaMSDS(guiaId, file);
+      } else if (uploadType === 'nondg') {
+        setUploadingNONDG(prev => ({ ...prev, [guiaId]: true }));
+        response = await uploadGuiaNONDG(guiaId, file);
+      } else {
+        // invoice
+        setUploadingInvoice(prev => ({ ...prev, [guiaId]: true }));
+        response = await uploadGuiaInvoice(guiaId, file);
       }
-      
-      const uploadResult = await uploadGuiaInvoice(guiaId, file);
-      
-      if (uploadResult.success) {
-        alert(`✅ Factura cargada exitosamente\n\nLa factura "${file.name}" se ha cargado correctamente para la guía ${selectedGuiaForUpload.nGuia || guiaId}`);
+
+      if (response.success) {
+        toast.success(response.message || 'Documento subido exitosamente');
+        // Recargar guías
         refetch();
       } else {
-        alert(`❌ Error al cargar factura\n\n${uploadResult.message || 'No se pudo cargar la factura. Inténtalo nuevamente.'}`);
+        toast.error(response.message || 'Error al subir documento');
       }
     } catch (error) {
-      console.error('❌ Error cargando factura:', error);
-      alert('❌ Error al cargar factura\n\nNo se pudo cargar la factura. Inténtalo nuevamente.');
+      console.error('Error al subir documento:', error);
+      toast.error('Error al subir documento');
     } finally {
-      setUploadingInvoice(prev => ({ ...prev, [guiaId]: false }));
+      // ✅ CORRECCIÓN: Limpiar estado correctamente
+      if (uploadType === 'msds') {
+        setUploadingMSDS(prev => ({ ...prev, [guiaId]: false }));
+      } else if (uploadType === 'nondg') {
+        setUploadingNONDG(prev => ({ ...prev, [guiaId]: false }));
+      } else {
+        setUploadingInvoice(prev => ({ ...prev, [guiaId]: false }));
+      }
+      
+      // Limpiar selección
       setSelectedGuiaForUpload(null);
-      event.target.value = '';
+      setUploadType(null);
+      
+      // Limpiar inputs
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (msdsInputRef.current) msdsInputRef.current.value = '';
+      if (nondgInputRef.current) nondgInputRef.current.value = '';
     }
   };
 
@@ -275,21 +362,13 @@ export default function Guides() {
   const filteredGuias = useMemo(() => {
     let result = guias;
 
-    // if (activeTab === 'activos') {
-    //   result = result.filter(guia => !guia.tienePago && !guia.estaPagado);
-    // } else if (activeTab === 'historial') {
-    //   result = result.filter(guia => guia.tienePago || guia.estaPagado);
-    // }
-
     if (activeTab === 'activos') {
-      // Activos: guías NO entregadas (independiente del pago)
       const estatusHistorial = ['entregado', 'completado'];
       result = result.filter(guia => {
         const estatus = guia.estatus?.toLowerCase();
         return !estatusHistorial.includes(estatus);
       });
     } else if (activeTab === 'historial') {
-      // Historial: guías entregadas
       const estatusHistorial = ['entregado'];
       result = result.filter(guia => {
         const estatus = guia.estatus?.toLowerCase();
@@ -308,17 +387,31 @@ export default function Guides() {
     return result;
   }, [guias, searchQuery, activeTab]);
 
-  // 🆕 CONTADOR DE GUÍAS PAGABLES
   const payableGuiasCount = useMemo(() => {
     return filteredGuias.filter(guia => sePuedePagar(guia)).length;
   }, [filteredGuias]);
 
   return (
     <div className={styles.container}>
+      {/* 🆕 INPUTS PARA ARCHIVOS (INVISIBLES) */}
       <input
         ref={fileInputRef}
         type="file"
         accept=".pdf,.jpg,.jpeg,.png,.gif,image/*,application/pdf"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+      <input
+        ref={msdsInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        style={{ display: 'none' }}
+        onChange={handleFileChange} 
+      />
+      <input
+        ref={nondgInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
@@ -354,7 +447,6 @@ export default function Guides() {
             />
           </div>
 
-          {/* 🆕 BOTÓN MODO SELECCIÓN */}
           <button
             className={clsx(styles.selectionModeBtn, selectionMode && styles.active)}
             onClick={toggleSelectionMode}
@@ -391,7 +483,6 @@ export default function Guides() {
                 <table className={styles.table}>
                   <thead>
                     <tr>
-                      {/* 🆕 COLUMNA CHECKBOX */}
                       {selectionMode && (
                         <th style={{ width: '50px' }}>
                           <button
@@ -410,7 +501,6 @@ export default function Guides() {
                       <th></th>
                       <th>N° Guía</th>
                       <th>Estatus</th>
-                      {/* <th>Costo del envío</th> */}
                       <th>Origen</th>
                       <th></th>
                     </tr>
@@ -423,14 +513,19 @@ export default function Guides() {
                           guia={guia} 
                           viewMode="list"
                           necesitaFactura={necesitaFactura(guia)}
+                          necesitaMSDS={necesitaMSDS(guia)}           // 🆕 PROP
+                          necesitaNONDG={necesitaNONDG(guia)}         // 🆕 PROP
                           sePuedePagar={sePuedePagar(guia)}
                           isUploadingInvoice={uploadingInvoice[guia.idGuia] || false}
+                          isUploadingMSDS={uploadingMSDS[guia.idGuia] || false}    // 🆕 PROP
+                          isUploadingNONDG={uploadingNONDG[guia.idGuia] || false}  // 🆕 PROP
                           onCargarFactura={handleCargarFactura}
+                          onCargarMSDS={handleCargarMSDS}            // 🆕 HANDLER
+                          onCargarNONDG={handleCargarNONDG}          // 🆕 HANDLER
                           openMenuId={openMenuId}
                           setOpenMenuId={setOpenMenuId}
                           calculatedCost={calculatedCosts[guia.idGuia]}
                           isCalculatingCost={calculatingCosts[guia.idGuia]}
-                          // 🆕 PROPS PARA SELECCIÓN
                           selectionMode={selectionMode}
                           isSelected={selectedGuias.includes(guia.idGuia)}
                           onToggleSelection={() => toggleGuiaSelection(guia.idGuia, guia)}
@@ -468,14 +563,19 @@ export default function Guides() {
                       guia={guia} 
                       viewMode="grid"
                       necesitaFactura={necesitaFactura(guia)}
+                      necesitaMSDS={necesitaMSDS(guia)}             // 🆕 PROP
+                      necesitaNONDG={necesitaNONDG(guia)}           // 🆕 PROP
                       sePuedePagar={sePuedePagar(guia)}
                       isUploadingInvoice={uploadingInvoice[guia.idGuia] || false}
+                      isUploadingMSDS={uploadingMSDS[guia.idGuia] || false}      // 🆕 PROP
+                      isUploadingNONDG={uploadingNONDG[guia.idGuia] || false}    // 🆕 PROP
                       onCargarFactura={handleCargarFactura}
+                      onCargarMSDS={handleCargarMSDS}              // 🆕 HANDLER
+                      onCargarNONDG={handleCargarNONDG}            // 🆕 HANDLER
                       openMenuId={openMenuId}
                       setOpenMenuId={setOpenMenuId}
                       calculatedCost={calculatedCosts[guia.idGuia]}
                       isCalculatingCost={calculatingCosts[guia.idGuia]}
-                      // 🆕 PROPS PARA SELECCIÓN
                       selectionMode={selectionMode}
                       isSelected={selectedGuias.includes(guia.idGuia)}
                       onToggleSelection={() => toggleGuiaSelection(guia.idGuia, guia)}
@@ -503,7 +603,6 @@ export default function Guides() {
         )}
       </div>
 
-      {/* 🆕 BOTÓN FLOTANTE PARA PAGAR SELECCIONADAS */}
       {selectionMode && selectedGuias.length > 0 && (
         <div className={styles.floatingPayButton}>
           <button onClick={handleMultiplePayment} className={styles.payBtn}>
