@@ -1,4 +1,4 @@
-// src/pages/MyGuides/MyGuides.jsx - CON MSDS Y NONDG
+// src/pages/MyGuides/MyGuides.jsx - VERSIÓN CORREGIDA
 
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   fetchGuias, 
   uploadGuiaInvoice, 
-  uploadGuiaMSDS,      // 🆕 IMPORTAR
-  uploadGuiaNONDG,     // 🆕 IMPORTAR
+  uploadGuiaMSDS,
+  uploadGuiaNONDG,
   calculateSingleGuiaPrice 
 } from '../../services/guiasService';
 import styles from './Guides.module.scss';
@@ -26,18 +26,18 @@ export default function Guides() {
   
   // Estados para carga de documentos
   const [uploadingInvoice, setUploadingInvoice] = useState({});
-  const [uploadingMSDS, setUploadingMSDS] = useState({});        // 🆕 ESTADO MSDS
-  const [uploadingNONDG, setUploadingNONDG] = useState({});      // 🆕 ESTADO NONDG
+  const [uploadingMSDS, setUploadingMSDS] = useState({});
+  const [uploadingNONDG, setUploadingNONDG] = useState({});
   
   const [selectedGuiaForUpload, setSelectedGuiaForUpload] = useState(null);
-  const [uploadType, setUploadType] = useState(null);  // 🆕 'invoice' | 'msds' | 'nondg'
+  const [uploadType, setUploadType] = useState(null);
   
   const [openMenuId, setOpenMenuId] = useState(null);
   
   // Refs para cada tipo de documento
   const fileInputRef = useRef(null);
-  const msdsInputRef = useRef(null);   // 🆕 REF MSDS
-  const nondgInputRef = useRef(null);  // 🆕 REF NONDG
+  const msdsInputRef = useRef(null);
+  const nondgInputRef = useRef(null);
 
   // Estado para costos calculados
   const [calculatedCosts, setCalculatedCosts] = useState({});
@@ -118,24 +118,55 @@ export default function Guides() {
     }
   }, [guias, calculateCost, calculatedCosts, calculatingCosts]);
 
-  // Verificar si necesita factura
+  // ============================================
+  // ✅ FUNCIONES CORREGIDAS - VERIFICAN SI YA FUE CARGADO
+  // ============================================
+
+  /**
+   * Verifica si necesita factura Y si NO ha sido cargada
+   */
   const necesitaFactura = (guia) => {
     if (!guia) return false;
+    
     const estatus = guia.estatus?.toLowerCase();
     const idEstatusActual = guia.idEstatusActual || 0;
-    return estatus === 'pendiente de factura' || idEstatusActual === 3;
+    const requiereFactura = estatus === 'pendiente de factura' || idEstatusActual === 3;
+    
+    // ✅ Verificar si ya fue cargada
+    const yaFueCargada = guia.invoiceCargado === true || !!guia.invoiceUrl;
+    
+    // Solo mostrar si se requiere Y NO ha sido cargada
+    return requiereFactura && !yaFueCargada;
   };
 
-  // 🆕 Verificar si necesita MSDS
+  /**
+   * ✅ CORREGIDO: Verifica si necesita MSDS Y si NO ha sido cargada
+   */
   const necesitaMSDS = (guia) => {
     if (!guia) return false;
-    return guia.msds === true;
+    
+    const requiereMSDS = guia.msds === true;
+    
+    // ✅ Verificar si ya fue cargada
+    const yaFueCargada = guia.msdsCargado === true || !!guia.msdsUrl;
+    
+    // Solo mostrar si se requiere Y NO ha sido cargada
+    return requiereMSDS && !yaFueCargada;
   };
 
-  // 🆕 Verificar si necesita NONDG
+  /**
+   * ✅ CORREGIDO: Verifica si necesita NONDG Y si NO ha sido cargada
+   */
   const necesitaNONDG = (guia) => {
     if (!guia) return false;
-    return guia.nondg === true;
+    
+    const requiereNONDG = guia.nondg === true;
+    
+    // ✅ Verificar si ya fue cargada
+    const yaFueCargada = guia.nondgCargado === true || !!guia.nondgUrl;
+    
+    // Solo mostrar si se requiere Y NO ha sido cargada
+    return requiereNONDG && !yaFueCargada;
   };
 
   // Verificar si se puede pagar
@@ -203,28 +234,10 @@ export default function Guides() {
     }
   };
 
-  // Convertir File a Base64
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result;
-        if (!result || typeof result !== 'string' || result.length < 50) {
-          reject(new Error('Error al leer el archivo'));
-          return;
-        }
-        resolve(result);
-      };
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-  };
-
   // ============================================
-  // 🆕 HANDLERS PARA CARGAR DOCUMENTOS
+  // 📄 HANDLERS PARA CARGAR DOCUMENTOS
   // ============================================
   
-  // Iniciar carga de factura
   const handleCargarFactura = (guia, e) => {
     if (e) e.stopPropagation();
     
@@ -242,7 +255,6 @@ export default function Guides() {
     }
   };
 
-  // 🆕 Iniciar carga de MSDS
   const handleCargarMSDS = (guia, e) => {
     if (e) e.stopPropagation();
     
@@ -260,7 +272,6 @@ export default function Guides() {
     }
   };
 
-  // 🆕 Iniciar carga de NONDG
   const handleCargarNONDG = (guia, e) => {
     if (e) e.stopPropagation();
     
@@ -279,19 +290,13 @@ export default function Guides() {
   };
 
   // ============================================
-  // 🆕 PROCESAR ARCHIVOS SELECCIONADOS
+  // 📤 PROCESAR ARCHIVOS SELECCIONADOS
   // ============================================
-
-  // Handler genérico para archivos
-  // ============================================
-// 🔧 PROCESAR ARCHIVOS SELECCIONADOS (CORREGIDO)
-// ============================================
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validar que haya una guía seleccionada
     if (!selectedGuiaForUpload || !selectedGuiaForUpload.idGuia) {
       toast.error('No se ha seleccionado una guía válida');
       return;
@@ -314,7 +319,6 @@ export default function Guides() {
     try {
       let response;
       
-      // ✅ CORRECCIÓN: Setear estado correctamente (como objeto)
       if (uploadType === 'msds') {
         setUploadingMSDS(prev => ({ ...prev, [guiaId]: true }));
         response = await uploadGuiaMSDS(guiaId, file);
@@ -322,15 +326,14 @@ export default function Guides() {
         setUploadingNONDG(prev => ({ ...prev, [guiaId]: true }));
         response = await uploadGuiaNONDG(guiaId, file);
       } else {
-        // invoice
         setUploadingInvoice(prev => ({ ...prev, [guiaId]: true }));
         response = await uploadGuiaInvoice(guiaId, file);
       }
 
       if (response.success) {
         toast.success(response.message || 'Documento subido exitosamente');
-        // Recargar guías
-        refetch();
+        // ✅ Recargar guías para actualizar el estado
+        await refetch();
       } else {
         toast.error(response.message || 'Error al subir documento');
       }
@@ -338,7 +341,6 @@ export default function Guides() {
       console.error('Error al subir documento:', error);
       toast.error('Error al subir documento');
     } finally {
-      // ✅ CORRECCIÓN: Limpiar estado correctamente
       if (uploadType === 'msds') {
         setUploadingMSDS(prev => ({ ...prev, [guiaId]: false }));
       } else if (uploadType === 'nondg') {
@@ -347,11 +349,9 @@ export default function Guides() {
         setUploadingInvoice(prev => ({ ...prev, [guiaId]: false }));
       }
       
-      // Limpiar selección
       setSelectedGuiaForUpload(null);
       setUploadType(null);
       
-      // Limpiar inputs
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (msdsInputRef.current) msdsInputRef.current.value = '';
       if (nondgInputRef.current) nondgInputRef.current.value = '';
@@ -393,7 +393,7 @@ export default function Guides() {
 
   return (
     <div className={styles.container}>
-      {/* 🆕 INPUTS PARA ARCHIVOS (INVISIBLES) */}
+      {/* Inputs ocultos para archivos */}
       <input
         ref={fileInputRef}
         type="file"
@@ -513,15 +513,15 @@ export default function Guides() {
                           guia={guia} 
                           viewMode="list"
                           necesitaFactura={necesitaFactura(guia)}
-                          necesitaMSDS={necesitaMSDS(guia)}           // 🆕 PROP
-                          necesitaNONDG={necesitaNONDG(guia)}         // 🆕 PROP
+                          necesitaMSDS={necesitaMSDS(guia)}
+                          necesitaNONDG={necesitaNONDG(guia)}
                           sePuedePagar={sePuedePagar(guia)}
                           isUploadingInvoice={uploadingInvoice[guia.idGuia] || false}
-                          isUploadingMSDS={uploadingMSDS[guia.idGuia] || false}    // 🆕 PROP
-                          isUploadingNONDG={uploadingNONDG[guia.idGuia] || false}  // 🆕 PROP
+                          isUploadingMSDS={uploadingMSDS[guia.idGuia] || false}
+                          isUploadingNONDG={uploadingNONDG[guia.idGuia] || false}
                           onCargarFactura={handleCargarFactura}
-                          onCargarMSDS={handleCargarMSDS}            // 🆕 HANDLER
-                          onCargarNONDG={handleCargarNONDG}          // 🆕 HANDLER
+                          onCargarMSDS={handleCargarMSDS}
+                          onCargarNONDG={handleCargarNONDG}
                           openMenuId={openMenuId}
                           setOpenMenuId={setOpenMenuId}
                           calculatedCost={calculatedCosts[guia.idGuia]}
@@ -563,40 +563,40 @@ export default function Guides() {
                       guia={guia} 
                       viewMode="grid"
                       necesitaFactura={necesitaFactura(guia)}
-                      necesitaMSDS={necesitaMSDS(guia)}             // 🆕 PROP
-                      necesitaNONDG={necesitaNONDG(guia)}           // 🆕 PROP
+                      necesitaMSDS={necesitaMSDS(guia)}
+                      necesitaNONDG={necesitaNONDG(guia)}
                       sePuedePagar={sePuedePagar(guia)}
                       isUploadingInvoice={uploadingInvoice[guia.idGuia] || false}
-                      isUploadingMSDS={uploadingMSDS[guia.idGuia] || false}      // 🆕 PROP
-                      isUploadingNONDG={uploadingNONDG[guia.idGuia] || false}    // 🆕 PROP
+                      isUploadingMSDS={uploadingMSDS[guia.idGuia] || false}
+                      isUploadingNONDG={uploadingNONDG[guia.idGuia] || false}
                       onCargarFactura={handleCargarFactura}
-                      onCargarMSDS={handleCargarMSDS}              // 🆕 HANDLER
-                      onCargarNONDG={handleCargarNONDG}            // 🆕 HANDLER
+                      onCargarMSDS={handleCargarMSDS}
+                      onCargarNONDG={handleCargarNONDG}
                       openMenuId={openMenuId}
-                      setOpenMenuId={setOpenMenuId}
-                      calculatedCost={calculatedCosts[guia.idGuia]}
-                      isCalculatingCost={calculatingCosts[guia.idGuia]}
-                      selectionMode={selectionMode}
-                      isSelected={selectedGuias.includes(guia.idGuia)}
-                      onToggleSelection={() => toggleGuiaSelection(guia.idGuia, guia)}
-                    />
-                  ))
-                ) : (
-                  <div className={styles.emptyState}>
-                    <p className={styles.emptyTitle}>
-                      {activeTab === 'activos' 
-                        ? 'No tienes guías activas' 
-                        : 'No hay historial de pagos'
-                      }
-                    </p>
-                    <p className={styles.emptyDescription}>
-                      {activeTab === 'activos'
-                        ? 'Las guías pendientes de pago aparecerán aquí'
-                        : 'Tus guías pagadas aparecerán en esta sección'
-                      }
-                    </p>
-                  </div>
-                )}
+                          setOpenMenuId={setOpenMenuId}
+                          calculatedCost={calculatedCosts[guia.idGuia]}
+                          isCalculatingCost={calculatingCosts[guia.idGuia]}
+                          selectionMode={selectionMode}
+                          isSelected={selectedGuias.includes(guia.idGuia)}
+                          onToggleSelection={() => toggleGuiaSelection(guia.idGuia, guia)}
+                        />
+                      ))
+                    ) : (
+                      <div className={styles.emptyState}>
+                        <p className={styles.emptyTitle}>
+                          {activeTab === 'activos' 
+                            ? 'No tienes guías activas' 
+                            : 'No hay historial de pagos'
+                          }
+                        </p>
+                        <p className={styles.emptyDescription}>
+                          {activeTab === 'activos'
+                            ? 'Las guías pendientes de pago aparecerán aquí'
+                            : 'Tus guías pagadas aparecerán en esta sección'
+                          }
+                        </p>
+                      </div>
+                    )}
               </div>
             )}
           </>
