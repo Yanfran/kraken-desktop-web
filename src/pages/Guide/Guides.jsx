@@ -181,7 +181,8 @@ export default function Guides() {
     if (fob <= 100) {
       return idEstatusActual >= 2;
     } else {
-      return idEstatusActual >= 8;
+      // return idEstatusActual >= 8;
+      return idEstatusActual >= 2;
     }
   };
 

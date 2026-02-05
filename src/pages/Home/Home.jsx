@@ -161,7 +161,8 @@ const Home = ({ onNavigateToShipments }) => {
       puedePagar = idEstatusActual >= 2;
       // console.log(`📦 FOB < 100: ${puedePagar ? '✅ SÍ puede' : '❌ NO puede'} (requiere >= 2, actual: ${idEstatusActual})`);
     } else {
-      puedePagar = idEstatusActual >= 8;
+      // puedePagar = idEstatusActual >= 8;
+      puedePagar = idEstatusActual >= 2;
       // console.log(`📦 FOB >= 100: ${puedePagar ? '✅ SÍ puede' : '❌ NO puede'} (requiere >= 8, actual: ${idEstatusActual})`);
     }
     
@@ -466,9 +467,9 @@ const Home = ({ onNavigateToShipments }) => {
   const getOriginFlag = (origin) => {
     const flags = {
       'USA': '🇺🇸',
-      'CHINA': '🇨🇳',
-      'ESPAÑA': '🇪🇸',
-      'MEXICO': '🇲🇽'
+      'CHN': '🇨🇳',
+      'ESP': '🇪🇸',
+      'MEX': '🇲🇽'
     };
     return flags[origin?.toUpperCase()] || '🌍';
   };
