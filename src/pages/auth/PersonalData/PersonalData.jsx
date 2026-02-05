@@ -7,12 +7,14 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import axiosInstance from '../../../services/axiosInstance';
 import './PersonalData.styles.scss';
 import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
-import logoImage from '../../../assets/images/logo.jpg'; 
+import logoImage from '../../../assets/images/logo.jpg';
+
+import { countryConfig, getCountryConfig } from '../../../config/countryConfig';
 
 // Componente toggle para cambio de tema
 const ThemeToggle = () => {
   const { actualTheme, toggleTheme } = useTheme();
-  
+
   return (
     <button
       className="theme-toggle-button"
@@ -27,7 +29,7 @@ const ThemeToggle = () => {
 const PersonalData = () => {
   const navigate = useNavigate();
   const { actualTheme } = useTheme();
-  
+
   // Estados principales
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -36,6 +38,7 @@ const PersonalData = () => {
 
   // Estados del formulario
   const [formData, setFormData] = useState({
+    residenceCountry: '', // Nuevo campo
     documentType: '',
     documentNumber: '',
     countryCode: '',
@@ -128,11 +131,11 @@ const PersonalData = () => {
     const loadInitialData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Cargar países (códigos de teléfono)
         const addressRes = await axiosInstance.get('/Addresses/countries');
         // console.log('📍 Countries response:', addressRes.data);
-        
+
         if (addressRes.data.success) {
           const phoneCodes = addressRes.data.data.map((item) => ({
             label: `+${item.phoneCode} (${item.name})`,
@@ -145,7 +148,7 @@ const PersonalData = () => {
           const sortedPhoneCodes = phoneCodes.sort((a, b) => {
             const isVenezuelaA = a.value === "+58" || a.name.toLowerCase().includes("venezuela");
             const isVenezuelaB = b.value === "+58" || b.name.toLowerCase().includes("venezuela");
-            
+
             if (isVenezuelaA && !isVenezuelaB) return -1;
             if (!isVenezuelaA && isVenezuelaB) return 1;
             return a.label.localeCompare(b.label);
@@ -157,7 +160,7 @@ const PersonalData = () => {
         // Cargar tipos de documento
         const docTypesRes = await axiosInstance.get('/Addresses/document-types');
         // console.log('📄 Document types response:', docTypesRes.data);
-        
+
         if (docTypesRes.data.success) {
           setDocumentTypeDB(docTypesRes.data.data);
         }
@@ -176,8 +179,16 @@ const PersonalData = () => {
 
   const validateDocument = (type, value) => {
     if (!type || !value) return { isValid: false, message: "" };
-    
-    const validation = documentValidations[type];
+
+    let validation = documentValidations[type];
+
+    // Check config validations override
+    const config = getCountryConfig(formData.residenceCountry);
+    const docConfig = config.documentTypes?.find(d => d.value === type);
+    if (docConfig && docConfig.validation) {
+      validation = docConfig.validation;
+    }
+
     if (!validation) return { isValid: false, message: "Tipo de documento no válido" };
 
     const { pattern, minLength, maxLength } = validation;
@@ -215,30 +226,31 @@ const PersonalData = () => {
 
   const isVenezuelanPhoneValid = () => {
     if (formData.countryCode === "+58") return true;
-    
+
     if (!formData.venezuelanPhone && !formData.venezuelanOperator) return true;
-    
+
     if (formData.venezuelanPhone || formData.venezuelanOperator) {
-      return formData.venezuelanOperator && 
-             formData.venezuelanPhone.replace(/\D/g, "").length === 7;
+      return formData.venezuelanOperator &&
+        formData.venezuelanPhone.replace(/\D/g, "").length === 7;
     }
-    
+
     return true;
   };
 
   const isFormComplete = () => {
     const documentValidation = validateDocument(
-      formData.documentType, 
+      formData.documentType,
       formData.documentNumber
     );
-    
-    return formData.documentType &&
-           formData.documentNumber &&
-           documentValidation.isValid &&
-           formData.countryCode &&
-           isPhoneComplete() &&
-           (formData.countryCode !== "+58" || formData.phoneOperator) &&
-           isVenezuelanPhoneValid();
+
+    return formData.residenceCountry && // Ensure residence country is selected
+      formData.documentType &&
+      formData.documentNumber &&
+      documentValidation.isValid &&
+      formData.countryCode &&
+      isPhoneComplete() &&
+      (formData.countryCode !== "+58" || formData.phoneOperator) &&
+      isVenezuelanPhoneValid();
   };
 
   // ===== FUNCIONES DE FORMATO =====
@@ -246,15 +258,15 @@ const PersonalData = () => {
   const formatPhone = (text) => {
     const cleaned = text.replace(/\D/g, "");
     const format = phoneFormats[formData.countryCode];
-    
+
     if (!format) return cleaned;
-    
+
     const { mask, length } = format;
     const limitedCleaned = cleaned.slice(0, length);
-    
+
     let formatted = "";
     let cleanedIndex = 0;
-    
+
     for (let i = 0; i < mask.length && cleanedIndex < limitedCleaned.length; i++) {
       if (mask[i] === "#") {
         formatted += limitedCleaned[cleanedIndex];
@@ -263,18 +275,18 @@ const PersonalData = () => {
         formatted += mask[i];
       }
     }
-    
+
     return formatted;
   };
 
   const formatVenezuelanPhone = (text) => {
     const cleaned = text.replace(/\D/g, "");
     const limitedCleaned = cleaned.slice(0, 7);
-    
+
     let formatted = "";
     let cleanedIndex = 0;
     const mask = "###-##-##";
-    
+
     for (let i = 0; i < mask.length && cleanedIndex < limitedCleaned.length; i++) {
       if (mask[i] === "#") {
         formatted += limitedCleaned[cleanedIndex];
@@ -283,7 +295,7 @@ const PersonalData = () => {
         formatted += mask[i];
       }
     }
-    
+
     return formatted;
   };
 
@@ -291,10 +303,20 @@ const PersonalData = () => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const handleResidenceChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      residenceCountry: value,
+      documentType: '',
+      documentNumber: ''
+    }));
+    setErrors(prev => ({ ...prev, documentNumber: '' }));
   };
 
   const handleDocumentTypeChange = (value) => {
@@ -311,22 +333,35 @@ const PersonalData = () => {
       return;
     }
 
-    const validation = documentValidations[formData.documentType];
+    let validation = documentValidations[formData.documentType];
+
+    // Check config validations override
+    const config = getCountryConfig(formData.residenceCountry);
+    const docConfig = config.documentTypes?.find(d => d.value === formData.documentType);
+    if (docConfig && docConfig.validation) {
+      validation = docConfig.validation;
+    }
+
     if (!validation) return;
 
     let cleaned = '';
-    
-    switch (formData.documentType) {
-      case 'cedula':
-        cleaned = text.replace(/[^0-9]/g, '');
-        break;
-      case 'pasaporte':
-      case 'rif':
-      case 'otro':
-        cleaned = text.replace(/[^A-Za-z0-9]/g, '');
-        break;
-      default:
-        cleaned = text;
+
+    // Config types default cleaning (Alphanumeric) or retain switch for existing types
+    if (docConfig) {
+      cleaned = text.replace(/[^A-Za-z0-9]/g, '');
+    } else {
+      switch (formData.documentType) {
+        case 'cedula':
+          cleaned = text.replace(/[^0-9]/g, '');
+          break;
+        case 'pasaporte':
+        case 'rif':
+        case 'otro':
+          cleaned = text.replace(/[^A-Za-z0-9]/g, '');
+          break;
+        default:
+          cleaned = text;
+      }
     }
 
     const limited = cleaned.slice(0, validation.maxLength);
@@ -335,7 +370,7 @@ const PersonalData = () => {
 
   const handleCountryChange = (value) => {
     const country = countryOptions.find(c => c.value === value);
-    
+
     setFormData(prev => ({
       ...prev,
       countryCode: value,
@@ -360,12 +395,12 @@ const PersonalData = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const documentValidation = validateDocument(
-      formData.documentType, 
+      formData.documentType,
       formData.documentNumber
     );
-    
+
     if (!documentValidation.isValid) {
       setErrors({ submit: `Error en documento: ${documentValidation.message}` });
       return;
@@ -375,27 +410,32 @@ const PersonalData = () => {
       setErrors({ submit: 'Por favor, complete todos los campos requeridos' });
       return;
     }
-    
+
     setIsSaving(true);
-    
+
     try {
+      const config = getCountryConfig(formData.residenceCountry);
+      const clientPrefix = config.prefix || 'KV';
+
       const submitData = {
+        clientPrefix,
+        residenceCountry: formData.residenceCountry,
         documentType: formData.documentType,
         documentNumber: formData.documentNumber,
         countryCode: formData.countryCode,
         countryIso2: formData.countryIso2,
         phone: formData.phone,
         ...(formData.countryCode === "+58" && { phoneOperator: formData.phoneOperator }),
-        ...(formData.countryCode !== "+58" && 
-            formData.venezuelanPhone && 
-            formData.venezuelanOperator && {
+        ...(formData.countryCode !== "+58" &&
+          formData.venezuelanPhone &&
+          formData.venezuelanOperator && {
           venezuelanPhone: formData.venezuelanPhone,
           venezuelanOperator: formData.venezuelanOperator
         })
       };
 
       // console.log('📤 Enviando datos:', submitData);
-      
+
       // Navegar a delivery-option con los datos
       navigate('/delivery-option', { state: submitData });
     } catch (error) {
@@ -408,27 +448,50 @@ const PersonalData = () => {
 
   // ===== HELPERS PARA UI =====
 
-  const sortedDocumentTypeDB = [...documentTypeDB].sort((a, b) => {
-    if (a.displayName.toLowerCase() === "cédula") return -1;
-    if (b.displayName.toLowerCase() === "cédula") return 1;
-    return 0;
-  });
+  // Nuevas opciones de documentos basadas en el país de residencia
+  const getDocumentOptions = () => {
+    if (!formData.residenceCountry) return [];
 
-  const documentOptions = sortedDocumentTypeDB.map(item => ({
-    label: item.displayName,
-    value: item.displayName
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/ /g, '')
-  }));
+    const config = getCountryConfig(formData.residenceCountry);
+
+    // Si es USA, usamos los definidos en config
+    if (formData.residenceCountry === 'US' && config.documentTypes.length > 0) {
+      return config.documentTypes;
+    }
+
+    // Si es Venezuela o cualquier otro (por ahora), usamos los de la BD
+    // OJO: Si quisieras restringir solo a VE para mostrar los de BD, agrega la condición aquí
+    const sortedDocumentTypeDB = [...documentTypeDB].sort((a, b) => {
+      if (a.displayName.toLowerCase() === "cédula") return -1;
+      if (b.displayName.toLowerCase() === "cédula") return 1;
+      return 0;
+    });
+
+    return sortedDocumentTypeDB.map(item => ({
+      label: item.displayName,
+      value: item.displayName
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ /g, '')
+    }));
+  };
+
+  const documentOptions = getDocumentOptions();
 
   const getDocumentPlaceholder = () => {
     if (!formData.documentType) return "Seleccione tipo de documento primero";
-    
+
+    // Check config validations first
+    const config = getCountryConfig(formData.residenceCountry);
+    const docConfig = config.documentTypes?.find(d => d.value === formData.documentType);
+    if (docConfig && docConfig.validation) {
+      return docConfig.validation.description || "Número de documento";
+    }
+
     const validation = documentValidations[formData.documentType];
     if (!validation) return "Número de documento";
-    
+
     switch (formData.documentType) {
       case 'cedula':
         return "Ej: 12345678";
@@ -456,7 +519,7 @@ const PersonalData = () => {
   };
 
   const currentDocumentValidation = validateDocument(
-    formData.documentType, 
+    formData.documentType,
     formData.documentNumber
   );
 
@@ -485,15 +548,15 @@ const PersonalData = () => {
       {/* <ThemeToggle /> */}
 
       {/* Logo */}
-      <div className="kraken-personal-data__logo">        
-        <a 
-          href="https://krakencourier.com/" 
-          target="_blank" 
+      <div className="kraken-personal-data__logo">
+        <a
+          href="https://krakencourier.com/"
+          target="_blank"
           rel="noopener noreferrer"
         >
-          <img 
-            src={logoImage} 
-            alt="Kraken Logo" 
+          <img
+            src={logoImage}
+            alt="Kraken Logo"
             className="kraken-personal-data__logo-image"
             onError={(e) => {
               e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='%23FF4500' text-anchor='middle' dy='0.3em'%3EKRAKEN%3C/text%3E%3C/svg%3E";
@@ -507,6 +570,21 @@ const PersonalData = () => {
         <h1 className="kraken-personal-data__title">Datos personales</h1>
 
         <form onSubmit={handleSubmit} className="kraken-personal-data__form">
+          {/* País de Residencia */}
+          <div className="kraken-form-field">
+            <label className="kraken-form-field__label">País de Residencia</label>
+            <SearchableSelect
+              options={[
+                { label: 'Venezuela', value: 'VE' },
+                { label: 'Estados Unidos', value: 'US' },
+                { label: 'España', value: 'ES' }
+              ]}
+              value={formData.residenceCountry}
+              onChange={handleResidenceChange}
+              placeholder="Seleccione país de residencia"
+            />
+          </div>
+
           {/* Tipo de documento */}
           <div className="kraken-form-field">
             <label className="kraken-form-field__label">Tipo de documento</label>
@@ -530,24 +608,23 @@ const PersonalData = () => {
             <label className="kraken-form-field__label">Número de documento</label>
             <input
               type="text"
-              className={`kraken-form-field__input ${
-                formData.documentNumber && !currentDocumentValidation.isValid 
-                  ? 'kraken-form-field__input--error' 
-                  : ''
-              }`}
+              className={`kraken-form-field__input ${formData.documentNumber && !currentDocumentValidation.isValid
+                ? 'kraken-form-field__input--error'
+                : ''
+                }`}
               placeholder={getDocumentPlaceholder()}
               value={formData.documentNumber}
               onChange={(e) => handleDocumentNumberChange(e.target.value)}
               disabled={!formData.documentType}
               required
             />
-            
+
             {formData.documentNumber && !currentDocumentValidation.isValid && (
               <p className="kraken-form-field__error">
                 {currentDocumentValidation.message}
               </p>
             )}
-            
+
             {formData.documentType && !formData.documentNumber && (
               <p className="kraken-form-field__helper">
                 {documentValidations[formData.documentType]?.description}
@@ -557,9 +634,8 @@ const PersonalData = () => {
 
           {/* Código de País y Operador */}
           <div className={`kraken-form-field__row ${formData.countryCode !== '+58' ? 'kraken-form-field__row--single' : ''}`}>
-            <div className={`kraken-form-field ${
-              formData.countryCode === '+58' ? 'kraken-form-field--60' : 'kraken-form-field--full'
-            }`}>
+            <div className={`kraken-form-field ${formData.countryCode === '+58' ? 'kraken-form-field--60' : 'kraken-form-field--full'
+              }`}>
               <label className="kraken-form-field__label">Código de País</label>
               <SearchableSelect
                 options={countryOptions}
@@ -601,7 +677,7 @@ const PersonalData = () => {
               onChange={(e) => handlePhoneChange(e.target.value)}
               required
             />
-            
+
             {formData.countryCode && formData.phone && !isPhoneComplete() && (
               <p className="kraken-form-field__error">
                 {getPhoneErrorMessage()}
@@ -650,14 +726,14 @@ const PersonalData = () => {
                   value={formData.venezuelanPhone}
                   onChange={(e) => handleVenezuelanPhoneChange(e.target.value)}
                 />
-                
-                {formData.venezuelanPhone && 
-                 formData.venezuelanPhone.replace(/\D/g, "").length > 0 && 
-                 formData.venezuelanPhone.replace(/\D/g, "").length < 7 && (
-                  <p className="kraken-form-field__error">
-                    Ingrese un número venezolano completo ###-##-##
-                  </p>
-                )}
+
+                {formData.venezuelanPhone &&
+                  formData.venezuelanPhone.replace(/\D/g, "").length > 0 &&
+                  formData.venezuelanPhone.replace(/\D/g, "").length < 7 && (
+                    <p className="kraken-form-field__error">
+                      Ingrese un número venezolano completo ###-##-##
+                    </p>
+                  )}
 
                 {formData.venezuelanOperator && !formData.venezuelanPhone && (
                   <p className="kraken-form-field__error">
@@ -665,13 +741,13 @@ const PersonalData = () => {
                   </p>
                 )}
 
-                {formData.venezuelanPhone && 
-                 formData.venezuelanPhone.replace(/\D/g, "").length === 7 && 
-                 !formData.venezuelanOperator && (
-                  <p className="kraken-form-field__error">
-                    Debe seleccionar un operador si ingresó el número
-                  </p>
-                )}
+                {formData.venezuelanPhone &&
+                  formData.venezuelanPhone.replace(/\D/g, "").length === 7 &&
+                  !formData.venezuelanOperator && (
+                    <p className="kraken-form-field__error">
+                      Debe seleccionar un operador si ingresó el número
+                    </p>
+                  )}
               </div>
             </>
           )}
@@ -686,9 +762,8 @@ const PersonalData = () => {
           {/* Botón de envío */}
           <button
             type="submit"
-            className={`kraken-personal-data__submit-button ${
-              isFormComplete() ? 'active' : 'inactive'
-            }`}
+            className={`kraken-personal-data__submit-button ${isFormComplete() ? 'active' : 'inactive'
+              }`}
             disabled={!isFormComplete() || isSaving}
           >
             {isSaving ? (
