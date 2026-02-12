@@ -1,6 +1,10 @@
+// src/components/TopNavigation/TopNavigation.jsx
+// ✅ VERSIÓN FINAL - 3 PAÍSES CON CONFIGURACIONES DIFERENTES
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTenant } from '../../core/context/TenantContext';
 import './TopNavigation.styles.scss';
 import iconPulpo from '../../../src/assets/images/icon-kraken-web-pulpo-peq.png'; 
 import iconCalcula from '../../../src/assets/images/icon-kraken-web-calculadora.png'; 
@@ -8,44 +12,143 @@ import iconParlante from '../../../src/assets/images/icon-kraken-web-parlante_1.
 import iconRastreo from '../../../src/assets/images/icon-kraken-web-rastrear-_1.png'; 
 import iconLogo from '../../../src/assets/images/logo.jpg'; 
 
-
-const TopNavigation = ({ 
-  onToggleSidebar, 
-  sidebarOpen 
-}) => {
-  const { actualTheme, toggleTheme } = useTheme();
+const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
+  const { actualTheme } = useTheme();
   const location = useLocation();
+  const { tenant } = useTenant();
 
-  const menuItems = [
-    { 
-      id: 'inicio', 
-      label: 'Inicio', 
-      icon: iconPulpo,
-      iconAlt: '🏠',
-      path: '/home'
-    },
-    { 
-      id: 'calcular', 
-      label: 'Calcular', 
-      icon: iconCalcula,
-      iconAlt: '🧮',
-      path: '/calculator'
-    },
-    { 
-      id: 'pre-alertar', 
-      label: 'Pre-Alertar', 
-      icon: iconParlante,
-      iconAlt: '📦',
-      path: '/pre-alert/list'
-    },
-    { 
-      id: 'rastrear', 
-      label: 'Rastrear', 
-      icon: iconRastreo,
-      iconAlt: '📍',
-      path: '/tracking'
-    }
-  ];
+  // ✅ MAPEO DE ÍCONOS
+  const iconMap = {
+    'home': iconPulpo,
+    'calculator': iconCalcula,
+    'calc': iconCalcula,
+    'bell': iconParlante,
+    'file-text': iconParlante,
+    'map-pin': iconRastreo,
+    'box': iconRastreo,
+  };
+
+  const emojiMap = {
+    'home': '🏠',
+    'calculator': '🧮',
+    'calc': '🧮',
+    'bell': '📢',
+    'file-text': '📄',
+    'map-pin': '📍',
+    'box': '📦',
+  };
+
+  // ✅ CONFIGURACIÓN POR PAÍS
+  let menuItems;
+
+  if (tenant.id === 'VE') {
+    // 🇻🇪 VENEZUELA: Configuración ORIGINAL con Pre-Alertar
+    menuItems = [
+      { 
+        id: 'inicio', 
+        label: 'Inicio', 
+        icon: 'home',
+        iconSrc: iconPulpo,
+        iconAlt: '🏠',
+        path: '/home'
+      },
+      { 
+        id: 'calcular', 
+        label: 'Calcular', 
+        icon: 'calculator',
+        iconSrc: iconCalcula,
+        iconAlt: '🧮',
+        path: '/calculator'
+      },
+      { 
+        id: 'pre-alertar', 
+        label: 'Pre-Alertar', 
+        icon: 'bell',
+        iconSrc: iconParlante,
+        iconAlt: '📢',
+        path: '/pre-alert/list'
+      },
+      { 
+        id: 'rastrear', 
+        label: 'Rastrear', 
+        icon: 'map-pin',
+        iconSrc: iconRastreo,
+        iconAlt: '📍',
+        path: '/tracking'
+      }
+    ];
+  } else if (tenant.id === 'US') {
+    // 🇺🇸 USA: Configuración NUEVA con Recogida
+    menuItems = [
+      { 
+        id: 'inicio', 
+        label: 'Inicio', 
+        icon: 'home',
+        iconSrc: iconPulpo,
+        iconAlt: '🏠',
+        path: '/home'
+      },
+      { 
+        id: 'calcular', 
+        label: 'Calcular', 
+        icon: 'calculator',
+        iconSrc: iconCalcula,
+        iconAlt: '🧮',
+        path: '/calculator'
+      },
+      { 
+        id: 'recogida', 
+        label: 'Recogida', 
+        icon: 'box',
+        iconSrc: iconRastreo,
+        iconAlt: '📦',
+        path: '/pickup'
+      },
+      { 
+        id: 'rastrear', 
+        label: 'Rastrear', 
+        icon: 'map-pin',
+        iconSrc: iconRastreo,
+        iconAlt: '📍',
+        path: '/tracking'
+      }
+    ];
+  } else if (tenant.id === 'ES') {
+    // 🇪🇸 ESPAÑA: Configuración SIMPLE (solo 3 opciones)
+    menuItems = [
+      { 
+        id: 'inicio', 
+        label: 'Inicio', 
+        icon: 'home',
+        iconSrc: iconPulpo,
+        iconAlt: '🏠',
+        path: '/home'
+      },
+      { 
+        id: 'calcular', 
+        label: 'Calcular', 
+        icon: 'calculator',
+        iconSrc: iconCalcula,
+        iconAlt: '🧮',
+        path: '/calculator'
+      },
+      { 
+        id: 'rastrear', 
+        label: 'Rastrear', 
+        icon: 'map-pin',
+        iconSrc: iconRastreo,
+        iconAlt: '📍',
+        path: '/tracking'
+      }
+    ];
+  } else {
+    // Fallback: usar configuración del tenant
+    menuItems = (tenant?.navigation?.topMenu || []).map(item => ({
+      ...item,
+      iconSrc: iconMap[item.icon],
+      iconAlt: emojiMap[item.icon] || '•'
+    }));
+  }
 
   return (
     <header className="top-navigation" data-theme={actualTheme}>
@@ -59,7 +162,7 @@ const TopNavigation = ({
           ☰
         </button>
         
-        {/* Logo Kraken pegado a la izquierda */}
+        {/* Logo Kraken */}
         <div className="top-navigation__logo-container">          
           <a 
             href="https://krakencourier.com/" 
@@ -79,7 +182,7 @@ const TopNavigation = ({
         </div>
       </div>
 
-      {/* Parte Central - Solo el menú azul, centrado */}
+      {/* Parte Central - Menú dinámico por país */}
       <div className="top-navigation__center">
         <nav className="top-navigation__main-nav">
           {menuItems.map((item) => (
@@ -89,23 +192,26 @@ const TopNavigation = ({
               className={`top-navigation__nav-item ${location.pathname === item.path ? 'active' : ''}`}
             >
               <div className="top-navigation__nav-icon-container">
-                <img 
-                  src={item.icon}
-                  alt={item.label}
-                  className="top-navigation__nav-icon-image"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentNode.innerHTML = `<span class="top-navigation__nav-icon-emoji">${item.iconAlt}</span>`;
-                  }}
-                />
+                {item.iconSrc ? (
+                  <img 
+                    src={item.iconSrc}
+                    alt={item.label}
+                    className="top-navigation__nav-icon-image"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentNode.innerHTML = `<span class="top-navigation__nav-icon-emoji">${item.iconAlt}</span>`;
+                    }}
+                  />
+                ) : (
+                  <span className="top-navigation__nav-icon-emoji">{item.iconAlt}</span>
+                )}
               </div>
               <span className="top-navigation__nav-label">{item.label}</span>
             </Link>
           ))}
         </nav>
       </div>
-
-      {/* Parte Derecha */}
+       {/* Parte Derecha */}
       {/* <div className="top-navigation__right">
         Información de entrega
         <div className="top-navigation__delivery-info">

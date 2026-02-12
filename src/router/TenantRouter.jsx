@@ -5,11 +5,12 @@ import Loading from '../components/common/Loading/Loading';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 
 // ===== LAZY LOAD US MODULES =====
-const USHome = React.lazy(() => import('../modules/us/pages/HomePage'));
+const USHome = React.lazy(() => import('../modules/us/pages/Home/HomePage'));
 const USPickup = React.lazy(() => import('../modules/us/pages/PickupPage'));
 const USStores = React.lazy(() => import('../modules/us/pages/StoresPage'));
 const USCalc = React.lazy(() => import('../modules/us/pages/CalculatorPage'));
 const USTracking = React.lazy(() => import('../modules/us/pages/TrackingPage'));
+const USAddresses = React.lazy(() => import('../modules/us/pages/Addresses/AddressesPage'));
 
 // ===== LAZY LOAD VE MODULES (Existing Pages) =====
 // Migraremos esto a modules/venezuela más tarde
@@ -19,6 +20,7 @@ const PreAlertList = React.lazy(() => import('../pages/PreAlert/List/PreAlertLis
 const PreAlertCreate = React.lazy(() => import('../pages/PreAlert/Create/PreAlertCreate'));
 const Guides = React.lazy(() => import('../pages/Guide/Guides'));
 const AddressesPage = React.lazy(() => import('../pages/addresses/Addresses'));
+const Tracking = React.lazy(() => import('../pages/Tracking/Tracking'));
 
 const TenantRouter = () => {
     const { tenant, isLoading } = useTenant();
@@ -40,6 +42,7 @@ const TenantRouter = () => {
                         <Route path="/stores" element={<USStores />} />
                         <Route path="/calculator" element={<USCalc />} />
                         <Route path="/tracking" element={<USTracking />} />
+                        <Route path="/profile/addresses" element={<USAddresses />} />
 
                         {/* Redirecciones Home por defecto */}
                         <Route path="/" element={<Navigate to="/home" replace />} />
@@ -57,6 +60,7 @@ const TenantRouter = () => {
                         <Route path="/pre-alert/create" element={<PreAlertCreate />} />
                         <Route path="/guide/guides" element={<Guides />} />
                         <Route path="/addresses" element={<AddressesPage />} />
+                        <Route path="/tracking" element={<Tracking />} />
 
                         {/* Redirecciones Home por defecto */}
                         <Route path="/" element={<Navigate to="/home" replace />} />

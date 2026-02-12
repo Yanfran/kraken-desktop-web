@@ -1,8 +1,11 @@
 // src/components/Sidebar/Sidebar.jsx
+// ✅ VERSIÓN FINAL - 3 PAÍSES CON CONFIGURACIONES DIFERENTES
+
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTenant } from '../../core/context/TenantContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { updateAvatar } from '../../services/profile/profileService';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
@@ -13,7 +16,6 @@ import KrakenAcademico from '../../../src/assets/images/avatars/Kraken-Academico
 import KrakenAgente from '../../../src/assets/images/avatars/Kraken-Agente.png'; 
 import './Sidebar.styles.scss';
 
-// Mapeo de avatares disponibles (igual que en la app)
 const AVATAR_SOURCES = {
   '1': KrakenOriginal,
   '2': KrakenChino,
@@ -23,8 +25,8 @@ const AVATAR_SOURCES = {
 };
 
 const Sidebar = ({ isOpen, onClose }) => {
-  // ✅ CORREGIR: Usar setUserState en lugar de setUser
   const { user, signOut, setUserState } = useAuth();
+  const { tenant } = useTenant();
   const { actualTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,28 +35,99 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [avatarSelectorVisible, setAvatarSelectorVisible] = useState(false);
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
 
-  // ✅ MENÚ ACTUALIZADO - IDÉNTICO A LA IMAGEN
-  const sidebarMenuItems = [
-    { id: 'mis-envios', label: 'Mis Envíos', path: '/guide/guides' },
-    { id: 'mis-pre-alertas', label: 'Mis Pre-Alertas', path: '/pre-alert/list' },
-    { 
-      id: 'perfil', 
-      label: 'Perfil de Usuario', 
-      hasSubMenu: true,
-      subItems: [
-        { id: 'datos-personales', label: 'Datos Personales', path: '/profile/personal-data' },
-        { id: 'direcciones', label: 'Mis Direcciones', path: '/profile/addresses' },
-        { id: 'change-password', label: 'Cambiar Contraseña', path: '/change-password'}
-        
-      ]
-    },
-    // { id: 'facturacion', label: 'Facturación', path: '/billing', hasArrow: true },
-    // { id: 'seguridad', label: 'Seguridad', path: '/security', hasArrow: true }
-  ];
+  // ✅ CONFIGURACIÓN POR PAÍS
+  let sidebarMenuItems;
+  let showCasilleroInfo;
+  let showStoresButton;
+
+  if (tenant.id === 'VE') {
+    // 🇻🇪 VENEZUELA: Configuración ORIGINAL
+    showCasilleroInfo = true;   // ✅ Mostrar casillero
+    showStoresButton = false;   // ❌ NO mostrar tiendas
+    
+    sidebarMenuItems = [
+      { 
+        id: 'mis-envios', 
+        label: 'Mis Envíos', 
+        path: '/guide/guides' 
+      },
+      { 
+        id: 'mis-pre-alertas', 
+        label: 'Mis Pre-Alertas', 
+        path: '/pre-alert/list' 
+      },
+      { 
+        id: 'perfil', 
+        label: 'Perfil de Usuario', 
+        hasSubMenu: true,
+        subItems: [
+          { id: 'datos-personales', label: 'Datos Personales', path: '/profile/personal-data' },
+          { id: 'direcciones', label: 'Mis Direcciones', path: '/profile/addresses' },
+          { id: 'change-password', label: 'Cambiar Contraseña', path: '/change-password'}
+        ]
+      }
+    ];
+  } else if (tenant.id === 'US') {
+    // 🇺🇸 USA: Configuración NUEVA
+    showCasilleroInfo = false;  // ❌ NO mostrar casillero
+    showStoresButton = true;    // ✅ Mostrar tiendas
+    
+    sidebarMenuItems = [
+      { 
+        id: 'mis-envios', 
+        label: 'Mis Envíos', 
+        path: '/guide/guides' 
+      },
+      { 
+        id: 'perfil', 
+        label: 'Perfil de Usuario', 
+        hasSubMenu: true,
+        subItems: [
+          { id: 'datos-personales', label: 'Datos Personales', path: '/profile/personal-data' },
+          { id: 'direcciones', label: 'Mis Direcciones', path: '/profile/addresses' },
+          { id: 'change-password', label: 'Cambiar Contraseña', path: '/change-password'}
+        ]
+      }
+    ];
+  } else if (tenant.id === 'ES') {
+    // 🇪🇸 ESPAÑA: Configuración INVENTADA
+    showCasilleroInfo = false;  // ❌ NO mostrar casillero
+    showStoresButton = true;    // ✅ Mostrar tiendas
+    
+    sidebarMenuItems = [
+      { 
+        id: 'mis-envios', 
+        label: 'Mis Envíos', 
+        path: '/guide/guides' 
+      },
+      { 
+        id: 'perfil', 
+        label: 'Perfil de Usuario', 
+        hasSubMenu: true,
+        subItems: [
+          { id: 'datos-personales', label: 'Datos Personales', path: '/profile/personal-data' },
+          { id: 'direcciones', label: 'Mis Direcciones', path: '/profile/addresses' },
+          { id: 'change-password', label: 'Cambiar Contraseña', path: '/change-password'}
+        ]
+      },
+      { 
+        id: 'soporte', 
+        label: 'Soporte', 
+        path: '/support' 
+      }
+    ];
+  } else {
+    // Fallback: usar configuración del tenant
+    const sidebarConfig = tenant?.navigation?.sidebar || {};
+    showCasilleroInfo = sidebarConfig.showCasilleroInfo || false;
+    showStoresButton = sidebarConfig.showStoresButton || false;
+    sidebarMenuItems = sidebarConfig.menuItems || [];
+  }
 
   const handleLogout = async () => {
     try {
       await signOut();
+      navigate('/login');
     } catch (error) {
       console.error('Error en logout:', error);
     }
@@ -71,51 +144,32 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   };
 
-  // ✅ FUNCIÓN PARA OBTENER EL AVATAR ACTUAL
   const getAvatarSource = () => {
     const avatarId = user?.avatarId || '1';
     return AVATAR_SOURCES[avatarId] || '/src/assets/images/about/circle_logo.png';
   };
 
-  // ✅ ABRIR SELECTOR DE AVATAR
   const handleAvatarClick = () => {
     setAvatarSelectorVisible(true);
   };
 
-  // ✅ CAMBIAR AVATAR - CORREGIDO
   const handleAvatarChange = async (newAvatarId) => {
     if (isUpdatingAvatar) return;
 
     try {
       setIsUpdatingAvatar(true);
-      // console.log('🎨 Iniciando cambio de avatar a:', newAvatarId);
 
       if (!user || !user.email) {
         toast.error('Usuario no válido. Por favor, inicia sesión nuevamente.');
         return;
       }
 
-      // ✅ PASO 1: Actualizar en el backend
       const response = await updateAvatar(newAvatarId, user.email);
 
       if (response.success) {
-        // console.log('✅ Avatar actualizado en backend');
-        
-        // ✅ PASO 2: Actualizar el usuario en el contexto
-        const updatedUser = { 
-          ...user, 
-          avatarId: newAvatarId
-        };
-        
-        // ✅ PASO 3: Guardar en localStorage
+        const updatedUser = { ...user, avatarId: newAvatarId };
         localStorage.setItem('userData', JSON.stringify(updatedUser));
-        // console.log('💾 Avatar guardado en localStorage');
-        
-        // ✅ PASO 4: Actualizar contexto usando setUserState
         await setUserState(updatedUser);
-        // console.log('🔄 Contexto actualizado');
-        
-        // ✅ PASO 5: Cerrar modal y mostrar éxito
         setAvatarSelectorVisible(false);
         toast.success('Avatar actualizado exitosamente');
       } else {
@@ -135,9 +189,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         {isOpen && <div className="dashboard-sidebar__overlay" onClick={onClose} />}
         
         <div className="dashboard-sidebar__content">
-          {/* User Profile con Avatar Editable */}
+          {/* User Profile con Avatar */}
           <div className="dashboard-sidebar__user-profile">
-            {/* ✅ Avatar clickeable con indicador de edición */}
             <button 
               className="dashboard-sidebar__avatar-button"
               onClick={handleAvatarClick}
@@ -150,7 +203,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                   alt="Avatar" 
                   className="dashboard-sidebar__avatar-image"
                 />
-                {/* Overlay de edición */}
                 <div className="dashboard-sidebar__avatar-edit-overlay">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -169,15 +221,36 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Casillero Info */}
-          <div className="dashboard-sidebar__casillero-info">
-            <p className="dashboard-sidebar__casillero-label">Casillero USA / Casillero CHINA</p>
-            <Link to="/addresses" className="dashboard-sidebar__directions-btn">
-              Ver direcciones
-            </Link>
-          </div>
+          {/* ✅ CASILLERO INFO - Solo para Venezuela */}
+          {showCasilleroInfo && (
+            <div className="dashboard-sidebar__casillero-info">
+              <p className="dashboard-sidebar__casillero-label">Casillero USA / Casillero CHINA</p>
+              <Link to="/addresses" className="dashboard-sidebar__directions-btn">
+                Ver direcciones
+              </Link>
+            </div>
+          )}
 
-          {/* Sidebar Menu */}
+          {/* ✅ BOTÓN DE TIENDAS - Para USA y España */}
+          {showStoresButton && (
+            <div className="dashboard-sidebar__casillero-info">              
+              <Link to="/stores" className="dashboard-sidebar__directions-btn">
+                🏪 Ver Nuestras Tiendas
+              </Link>
+            </div>
+            
+            // <button
+            //   onClick={() => {
+            //     navigate('/stores');
+            //     if (window.innerWidth <= 768) onClose();
+            //   }}
+            //   className="dashboard-sidebar__stores-button"
+            // >
+            //   🏪 Ver Nuestras Tiendas
+            // </button>
+          )}
+
+          {/* Menu Items - Diferente por país */}
           <nav className="dashboard-sidebar__menu">
             {sidebarMenuItems.map((item) => (
               <div key={item.id}>
@@ -225,15 +298,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             ))}
           </nav>
 
-          {/* Idioma */}
-        {/* <div className="dashboard-sidebar__language-selector">
-          <p className="dashboard-sidebar__language-label">Idioma</p>
-          <div className="dashboard-sidebar__language-buttons">
-            <button className="dashboard-sidebar__language-btn active">ES</button>
-            <button className="dashboard-sidebar__language-btn">EN</button>
-          </div>
-        </div> */}
-
           {/* Logout Button */}
           <button className="dashboard-sidebar__logout-btn" onClick={handleLogout}>
             Cerrar Sesión
@@ -241,7 +305,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
       </aside>
 
-      {/* ✅ MODAL DE SELECTOR DE AVATAR */}
+      {/* Modal de Selector de Avatar */}
       <AvatarSelector
         visible={avatarSelectorVisible}
         currentAvatarId={user?.avatarId || '1'}
