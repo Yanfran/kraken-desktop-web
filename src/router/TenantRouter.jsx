@@ -1,10 +1,44 @@
+// src/router/TenantRouter.jsx
+// ✅ VERSIÓN COMPLETA CON TODAS LAS RUTAS PARA VENEZUELA
+
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useTenant } from '../core/context/TenantContext';
 import Loading from '../components/common/Loading/Loading';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 
-// ===== LAZY LOAD US MODULES =====
+// ============================================
+// LAZY LOAD - PÁGINAS VENEZUELA (KV)
+// ============================================
+const Home = React.lazy(() => import('../pages/Home/Home'));
+const Calculator = React.lazy(() => import('../pages/calculator/Calculator/Calculator'));
+const Tracking = React.lazy(() => import('../pages/Tracking/Tracking'));
+
+// Pre-Alertas
+const PreAlertList = React.lazy(() => import('../pages/PreAlert/List/PreAlertList'));
+const PreAlertCreate = React.lazy(() => import('../pages/PreAlert/Create/PreAlertCreate'));
+
+// Guías
+const Guides = React.lazy(() => import('../pages/Guide/Guides'));
+const GuideDetail = React.lazy(() => import('../pages/GuideDetail/GuideDetail'));
+
+// Perfil
+const PersonalDataPage = React.lazy(() => import('../pages/profile/Profile/PersonalData/PersonalData'));
+const AddressesPage = React.lazy(() => import('../pages/addresses/Addresses'));
+const ChangePassword = React.lazy(() => import('../pages/profile/Profile/ChangePassword/ChangePassword'));
+
+// Billing/Pagos
+const Billing = React.lazy(() => import('../pages/Billing/Billing'));
+const Payment = React.lazy(() => import('../pages/payment/PaymentPage'));
+
+// Paquetes
+// const Packages = React.lazy(() => import('../pages/Packages/PackagesList'));
+
+// Dashboard (si existe)
+// const Dashboard = React.lazy(() => import('../pages/Dashboard/Dashboard'));
+
+// ============================================
+// LAZY LOAD - PÁGINAS USA (KU)
+// ============================================
 const USHome = React.lazy(() => import('../modules/us/pages/Home/HomePage'));
 const USPickup = React.lazy(() => import('../modules/us/pages/PickupPage'));
 const USStores = React.lazy(() => import('../modules/us/pages/StoresPage'));
@@ -12,30 +46,78 @@ const USCalc = React.lazy(() => import('../modules/us/pages/CalculatorPage'));
 const USTracking = React.lazy(() => import('../modules/us/pages/TrackingPage'));
 const USAddresses = React.lazy(() => import('../modules/us/pages/Addresses/AddressesPage'));
 
-// ===== LAZY LOAD VE MODULES (Existing Pages) =====
-// Migraremos esto a modules/venezuela más tarde
-const Home = React.lazy(() => import('../pages/Home/Home'));
-const Calculator = React.lazy(() => import('../pages/calculator/Calculator/Calculator'));
-const PreAlertList = React.lazy(() => import('../pages/PreAlert/List/PreAlertList'));
-const PreAlertCreate = React.lazy(() => import('../pages/PreAlert/Create/PreAlertCreate'));
-const Guides = React.lazy(() => import('../pages/Guide/Guides'));
-const AddressesPage = React.lazy(() => import('../pages/addresses/Addresses'));
-const Tracking = React.lazy(() => import('../pages/Tracking/Tracking'));
-
 const TenantRouter = () => {
     const { tenant, isLoading } = useTenant();
 
     if (isLoading) return <Loading />;
 
-    //console.log("🔀 [Router] Rendering routes for tenant:", tenant.id);
+    // Normalizar identificadores del tenant para evitar problemas de mayúsculas
+    const tenantId = tenant?.id?.toString?.().toUpperCase?.() || '';
+    const tenantPrefix = tenant?.prefix?.toString?.().toUpperCase?.() || '';
+
+    // Traza para debugging rápido (descomentar si es necesario)
+    // console.log('[TenantRouter] tenantId:', tenantId, 'tenantPrefix:', tenantPrefix, 'tenant:', tenant);
 
     return (
         <Suspense fallback={<Loading />}>
             <Routes>
                 {/* =======================================================
-                    RUTAS ESPECÍFICAS DE USA (KU)
+                    🇻🇪 VENEZUELA (KV) - TODAS LAS RUTAS
                    ======================================================= */}
-                {tenant.id === 'US' && (
+                {(tenantId === 'VE' || tenantPrefix === 'KV') && (
+                    <>
+                        {/* Página principal */}
+                        <Route path="/home" element={<Home />} />
+                        
+                        {/* Calculadora */}
+                        <Route path="/calculator" element={<Calculator />} />
+                        
+                        {/* Pre-Alertas */}
+                        <Route path="/pre-alert/list" element={<PreAlertList />} />
+                        <Route path="/pre-alert/create" element={<PreAlertCreate />} />
+                        
+                        {/* Guías */}
+                        <Route path="/guide/guides" element={<Guides />} />
+                        <Route path="/guide/:id" element={<GuideDetail />} />
+                        
+                        {/* Tracking */}
+                        <Route path="/tracking" element={<Tracking />} />
+                        
+                        {/* Perfil */}
+                        <Route path="/profile" element={<Navigate to="/profile/personal-data" replace />} />
+                        <Route path="/profile/personal-data" element={<PersonalDataPage />} />
+                        <Route path="/profile/addresses" element={<AddressesPage />} />
+                        <Route path="/addresses" element={<AddressesPage />} /> {/* Alias */}
+                        <Route path="/change-password" element={<ChangePassword />} />
+                        
+                        {/* Billing y Pagos */}
+                        <Route path="/billing" element={<Billing />} />
+                        <Route path="/payment" element={<Payment />} />
+                        <Route path="/payment/:id" element={<Payment />} />
+                        
+                        {/* Paquetes */}
+                        {/* <Route path="/packages" element={<Packages />} /> */}
+                        
+                        {/* Dashboard (si existe) */}
+                        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+                        
+                        {/* Redirección por defecto */}
+                        <Route path="/" element={<Navigate to="/home" replace />} />
+                        
+                        {/* 404 para Venezuela */}
+                        <Route path="*" element={
+                            <div className="p-10 text-center">
+                                <h2>Página no encontrada</h2>
+                                <p>La ruta solicitada no existe para Venezuela</p>
+                            </div>
+                        } />
+                    </>
+                )}
+
+                {/* =======================================================
+                    🇺🇸 USA (KU) - RUTAS
+                   ======================================================= */}
+                {(tenantId === 'US' || tenantPrefix === 'KU') && (
                     <>
                         <Route path="/home" element={<USHome />} />
                         <Route path="/pickup" element={<USPickup />} />
@@ -43,37 +125,42 @@ const TenantRouter = () => {
                         <Route path="/calculator" element={<USCalc />} />
                         <Route path="/tracking" element={<USTracking />} />
                         <Route path="/profile/addresses" element={<USAddresses />} />
-
-                        {/* Redirecciones Home por defecto */}
+                        
+                        {/* Redirección por defecto */}
                         <Route path="/" element={<Navigate to="/home" replace />} />
+                        
+                        {/* 404 para USA */}
+                        <Route path="*" element={
+                            <div className="p-10 text-center">
+                                <h2>Page not found</h2>
+                                <p>The requested route does not exist for USA</p>
+                            </div>
+                        } />
                     </>
                 )}
 
                 {/* =======================================================
-                    RUTAS ESPECÍFICAS DE VENEZUELA (KV) - LEGACY
+                    🇪🇸 ESPAÑA (KE) - RUTAS FUTURAS
                    ======================================================= */}
-                {tenant.id === 'VE' && (
+                {(tenantId === 'ES' || tenantPrefix === 'KE') && (
                     <>
-                        <Route path="/home" element={<Home />} />
-                        <Route path="/calculator" element={<Calculator />} />
-                        <Route path="/pre-alert/list" element={<PreAlertList />} />
-                        <Route path="/pre-alert/create" element={<PreAlertCreate />} />
-                        <Route path="/guide/guides" element={<Guides />} />
-                        <Route path="/addresses" element={<AddressesPage />} />
-                        <Route path="/tracking" element={<Tracking />} />
-
-                        {/* Redirecciones Home por defecto */}
                         <Route path="/" element={<Navigate to="/home" replace />} />
+                        <Route path="*" element={
+                            <div className="p-10 text-center">
+                                <h2>Próximamente</h2>
+                                <p>Las páginas para España están en desarrollo</p>
+                            </div>
+                        } />
                     </>
                 )}
 
-                {/* =======================================================
-                    RUTAS COMPARTIDAS / FALLBACK
-                   ======================================================= */}
-                {/* Aquí irían perfil, settings, etc. que son iguales para todos */}
-
-                {/* 404 para rutas no encontradas dentro del tenant */}
-                <Route path="*" element={<div className="p-10 text-center">Página no encontrada para {tenant.name}</div>} />
+                {/* Fallback global si no coincide ningún tenant */}
+                <Route path="*" element={
+                    <div className="p-10 text-center">
+                        <h2>Error de configuración</h2>
+                        <p>No se pudo determinar el país del usuario</p>
+                    </div>
+                } />
             </Routes>
         </Suspense>
     );

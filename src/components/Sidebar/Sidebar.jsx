@@ -1,5 +1,5 @@
 // src/components/Sidebar/Sidebar.jsx
-// ✅ VERSIÓN FINAL - 3 PAÍSES CON CONFIGURACIONES DIFERENTES
+// ✅ VERSIÓN CORREGIDA CON MANEJO CORRECTO DE SUBMENÚS
 
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -26,170 +26,90 @@ const AVATAR_SOURCES = {
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, signOut, setUserState } = useAuth();
-  const { tenant } = useTenant();
+  const { tenant, isLoading } = useTenant();
   const { actualTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   
+  // ✅ ESTADO CORRECTO: Solo un booleano para el submenú de perfil
   const [profileSubMenuOpen, setProfileSubMenuOpen] = useState(false);
   const [avatarSelectorVisible, setAvatarSelectorVisible] = useState(false);
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
 
-  // ✅ CONFIGURACIÓN POR PAÍS
-  let sidebarMenuItems;
-  let showCasilleroInfo;
-  let showStoresButton;
+  // ✅ OBTENER CONFIGURACIÓN DESDE BD (sin if/else)
+  const sidebarConfig = tenant?.navigation?.sidebar || {};
+  const showCasilleroInfo = sidebarConfig.showCasilleroInfo || false;
+  const showStoresButton = sidebarConfig.showStoresButton || false;
+  const sidebarMenuItems = sidebarConfig.menuItems || [];
 
-  if (tenant.id === 'VE') {
-    // 🇻🇪 VENEZUELA: Configuración ORIGINAL
-    showCasilleroInfo = true;   // ✅ Mostrar casillero
-    showStoresButton = false;   // ❌ NO mostrar tiendas
-    
-    sidebarMenuItems = [
-      { 
-        id: 'mis-envios', 
-        label: 'Mis Envíos', 
-        path: '/guide/guides' 
-      },
-      { 
-        id: 'mis-pre-alertas', 
-        label: 'Mis Pre-Alertas', 
-        path: '/pre-alert/list' 
-      },
-      { 
-        id: 'perfil', 
-        label: 'Perfil de Usuario', 
-        hasSubMenu: true,
-        subItems: [
-          { id: 'datos-personales', label: 'Datos Personales', path: '/profile/personal-data' },
-          { id: 'direcciones', label: 'Mis Direcciones', path: '/profile/addresses' },
-          { id: 'change-password', label: 'Cambiar Contraseña', path: '/change-password'}
-        ]
-      }
-    ];
-  } else if (tenant.id === 'US') {
-    // 🇺🇸 USA: Configuración NUEVA
-    showCasilleroInfo = false;  // ❌ NO mostrar casillero
-    showStoresButton = true;    // ✅ Mostrar tiendas
-    
-    sidebarMenuItems = [
-      { 
-        id: 'mis-envios', 
-        label: 'Mis Envíos', 
-        path: '/guide/guides' 
-      },
-      { 
-        id: 'perfil', 
-        label: 'Perfil de Usuario', 
-        hasSubMenu: true,
-        subItems: [
-          { id: 'datos-personales', label: 'Datos Personales', path: '/profile/personal-data' },
-          { id: 'direcciones', label: 'Mis Direcciones', path: '/profile/addresses' },
-          { id: 'change-password', label: 'Cambiar Contraseña', path: '/change-password'}
-        ]
-      }
-    ];
-  } else if (tenant.id === 'ES') {
-    // 🇪🇸 ESPAÑA: Configuración INVENTADA
-    showCasilleroInfo = false;  // ❌ NO mostrar casillero
-    showStoresButton = true;    // ✅ Mostrar tiendas
-    
-    sidebarMenuItems = [
-      { 
-        id: 'mis-envios', 
-        label: 'Mis Envíos', 
-        path: '/guide/guides' 
-      },
-      { 
-        id: 'perfil', 
-        label: 'Perfil de Usuario', 
-        hasSubMenu: true,
-        subItems: [
-          { id: 'datos-personales', label: 'Datos Personales', path: '/profile/personal-data' },
-          { id: 'direcciones', label: 'Mis Direcciones', path: '/profile/addresses' },
-          { id: 'change-password', label: 'Cambiar Contraseña', path: '/change-password'}
-        ]
-      },
-      { 
-        id: 'soporte', 
-        label: 'Soporte', 
-        path: '/support' 
-      }
-    ];
-  } else {
-    // Fallback: usar configuración del tenant
-    const sidebarConfig = tenant?.navigation?.sidebar || {};
-    showCasilleroInfo = sidebarConfig.showCasilleroInfo || false;
-    showStoresButton = sidebarConfig.showStoresButton || false;
-    sidebarMenuItems = sidebarConfig.menuItems || [];
-  }
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/login');
-    } catch (error) {
-      console.error('Error en logout:', error);
-    }
-  };
-
-  const toggleProfileSubMenu = () => {
-    setProfileSubMenuOpen(!profileSubMenuOpen);
-  };
-
-  const handleSubItemClick = (path) => {
-    navigate(path);
-    if (window.innerWidth <= 768) {
-      onClose();
-    }
-  };
-
-  const getAvatarSource = () => {
-    const avatarId = user?.avatarId || '1';
-    return AVATAR_SOURCES[avatarId] || '/src/assets/images/about/circle_logo.png';
-  };
-
+  // Handlers
   const handleAvatarClick = () => {
     setAvatarSelectorVisible(true);
   };
 
-  const handleAvatarChange = async (newAvatarId) => {
-    if (isUpdatingAvatar) return;
-
+  const handleAvatarSelect = async (avatarId) => {
     try {
       setIsUpdatingAvatar(true);
-
-      if (!user || !user.email) {
-        toast.error('Usuario no válido. Por favor, inicia sesión nuevamente.');
-        return;
-      }
-
-      const response = await updateAvatar(newAvatarId, user.email);
-
+      const response = await updateAvatar(avatarId);
+      
       if (response.success) {
-        const updatedUser = { ...user, avatarId: newAvatarId };
-        localStorage.setItem('userData', JSON.stringify(updatedUser));
-        await setUserState(updatedUser);
+        setUserState(prev => ({
+          ...prev,
+          avatarId: avatarId
+        }));
+        
+        const updatedUserData = {
+          ...JSON.parse(localStorage.getItem('userData') || '{}'),
+          avatarId: avatarId
+        };
+        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+        
+        toast.success('Avatar actualizado correctamente');
         setAvatarSelectorVisible(false);
-        toast.success('Avatar actualizado exitosamente');
       } else {
-        toast.error(response.message || 'Error al actualizar el avatar');
+        toast.error(response.message || 'Error al actualizar avatar');
       }
     } catch (error) {
-      console.error('❌ Error actualizando avatar:', error);
-      toast.error('No se pudo actualizar el avatar. Intenta nuevamente.');
+      console.error('Error updating avatar:', error);
+      toast.error('Error al actualizar el avatar');
     } finally {
       setIsUpdatingAvatar(false);
     }
   };
 
+  // ✅ TOGGLE SIMPLE para el submenú de perfil
+  const toggleProfileSubmenu = () => {
+    setProfileSubMenuOpen(!profileSubMenuOpen);
+  };
+
+  const handleLogout = () => {
+    signOut();
+    navigate('/login');
+    onClose();
+  };
+
+  const handleSubItemClick = (path) => {
+    navigate(path);
+    onClose();
+  };
+
+  const currentAvatarId = user?.avatarId || '1';
+  const currentAvatar = AVATAR_SOURCES[currentAvatarId] || AVATAR_SOURCES['1'];
+
+  // Loading state
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <>
+      {/* Overlay para cerrar en mobile */}
+      {isOpen && <div className="dashboard-sidebar__overlay" onClick={onClose} />}
+      
       <aside className={`dashboard-sidebar ${isOpen ? 'open' : 'closed'}`} data-theme={actualTheme}>
-        {isOpen && <div className="dashboard-sidebar__overlay" onClick={onClose} />}
-        
         <div className="dashboard-sidebar__content">
-          {/* User Profile con Avatar */}
+          
+          {/* ========== USER PROFILE SECTION ========== */}
           <div className="dashboard-sidebar__user-profile">
             <button 
               className="dashboard-sidebar__avatar-button"
@@ -199,7 +119,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
               <div className="dashboard-sidebar__user-avatar">
                 <img 
-                  src={getAvatarSource()} 
+                  src={currentAvatar} 
                   alt="Avatar" 
                   className="dashboard-sidebar__avatar-image"
                 />
@@ -214,14 +134,14 @@ const Sidebar = ({ isOpen, onClose }) => {
             
             <div className="dashboard-sidebar__user-info">
               <h3 className="dashboard-sidebar__user-name">
-                {user?.name || 'Usuario'} {user?.lastName || ''}
+                {user?.name || user?.nombres || 'Usuario'} {user?.lastName || user?.apellidos || ''}
               </h3>
               <p className="dashboard-sidebar__user-id">N° de Casillero</p>
-              <p className="dashboard-sidebar__user-number">{user?.codCliente || 'KV000111'}</p>
+              <p className="dashboard-sidebar__user-number">{user?.codCliente || 'N/A'}</p>
             </div>
           </div>
 
-          {/* ✅ CASILLERO INFO - Solo para Venezuela */}
+          {/* ========== CASILLERO INFO (Solo Venezuela) ========== */}
           {showCasilleroInfo && (
             <div className="dashboard-sidebar__casillero-info">
               <p className="dashboard-sidebar__casillero-label">Casillero USA / Casillero CHINA</p>
@@ -231,33 +151,24 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* ✅ BOTÓN DE TIENDAS - Para USA y España */}
+          {/* ========== BOTÓN VER TIENDAS (USA y España) ========== */}
           {showStoresButton && (
             <div className="dashboard-sidebar__casillero-info">              
               <Link to="/stores" className="dashboard-sidebar__directions-btn">
                 🏪 Ver Nuestras Tiendas
               </Link>
             </div>
-            
-            // <button
-            //   onClick={() => {
-            //     navigate('/stores');
-            //     if (window.innerWidth <= 768) onClose();
-            //   }}
-            //   className="dashboard-sidebar__stores-button"
-            // >
-            //   🏪 Ver Nuestras Tiendas
-            // </button>
           )}
 
-          {/* Menu Items - Diferente por país */}
+          {/* ========== MENU ITEMS DINÁMICOS ========== */}
           <nav className="dashboard-sidebar__menu">
             {sidebarMenuItems.map((item) => (
               <div key={item.id}>
                 {item.hasSubMenu ? (
+                  // ✅ ITEM CON SUBMENÚ
                   <>
                     <button
-                      onClick={toggleProfileSubMenu}
+                      onClick={toggleProfileSubmenu}
                       className={`dashboard-sidebar__menu-item ${profileSubMenuOpen ? 'active' : ''}`}
                     >
                       <span className="dashboard-sidebar__menu-text">{item.label}</span>
@@ -266,9 +177,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                       </span>
                     </button>
                     
+                    {/* ✅ SUBMENÚ (se muestra si profileSubMenuOpen es true) */}
                     {profileSubMenuOpen && (
                       <div className="dashboard-sidebar__submenu">
-                        {item.subItems.map((subItem) => (
+                        {item.subItems?.map((subItem) => (
                           <button
                             key={subItem.id}
                             onClick={() => handleSubItemClick(subItem.path)}
@@ -283,6 +195,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     )}
                   </>
                 ) : (
+                  // ✅ ITEM NORMAL (sin submenú)
                   <Link
                     to={item.path}
                     className={`dashboard-sidebar__menu-item ${
@@ -291,27 +204,28 @@ const Sidebar = ({ isOpen, onClose }) => {
                     onClick={() => window.innerWidth <= 768 && onClose()}
                   >
                     <span className="dashboard-sidebar__menu-text">{item.label}</span>
-                    {item.hasArrow && <span className="dashboard-sidebar__menu-arrow">›</span>}
                   </Link>
                 )}
               </div>
             ))}
           </nav>
 
-          {/* Logout Button */}
+          {/* ========== LOGOUT BUTTON ========== */}
           <button className="dashboard-sidebar__logout-btn" onClick={handleLogout}>
-            Cerrar Sesión
+            🚪 Cerrar Sesión
           </button>
         </div>
       </aside>
 
-      {/* Modal de Selector de Avatar */}
-      <AvatarSelector
-        visible={avatarSelectorVisible}
-        currentAvatarId={user?.avatarId || '1'}
-        onSelect={handleAvatarChange}
-        onCancel={() => setAvatarSelectorVisible(false)}
-      />
+      {/* ========== AVATAR SELECTOR MODAL ========== */}
+      {avatarSelectorVisible && (
+        <AvatarSelector
+          currentAvatarId={currentAvatarId}
+          onSelect={handleAvatarSelect}
+          onClose={() => setAvatarSelectorVisible(false)}
+          isUpdating={isUpdatingAvatar}
+        />
+      )}
     </>
   );
 };

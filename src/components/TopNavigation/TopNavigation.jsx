@@ -1,5 +1,5 @@
 // src/components/TopNavigation/TopNavigation.jsx
-// ✅ VERSIÓN FINAL - 3 PAÍSES CON CONFIGURACIONES DIFERENTES
+// ✅ SIMPLIFICADO: Elimina if/else, obtiene menús desde BD
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -15,17 +15,16 @@ import iconLogo from '../../../src/assets/images/logo.jpg';
 const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
   const { actualTheme } = useTheme();
   const location = useLocation();
-  const { tenant } = useTenant();
+  const { tenant, isLoading } = useTenant();
 
-  // ✅ MAPEO DE ÍCONOS
+  // ✅ MAPEO DE ÍCONOS LOCALES (mantener para compatibilidad con assets)
   const iconMap = {
     'home': iconPulpo,
     'calculator': iconCalcula,
     'calc': iconCalcula,
     'bell': iconParlante,
-    'file-text': iconParlante,
-    'map-pin': iconRastreo,
     'box': iconRastreo,
+    'map-pin': iconRastreo,
   };
 
   const emojiMap = {
@@ -33,121 +32,24 @@ const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
     'calculator': '🧮',
     'calc': '🧮',
     'bell': '📢',
-    'file-text': '📄',
-    'map-pin': '📍',
     'box': '📦',
+    'map-pin': '📍',
   };
 
-  // ✅ CONFIGURACIÓN POR PAÍS
-  let menuItems;
+  // ✅ OBTENER MENÚS DIRECTAMENTE DE LA BD (sin if/else)
+  const menuItems = tenant?.navigation?.topMenu?.map(item => ({
+    ...item,
+    iconSrc: iconMap[item.icon],
+    iconAlt: emojiMap[item.icon] || '•'
+  })) || [];
 
-  if (tenant.id === 'VE') {
-    // 🇻🇪 VENEZUELA: Configuración ORIGINAL con Pre-Alertar
-    menuItems = [
-      { 
-        id: 'inicio', 
-        label: 'Inicio', 
-        icon: 'home',
-        iconSrc: iconPulpo,
-        iconAlt: '🏠',
-        path: '/home'
-      },
-      { 
-        id: 'calcular', 
-        label: 'Calcular', 
-        icon: 'calculator',
-        iconSrc: iconCalcula,
-        iconAlt: '🧮',
-        path: '/calculator'
-      },
-      { 
-        id: 'pre-alertar', 
-        label: 'Pre-Alertar', 
-        icon: 'bell',
-        iconSrc: iconParlante,
-        iconAlt: '📢',
-        path: '/pre-alert/list'
-      },
-      { 
-        id: 'rastrear', 
-        label: 'Rastrear', 
-        icon: 'map-pin',
-        iconSrc: iconRastreo,
-        iconAlt: '📍',
-        path: '/tracking'
-      }
-    ];
-  } else if (tenant.id === 'US') {
-    // 🇺🇸 USA: Configuración NUEVA con Recogida
-    menuItems = [
-      { 
-        id: 'inicio', 
-        label: 'Inicio', 
-        icon: 'home',
-        iconSrc: iconPulpo,
-        iconAlt: '🏠',
-        path: '/home'
-      },
-      { 
-        id: 'calcular', 
-        label: 'Calcular', 
-        icon: 'calculator',
-        iconSrc: iconCalcula,
-        iconAlt: '🧮',
-        path: '/calculator'
-      },
-      { 
-        id: 'recogida', 
-        label: 'Recogida', 
-        icon: 'box',
-        iconSrc: iconRastreo,
-        iconAlt: '📦',
-        path: '/pickup'
-      },
-      { 
-        id: 'rastrear', 
-        label: 'Rastrear', 
-        icon: 'map-pin',
-        iconSrc: iconRastreo,
-        iconAlt: '📍',
-        path: '/tracking'
-      }
-    ];
-  } else if (tenant.id === 'ES') {
-    // 🇪🇸 ESPAÑA: Configuración SIMPLE (solo 3 opciones)
-    menuItems = [
-      { 
-        id: 'inicio', 
-        label: 'Inicio', 
-        icon: 'home',
-        iconSrc: iconPulpo,
-        iconAlt: '🏠',
-        path: '/home'
-      },
-      { 
-        id: 'calcular', 
-        label: 'Calcular', 
-        icon: 'calculator',
-        iconSrc: iconCalcula,
-        iconAlt: '🧮',
-        path: '/calculator'
-      },
-      { 
-        id: 'rastrear', 
-        label: 'Rastrear', 
-        icon: 'map-pin',
-        iconSrc: iconRastreo,
-        iconAlt: '📍',
-        path: '/tracking'
-      }
-    ];
-  } else {
-    // Fallback: usar configuración del tenant
-    menuItems = (tenant?.navigation?.topMenu || []).map(item => ({
-      ...item,
-      iconSrc: iconMap[item.icon],
-      iconAlt: emojiMap[item.icon] || '•'
-    }));
+  // Loading state
+  if (isLoading) {
+    return (
+      <header className="top-navigation" data-theme={actualTheme}>
+        <div className="top-navigation__loading">Cargando menú...</div>
+      </header>
+    );
   }
 
   return (
@@ -162,7 +64,6 @@ const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
           ☰
         </button>
         
-        {/* Logo Kraken */}
         <div className="top-navigation__logo-container">          
           <a 
             href="https://krakencourier.com/" 
@@ -182,7 +83,7 @@ const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
         </div>
       </div>
 
-      {/* Parte Central - Menú dinámico por país */}
+      {/* Parte Central - Menú dinámico desde BD */}
       <div className="top-navigation__center">
         <nav className="top-navigation__main-nav">
           {menuItems.map((item) => (
@@ -193,7 +94,7 @@ const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
             >
               <div className="top-navigation__nav-icon-container">
                 {item.iconSrc ? (
-                  <img 
+                  <img
                     src={item.iconSrc}
                     alt={item.label}
                     className="top-navigation__nav-icon-image"
@@ -246,4 +147,4 @@ const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
   );
 };
 
-export default TopNavigation;
+export default TopNavigation; 
