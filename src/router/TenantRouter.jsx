@@ -55,8 +55,8 @@ const TenantRouter = () => {
     const tenantId = tenant?.id?.toString?.().toUpperCase?.() || '';
     const tenantPrefix = tenant?.prefix?.toString?.().toUpperCase?.() || '';
 
-    // Traza para debugging rápido (descomentar si es necesario)
-    // console.log('[TenantRouter] tenantId:', tenantId, 'tenantPrefix:', tenantPrefix, 'tenant:', tenant);
+    // Traza para debugging rápido
+    console.log('[TenantRouter] tenantId:', tenantId, 'tenantPrefix:', tenantPrefix, 'tenant:', tenant);
 
     return (
         <Suspense fallback={<Loading />}>

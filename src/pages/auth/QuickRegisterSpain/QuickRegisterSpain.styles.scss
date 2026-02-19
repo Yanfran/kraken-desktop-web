@@ -1,0 +1,418 @@
+// src/pages/auth/QuickRegisterSpain/QuickRegisterSpain.styles.scss
+// ✅ VERSIÓN 2 COLUMNAS - SIN SCROLL
+
+/* Variables base */
+:root {
+  --color-primary: #FF4500;
+  --color-primary-light: #FF7F50;
+  --color-secondary: #0175c8;
+  --color-background: #FFFFFF;
+  --color-card-background: #F8F8F8;
+  --color-text-primary: #000000;
+  --color-text-secondary: #757575;
+  --color-text-placeholder: #AAAAAA;
+  --color-success: #4CAF50;
+  --color-error: #F44336;
+  --color-input-background: #F5F5F5;
+  --color-border: #D0D0D0;
+  --color-separator: #EEEEEE;
+}
+
+.quick-register-spain {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--color-background);
+  transition: background-color 0.3s ease;
+  position: relative;
+  
+  // ✅ Fondo de imagen para modo claro
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    z-index: -1;
+    opacity: 0.95;
+    
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+    }
+  }
+  
+  // ✅ Fondo para modo oscuro
+  &[data-theme="dark"]::before {
+    background-image: none;
+    background: linear-gradient(135deg, #141218 0%, #1D1B20 50%, #211F26 100%);
+  }
+}
+
+.quick-register-spain__container {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  padding: 40px;
+  max-width: 900px; // ✅ MÁS ANCHO para 2 columnas
+  width: 100%;
+  animation: slideUp 0.4s ease-out;
+  position: relative;
+  z-index: 1;
+  
+  [data-theme="dark"] & {
+    background: rgba(29, 27, 32, 0.98);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 30px 20px;
+    border-radius: 16px;
+    max-width: 500px; // En móvil vuelve a ancho normal
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Logo
+.quick-register-spain__logo {
+  text-align: center;
+  margin-bottom: 20px;
+  
+  img {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+  }
+}
+
+// Título
+.quick-register-spain__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin-bottom: 6px;
+  
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+}
+
+.quick-register-spain__subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+// ✅ FORMULARIO CON GRID DE 2 COLUMNAS
+.quick-register-spain__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr; // 2 columnas iguales
+  gap: 20px 24px; // vertical horizontal
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr; // 1 columna en móvil
+    gap: 16px;
+  }
+}
+
+// Form Group
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  
+  label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  
+  input,
+  select {
+    padding: 12px 16px;
+    font-size: 14px;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease;
+    background: var(--color-input-background);
+    color: var(--color-text-primary);
+    
+    &:focus {
+      border-color: var(--color-primary);
+      background: #FFFFFF;
+      
+      [data-theme="dark"] & {
+        background: #2d3748;
+        border-color: var(--color-primary-light);
+      }
+    }
+    
+    &::placeholder {
+      color: var(--color-text-placeholder);
+    }
+    
+    &.error {
+      border-color: var(--color-error);
+      
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
+      }
+    }
+    
+    [data-theme="dark"] & {
+      background: #2d3748;
+      border-color: #4a5568;
+      color: #e2e8f0;
+    }
+  }
+  
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23718096' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  
+  // ✅ ELEMENTOS QUE OCUPAN TODA LA FILA
+  &.full-width {
+    grid-column: 1 / -1; // Ocupa todas las columnas
+  }
+}
+
+// Teléfono con prefijo
+.phone-input {
+  display: flex;
+  gap: 8px;
+  
+  .phone-prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: #e2e8f0;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    
+    [data-theme="dark"] & {
+      background: #1a202c;
+      border-color: #4a5568;
+      color: #e2e8f0;
+    }
+  }
+  
+  input {
+    flex: 1;
+  }
+}
+
+// Checkbox (Términos) - ✅ OCUPA TODA LA FILA
+.form-group.checkbox {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  
+  label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  
+  input[type="checkbox"] {
+    margin-top: 2px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    accent-color: var(--color-primary);
+  }
+  
+  a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    font-weight: 600;
+    
+    &:hover {
+      color: var(--color-primary-light);
+    }
+  }
+}
+
+// Mensajes de error
+.error-text {
+  font-size: 12px;
+  color: var(--color-error);
+  margin-top: -2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  
+  &::before {
+    content: "⚠️";
+    font-size: 10px;
+  }
+}
+
+// ✅ BOTÓN SUBMIT - OCUPA TODA LA FILA
+.quick-register-spain__submit {
+  grid-column: 1 / -1;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: var(--color-primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
+  
+  &:hover:not(:disabled) {
+    background: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 69, 0, 0.4);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// ✅ LINK DE LOGIN - FUERA DEL GRID
+.quick-register-spain__login {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  grid-column: 1 / -1;
+  
+  button {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 14px;
+    padding: 0;
+    margin-left: 4px;
+    
+    &:hover {
+      color: var(--color-primary-light);
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .quick-register-spain {
+    padding: 16px;
+  }
+  
+  .quick-register-spain__container {
+    padding: 24px 16px;
+  }
+  
+  .form-group {
+    gap: 4px;
+    
+    label {
+      font-size: 13px;
+    }
+    
+    input,
+    select {
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+  }
+  
+  .quick-register-spain__submit {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+}
+
+// Estados de validación
+.form-group {
+  input:valid:not(:placeholder-shown):not(.error),
+  select:valid:not(.error) {
+    border-color: var(--color-success);
+  }
+}
+
+// Animación de carga en el botón
+.quick-register-spain__submit:disabled {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Mejoras de accesibilidad
+.form-group {
+  input:focus,
+  select:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+
+// Prevenir zoom en iOS
+@media (max-width: 768px) {
+  input,
+  select {
+    font-size: 16px !important;
+  }
+}

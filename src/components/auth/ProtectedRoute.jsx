@@ -13,6 +13,9 @@ export const ProtectedRoute = ({ children }) => {
     return <Loading />;
   }
 
+  // Debug: mostrar estado de auth cuando se evalúa la ruta
+  console.log('[ProtectedRoute] isLoading:', isLoading, 'isSignedIn:', isSignedIn, 'user:', user?.email || user?.id || null);
+
   if (!isSignedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
