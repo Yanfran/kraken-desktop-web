@@ -46,6 +46,11 @@ const USCalc = React.lazy(() => import('../modules/us/pages/CalculatorPage'));
 const USTracking = React.lazy(() => import('../modules/us/pages/TrackingPage'));
 const USAddresses = React.lazy(() => import('../modules/us/pages/Addresses/AddressesPage'));
 
+
+// ============================================
+// LAZY LOAD - PÁGINAS ES (Ke)
+// ============================================
+const ESHome = React.lazy(() => import('../modules/es/pages/Home/HomePage'));
 const TenantRouter = () => {
     const { tenant, isLoading } = useTenant();
 
@@ -144,11 +149,25 @@ const TenantRouter = () => {
                    ======================================================= */}
                 {(tenantId === 'ES' || tenantPrefix === 'KE') && (
                     <>
-                        <Route path="/" element={<Navigate to="/home" replace />} />
+                        <Route path="/home" element={<ESHome />} />
+
+                        {/* Tracking */}
+                        <Route path="/tracking" element={<Tracking />} />
+
+                        {/* Perfil */}
+                        <Route path="/profile" element={<Navigate to="/profile/personal-data" replace />} />
+                        <Route path="/profile/personal-data" element={<PersonalDataPage />} />
+                        <Route path="/profile/addresses" element={<AddressesPage />} />
+                        <Route path="/addresses" element={<AddressesPage />} />
+                        <Route path="/change-password" element={<ChangePassword />} />
+
+                        {/* Si hay home España, puede agregarse aquí; por ahora redirigimos al tracking */}
+                        <Route path="/" element={<Navigate to="/tracking" replace />} />
+
                         <Route path="*" element={
                             <div className="p-10 text-center">
-                                <h2>Próximamente</h2>
-                                <p>Las páginas para España están en desarrollo</p>
+                                <h2>Página no encontrada</h2>
+                                <p>La ruta solicitada no existe para España</p>
                             </div>
                         } />
                     </>

@@ -1,0 +1,285 @@
+// src/modules/us/pages/HomePage.scss
+// ✅ ESTILOS PARA HOME PAGE USA
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;  
+}
+
+.us-home {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  // background-color: #f5f5f5;
+  // min-height: calc(100vh - 80px);
+
+  // Header de Bienvenida
+  &__header {
+    margin-bottom: 1.5rem;
+  }
+
+  &__title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 0.5rem 0;
+  }
+
+  &__subtitle {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+  }
+
+  // Botón Nueva Recogida
+  &__pickup-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ff6b3d 0%, #ff8f5d 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    cursor: pointer;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(255, 107, 61, 0.3);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(255, 107, 61, 0.4);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &__pickup-icon {
+    font-size: 2rem;
+  }
+
+  &__pickup-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  // Grid Principal
+  &__grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Secciones
+  &__section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 1rem 0;
+  }
+
+  // Envíos Recientes
+  &__shipments {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__shipment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #2d5ba6;
+      background-color: #f8f9fa;
+      transform: translateX(4px);
+    }
+  }
+
+  &__shipment-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  &__shipment-id {
+    font-weight: 600;
+    color: #1a1a1a;
+    font-size: 1rem;
+  }
+
+  &__shipment-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+
+    &--orange {
+      background-color: #fff3e0;
+      color: #e65100;
+    }
+
+    &--green {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+  }
+
+  &__shipment-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+  }
+
+  &__shipment-label {
+    font-size: 0.9rem;
+  }
+
+  &__shipment-arrow {
+    font-size: 1.5rem;
+    color: #999;
+  }
+
+  // Direcciones Guardadas
+  &__addresses {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__address-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #2d5ba6;
+      background-color: #f8f9fa;
+    }
+  }
+
+  &__address-icon {
+    font-size: 1.5rem;
+  }
+
+  &__address-name {
+    font-weight: 500;
+    color: #1a1a1a;
+    font-size: 0.95rem;
+  }
+
+  // Ruta Frecuente
+  &__route {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+  }
+
+  &__route-flag {
+    font-size: 2rem;
+  }
+
+  &__route-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  // Estadísticas
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    text-align: center;
+  }
+
+  &__stat-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0 0 0.5rem 0;
+    font-weight: 500;
+  }
+
+  &__stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .us-home {
+    padding: 1rem;
+
+    &__title {
+      font-size: 1.5rem;
+    }
+
+    &__pickup-btn {
+      padding: 1.25rem;
+    }
+
+    &__pickup-text {
+      font-size: 1.1rem;
+    }
+  }
+}
