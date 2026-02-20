@@ -1,0 +1,314 @@
+// src/modules/es/pages/ShipmentWizard/ESShipmentWizard.scss
+// Wizard de envíos España — respeta el design system de Kraken
+// Colores: primario #FF4500, secundario #0175c8, navy #1B2B6B
+
+// ─── Variables locales ────────────────────────────────────────────────────────
+$primary:       #FF4500;
+$primary-hover: #e03d00;
+$navy:          #1B2B6B;
+$navy-light:    #2d448f;
+$success:       #4CAF50;
+$text-main:     #1a1a1a;
+$text-muted:    #6b7280;
+$border:        #e5e7eb;
+$bg-page:       #f4f5f7;
+$bg-card:       #ffffff;
+$radius:        12px;
+$radius-sm:     8px;
+$transition:    0.2s ease;
+
+// ─── Wrapper del wizard ───────────────────────────────────────────────────────
+.es-wizard {
+  min-height: 100vh;
+  background: $bg-page;
+  display: flex;
+  flex-direction: column;
+
+  // ── Barra de pasos ──────────────────────────────────────────────────────────
+  &__header {
+    background: $navy;
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  &__steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.25rem 0;
+    overflow-x: auto;
+
+    @media (max-width: 640px) {
+      justify-content: flex-start;
+      padding: 1rem 0;
+    }
+  }
+
+  // ── Nodo individual de paso ─────────────────────────────────────────────────
+  &__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: default;
+    padding: 0 0.5rem;
+    min-width: 110px;
+    flex-shrink: 0;
+
+    @media (max-width: 640px) {
+      min-width: 80px;
+    }
+
+    &--done {
+      cursor: pointer;
+      .es-wizard__step-circle {
+        background: $success;
+        border-color: $success;
+        color: #fff;
+      }
+      .es-wizard__step-label { color: rgba(255,255,255,0.75); }
+    }
+
+    &--active {
+      .es-wizard__step-circle {
+        background: $primary;
+        border-color: $primary;
+        color: #fff;
+        box-shadow: 0 0 0 4px rgba(255,69,0,0.25);
+      }
+      .es-wizard__step-label {
+        color: #fff;
+        font-weight: 700;
+      }
+    }
+
+    &--pending {
+      .es-wizard__step-circle {
+        background: transparent;
+        border-color: rgba(255,255,255,0.35);
+        color: rgba(255,255,255,0.4);
+      }
+      .es-wizard__step-label { color: rgba(255,255,255,0.4); }
+    }
+  }
+
+  &__step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: all $transition;
+  }
+
+  &__step-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-align: center;
+    transition: color $transition;
+    white-space: nowrap;
+
+    @media (max-width: 640px) { display: none; }
+  }
+
+  // ── Conector entre pasos ────────────────────────────────────────────────────
+  &__connector {
+    flex: 1;
+    height: 2px;
+    background: rgba(255,255,255,0.25);
+    min-width: 24px;
+    transition: background $transition;
+
+    &--done { background: $success; }
+  }
+
+  // ── Zona de contenido del paso ──────────────────────────────────────────────
+  &__body {
+    flex: 1;
+    max-width: 960px;
+    width: 100%;
+    margin: 2rem auto;
+    padding: 0 1.5rem 3rem;
+
+    @media (max-width: 768px) {
+      margin: 1rem auto;
+      padding: 0 1rem 2rem;
+    }
+  }
+}
+
+// ─── Tarjeta base (usada en todos los pasos) ──────────────────────────────────
+.wizard-card {
+  background: $bg-card;
+  border-radius: $radius;
+  border: 1px solid $border;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  padding: 1.75rem;
+  margin-bottom: 1.25rem;
+
+  &__title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: $text-main;
+    margin: 0 0 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__subtitle {
+    font-size: 0.9rem;
+    color: $text-muted;
+    margin: -1rem 0 1.25rem;
+  }
+}
+
+// ─── Botones de acción (Continuar / Volver) ───────────────────────────────────
+.wizard-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+  }
+}
+
+.btn-wizard-back {
+  padding: 0.75rem 1.75rem;
+  border-radius: 25px;
+  border: 2px solid $border;
+  background: transparent;
+  color: $text-muted;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition;
+
+  &:hover {
+    border-color: $navy;
+    color: $navy;
+  }
+}
+
+.btn-wizard-next {
+  padding: 0.75rem 2.25rem;
+  border-radius: 25px;
+  border: none;
+  background: $primary;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background $transition, transform $transition;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover { background: $primary-hover; transform: translateY(-1px); }
+  &:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+}
+
+// ─── Campo de formulario ──────────────────────────────────────────────────────
+.wizard-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  input, select {
+    border: 1.5px solid $border;
+    border-radius: $radius-sm;
+    padding: 0.62rem 0.85rem;
+    font-size: 0.95rem;
+    color: $text-main;
+    background: #fff;
+    transition: border-color $transition, box-shadow $transition;
+    font-family: inherit;
+    height: 40px;
+    box-sizing: border-box;
+    width: 100%;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba(255,69,0,0.12);
+    }
+
+    &::placeholder { color: #aaa; }
+  }
+
+  textarea {
+    border: 1.5px solid $border;
+    border-radius: $radius-sm;
+    padding: 0.62rem 0.85rem;
+    font-size: 0.95rem;
+    color: $text-main;
+    background: #fff;
+    transition: border-color $transition, box-shadow $transition;
+    font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba(255,69,0,0.12);
+    }
+
+    &::placeholder { color: #aaa; }
+  }
+
+  textarea { resize: vertical; min-height: 90px; }
+}
+
+// ─── Grid helpers ─────────────────────────────────────────────────────────────
+.wizard-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+
+.wizard-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  @media (max-width: 600px) { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 380px) { grid-template-columns: 1fr; }
+}
+
+.wizard-grid-5 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1.4fr;
+  gap: 0.85rem;
+  @media (max-width: 768px) { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 480px) { grid-template-columns: 1fr 1fr; }
+}
+
+// ─── Separador ───────────────────────────────────────────────────────────────
+.wizard-divider {
+  height: 1px;
+  background: $border;
+  margin: 1.25rem 0;
+}

@@ -1,5 +1,5 @@
 // src/core/context/TenantContext.jsx
-// ✅ REFACTORIZADO: Llama al backend para obtener configuración dinámica
+// ✅ VERSIÓN CORREGIDA que NUNCA retorna tenant null
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -12,9 +12,47 @@ const TenantContext = createContext({
     reloadConfig: () => {}
 });
 
+// ✅ CONFIGURACIÓN POR DEFECTO (Venezuela) - Siempre disponible
+const DEFAULT_CONFIG = {
+    id: 'VE',
+    name: 'Venezuela',
+    prefix: 'KV',
+    locale: 'es-VE',
+    currency: 'USD',
+    flag: '🇻🇪',
+    navigation: {
+        topMenu: [
+            { id: 'home', label: 'Inicio', path: '/home', icon: 'home' },
+            { id: 'calculator', label: 'Calcular', path: '/calculator', icon: 'calculator' },
+            { id: 'pre-alert', label: 'Pre-Alertar', path: '/pre-alert/list', icon: 'bell' },
+            { id: 'tracking', label: 'Rastrear', path: '/tracking', icon: 'map-pin' }
+        ],
+        sidebar: {
+            showCasilleroInfo: true,
+            showStoresButton: false,
+            menuItems: [
+                { id: 'shipments', label: 'Mis Envíos', path: '/guide/guides' },
+                { id: 'prealerts', label: 'Mis Pre-Alertas', path: '/pre-alert/list' },
+                {
+                    id: 'profile',
+                    label: 'Perfil de Usuario',
+                    path: '/profile',
+                    hasSubMenu: true,
+                    subItems: [
+                        { id: 'personal', label: 'Datos Personales', path: '/profile/personal-data' },
+                        { id: 'addresses', label: 'Mis Direcciones', path: '/profile/addresses' },
+                        { id: 'password', label: 'Cambiar Contraseña', path: '/change-password' }
+                    ]
+                }
+            ]
+        }
+    }
+};
+
 export const TenantProvider = ({ children }) => {
     const { user, loading: authLoading } = useAuth();
-    const [tenant, setTenant] = useState(null);
+    // ✅ CRÍTICO: Inicializar con DEFAULT_CONFIG, no con null
+    const [tenant, setTenant] = useState(DEFAULT_CONFIG);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -28,19 +66,21 @@ export const TenantProvider = ({ children }) => {
             setError(null);
 
             // Esperar a que Auth termine de cargar
-            if (authLoading) return;
+            if (authLoading) {
+                return;
+            }
 
             // Si no hay usuario, usar config por defecto (Venezuela)
             if (!user || !user.codCliente) {
                 console.log('⚠️ [Tenant] No hay usuario, usando config por defecto');
-                setTenant(getDefaultConfig());
+                setTenant(DEFAULT_CONFIG);
                 setIsLoading(false);
                 return;
             }
 
             // Extraer prefijo del código de cliente
             const prefix = user.codCliente.substring(0, 2).toUpperCase();
-            console.log(`🌍 [Tenant] Detectando tenant para: ${user.codCliente} → Prefijo: ${prefix}`);
+            console.log(`🌍 [Tenant] Detectando tenant para: ${user.codCliente} → Prefix: ${prefix}`);
 
             // 🔥 LLAMAR AL BACKEND
             const response = await axiosInstance.get(`/Tenant/config/${prefix}`);
@@ -56,51 +96,15 @@ export const TenantProvider = ({ children }) => {
             console.error('❌ [Tenant] Error al cargar configuración:', err);
             setError(err.message);
             
-            // Fallback a configuración por defecto
-            setTenant(getDefaultConfig());
+            // ✅ CRÍTICO: Siempre usar fallback, nunca dejar tenant como null
+            console.log('⚠️ [Tenant] Usando configuración por defecto debido a error');
+            setTenant(DEFAULT_CONFIG);
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Configuración por defecto (Venezuela) en caso de error
-    const getDefaultConfig = () => ({
-        id: 'VE',
-        name: 'Venezuela',
-        prefix: 'KV',
-        locale: 'es-VE',
-        currency: 'USD',
-        flag: '🇻🇪',
-        navigation: {
-            topMenu: [
-                { id: 'home', label: 'Inicio', path: '/home', icon: 'home' },
-                { id: 'calculator', label: 'Calcular', path: '/calculator', icon: 'calculator' },
-                { id: 'pre-alert', label: 'Pre-Alertar', path: '/pre-alert/list', icon: 'bell' },
-                { id: 'tracking', label: 'Rastrear', path: '/tracking', icon: 'map-pin' }
-            ],
-            sidebar: {
-                showCasilleroInfo: true,
-                showStoresButton: false,
-                menuItems: [
-                    { id: 'shipments', label: 'Mis Envíos', path: '/guide/guides' },
-                    { id: 'prealerts', label: 'Mis Pre-Alertas', path: '/pre-alert/list' },
-                    {
-                        id: 'profile',
-                        label: 'Perfil de Usuario',
-                        path: '/profile',
-                        hasSubMenu: true,
-                        subItems: [
-                            { id: 'personal', label: 'Datos Personales', path: '/profile/personal-data' },
-                            { id: 'addresses', label: 'Mis Direcciones', path: '/profile/addresses' },
-                            { id: 'password', label: 'Cambiar Contraseña', path: '/change-password' }
-                        ]
-                    }
-                ]
-            }
-        }
-    });
-
-    // Función para recargar configuración (útil para testing/admin)
+    // Función para recargar configuración
     const reloadConfig = () => {
         console.log('🔄 [Tenant] Recargando configuración...');
         loadTenantConfig();

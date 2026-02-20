@@ -1,0 +1,233 @@
+// src/modules/es/pages/ShipmentWizard/steps/Step3Summary.scss
+$primary: #FF4500;
+$navy: #1B2B6B;
+$border: #e5e7eb;
+$text-main: #1a1a1a;
+$text-muted: #6b7280;
+
+// ── Layout de dos columnas ────────────────────────────────────────────────────
+.step3-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__left { display: flex; flex-direction: column; }
+  &__right { position: sticky; top: 90px; }
+}
+
+// ── Sección dentro del resumen ────────────────────────────────────────────────
+.summary-section {
+  padding: 0.5rem 0;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  &__icon { font-size: 1.1rem; }
+
+  &__title {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-main;
+    margin: 0;
+  }
+
+  &__edit {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $primary;
+    font-size: 0.9rem;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+    &:hover { background: rgba(255,69,0,0.08); }
+  }
+}
+
+// ── Grid de detalles del paquete ──────────────────────────────────────────────
+.summary-pkg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 0.85rem;
+
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+
+.summary-pkg-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+
+  &__icon { font-size: 1rem; margin-top: 2px; }
+
+  &__label {
+    font-size: 0.78rem;
+    color: $text-muted;
+    margin: 0 0 2px;
+  }
+
+  &__value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: $text-main;
+    margin: 0;
+  }
+}
+
+.summary-multi-box {
+  font-size: 0.82rem;
+  color: $primary;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+// ── Dirección de resumen ──────────────────────────────────────────────────────
+.summary-addr {
+  &__name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $text-main;
+    margin: 0 0 6px;
+  }
+  &__line {
+    font-size: 0.85rem;
+    color: $text-muted;
+    margin: 0 0 4px;
+    strong { color: $text-main; }
+  }
+}
+
+// ── Tarjeta de costos ─────────────────────────────────────────────────────────
+.cost-card {
+  background: #fff;
+  border: 1.5px solid $border;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+
+  &__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-main;
+    margin: 0 0 1.25rem;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $text-muted;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+  }
+
+  &__error {
+    font-size: 0.85rem;
+    color: #ef4444;
+  }
+
+  &__proceed-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 1.25rem;
+  }
+}
+
+// ── Fila de costo ─────────────────────────────────────────────────────────────
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+
+  &__label {
+    color: $text-muted;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    label { cursor: pointer; color: $text-muted; }
+  }
+
+  &__value {
+    font-weight: 600;
+    color: $text-main;
+
+    &--off {
+      color: #d1d5db;
+      text-decoration: line-through;
+    }
+  }
+
+  &__check {
+    accent-color: $primary;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+  }
+
+  &--optional .cost-row__label { color: $text-muted; font-size: 0.85rem; }
+}
+
+.cost-divider {
+  height: 1px;
+  background: $border;
+  margin: 0.75rem 0;
+}
+
+// ── Total ─────────────────────────────────────────────────────────────────────
+.cost-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+
+  &__label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-main;
+  }
+
+  &__values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  &__eur {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: $primary;
+  }
+
+  &__usd {
+    font-size: 0.78rem;
+    color: $text-muted;
+  }
+}
+
+// ── Spinner ───────────────────────────────────────────────────────────────────
+.spinner-small {
+  width: 18px; height: 18px;
+  border: 2px solid #e5e7eb;
+  border-top-color: $primary;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

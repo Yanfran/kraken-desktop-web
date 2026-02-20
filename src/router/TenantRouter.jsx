@@ -51,6 +51,8 @@ const USAddresses = React.lazy(() => import('../modules/us/pages/Addresses/Addre
 // LAZY LOAD - PÁGINAS ES (Ke)
 // ============================================
 const ESHome = React.lazy(() => import('../modules/es/pages/Home/HomePage'));
+const ESShipmentWizard = React.lazy(() => import('../modules/es/pages/ShipmentWizard/ESShipmentWizard'));
+
 const TenantRouter = () => {
     const { tenant, isLoading } = useTenant();
 
@@ -153,6 +155,9 @@ const TenantRouter = () => {
 
                         {/* Tracking */}
                         <Route path="/tracking" element={<Tracking />} />
+
+                        <Route path="/pickup" element={<ESShipmentWizard />} />
+                        {/* <Route path="/shipment/new"   element={<ESShipmentWizard />} /> */}
 
                         {/* Perfil */}
                         <Route path="/profile" element={<Navigate to="/profile/personal-data" replace />} />

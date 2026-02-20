@@ -1,8 +1,11 @@
+// src/layout/DynamicLayout.jsx
+// ✅ VERSIÓN CORREGIDA con validación de tenant null
+
 import React, { useState } from 'react';
 import { useTenant } from '../core/context/TenantContext';
-import Sidebar from '../components/Sidebar/Sidebar'; // Usando el existente por ahora (lo refactorizaremos)
-import TopNavigation from '../components/TopNavigation/TopNavigation'; // Usando el existente
-import './DynamicLayout.styles.scss'; // Asumiendo estilos compartidos
+import Sidebar from '../components/Sidebar/Sidebar';
+import TopNavigation from '../components/TopNavigation/TopNavigation';
+import './DynamicLayout.styles.scss';
 
 const DynamicLayout = ({ children }) => {
     const { tenant, isLoading } = useTenant();
@@ -12,8 +15,52 @@ const DynamicLayout = ({ children }) => {
         setSidebarOpen(!sidebarOpen);
     };
 
+    // ✅ MIENTRAS ESTÁ CARGANDO
     if (isLoading) {
-        return <div className="loading-screen">Cargando configuración...</div>;
+        return (
+            <div className="loading-screen" style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                fontSize: '1.2rem'
+            }}>
+                Cargando configuración...
+            </div>
+        );
+    }
+
+    // ✅ SI TENANT ES NULL (error crítico)
+    if (!tenant || !tenant.navigation) {
+        console.error('❌ [DynamicLayout] Tenant is null or missing navigation');
+        return (
+            <div className="error-screen" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                padding: '2rem',
+                textAlign: 'center'
+            }}>
+                <h2>Error de Configuración</h2>
+                <p>No se pudo cargar la configuración del sistema.</p>
+                <button 
+                    onClick={() => window.location.reload()}
+                    style={{
+                        marginTop: '1rem',
+                        padding: '0.75rem 1.5rem',
+                        background: '#2d5ba6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Recargar Página
+                </button>
+            </div>
+        );
     }
 
     return (
@@ -22,7 +69,6 @@ const DynamicLayout = ({ children }) => {
             <Sidebar
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
-                tenantConfig={tenant.navigation?.sidebar} // ✅ Pasamos config
             />
 
             <div className={`main-content ${sidebarOpen ? 'sidebar-open' : ''}`}>
@@ -30,7 +76,6 @@ const DynamicLayout = ({ children }) => {
                 <TopNavigation
                     onToggleSidebar={toggleSidebar}
                     sidebarOpen={sidebarOpen}
-                    tenantConfig={tenant.navigation?.topMenu} // ✅ Pasamos config
                 />
 
                 <main className="page-content">
