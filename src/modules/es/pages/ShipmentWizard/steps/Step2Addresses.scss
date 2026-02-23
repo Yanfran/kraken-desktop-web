@@ -252,3 +252,168 @@ $radius: 10px;
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ── Añadir al final de Step2Addresses.scss ─────────────────────────────────
+// Estos estilos complementan los existentes. No reemplaces el archivo,
+// solo agrega estas clases al final.
+
+// ── Grid 3 columnas (Estado / Municipio / Parroquia) ─────────────────────────
+.wizard-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Modal más ancho para Venezuela (tiene más campos) ────────────────────────
+.addr-modal--wide {
+  max-width: 580px;
+}
+
+// ── Selector de tipo (Retiro en Tienda / Enviar a dirección) ─────────────────
+.addr-modal__type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.addr-modal__type-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #FF4500;
+    color: #FF4500;
+    background: rgba(255, 69, 0, 0.04);
+  }
+
+  &--active {
+    border-color: #FF4500 !important;
+    background: rgba(255, 69, 0, 0.07) !important;
+    color: #FF4500 !important;
+  }
+}
+
+// ── Textarea dentro del modal ─────────────────────────────────────────────────
+.addr-modal__textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #1a1a1a;
+  resize: vertical;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #FF4500;
+  }
+
+  &::placeholder { color: #9ca3af; }
+}
+
+// ── Etiqueta "opcional" ───────────────────────────────────────────────────────
+.label-optional {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+// ── Checkbox del modal ────────────────────────────────────────────────────────
+.addr-modal__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: #374151;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #FF4500;
+    cursor: pointer;
+  }
+}
+
+// ── Columna vacía ─────────────────────────────────────────────────────────────
+.addr-col__empty {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  padding: 0.5rem 0;
+  grid-column: 1 / -1;
+}
+
+// ── Badge predeterminada en tarjeta ──────────────────────────────────────────
+.addr-card__badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-bottom: 6px;
+}
+
+// ── Botón estrella (marcar predeterminada) ────────────────────────────────────
+.addr-card__action-btn--star {
+  &:hover { background: #fef9c3; color: #ca8a04; }
+}
+
+// ── Error de campo ────────────────────────────────────────────────────────────
+.field-error {
+  display: block;
+  font-size: 0.76rem;
+  color: #dc2626;
+  margin-top: 3px;
+}
