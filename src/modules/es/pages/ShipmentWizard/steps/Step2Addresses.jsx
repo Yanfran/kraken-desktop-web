@@ -532,7 +532,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 // ════════════════════════════════════════════════════════════════════════════
 // ██  COMPONENTE PRINCIPAL — Step2Addresses
 // ════════════════════════════════════════════════════════════════════════════
-const Step2Addresses = ({ data, updateData, onNext, onBack }) => {
+const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const clientId = getClientId();
 
   const [originList, setOriginList] = useState([]);
@@ -639,11 +639,13 @@ const Step2Addresses = ({ data, updateData, onNext, onBack }) => {
     if (!res.success) { toast.error(res.message); return; }
 
     const card = {
-      id:              res.data.id,
-      alias:           res.data.alias,
-      line1:           formData.direccion ?? '',
-      tipoDireccion:   formData.tipoDireccion,
+      id:               res.data.id,
+      alias:            res.data.alias,
+      line1:            formData.direccion ?? '',
+      tipoDireccion:    formData.tipoDireccion,
       esPredeterminada: res.data.esPredeterminada ?? formData.setAsDefault,
+      idEstado:         res.data.idEstado   ?? formData.idEstado   ?? null,  // ← AÑADIR
+      idMunicipio:      res.data.idMunicipio ?? formData.idMunicipio ?? null, // ← AÑADIR
     };
     setDestList((p) => {
       const lista = formData.setAsDefault ? p.map((a) => ({ ...a, esPredeterminada: false })) : [...p];
@@ -660,7 +662,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack }) => {
     if (!data.originAddressId)      e.origin = 'Selecciona o añade una dirección de origen';
     if (!data.destinationAddressId) e.dest   = 'Selecciona o añade una dirección de destino';
     if (Object.keys(e).length) { setErrors(e); return; }
-    onNext();
+    onNext(destList);    // ← CAMBIO: pasa destList para que el wizard encuentre idEstado/idMunicipio
   };
 
   return (
@@ -702,7 +704,13 @@ const Step2Addresses = ({ data, updateData, onNext, onBack }) => {
 
       <div className="wizard-actions">
         <button className="btn-wizard-back" onClick={onBack}>← Volver</button>
-        <button className="btn-wizard-next" onClick={handleNext}>Continuar →</button>
+        <button
+          className="btn-wizard-next"
+          onClick={handleNext}
+          disabled={calculating}
+        >
+          {calculating ? '⏳ Calculando tarifa...' : 'Continuar →'}
+        </button>        
       </div>
 
       {modal === 'origin' && (

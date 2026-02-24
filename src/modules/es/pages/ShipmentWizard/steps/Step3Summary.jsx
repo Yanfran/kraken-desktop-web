@@ -1,89 +1,68 @@
 // src/modules/es/pages/ShipmentWizard/steps/Step3Summary.jsx
-// Paso 3: Resumen del envío — detalles + cálculo de costos
-// Llama al backend para calcular el precio; el usuario puede activar seguro opcional
+// Paso 3: Resumen del envío — detalles + costos reales del backend
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import './Step3Summary.scss';
 
-// ── Mock para calcular precio — reemplazar con llamada real ─────────────────
-// POST /api/es/shipments/calculate
-const mockCalculate = async (packages, seguroActivo) => {
-  await new Promise((r) => setTimeout(r, 800));
-  const totalKg       = packages.reduce((s, p) => s + Number(p.peso || 0), 0);
-  const totalVol      = packages.reduce((s, p) => s + (Number(p.largo||0) * Number(p.ancho||0) * Number(p.alto||0)) / 5000, 0);
-  const envioBase     = 25.00;
-  const pesoVol       = Math.max(0, (totalVol - totalKg) * 3);
-  const seguro        = seguroActivo ? 8.50 : 0;
-  const subtotal      = envioBase + pesoVol + seguro;
-  const iva           = parseFloat((subtotal * 0.21).toFixed(2));
-  const total         = parseFloat((subtotal + iva).toFixed(2));
-  const totalUSD      = parseFloat((total * 1.10).toFixed(2)); // tasa aprox
-  return { envioBase, pesoVolumetrico: pesoVol, seguro, subtotal, iva, total, totalUSD };
-};
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
-const eur = (n) => `€${Number(n || 0).toFixed(2)}`;
+const fmt   = (n)  => Number(n || 0).toFixed(2);
+const fmtBs = (n)  => `Bs. ${fmt(n)}`;
+const fmtUSD = (n) => `$${fmt(n)} USD`;
 
-// ── Fila de resumen de costo ─────────────────────────────────────────────────
-const CostRow = ({ label, value, optional, checked, onToggle }) => (
-  <div className={`cost-row ${optional ? 'cost-row--optional' : ''}`}>
-    <span className="cost-row__label">
-      {optional && (
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onToggle}
-          className="cost-row__check"
-          id="seguro-check"
-        />
-      )}
-      {optional ? <label htmlFor="seguro-check">{label}</label> : label}
-    </span>
-    <span className={`cost-row__value ${checked === false ? 'cost-row__value--off' : ''}`}>
-      {value}
-    </span>
+// ── Fila de costo genérica ────────────────────────────────────────────────────
+const CostRow = ({ label, valueBs, valueUSD, isDiscount, isMuted }) => (
+  <div className={`cost-row ${isDiscount ? 'cost-row--discount' : ''} ${isMuted ? 'cost-row--muted' : ''}`}>
+    <span className="cost-row__label">{label}</span>
+    <div className="cost-row__values">
+      <span className="cost-row__bs">{valueBs}</span>
+      {valueUSD && <span className="cost-row__usd">{valueUSD}</span>}
+    </div>
   </div>
 );
 
-// ── Componente principal del paso 3 ─────────────────────────────────────────
+// ── Componente principal del paso 3 ──────────────────────────────────────────
 const Step3Summary = ({ data, updateData, onNext, onBack }) => {
-  const [calculating, setCalculating] = useState(false);
 
-  // Dispara el cálculo cuando se monta o cambia el seguro
-  const calculate = useCallback(async () => {
-    setCalculating(true);
-    try {
-      const pricing = await mockCalculate(data.packages, data.seguroActivo);
-      updateData({ pricing });
-    } finally {
-      setCalculating(false);
-    }
-  }, [data.packages, data.seguroActivo, updateData]);
-
-  useEffect(() => { calculate(); }, [data.seguroActivo]); // eslint-disable-line
-
-  const toggleSeguro = () => updateData({ seguroActivo: !data.seguroActivo });
-
-  // Dirección de origen / destino simuladas (normalmente vendrían del contexto de direcciones)
-  const originAddr  = { name: 'Carlos Rodríguez', line: 'Calle Mayor, 12, 4ºB, 28013 Madrid, España',       phone: '+34 612 345 678' };
-  const destAddr    = { name: 'Ana Martínez',      line: 'Av. Francisco de Miranda, Torre Europa, P5, Caracas', phone: '+58 424 123 4567' };
-
-  const pkg = data.packages[0];
-  const p   = data.pricing;
-
-  // Resumen de dimensiones del primer paquete
+  // ── Datos del paquete (Step1) ────────────────────────────────────────────
+  const pkg  = data.packages[0];
   const dims = pkg
     ? `${pkg.largo || '–'}×${pkg.ancho || '–'}×${pkg.alto || '–'} cm`
     : '–';
 
+  // ── Resultado del calculator (viene de ESShipmentWizard tras Step2) ──────
+  // Shape: { cost, weightLbVol, deliveryOptions:[{type,name,cost,savings}],
+  //          breakdowns:{ oficina:{detalles,total,totalBs,tasaCambio,...},
+  //                       domicilio:{...} } }
+  const calc   = data.calculationResult;
+  const opts   = calc?.deliveryOptions ?? [];
+  const bdOfi  = calc?.breakdowns?.oficina;    // retiro en tienda
+  const bdDom  = calc?.breakdowns?.domicilio;  // domicilio
+  const tasa   = bdOfi?.tasaCambio ?? 0;
+
+  // Opción de oficina como precio base (la más económica)
+  const opcionOfi = opts.find((o) => o.type === 'oficina');
+  const opcionDom = opts.find((o) => o.type === 'domicilio');
+
+  // Líneas del desglose (filtrar las que son 0)
+  const lineas = (bdOfi?.detalles ?? []).filter(
+    (d) => d.montoBs !== 0 && d.categoria !== 'TOTAL_BS'
+  );
+
+  // Total final (de la opción oficina si existe, sino domicilio)
+  const totalUSD = opcionOfi?.cost ?? opcionDom?.cost ?? 0;
+  const totalBs  = bdOfi?.totalBs  ?? bdDom?.totalBs  ?? 0;
+
   return (
     <div className="step3-layout">
-      {/* ── Columna izquierda: detalles ── */}
+
+      {/* ══════════════════════════════════════════════════════════════
+          COLUMNA IZQUIERDA — detalles del paquete y direcciones
+      ══════════════════════════════════════════════════════════════ */}
       <div className="step3-layout__left">
         <div className="wizard-card">
           <h2 className="wizard-card__title">📋 Resumen del Envío</h2>
 
-          {/* Detalles del paquete */}
+          {/* ── Detalles del paquete ─────────────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">📦</span>
@@ -120,6 +99,15 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
                   <p className="summary-pkg-item__value">${pkg?.valorFOB || '–'} USD</p>
                 </div>
               </div>
+              {calc?.weightLbVol && (
+                <div className="summary-pkg-item">
+                  <span className="summary-pkg-item__icon">📊</span>
+                  <div>
+                    <p className="summary-pkg-item__label">Peso facturado:</p>
+                    <p className="summary-pkg-item__value">{fmt(calc.weightLbVol)} lb</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {data.packages.length > 1 && (
@@ -129,30 +117,26 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
 
           <div className="wizard-divider" />
 
-          {/* Dirección origen */}
+          {/* ── Dirección origen (España) ────────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">🇪🇸</span>
               <h3 className="summary-section__title">Dirección de Origen</h3>
-              <button className="summary-section__edit" title="Editar">✏️</button>
+              <button className="summary-section__edit" onClick={onBack} title="Editar">✏️</button>
             </div>
-            <p className="summary-addr__name">{originAddr.name}</p>
-            <p className="summary-addr__line"><strong>Dirección:</strong> {originAddr.line}</p>
-            <p className="summary-addr__line"><strong>Teléfono:</strong> {originAddr.phone}</p>
+            <p className="summary-addr__line">ID seleccionado: {data.originAddressId ?? '–'}</p>
           </section>
 
           <div className="wizard-divider" />
 
-          {/* Dirección destino */}
+          {/* ── Dirección destino (Venezuela) ────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">🇻🇪</span>
               <h3 className="summary-section__title">Dirección de Destino</h3>
-              <button className="summary-section__edit" title="Editar">✏️</button>
+              <button className="summary-section__edit" onClick={onBack} title="Editar">✏️</button>
             </div>
-            <p className="summary-addr__name">{destAddr.name}</p>
-            <p className="summary-addr__line"><strong>Dirección:</strong> {destAddr.line}</p>
-            <p className="summary-addr__line"><strong>Teléfono:</strong> {destAddr.phone}</p>
+            <p className="summary-addr__line">ID seleccionado: {data.destinationAddressId ?? '–'}</p>
           </section>
         </div>
 
@@ -161,54 +145,83 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
         </div>
       </div>
 
-      {/* ── Columna derecha: costos ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          COLUMNA DERECHA — costos reales del backend
+      ══════════════════════════════════════════════════════════════ */}
       <div className="step3-layout__right">
         <div className="cost-card">
           <h3 className="cost-card__title">Resumen de Costos</h3>
 
-          {calculating ? (
-            <div className="cost-card__loading">
-              <div className="spinner-small" />
-              <span>Calculando precio...</span>
-            </div>
-          ) : p ? (
+          {!calc ? (
+            /* Sin resultado — no debería llegar aquí porque el wizard
+               bloqueó el avance si el calculator falló */
+            <p className="cost-card__error">
+              ⚠️ No se pudo calcular la tarifa. Vuelve al paso anterior.
+            </p>
+
+          ) : (
             <>
-              <CostRow label="Envío base:"        value={eur(p.envioBase)} />
-              <CostRow label="Peso volumétrico:"  value={eur(p.pesoVolumetrico)} />
-              <CostRow
-                label="Seguro opcional (hasta €500):"
-                value={eur(p.seguro)}
-                optional
-                checked={data.seguroActivo}
-                onToggle={toggleSeguro}
-              />
+              {/* ── Opciones de entrega disponibles ─────────────── */}
+              {opts.length > 0 && (
+                <div className="cost-options">
+                  {opts.map((opt) => (
+                    <div key={opt.type} className="cost-option">
+                      <span className="cost-option__name">{opt.name}</span>
+                      <span className="cost-option__price">{fmtUSD(opt.cost)}</span>
+                      {opt.savings > 0 && (
+                        <span className="cost-option__savings">Ahorra {opt.savings}%</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="cost-divider" />
 
-              <CostRow label="Subtotal:" value={eur(p.subtotal)} />
-              <CostRow label="IVA (21%):" value={eur(p.iva)} />
+              {/* ── Desglose línea a línea ────────────────────────── */}
+              <p className="cost-card__subtitle">Desglose (Retiro en Tienda)</p>
+              {lineas.map((d) => (
+                <CostRow
+                  key={d.numLinea}
+                  label={d.descripcionItem}
+                  valueBs={fmtBs(Math.abs(d.montoBs))}
+                  valueUSD={fmtUSD(Math.abs(d.montoUSD))}
+                  isDiscount={d.esDescuento}
+                  isMuted={d.categoria === 'SUBTOTAL'}
+                />
+              ))}
 
+              <div className="cost-divider" />
+
+              {/* ── Tasa de cambio ───────────────────────────────── */}
+              <CostRow
+                label="Tasa de cambio:"
+                valueBs={`Bs. ${fmt(tasa)}`}
+                isMuted
+              />
+
+              {/* ── Total ────────────────────────────────────────── */}
               <div className="cost-total">
-                <span className="cost-total__label">Costo Total:</span>
+                <span className="cost-total__label">Total a Pagar:</span>
                 <div className="cost-total__values">
-                  <span className="cost-total__eur">{eur(p.total)}</span>
-                  <span className="cost-total__usd">(${p.totalUSD} USD aprox.)</span>
+                  <span className="cost-total__usd">{fmtUSD(totalUSD)}</span>
+                  <span className="cost-total__bs">({fmtBs(totalBs)})</span>
                 </div>
               </div>
             </>
-          ) : (
-            <p className="cost-card__error">No se pudo calcular el precio. Intenta de nuevo.</p>
           )}
 
+          {/* ── Botón proceder al pago ───────────────────────────── */}
           <button
             className="btn-wizard-next cost-card__proceed-btn"
             onClick={onNext}
-            disabled={calculating || !p}
+            disabled={!calc}
           >
             Proceder al Pago →
           </button>
         </div>
       </div>
+
     </div>
   );
 };

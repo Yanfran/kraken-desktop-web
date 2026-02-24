@@ -231,3 +231,85 @@ $text-muted: #6b7280;
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+
+
+
+
+
+
+
+
+
+
+// ── AÑADIR al final de Step3Summary.scss ─────────────────────────────────────
+// Clases nuevas usadas por el Step3 actualizado
+
+// Opciones de entrega (retiro en tienda vs domicilio)
+.cost-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cost-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+
+  &__name  { flex: 1; font-size: 0.88rem; color: #374151; }
+  &__price { font-weight: 700; color: #1B2B6B; font-size: 0.9rem; }
+  &__savings {
+    font-size: 0.75rem;
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 2px 6px;
+    border-radius: 99px;
+    font-weight: 600;
+  }
+}
+
+// Subtítulo dentro del cost-card
+.cost-card__subtitle {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 4px 0 8px;
+}
+
+// Variantes del cost-row
+.cost-row {
+  &--discount {
+    .cost-row__bs,
+    .cost-row__usd { color: #16a34a; }  // verde — descuentos
+  }
+
+  &--muted {
+    opacity: 0.65;
+    font-size: 0.82rem;
+  }
+
+  // Columna de valores (Bs + USD en línea)
+  &__values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+  }
+
+  &__bs  { font-size: 0.88rem; font-weight: 600; color: #1a1a1a; }
+  &__usd { font-size: 0.75rem; color: #9ca3af; }
+}
+
+// Total — añadir referencia en Bs debajo del USD
+.cost-total__bs {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin-left: 4px;
+}
