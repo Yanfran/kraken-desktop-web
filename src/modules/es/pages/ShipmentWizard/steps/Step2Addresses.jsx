@@ -216,7 +216,7 @@ const OriginModal = ({ onSave, onClose, saving }) => {
 // ════════════════════════════════════════════════════════════════════════════
 const DestinationModal = ({ onSave, onClose, saving }) => {
   // ── Tipo de entrega ────────────────────────────────────────────────────────
-  const [tipo, setTipo] = useState('store'); // 'store' | 'home'
+  const [tipo, setTipo] = useState('home'); // 'store' | 'home'
 
   // ── Estado del formulario TIENDA ──────────────────────────────────────────
   const [storeForm, setStoreForm] = useState({ city: '', store: '' });
@@ -362,6 +362,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
         <div className="addr-modal__body">
 
           {/* ── Selector de tipo ─────────────────────────────────────────── */}
+           {/* 🚧 TEMPORALMENTE DESHABILITADO: Retiro en tienda pendiente de implementación
           <div className="addr-modal__type-selector">
             <button
               type="button"
@@ -378,14 +379,19 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <span>🏠</span> Enviar a otra dirección
             </button>
           </div>
-
+           */}
           {/* ══════════════════════════════════════════════════════════════
               SECCIÓN TIENDA — Ciudad + Tienda (filtrada)
           ══════════════════════════════════════════════════════════════ */}
-          {tipo === 'store' && (
+
+          {/* ══════════════════════════════════════════════════════════════
+              SECCIÓN TIENDA — 🚧 TEMPORALMENTE DESHABILITADO
+          ══════════════════════════════════════════════════════════════ */}
+          
+          {/* {tipo === 'store' && (
             <>
               <div className="wizard-grid-2">
-                {/* Ciudad */}
+                
                 <div className="wizard-field">
                   <label>Ciudad *</label>
                   <select
@@ -400,7 +406,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                   {errors.city && <span className="field-error">{errors.city}</span>}
                 </div>
 
-                {/* Tienda (se habilita al tener ciudad) */}
+                
                 <div className="wizard-field">
                   <label>Tienda *</label>
                   <select
@@ -417,7 +423,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 </div>
               </div>
             </>
-          )}
+          )} */}
 
           {/* ══════════════════════════════════════════════════════════════
               SECCIÓN DOMICILIO — Nombre + Estado + Municipio + Parroquia + Dirección
@@ -542,8 +548,17 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const [modal,      setModal]      = useState(null);
   const [errors,     setErrors]     = useState({});
 
+  // ✅ FIX: Subir allTiendas al nivel del componente padre (antes solo estaba en DestinationModal)
+  // Esto permite enriquecer el destList con idEstado antes de llamar onNext
+  const [allTiendas, setAllTiendas] = useState([]);
+
   // ── Carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
+    // ✅ FIX: Cargar tiendas aquí también para tener idEstado disponible en handleNext
+    fetchDeliveryData().then(({ tiendas: t }) => {
+      setAllTiendas(t);
+    });
+
     if (!clientId) { setLoading({ origin: false, dest: false }); return; }
 
     fetchOriginAddresses(clientId).then((res) => {
@@ -644,8 +659,10 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       line1:            formData.direccion ?? '',
       tipoDireccion:    formData.tipoDireccion,
       esPredeterminada: res.data.esPredeterminada ?? formData.setAsDefault,
-      idEstado:         res.data.idEstado   ?? formData.idEstado   ?? null,  // ← AÑADIR
-      idMunicipio:      res.data.idMunicipio ?? formData.idMunicipio ?? null, // ← AÑADIR
+      idEstado:         res.data.idEstado   ?? formData.idEstado   ?? null,
+      idMunicipio:      res.data.idMunicipio ?? formData.idMunicipio ?? null,
+      // ✅ FIX: Guardar idLocker para poder enriquecer si idEstado es null
+      idLocker:         formData.idLocker ?? null,
     };
     setDestList((p) => {
       const lista = formData.setAsDefault ? p.map((a) => ({ ...a, esPredeterminada: false })) : [...p];
@@ -662,7 +679,19 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
     if (!data.originAddressId)      e.origin = 'Selecciona o añade una dirección de origen';
     if (!data.destinationAddressId) e.dest   = 'Selecciona o añade una dirección de destino';
     if (Object.keys(e).length) { setErrors(e); return; }
-    onNext(destList);    // ← CAMBIO: pasa destList para que el wizard encuentre idEstado/idMunicipio
+
+    const enrichedDestList = destList.map((addr) => {
+      if (addr.tipoDireccion === 'store' && !addr.idEstado && addr.idLocker) {
+        const tienda = allTiendas.find((t) => t.id === Number(addr.idLocker));
+        if (tienda?.idEstado) {
+          return { ...addr, idEstado: tienda.idEstado };
+        }
+      }
+      return addr;
+    });
+
+    // ✅ Pasar ambas listas para que el wizard pueda guardar los objetos seleccionados
+    onNext({ destList: enrichedDestList, originList });
   };
 
   return (
@@ -717,7 +746,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         <OriginModal onSave={handleSaveOrigin} onClose={() => setModal(null)} saving={saving} />
       )}
       {modal === 'dest' && (
-        <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} />
+        <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas}  />
       )}
     </div>
   );

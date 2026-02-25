@@ -66,63 +66,81 @@ const ESShipmentWizard = () => {
   //
   // Step2Addresses llama a onNext(destList) pasando su array local de destinos.
   // Aquí buscamos el que tiene el id seleccionado para extraer idEstado/idMunicipio.
-  const handleStep2Next = async (destList = []) => {
-    const pkg     = wizardData.packages[0];
-    const destino = destList.find((d) => d.id === wizardData.destinationAddressId);
+  const handleStep2Next = async ({ destList = [], originList = [] } = {}) => {
+      const pkg     = wizardData.packages[0];
+      const destino = destList.find((d) => d.id === wizardData.destinationAddressId);
 
-    // ── Resolver municipalityId ──────────────────────────────────────────────
-    // Para destinos tipo "store" idMunicipio es null (tiendas no tienen municipio).
-    // El backend necesita al menos un municipioId para calcular la tarifa en CCS.
-    // Solución: si no hay municipio, fetch el primero disponible del estado destino.
-    let municipioId = destino?.idMunicipio ?? null;
-
-    if (!municipioId && destino?.idEstado) {
-      try {
-        const municipios = await fetchMunicipios(destino.idEstado);
-        if (municipios.length > 0) {
-          municipioId = municipios[0].id;
-          console.log(`🏙️ Store destino → municipio fallback: ${municipios[0].id} (${municipios[0].name})`);
-        }
-      } catch (e) {
-        console.warn('⚠️ No se pudo obtener municipio del estado destino:', e);
+      // ✅ Guard: igual que Venezuela valida estado antes de calcular
+      if (!destino) {
+          toast.error('Por favor selecciona una dirección de destino.');
+          return;
       }
-    }
-    // ────────────────────────────────────────────────────────────────────────
 
-    // Peso → libras
-    const pesoRaw = parseFloat(pkg.peso) || 0;
-    const pesoLb  = pkg.unidadPeso?.toLowerCase() === 'kg'
-      ? parseFloat((pesoRaw * 2.20462).toFixed(2))
-      : pesoRaw;
+      // ✅ Igual que Calculator.jsx usa el state seleccionado directamente,
+      // aquí usamos el idEstado ya enriquecido por Step2Addresses
+      const stateId = destino.idEstado ?? null;
 
-    // Dimensiones
-    const largo = parseFloat(pkg.largo) || 0;
-    const ancho = parseFloat(pkg.ancho) || 0;
-    const alto  = parseFloat(pkg.alto)  || 0;
-    const dims  = (largo > 0 && ancho > 0 && alto > 0)
-      ? { length: largo, width: ancho, height: alto }
-      : null;
+      if (!stateId) {
+          toast.error('No se pudo determinar el estado de la dirección. Intenta crear la dirección de nuevo.');
+          console.error('❌ [ESWizard] destino sin idEstado:', destino);
+          return;
+      }
 
-    setCalculating(true);
-    const result = await calculateSpainShipping({
-      stateId:        destino?.idEstado   ?? 24,
-      municipalityId: municipioId,               // ← ya resuelto arriba
-      declaredValue:  parseFloat(pkg.valorFOB) || 0,
-      weight:         pesoLb,
-      weightUnit:     'Lb',
-      dimensionUnit:  'cm',
-      dimensions:     dims,
-      content:        pkg.descripcion || 'General',
-    });
-    setCalculating(false);
+      // ── Resolver municipalityId ──────────────────────────────────────────────
+      let municipioId = destino?.idMunicipio ?? null;
 
-    if (!result.success) {
-      toast.error(result.message || 'No se pudo calcular la tarifa.');
-      return;
-    }
+      if (!municipioId && stateId) {
+        try {
+          const municipios = await fetchMunicipios(stateId);
+          if (municipios.length > 0) {
+            municipioId = municipios[0].id;
+            console.log(`🏙️ municipio fallback: ${municipios[0].id} (${municipios[0].name})`);
+          }
+        } catch (e) {
+          console.warn('⚠️ No se pudo obtener municipio:', e);
+        }
+      }
 
-    updateData({ calculationResult: result.data });
-    setCurrentStep(3);
+      // Peso → libras (sin cambios)
+      const pesoRaw = parseFloat(pkg.peso) || 0;
+      const pesoLb  = pkg.unidadPeso?.toLowerCase() === 'kg'
+        ? parseFloat((pesoRaw * 2.20462).toFixed(2))
+        : pesoRaw;
+
+      // Dimensiones (sin cambios)
+      const largo = parseFloat(pkg.largo) || 0;
+      const ancho = parseFloat(pkg.ancho) || 0;
+      const alto  = parseFloat(pkg.alto)  || 0;
+      const dims  = (largo > 0 && ancho > 0 && alto > 0)
+        ? { length: largo, width: ancho, height: alto }
+        : null;
+
+      setCalculating(true);
+      const result = await calculateSpainShipping({
+        stateId,           // ✅ Ahora siempre es válido
+        municipalityId: municipioId,
+        declaredValue:  parseFloat(pkg.valorFOB) || 0,
+        weight:         pesoLb,
+        weightUnit:     'Lb',
+        dimensionUnit:  'cm',
+        dimensions:     dims,
+        content:        pkg.descripcion || 'General',
+      });
+      setCalculating(false);
+
+      if (!result.success) {
+        toast.error(result.message || 'No se pudo calcular la tarifa.');
+        return;
+      }
+
+       const selectedOrigin = originList.find((a) => a.id === wizardData.originAddressId) ?? null;
+
+      updateData({
+        calculationResult:          result.data,
+        selectedOriginAddress:      selectedOrigin,
+        selectedDestinationAddress: destino,
+      });
+      setCurrentStep(3);
   };
   // ──────────────────────────────────────────────────────────────────────────
 
@@ -159,6 +177,8 @@ const ESShipmentWizard = () => {
           <Step3Summary
             {...commonProps}
             onNext={() => setCurrentStep(4)}
+            onEditPackage={()   => setCurrentStep(1)}
+            onEditAddresses={() => setCurrentStep(2)}
           />
         );
       case 4:

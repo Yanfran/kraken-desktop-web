@@ -1,15 +1,11 @@
 // src/modules/es/pages/ShipmentWizard/steps/Step3Summary.jsx
-// Paso 3: Resumen del envío — detalles + costos reales del backend
-
 import React from 'react';
 import './Step3Summary.scss';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const fmt   = (n)  => Number(n || 0).toFixed(2);
-const fmtBs = (n)  => `Bs. ${fmt(n)}`;
+const fmt    = (n) => Number(n || 0).toFixed(2);
+const fmtBs  = (n) => `Bs. ${fmt(n)}`;
 const fmtUSD = (n) => `$${fmt(n)} USD`;
 
-// ── Fila de costo genérica ────────────────────────────────────────────────────
 const CostRow = ({ label, valueBs, valueUSD, isDiscount, isMuted }) => (
   <div className={`cost-row ${isDiscount ? 'cost-row--discount' : ''} ${isMuted ? 'cost-row--muted' : ''}`}>
     <span className="cost-row__label">{label}</span>
@@ -20,54 +16,99 @@ const CostRow = ({ label, valueBs, valueUSD, isDiscount, isMuted }) => (
   </div>
 );
 
-// ── Componente principal del paso 3 ──────────────────────────────────────────
-const Step3Summary = ({ data, updateData, onNext, onBack }) => {
+// ── Bloque de dirección legible ───────────────────────────────────────────────
+const AddressBlock = ({ address, flag, onEdit }) => {
+  if (!address) {
+    return (
+      <div className="summary-addr">
+        <p className="summary-addr__line" style={{ color: '#ef4444' }}>
+          ⚠️ No se encontró la dirección seleccionada.
+        </p>
+        <button className="summary-section__edit" onClick={onEdit}>✏️ Cambiar</button>
+      </div>
+    );
+  }
 
-  // ── Datos del paquete (Step1) ────────────────────────────────────────────
+  const esStore = address.tipoDireccion === 'store';
+
+  return (
+    <div className="summary-addr">
+      <p className="summary-addr__name">
+        {flag} {address.alias || address.nombreLocker || 'Sin nombre'}
+      </p>
+
+      {esStore ? (
+        <>
+          {address.nombreLocker && <p className="summary-addr__line">🏪 {address.nombreLocker}</p>}
+          {address.line1        && <p className="summary-addr__line">{address.line1}</p>}
+        </>
+      ) : (
+        <>
+          {address.line1      && <p className="summary-addr__line">{address.line1}</p>}
+          {address.city       && (
+            <p className="summary-addr__line">
+              {address.city}{address.zip ? ` - ${address.zip}` : ''}
+            </p>
+          )}
+          {address.province   && <p className="summary-addr__line">{address.province}</p>}
+          {address.phone      && <p className="summary-addr__line">📞 {address.phone}</p>}
+          {/* Campos Venezuela */}
+          {address.direccion  && <p className="summary-addr__line">📍 {address.direccion}</p>}
+          {address.referencia && (
+            <p className="summary-addr__line" style={{ color: '#9ca3af' }}>
+              Ref: {address.referencia}
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+// ── Componente principal ──────────────────────────────────────────────────────
+const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) => {
+
   const pkg  = data.packages[0];
   const dims = pkg
     ? `${pkg.largo || '–'}×${pkg.ancho || '–'}×${pkg.alto || '–'} cm`
     : '–';
 
-  // ── Resultado del calculator (viene de ESShipmentWizard tras Step2) ──────
-  // Shape: { cost, weightLbVol, deliveryOptions:[{type,name,cost,savings}],
-  //          breakdowns:{ oficina:{detalles,total,totalBs,tasaCambio,...},
-  //                       domicilio:{...} } }
-  const calc   = data.calculationResult;
-  const opts   = calc?.deliveryOptions ?? [];
-  const bdOfi  = calc?.breakdowns?.oficina;    // retiro en tienda
-  const bdDom  = calc?.breakdowns?.domicilio;  // domicilio
-  const tasa   = bdOfi?.tasaCambio ?? 0;
+  const calc     = data.calculationResult;
+  const opts     = calc?.deliveryOptions ?? [];
+  const bdOfi    = calc?.breakdowns?.oficina;
+  const bdDom    = calc?.breakdowns?.domicilio;
+  const tasa     = bdOfi?.tasaCambio ?? bdDom?.tasaCambio ?? 0;
 
-  // Opción de oficina como precio base (la más económica)
   const opcionOfi = opts.find((o) => o.type === 'oficina');
   const opcionDom = opts.find((o) => o.type === 'domicilio');
 
-  // Líneas del desglose (filtrar las que son 0)
-  const lineas = (bdOfi?.detalles ?? []).filter(
+  // Mostrar desglose de oficina si existe, sino domicilio
+  const bdActivo = bdOfi ?? bdDom;
+  const lineas   = (bdActivo?.detalles ?? []).filter(
     (d) => d.montoBs !== 0 && d.categoria !== 'TOTAL_BS'
   );
 
-  // Total final (de la opción oficina si existe, sino domicilio)
   const totalUSD = opcionOfi?.cost ?? opcionDom?.cost ?? 0;
-  const totalBs  = bdOfi?.totalBs  ?? bdDom?.totalBs  ?? 0;
+  const totalBs  = bdActivo?.totalBs ?? 0;
+
+  // Callbacks con fallback a onBack
+  const editPkg  = onEditPackage   ?? onBack;
+  const editAddr = onEditAddresses ?? onBack;
 
   return (
     <div className="step3-layout">
 
-      {/* ══════════════════════════════════════════════════════════════
-          COLUMNA IZQUIERDA — detalles del paquete y direcciones
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ COLUMNA IZQUIERDA ════════════════════════════════════════════════ */}
       <div className="step3-layout__left">
         <div className="wizard-card">
           <h2 className="wizard-card__title">📋 Resumen del Envío</h2>
 
-          {/* ── Detalles del paquete ─────────────────────────────── */}
+          {/* ── Detalles del paquete ─────────────────────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">📦</span>
               <h3 className="summary-section__title">Detalles del Paquete</h3>
-              <button className="summary-section__edit" onClick={onBack} title="Editar">✏️</button>
+              <button className="summary-section__edit" onClick={editPkg} title="Editar paquete">✏️</button>
             </div>
 
             <div className="summary-pkg-grid">
@@ -117,26 +158,34 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
 
           <div className="wizard-divider" />
 
-          {/* ── Dirección origen (España) ────────────────────────── */}
+          {/* ── Dirección de recogida (España) ───────────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">🇪🇸</span>
-              <h3 className="summary-section__title">Dirección de Origen</h3>
-              <button className="summary-section__edit" onClick={onBack} title="Editar">✏️</button>
+              <h3 className="summary-section__title">Dirección de Recogida</h3>
+              <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
             </div>
-            <p className="summary-addr__line">ID seleccionado: {data.originAddressId ?? '–'}</p>
+            <AddressBlock
+              address={data.selectedOriginAddress}
+              flag="🇪🇸"
+              onEdit={editAddr}
+            />
           </section>
 
           <div className="wizard-divider" />
 
-          {/* ── Dirección destino (Venezuela) ────────────────────── */}
+          {/* ── Dirección de entrega (Venezuela) ────────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">🇻🇪</span>
-              <h3 className="summary-section__title">Dirección de Destino</h3>
-              <button className="summary-section__edit" onClick={onBack} title="Editar">✏️</button>
+              <h3 className="summary-section__title">Dirección de Entrega</h3>
+              <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
             </div>
-            <p className="summary-addr__line">ID seleccionado: {data.destinationAddressId ?? '–'}</p>
+            <AddressBlock
+              address={data.selectedDestinationAddress}
+              flag="🇻🇪"
+              onEdit={editAddr}
+            />
           </section>
         </div>
 
@@ -145,23 +194,17 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════
-          COLUMNA DERECHA — costos reales del backend
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ COLUMNA DERECHA ══════════════════════════════════════════════════ */}
       <div className="step3-layout__right">
         <div className="cost-card">
           <h3 className="cost-card__title">Resumen de Costos</h3>
 
           {!calc ? (
-            /* Sin resultado — no debería llegar aquí porque el wizard
-               bloqueó el avance si el calculator falló */
             <p className="cost-card__error">
               ⚠️ No se pudo calcular la tarifa. Vuelve al paso anterior.
             </p>
-
           ) : (
             <>
-              {/* ── Opciones de entrega disponibles ─────────────── */}
               {opts.length > 0 && (
                 <div className="cost-options">
                   {opts.map((opt) => (
@@ -178,8 +221,9 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
 
               <div className="cost-divider" />
 
-              {/* ── Desglose línea a línea ────────────────────────── */}
-              <p className="cost-card__subtitle">Desglose (Retiro en Tienda)</p>
+              <p className="cost-card__subtitle">
+                Desglose {bdOfi ? '(Retiro en Tienda)' : '(Domicilio)'}
+              </p>
               {lineas.map((d) => (
                 <CostRow
                   key={d.numLinea}
@@ -193,14 +237,8 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
 
               <div className="cost-divider" />
 
-              {/* ── Tasa de cambio ───────────────────────────────── */}
-              <CostRow
-                label="Tasa de cambio:"
-                valueBs={`Bs. ${fmt(tasa)}`}
-                isMuted
-              />
+              <CostRow label="Tasa de cambio:" valueBs={`Bs. ${fmt(tasa)}`} isMuted />
 
-              {/* ── Total ────────────────────────────────────────── */}
               <div className="cost-total">
                 <span className="cost-total__label">Total a Pagar:</span>
                 <div className="cost-total__values">
@@ -211,7 +249,6 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
             </>
           )}
 
-          {/* ── Botón proceder al pago ───────────────────────────── */}
           <button
             className="btn-wizard-next cost-card__proceed-btn"
             onClick={onNext}
@@ -221,7 +258,6 @@ const Step3Summary = ({ data, updateData, onNext, onBack }) => {
           </button>
         </div>
       </div>
-
     </div>
   );
 };
