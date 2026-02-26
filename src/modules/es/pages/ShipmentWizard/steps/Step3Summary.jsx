@@ -1,18 +1,15 @@
 // src/modules/es/pages/ShipmentWizard/steps/Step3Summary.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import './Step3Summary.scss';
 
 const fmt    = (n) => Number(n || 0).toFixed(2);
-const fmtBs  = (n) => `Bs. ${fmt(n)}`;
 const fmtUSD = (n) => `$${fmt(n)} USD`;
 
-const CostRow = ({ label, valueBs, valueUSD, isDiscount, isMuted }) => (
+// ── Fila de costo (solo USD) ──────────────────────────────────────────────────
+const CostRow = ({ label, valueUSD, isDiscount, isMuted }) => (
   <div className={`cost-row ${isDiscount ? 'cost-row--discount' : ''} ${isMuted ? 'cost-row--muted' : ''}`}>
     <span className="cost-row__label">{label}</span>
-    <div className="cost-row__values">
-      <span className="cost-row__bs">{valueBs}</span>
-      {valueUSD && <span className="cost-row__usd">{valueUSD}</span>}
-    </div>
+    <span className="cost-row__usd-value">{valueUSD}</span>
   </div>
 );
 
@@ -52,7 +49,6 @@ const AddressBlock = ({ address, flag, onEdit }) => {
           )}
           {address.province   && <p className="summary-addr__line">{address.province}</p>}
           {address.phone      && <p className="summary-addr__line">📞 {address.phone}</p>}
-          {/* Campos Venezuela */}
           {address.direccion  && <p className="summary-addr__line">📍 {address.direccion}</p>}
           {address.referencia && (
             <p className="summary-addr__line" style={{ color: '#9ca3af' }}>
@@ -68,30 +64,28 @@ const AddressBlock = ({ address, flag, onEdit }) => {
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) => {
 
+  const [desglosAbierto, setDesglosAbierto] = useState(false);
+
   const pkg  = data.packages[0];
   const dims = pkg
     ? `${pkg.largo || '–'}×${pkg.ancho || '–'}×${pkg.alto || '–'} cm`
     : '–';
 
-  const calc     = data.calculationResult;
-  const opts     = calc?.deliveryOptions ?? [];
-  const bdOfi    = calc?.breakdowns?.oficina;
-  const bdDom    = calc?.breakdowns?.domicilio;
-  const tasa     = bdOfi?.tasaCambio ?? bdDom?.tasaCambio ?? 0;
+  const calc      = data.calculationResult;
+  const opts      = calc?.deliveryOptions ?? [];
+  const bdOfi     = calc?.breakdowns?.oficina;
+  const bdDom     = calc?.breakdowns?.domicilio;
 
   const opcionOfi = opts.find((o) => o.type === 'oficina');
   const opcionDom = opts.find((o) => o.type === 'domicilio');
 
-  // Mostrar desglose de oficina si existe, sino domicilio
-  const bdActivo = bdOfi ?? bdDom;
-  const lineas   = (bdActivo?.detalles ?? []).filter(
-    (d) => d.montoBs !== 0 && d.categoria !== 'TOTAL_BS'
+  const bdActivo  = bdOfi ?? bdDom;
+  const lineas    = (bdActivo?.detalles ?? []).filter(
+    (d) => d.montoUSD !== 0 && d.categoria !== 'TOTAL_BS'
   );
 
-  const totalUSD = opcionOfi?.cost ?? opcionDom?.cost ?? 0;
-  const totalBs  = bdActivo?.totalBs ?? 0;
+  const totalUSD  = opcionOfi?.cost ?? opcionDom?.cost ?? 0;
 
-  // Callbacks con fallback a onBack
   const editPkg  = onEditPackage   ?? onBack;
   const editAddr = onEditAddresses ?? onBack;
 
@@ -165,11 +159,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
               <h3 className="summary-section__title">Dirección de Recogida</h3>
               <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
             </div>
-            <AddressBlock
-              address={data.selectedOriginAddress}
-              flag="🇪🇸"
-              onEdit={editAddr}
-            />
+            <AddressBlock address={data.selectedOriginAddress} flag="🇪🇸" onEdit={editAddr} />
           </section>
 
           <div className="wizard-divider" />
@@ -181,11 +171,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
               <h3 className="summary-section__title">Dirección de Entrega</h3>
               <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
             </div>
-            <AddressBlock
-              address={data.selectedDestinationAddress}
-              flag="🇻🇪"
-              onEdit={editAddr}
-            />
+            <AddressBlock address={data.selectedDestinationAddress} flag="🇻🇪" onEdit={editAddr} />
           </section>
         </div>
 
@@ -205,6 +191,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
             </p>
           ) : (
             <>
+              {/* ── Opciones de entrega ─────────────────────────────────── */}
               {opts.length > 0 && (
                 <div className="cost-options">
                   {opts.map((opt) => (
@@ -221,30 +208,37 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
 
               <div className="cost-divider" />
 
-              <p className="cost-card__subtitle">
-                Desglose {bdOfi ? '(Retiro en Tienda)' : '(Domicilio)'}
-              </p>
-              {lineas.map((d) => (
-                <CostRow
-                  key={d.numLinea}
-                  label={d.descripcionItem}
-                  valueBs={fmtBs(Math.abs(d.montoBs))}
-                  valueUSD={fmtUSD(Math.abs(d.montoUSD))}
-                  isDiscount={d.esDescuento}
-                  isMuted={d.categoria === 'SUBTOTAL'}
-                />
-              ))}
+              {/* ── Desglose colapsable ─────────────────────────────────── */}
+              <button
+                className={`cost-breakdown-toggle ${desglosAbierto ? 'cost-breakdown-toggle--open' : ''}`}
+                onClick={() => setDesglosAbierto((v) => !v)}
+              >
+                <span className="cost-breakdown-toggle__label">
+                  {bdOfi ? '🏪 Ver desglose (Retiro en Tienda)' : '🏠 Ver desglose (Domicilio)'}
+                </span>
+                <span className="cost-breakdown-toggle__arrow">
+                  {desglosAbierto ? '▲' : '▼'}
+                </span>
+              </button>
 
-              <div className="cost-divider" />
+              {/* Líneas detalladas — visibles solo cuando está abierto */}
+              <div className={`cost-breakdown-body ${desglosAbierto ? 'cost-breakdown-body--open' : ''}`}>
+                {lineas.map((d) => (
+                  <CostRow
+                    key={d.numLinea}
+                    label={d.descripcionItem}
+                    valueUSD={fmtUSD(Math.abs(d.montoUSD))}
+                    isDiscount={d.esDescuento}
+                    isMuted={d.categoria === 'SUBTOTAL'}
+                  />
+                ))}
+                <div className="cost-divider" />
+              </div>
 
-              <CostRow label="Tasa de cambio:" valueBs={`Bs. ${fmt(tasa)}`} isMuted />
-
+              {/* ── Total — siempre visible ─────────────────────────────── */}
               <div className="cost-total">
                 <span className="cost-total__label">Total a Pagar:</span>
-                <div className="cost-total__values">
-                  <span className="cost-total__usd">{fmtUSD(totalUSD)}</span>
-                  <span className="cost-total__bs">({fmtBs(totalBs)})</span>
-                </div>
+                <span className="cost-total__usd">{fmtUSD(totalUSD)}</span>
               </div>
             </>
           )}

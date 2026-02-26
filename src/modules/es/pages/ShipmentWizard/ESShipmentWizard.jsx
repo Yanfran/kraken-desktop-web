@@ -5,15 +5,17 @@ import toast from 'react-hot-toast';
 import { fetchMunicipios } from '../../../../services/es/spainAddressService';
 import Step1PackageDetails from './steps/Step1PackageDetails';
 import Step2Addresses from './steps/Step2Addresses';
-import Step3Summary from './steps/Step3Summary';
-import Step4Payment from './steps/Step4Payment';
+import Step3CourierSelection from './steps/Step3CourierSelection';
+import Step4Summary          from './steps/Step3Summary';   // renombrar import alias
+import Step5Payment          from './steps/Step4Payment';   // renombrar import
 import './ESShipmentWizard.scss';
 
 const STEPS = [
-  { id: 1, label: 'Detalles del Envío' },
-  { id: 2, label: 'Recogida y Entrega' },
-  { id: 3, label: 'Resumen' },
-  { id: 4, label: 'Pago' },
+  { id: 1, label: 'Detalles del Envío'  },
+  { id: 2, label: 'Recogida y Entrega'  },
+  { id: 3, label: 'Servicio de Recogida'},  // ← nuevo paso SendSei
+  { id: 4, label: 'Resumen'             },
+  { id: 5, label: 'Pago'                },
 ];
 
 const INITIAL_STATE = {
@@ -37,6 +39,10 @@ const INITIAL_STATE = {
   // ANTES ERA: pricing: null,
   calculationResult: null,   // { cost, weightLbVol, deliveryOptions, breakdowns:{oficina,domicilio} }
   // ──────────────────────────────────────────────────────────────────────────
+
+  courierId:        null,   // ID del courier seleccionado (ej: 3)
+  courierServiceId: null,   // ID del servicio seleccionado (ej: 4)
+  courierQuote:     null,   // Objeto completo del quote seleccionado
 
   seguroActivo: false,
   metodoPago: 'card',
@@ -153,7 +159,7 @@ const ESShipmentWizard = () => {
   const goBack   = () => setCurrentStep((s) => Math.max(s - 1, 1));
   const goToStep = (n) => { if (n < currentStep) setCurrentStep(n); };
 
-  const renderStep = () => {
+   const renderStep = () => {
     const commonProps = { data: wizardData, updateData, onBack: goBack };
 
     switch (currentStep) {
@@ -164,30 +170,43 @@ const ESShipmentWizard = () => {
             onNext={() => setCurrentStep(2)}
           />
         );
+
       case 2:
         return (
           <Step2Addresses
             {...commonProps}
-            calculating={calculating}    // ← para deshabilitar botón mientras calcula
-            onNext={handleStep2Next}     // ← recibe destList al invocarlo
+            calculating={calculating}
+            onNext={handleStep2Next}   // handleStep2Next ya llama setCurrentStep(3) al final
           />
         );
-      case 3:
+
+      case 3:  // ← NUEVO: selección del courier de recogida
         return (
-          <Step3Summary
+          <Step3CourierSelection
             {...commonProps}
             onNext={() => setCurrentStep(4)}
-            onEditPackage={()   => setCurrentStep(1)}
+            onBack={() => setCurrentStep(2)}
+          />
+        );
+
+      case 4:  // era case 3
+        return (
+          <Step4Summary
+            {...commonProps}
+            onNext={() => setCurrentStep(5)}
+            onEditPackage={()    => setCurrentStep(1)}
             onEditAddresses={() => setCurrentStep(2)}
           />
         );
-      case 4:
+
+      case 5:  // era case 4
         return (
-          <Step4Payment
+          <Step5Payment
             {...commonProps}
             onNext={() => {}}
           />
         );
+
       default:
         return null;
     }

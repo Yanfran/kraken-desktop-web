@@ -125,15 +125,6 @@ $text-muted: #6b7280;
     margin: 0 0 1.25rem;
   }
 
-  &__loading {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: $text-muted;
-    font-size: 0.9rem;
-    padding: 0.5rem 0;
-  }
-
   &__error {
     font-size: 0.85rem;
     color: #ef4444;
@@ -143,6 +134,14 @@ $text-muted: #6b7280;
     width: 100%;
     justify-content: center;
     margin-top: 1.25rem;
+  }
+
+  &__subtitle {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 4px 0 8px;
   }
 }
 
@@ -156,31 +155,26 @@ $text-muted: #6b7280;
 
   &__label {
     color: $text-muted;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-
-    label { cursor: pointer; color: $text-muted; }
+    flex: 1;
   }
 
-  &__value {
+  // Valor único en USD
+  &__usd-value {
+    font-size: 0.88rem;
     font-weight: 600;
     color: $text-main;
-
-    &--off {
-      color: #d1d5db;
-      text-decoration: line-through;
-    }
   }
 
-  &__check {
-    accent-color: $primary;
-    width: 15px;
-    height: 15px;
-    cursor: pointer;
+  // Descuento → verde
+  &--discount {
+    .cost-row__usd-value { color: #16a34a; }
   }
 
-  &--optional .cost-row__label { color: $text-muted; font-size: 0.85rem; }
+  // Líneas de subtotal → atenuadas
+  &--muted {
+    opacity: 0.65;
+    font-size: 0.82rem;
+  }
 }
 
 .cost-divider {
@@ -189,63 +183,7 @@ $text-muted: #6b7280;
   margin: 0.75rem 0;
 }
 
-// ── Total ─────────────────────────────────────────────────────────────────────
-.cost-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-top: 0.75rem;
-  margin-top: 0.25rem;
-
-  &__label {
-    font-size: 1rem;
-    font-weight: 700;
-    color: $text-main;
-  }
-
-  &__values {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-  }
-
-  &__eur {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: $primary;
-  }
-
-  &__usd {
-    font-size: 0.78rem;
-    color: $text-muted;
-  }
-}
-
-// ── Spinner ───────────────────────────────────────────────────────────────────
-.spinner-small {
-  width: 18px; height: 18px;
-  border: 2px solid #e5e7eb;
-  border-top-color: $primary;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-
-
-
-
-
-
-
-
-
-
-// ── AÑADIR al final de Step3Summary.scss ─────────────────────────────────────
-// Clases nuevas usadas por el Step3 actualizado
-
-// Opciones de entrega (retiro en tienda vs domicilio)
+// ── Opciones de entrega ───────────────────────────────────────────────────────
 .cost-options {
   display: flex;
   flex-direction: column;
@@ -258,12 +196,12 @@ $text-muted: #6b7280;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $border;
   border-radius: 8px;
   background: #f9fafb;
 
   &__name  { flex: 1; font-size: 0.88rem; color: #374151; }
-  &__price { font-weight: 700; color: #1B2B6B; font-size: 0.9rem; }
+  &__price { font-weight: 700; color: $navy; font-size: 0.9rem; }
   &__savings {
     font-size: 0.75rem;
     color: #16a34a;
@@ -274,42 +212,89 @@ $text-muted: #6b7280;
   }
 }
 
-// Subtítulo dentro del cost-card
-.cost-card__subtitle {
-  font-size: 0.78rem;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 4px 0 8px;
-}
-
-// Variantes del cost-row
-.cost-row {
-  &--discount {
-    .cost-row__bs,
-    .cost-row__usd { color: #16a34a; }  // verde — descuentos
-  }
-
-  &--muted {
-    opacity: 0.65;
-    font-size: 0.82rem;
-  }
-
-  // Columna de valores (Bs + USD en línea)
-  &__values {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1px;
-  }
-
-  &__bs  { font-size: 0.88rem; font-weight: 600; color: #1a1a1a; }
-  &__usd { font-size: 0.75rem; color: #9ca3af; }
-}
-
-// Total — añadir referencia en Bs debajo del USD
-.cost-total__bs {
+// ── Toggle del desglose (colapsable) ─────────────────────────────────────────
+.cost-breakdown-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: #f3f4f6;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
   font-size: 0.82rem;
-  color: #6b7280;
-  margin-left: 4px;
+  color: $text-muted;
+  font-weight: 600;
+  transition: background 0.15s;
+  margin-bottom: 0;
+
+  &:hover { background: #e9ebf0; }
+
+  &--open {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: $navy;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  &__label { flex: 1; text-align: left; }
+
+  &__arrow {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+  }
 }
+
+// ── Cuerpo del desglose colapsable ────────────────────────────────────────────
+.cost-breakdown-body {
+  // Colapso con max-height para animación suave
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+  opacity: 0;
+
+  border: 1px solid $border;
+  border-top: none;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  padding: 0 12px;
+
+  &--open {
+    max-height: 600px; // suficiente para cualquier lista de líneas
+    opacity: 1;
+    padding: 8px 12px 0;
+  }
+}
+
+// ── Total — siempre visible ───────────────────────────────────────────────────
+.cost-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+
+  &__label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-main;
+  }
+
+  &__usd {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: $primary;
+  }
+}
+
+// ── Spinner ───────────────────────────────────────────────────────────────────
+.spinner-small {
+  width: 18px; height: 18px;
+  border: 2px solid #e5e7eb;
+  border-top-color: $primary;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

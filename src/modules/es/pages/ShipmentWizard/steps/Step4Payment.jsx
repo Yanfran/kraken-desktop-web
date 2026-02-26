@@ -1,15 +1,20 @@
 // src/modules/es/pages/ShipmentWizard/steps/Step4Payment.jsx
-// Paso 4: Método de pago — Tarjeta, PayPal, Transferencia
-// Al confirmar llama al backend y redirige a pantalla de éxito
+// Paso 5 del wizard España — Método de pago + creación de guía post-pago
 
 import React, { useState } from 'react';
+import { createSpainGuia }       from '../../../../../services/es/spainGuiaService';
+import { createSendSeiShipment } from '../../../../../services/es/sendSeiService';
 import './Step4Payment.scss';
 
-// ── Mock submit — reemplazar con llamada real ────────────────────────────────
-// POST /api/es/shipments/create + POST /api/es/payments/process
-const mockSubmit = async (payload) => {
-  await new Promise((r) => setTimeout(r, 1500));
-  return { success: true, orderId: `KE${Date.now()}` };
+// ── Dirección del almacén Kraken España (destino de la recogida SendSei) ─────
+const KRAKEN_WAREHOUSE = {
+  fullName:      'Kraken Courier España',
+  email:         'operaciones@krakencourier.com',
+  phoneNumber:   '+34600000000',
+  address:       'Calle Mayor',
+  addressNumber: '1',
+  postalCode:    '28013',
+  city:          'Madrid',
 };
 
 // ── Formateo de número de tarjeta ────────────────────────────────────────────
@@ -18,40 +23,25 @@ const formatCardNumber = (v) =>
 
 const detectCardBrand = (v) => {
   const n = v.replace(/\s/g, '');
-  if (/^4/.test(n))  return 'Visa';
+  if (/^4/.test(n))                             return 'Visa';
   if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return 'Mastercard';
-  if (/^3[47]/.test(n)) return 'Amex';
+  if (/^3[47]/.test(n))                        return 'Amex';
   return '';
 };
 
 // ── Métodos de pago disponibles ───────────────────────────────────────────────
 const PAYMENT_METHODS = [
-  {
-    id: 'card',
-    label: 'Tarjeta de Crédito/Débito',
-    icons: ['Visa', 'MC', 'Amex'],
-    render: () => '💳',
-  },
-  {
-    id: 'paypal',
-    label: 'PayPal',
-    render: () => '🅿️',
-  },
-  {
-    id: 'transfer',
-    label: 'Transferencia Bancaria',
-    render: () => '🏦',
-  },
+  { id: 'card',     label: 'Tarjeta de Crédito/Débito', render: () => '💳' },
+  { id: 'paypal',   label: 'PayPal',                    render: () => '🅿️' },
+  { id: 'transfer', label: 'Transferencia Bancaria',     render: () => '🏦' },
 ];
 
 // ── Formulario de tarjeta ────────────────────────────────────────────────────
 const CardForm = ({ card, onChange, errors }) => {
   const brand = detectCardBrand(card.numero);
-
   return (
     <div className="card-form">
       <div className="wizard-grid-2">
-        {/* Número */}
         <div className="wizard-field card-form__numero-field">
           <label>Número de Tarjeta</label>
           <div className="card-form__numero-wrap">
@@ -68,7 +58,6 @@ const CardForm = ({ card, onChange, errors }) => {
           {errors?.numero && <span className="field-error-msg">{errors.numero}</span>}
         </div>
 
-        {/* Expiración */}
         <div className="wizard-field">
           <label>Fecha de Expiración (MM/AA)</label>
           <input
@@ -87,12 +76,8 @@ const CardForm = ({ card, onChange, errors }) => {
       </div>
 
       <div className="wizard-grid-2">
-        {/* CVV */}
         <div className="wizard-field" style={{ position: 'relative' }}>
-          <label>
-            CVV
-            <span className="card-form__cvv-hint" title="El código de 3 dígitos en la parte posterior de tu tarjeta"> ⓘ</span>
-          </label>
+          <label>CVV <span className="card-form__cvv-hint" title="Código de 3 dígitos en el reverso"> ⓘ</span></label>
           <input
             value={card.cvv}
             onChange={(e) => onChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -104,7 +89,6 @@ const CardForm = ({ card, onChange, errors }) => {
           {errors?.cvv && <span className="field-error-msg">{errors.cvv}</span>}
         </div>
 
-        {/* Titular */}
         <div className="wizard-field">
           <label>Nombre del Titular</label>
           <input
@@ -117,7 +101,6 @@ const CardForm = ({ card, onChange, errors }) => {
         </div>
       </div>
 
-      {/* Guardar tarjeta */}
       <label className="card-form__save-label">
         <input
           type="checkbox"
@@ -131,7 +114,7 @@ const CardForm = ({ card, onChange, errors }) => {
   );
 };
 
-// ── Instrucciones de PayPal / Transferencia ───────────────────────────────────
+// ── Instrucciones PayPal / Transferencia ──────────────────────────────────────
 const PaypalInfo = () => (
   <div className="payment-info-block">
     <p>Serás redirigido a PayPal para completar el pago de forma segura.</p>
@@ -147,34 +130,66 @@ const TransferInfo = () => (
       <span><strong>IBAN:</strong> ES91 2100 0418 4502 0005 1332</span>
       <span><strong>Concepto:</strong> Tu número de pedido (se asignará al confirmar)</span>
     </div>
-    <p className="payment-info-block__note">⚠️ Tu envío se procesará una vez confirmado el pago (1-2 días hábiles).</p>
+    <p className="payment-info-block__note">
+      ⚠️ Tu envío se procesará una vez confirmado el pago (1-2 días hábiles).
+    </p>
   </div>
 );
 
 // ── Pantalla de éxito ─────────────────────────────────────────────────────────
-const SuccessScreen = ({ orderId }) => (
+const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal }) => (
   <div className="payment-success">
     <div className="payment-success__icon">✅</div>
-    <h2 className="payment-success__title">¡Envío Creado!</h2>
-    <p className="payment-success__sub">Tu pedido ha sido registrado correctamente.</p>
-    <div className="payment-success__order">
-      N° de Orden: <strong>{orderId}</strong>
-    </div>
-    <p className="payment-success__hint">Recibirás un correo de confirmación con todos los detalles.</p>
+    <h2 className="payment-success__title">¡Envío Registrado!</h2>
+    <p className="payment-success__sub">Tu pedido ha sido registrado y tu guía generada.</p>
+
+    {/* Número de guía — el dato más importante */}
+    {nGuia && (
+      <div className="payment-success__guia">
+        <span className="payment-success__guia-label">Tu número de guía</span>
+        <span className="payment-success__guia-number">{nGuia}</span>
+        <span className="payment-success__guia-hint">
+          Guarda este código para hacer seguimiento de tu envío
+        </span>
+      </div>
+    )}
+
+    {/* Datos del courier */}
+    {courierName && (
+      <div className="payment-success__courier">
+        <span>🚚 {courierName} — {courierService}</span>
+        {courierTotal && <span className="payment-success__courier-price">€{Number(courierTotal).toFixed(2)}</span>}
+      </div>
+    )}
+
+    <p className="payment-success__hint">
+      Recibirás un correo de confirmación con todos los detalles del envío.
+    </p>
     <a href="/home" className="btn-wizard-next payment-success__btn">
       Ir al Inicio
     </a>
   </div>
 );
 
-// ── Componente principal del paso 4 ─────────────────────────────────────────
+// ── Componente principal ──────────────────────────────────────────────────────
 const Step4Payment = ({ data, updateData, onBack }) => {
-  const [cardErrors, setCardErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [orderId, setOrderId] = useState(null);
+  const [cardErrors,   setCardErrors]   = useState({});
+  const [submitting,   setSubmitting]   = useState(false);
+  const [submitPhase,  setSubmitPhase]  = useState('');  // texto de estado mientras procesa
+  const [guiaResult,   setGuiaResult]   = useState(null); // { nGuia, courierName, ... }
+  const [submitError,  setSubmitError]  = useState(null);
 
-  const { metodoPago, cardData, pricing } = data;
+  const { metodoPago, cardData, calculationResult, courierQuote } = data;
 
+  // ── Precios ──────────────────────────────────────────────────────────────────
+  const eur      = (n) => `€${Number(n || 0).toFixed(2)}`;
+  const p        = calculationResult;
+  const shipping = p?.cost ?? 0;
+  const courier  = courierQuote ? parseFloat(courierQuote.total) : 0;
+  const iva      = ((shipping + courier) * 0.21);
+  const total    = shipping + courier + iva;
+
+  // ── Validación tarjeta ────────────────────────────────────────────────────
   const updateCard = (field, value) => {
     updateData({ cardData: { ...cardData, [field]: value } });
     setCardErrors((p) => { const c = { ...p }; delete c[field]; return c; });
@@ -182,43 +197,112 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
   const validateCard = () => {
     const e = {};
-    if (!cardData.numero || cardData.numero.replace(/\s/g, '').length < 13) e.numero = 'Número inválido';
+    if (!cardData.numero || cardData.numero.replace(/\s/g, '').length < 13) e.numero    = 'Número inválido';
     if (!cardData.expiracion || !/^\d{2}\/\d{2}$/.test(cardData.expiracion)) e.expiracion = 'Formato MM/AA';
-    if (!cardData.cvv || cardData.cvv.length < 3) e.cvv = 'CVV inválido';
-    if (!cardData.titular.trim()) e.titular = 'Requerido';
+    if (!cardData.cvv || cardData.cvv.length < 3)                            e.cvv       = 'CVV inválido';
+    if (!cardData.titular?.trim())                                            e.titular   = 'Requerido';
     return e;
   };
 
+  // ── Flujo principal post-pago ─────────────────────────────────────────────
   const handleConfirm = async () => {
+    // 1. Validar tarjeta si aplica
     if (metodoPago === 'card') {
       const errs = validateCard();
       if (Object.keys(errs).length) { setCardErrors(errs); return; }
     }
 
     setSubmitting(true);
+    setSubmitError(null);
+
     try {
-      const result = await mockSubmit({ data, metodoPago });
-      if (result.success) setOrderId(result.orderId);
-    } catch {
-      alert('Error al procesar el pago. Intenta de nuevo.');
+      // ── FASE 1: Procesar pago ────────────────────────────────────────────
+      // TODO: reemplazar este mock con tu llamada real de pago
+      setSubmitPhase('Procesando pago...');
+      await new Promise((r) => setTimeout(r, 1200)); // ← mock, eliminar en producción
+      // const pagoResult = await procesarPago({ metodoPago, cardData, total });
+      // if (!pagoResult.success) throw new Error(pagoResult.message);
+
+      // ── FASE 2: Crear envío en SendSei ───────────────────────────────────
+      let sendSeiUuid = null;
+
+      if (data.courierId && data.selectedOriginAddress) {
+        setSubmitPhase('Registrando recogida con el courier...');
+
+        const shipmentRes = await createSendSeiShipment({
+          courierId:        data.courierId,
+          courierServiceId: data.courierServiceId,
+          origin:           data.selectedOriginAddress,
+          destination:      KRAKEN_WAREHOUSE,
+          packages:         data.packages,
+          insuredAmount:    total > 0 ? total.toFixed(2) : null,
+        });
+
+        if (shipmentRes.success) {
+          // La respuesta de SendSei puede devolver el UUID en distintos campos
+          sendSeiUuid = shipmentRes.data?.uuid
+                     ?? shipmentRes.data?.id
+                     ?? shipmentRes.data?.shipment_uuid
+                     ?? null;
+
+          if (sendSeiUuid) {
+            updateData({ sendSeiShipmentUuid: sendSeiUuid });
+          }
+        } else {
+          // SendSei falló pero el pago ya fue procesado → continuar igual
+          console.warn('[Step4Payment] SendSei shipment falló:', shipmentRes.error);
+        }
+      }
+
+      // ── FASE 3: Crear guía en Kraken backend ─────────────────────────────
+      setSubmitPhase('Generando guía de envío...');
+
+      const guiaRes = await createSpainGuia(
+        data,
+        sendSeiUuid,
+        null // pickupDate — si tienes el campo en el wizard, pásalo aquí
+      );
+
+      if (!guiaRes.success) {
+        // El pago ya fue procesado → no bloquear al usuario, mostrar aviso
+        console.error('[Step4Payment] Error creando guía:', guiaRes.error);
+        setGuiaResult({
+          nGuia:         'Error al generar',
+          courierName:   courierQuote?.courier ?? null,
+          courierService:courierQuote?.service ?? null,
+          courierTotal:  courierQuote?.total   ?? null,
+        });
+      } else {
+        updateData({ nGuia: guiaRes.nGuia, guiaId: guiaRes.guiaId });
+        setGuiaResult({
+          nGuia:          guiaRes.nGuia,
+          courierName:    courierQuote?.courier ?? null,
+          courierService: courierQuote?.service ?? null,
+          courierTotal:   courierQuote?.total   ?? null,
+        });
+      }
+
+    } catch (err) {
+      console.error('[Step4Payment] Error en flujo de confirmación:', err);
+      setSubmitError('Error al procesar el pago. Por favor intenta de nuevo.');
     } finally {
       setSubmitting(false);
+      setSubmitPhase('');
     }
   };
 
-  const eur = (n) => `€${Number(n || 0).toFixed(2)}`;
-  const p   = pricing;
-
-  // ── Pantalla de éxito ──────────────────────────────────────────────────────
-  if (orderId) return <SuccessScreen orderId={orderId} />;
+  // ── Pantalla de éxito ─────────────────────────────────────────────────────
+  if (guiaResult) return <SuccessScreen {...guiaResult} />;
 
   return (
     <div className="step4-layout">
-      {/* ── Columna izquierda: métodos ── */}
+      {/* ── Columna izquierda: métodos de pago ── */}
       <div className="step4-layout__left">
         <div className="wizard-card">
           <h2 className="wizard-card__title">💳 Método de Pago</h2>
-          <p className="wizard-card__subtitle">Selecciona tu forma de pago preferida para completar tu envío.</p>
+          <p className="wizard-card__subtitle">
+            Selecciona tu forma de pago para completar el envío.
+          </p>
 
           {/* Selector de método */}
           <div className="payment-methods">
@@ -243,7 +327,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             ))}
           </div>
 
-          {/* Formulario según método seleccionado */}
+          {/* Formulario según método */}
           <div className="payment-form-area">
             {metodoPago === 'card'     && <CardForm card={cardData} onChange={updateCard} errors={cardErrors} />}
             {metodoPago === 'paypal'   && <PaypalInfo />}
@@ -251,31 +335,54 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           </div>
         </div>
 
+        {/* Error de submit */}
+        {submitError && (
+          <div className="payment-submit-error">⚠️ {submitError}</div>
+        )}
+
         <div className="wizard-actions">
-          <button className="btn-wizard-back" onClick={onBack} disabled={submitting}>← Volver</button>
+          <button className="btn-wizard-back" onClick={onBack} disabled={submitting}>
+            ← Volver
+          </button>
         </div>
       </div>
 
-      {/* ── Columna derecha: resumen + confirmar ── */}
+      {/* ── Columna derecha: resumen + botón confirmar ── */}
       <div className="step4-layout__right">
         <div className="cost-card">
           <h3 className="cost-card__title">Resumen del Pedido</h3>
 
+          {/* Envío internacional Kraken */}
           {p ? (
             <>
-              <div className="order-row"><span>Envío base</span>        <span>{eur(p.envioBase)}</span></div>
-              {p.pesoVolumetrico > 0 && <div className="order-row"><span>Peso volumétrico</span> <span>{eur(p.pesoVolumetrico)}</span></div>}
-              {data.seguroActivo     && <div className="order-row"><span>Seguro de Envío</span>  <span>{eur(p.seguro)}</span></div>}
-              <div className="order-row"><span>IVA (21%)</span>         <span>{eur(p.iva)}</span></div>
-              <div className="order-divider" />
-              <div className="order-total">
-                <span>Total a Pagar:</span>
-                <span className="order-total__value">{eur(p.total)}</span>
+              <div className="order-row">
+                <span>Envío internacional</span>
+                <span>{eur(shipping)}</span>
               </div>
             </>
           ) : (
-            <p style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Precio no disponible</p>
+            <p style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Tarifa no disponible</p>
           )}
+
+          {/* Recogida SendSei */}
+          {courierQuote && (
+            <div className="order-row">
+              <span>Recogida ({courierQuote.service})</span>
+              <span>{eur(courierQuote.total)}</span>
+            </div>
+          )}
+
+          <div className="order-row">
+            <span>IVA (21%)</span>
+            <span>{eur(iva)}</span>
+          </div>
+
+          <div className="order-divider" />
+
+          <div className="order-total">
+            <span>Total a Pagar:</span>
+            <span className="order-total__value">{eur(total)}</span>
+          </div>
 
           {/* Badges de seguridad */}
           <div className="security-badges">
@@ -284,15 +391,18 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             <span className="security-badge">🔐 Cifrado</span>
           </div>
           <p className="security-text">
-            Tus datos están protegidos con encriptación de grado bancario. No almacenamos la información de tu tarjeta sin tu consentimiento.
+            Tus datos están protegidos con encriptación de grado bancario.
           </p>
 
+          {/* Botón confirmar */}
           <button
             className="btn-wizard-next cost-card__proceed-btn"
             onClick={handleConfirm}
             disabled={submitting}
           >
-            {submitting ? '⏳ Procesando...' : `Confirmar Pago ${p ? eur(p.total) : ''}`}
+            {submitting
+              ? `⏳ ${submitPhase || 'Procesando...'}`
+              : `Confirmar Pago ${eur(total)}`}
           </button>
         </div>
       </div>
