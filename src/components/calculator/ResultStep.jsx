@@ -360,6 +360,21 @@ const ResultStep = ({
           Nuevo Cálculo
         </button>
 
+        <p className="result-step__impuestos-text">
+          Los impuestos de importación no están incluidos en nuestra tarifa ni
+          pueden calcularse con antelación. Si la aduana aplica cargos
+          adicionales, deberán ser asumidos por el cliente. Más información{" "}
+          <a
+            href="https://krakencourier.com/wiki/aranceles-aduana-como-afectan-tu-envio/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="result-step__impuestos-link"
+          >
+            aquí
+          </a>
+          .
+        </p>
+
         {/* ✅ NUEVO: Banner promocional alineado a la derecha */}
         <div className="result-step__promotional-banner">
           <img 
