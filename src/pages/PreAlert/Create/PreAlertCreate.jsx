@@ -435,6 +435,7 @@ const PreAlertCreate = () => {
       if (
         !addressState.selectedState ||
         !addressState.selectedMunicipality ||
+        !addressState.selectedParish ||
         !addressState.address
       ) {
         newErrors.address = 'Complete todos los campos de dirección';
@@ -608,7 +609,16 @@ const PreAlertCreate = () => {
       (t) => t.trim().length > 0 && t.trim().length <= 30
     );
     const hasContent = formState.contenidos.length > 0;
-    return hasValidTracking && hasContent;
+
+     // Validar parroquia si está en modo nueva dirección
+    const hasValidAddress =
+      addressState.selectedOption !== 'new' ||
+      (!!addressState.selectedState &&
+        !!addressState.selectedMunicipality &&
+        !!addressState.selectedParish &&   // ← Agregar esto
+        !!addressState.address);
+    
+    return hasValidTracking && hasContent && hasValidAddress;
   }, [formState.trackings, formState.contenidos]);
 
   return (

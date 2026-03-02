@@ -218,6 +218,10 @@ const Addresses = () => {
         toast.error('Seleccione un municipio');
         return false;
       }
+      if (!selectedParish) {
+        toast.error('Seleccione una parroquia');
+        return false;
+      }
       if (!address.trim()) {
         toast.error('Ingrese una dirección');
         return false;
@@ -569,14 +573,14 @@ const Addresses = () => {
                           </div>
 
                           <div className="form-group">
-                            <label className="form-label">PARROQUIA</label>
-                            <SearchableSelect
-                              options={parishesData || []}
-                              value={selectedParish}
-                              onChange={setSelectedParish}
-                              placeholder="Seleccione una parroquia (opcional)"
-                              disabled={!selectedMunicipality || isLoadingParishes || submitting}
-                            />
+                            <label className="form-label">PARROQUIA <span className="required">*</span></label>
+                              <SearchableSelect
+                                options={parishesData || []}
+                                value={selectedParish}
+                                onChange={setSelectedParish}
+                                placeholder="Seleccione una parroquia"
+                                disabled={!selectedMunicipality || isLoadingParishes || submitting}
+                              />
                           </div>
                         </div>
 
