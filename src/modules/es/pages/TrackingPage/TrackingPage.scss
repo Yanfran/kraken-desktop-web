@@ -1,0 +1,300 @@
+.ke-tracking {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  font-family: inherit;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  &__back {
+    background: none;
+    border: none;
+    color: #1B2B6B;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    &:hover { text-decoration: underline; }
+  }
+
+  &__title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1B2B6B;
+    margin: 0;
+  }
+
+  // ── Buscador ────────────────────────────────────────────────────
+  &__search {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  &__search-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: monospace;
+    outline: none;
+    transition: border-color 0.2s;
+    text-transform: uppercase;
+
+    &:focus   { border-color: #F05A22; }
+    &:disabled { background: #F9FAFB; cursor: not-allowed; }
+  }
+
+  &__search-btn {
+    padding: 12px 20px;
+    background: #F05A22;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+
+    &:hover    { background: #d44d1a; }
+    &:disabled { background: #9CA3AF; cursor: not-allowed; }
+  }
+
+  &__btn-spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  // ── Loading ──────────────────────────────────────────────────────
+  &__loading {
+    text-align: center;
+    padding: 48px 0;
+    color: #6B7280;
+  }
+
+  &__spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #E5E7EB;
+    border-top-color: #F05A22;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  // ── Error ────────────────────────────────────────────────────────
+  &__error {
+    background: #FEF2F2;
+    border: 1px solid #FCA5A5;
+    color: #B91C1C;
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+
+  // ── Empty state ──────────────────────────────────────────────────
+  &__empty {
+    text-align: center;
+    padding: 48px 0;
+    color: #9CA3AF;
+
+    &-icon {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    p { font-size: 14px; margin: 0; }
+  }
+
+  // ── NGuia box ────────────────────────────────────────────────────
+  &__guia-box {
+    background: #F0FDF4;
+    border: 2px solid #22C55E;
+    border-radius: 12px;
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+
+  &__guia-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6B7280;
+    margin: 0 0 6px;
+  }
+
+  &__guia-number {
+    font-size: 24px;
+    font-weight: 800;
+    color: #15803D;
+    font-family: monospace;
+    margin: 0 0 4px;
+  }
+
+  &__guia-sub {
+    font-size: 12px;
+    color: #6B7280;
+    margin: 0;
+  }
+
+  // ── Progress steps ───────────────────────────────────────────────
+  &__steps {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    position: relative;
+  }
+
+  &__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    color: #9CA3AF;
+
+    &--done   { color: #22C55E; }
+    &--active { color: #F05A22; font-weight: 700; }
+  }
+
+  &__step-circle {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #E5E7EB;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    margin-bottom: 6px;
+    z-index: 1;
+
+    .ke-tracking__step--done  & { background: #22C55E; color: #fff; }
+    .ke-tracking__step--active & { background: #F05A22; color: #fff; }
+  }
+
+  &__step-label {
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  &__step-line {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #E5E7EB;
+    z-index: 0;
+
+    &--done { background: #22C55E; }
+  }
+
+  // ── Info grid ────────────────────────────────────────────────────
+  &__info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  &__info-item {
+    background: #F9FAFB;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__info-label {
+    font-size: 11px;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1A1A1A;
+
+    &--status { color: #F05A22; }
+  }
+
+  // ── Historial ────────────────────────────────────────────────────
+  &__history-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1B2B6B;
+    margin: 0 0 16px;
+  }
+
+  &__history-list {
+    list-style: none;
+    margin: 0; padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__history-item {
+    display: flex;
+    gap: 14px;
+    padding-bottom: 20px;
+    position: relative;
+
+    &:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 7px; top: 16px;
+      width: 2px;
+      height: calc(100% - 8px);
+      background: #E5E7EB;
+    }
+  }
+
+  &__history-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #F05A22;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &__history-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__history-status {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1A1A1A;
+  }
+
+  &__history-note {
+    font-size: 12px;
+    color: #6B7280;
+  }
+
+  &__history-date {
+    font-size: 11px;
+    color: #9CA3AF;
+  }
+}

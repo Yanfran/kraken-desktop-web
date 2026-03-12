@@ -2,8 +2,11 @@
 // Paso 1: Detalles del envío — dimensiones, peso, tipo, FOB, descripción
 // Soporta múltiples cajas (paquetes)
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './Step1PackageDetails.scss';
+import axiosInstance from '../../../../../services/axiosInstance';
+
+
 
 // ── Opciones de tipo de paquete ──────────────────────────────────────────────
 const PACKAGE_TYPES = ['Caja', 'Sobre'];
@@ -20,6 +23,7 @@ const newPackage = () => ({
   tipoPaquete: 'Caja',
   valorFOB: '',
   descripcion: '',
+  contenidos: [],
 });
 
 // ── Validación de un paquete ─────────────────────────────────────────────────
@@ -30,8 +34,95 @@ const validatePackage = (pkg) => {
   if (!pkg.alto   || isNaN(pkg.alto)   || Number(pkg.alto)   <= 0) errors.alto   = 'Requerido';
   if (!pkg.peso   || isNaN(pkg.peso)   || Number(pkg.peso)   <= 0) errors.peso   = 'Requerido';
   if (!pkg.valorFOB || isNaN(pkg.valorFOB) || Number(pkg.valorFOB) < 0) errors.valorFOB = 'Requerido';
-  if (!pkg.descripcion.trim()) errors.descripcion = 'Requerido';
+  if (!pkg.contenidos?.length) errors.contenidos = 'Selecciona al menos un contenido';
   return errors;
+};
+
+// ── Selector de contenidos ────────────────────────────────────────────────────
+const ContenidoSelector = ({ selected, onChange }) => {
+  const [opciones, setOpciones] = useState([]);
+  const [abierto, setAbierto]   = useState(false);
+  const [loading, setLoading]   = useState(true);
+  const ref = useRef(null); // ✅
+
+  useEffect(() => {
+    axiosInstance.get('/PaqueteContenidos/getContent')
+      .then(res => setOpciones(res.data?.data ?? []))
+      .catch(() => setOpciones([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ✅ Cierra al hacer click fuera
+  useEffect(() => {
+    if (!abierto) return; // solo escucha cuando está abierto
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setAbierto(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [abierto]); // ← depende de abierto
+
+  const toggle = (item) => {
+    const existe = selected.find(s => s.id === item.id);
+    onChange(existe
+      ? selected.filter(s => s.id !== item.id)
+      : [...selected, item]
+    );
+  };
+
+  const label = selected.length === 0
+    ? 'Seleccionar contenidos'
+    : `${selected.length} seleccionado${selected.length > 1 ? 's' : ''}`;
+
+  return (
+    <div className="contenido-selector" ref={ref}> {/* ✅ ref conectado */}
+      <button
+        type="button"
+        className={`contenido-selector__trigger ${abierto ? 'contenido-selector__trigger--open' : ''}`}
+        onMouseDown={(e) => { e.preventDefault(); setAbierto(v => !v); }}
+      >
+        <span>{label}</span>
+        <span>{abierto ? '▲' : '▼'}</span>
+      </button>
+
+      {abierto && (
+        <div className="contenido-selector__dropdown">
+          {loading
+            ? <p className="contenido-selector__loading">Cargando...</p>
+            : opciones.map(op => {
+                const activo = !!selected.find(s => s.id === op.id);
+                return (
+                  <div
+                    key={op.id}
+                    className={`contenido-selector__option ${activo ? 'contenido-selector__option--active' : ''}`}
+                    onMouseDown={(e) => { e.preventDefault(); toggle(op); }}
+                  >
+                    <span>{op.contenido}</span>
+                    {activo && <span className="contenido-selector__check">✓</span>}
+                  </div>
+                );
+              })
+          }
+        </div>
+      )}
+
+      {selected.length > 0 && (
+        <div className="contenido-selector__tags">
+          {selected.map(s => (
+            <span key={s.id} className="contenido-selector__tag">
+              {s.contenido}
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); toggle(s); }}
+              >×</button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 // ── Componente de una caja individual ───────────────────────────────────────
@@ -294,12 +385,11 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
       {/* Descripción del contenido */}
       <div className="wizard-field">
         <label>Descripción del Contenido</label>
-        <textarea
-          placeholder="Descripción detallada del contenido"
-          value={pkg.descripcion}
-          onChange={(e) => set('descripcion', e.target.value)}
-          className={errors?.descripcion ? 'field-error' : ''}
-          rows={3}
+        <ContenidoSelector
+          selected={pkg.contenidos ?? []}
+          onChange={(items) => {
+            onChange(pkg.id, '__contenidos__', items);
+          }}
         />
         {errors?.descripcion && <span className="field-error-msg">{errors.descripcion}</span>}
       </div>
@@ -314,14 +404,26 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
   // Mutaciones en el array de paquetes
   const handleChange = (id, field, value) => {
     updateData({
-      packages: data.packages.map((p) =>
-        p.id === id ? { ...p, [field]: value } : p
-      ),
+      packages: data.packages.map((p) => {
+        if (p.id !== id) return p;
+
+        // ── Caso especial: actualizar contenidos + descripcion juntos ──
+        if (field === '__contenidos__') {
+          return {
+            ...p,
+            contenidos:  value,
+            descripcion: value.map(i => i.contenido).join(', '),
+          };
+        }
+
+        return { ...p, [field]: value };
+      }),
     });
-    // Limpia el error del campo tocado
+
     setFieldErrors((prev) => {
       const copy = { ...prev };
       delete copy[`${id}.${field}`];
+      delete copy[`${id}.contenidos`];
       return copy;
     });
   };

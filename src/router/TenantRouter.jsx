@@ -52,6 +52,7 @@ const USAddresses = React.lazy(() => import('../modules/us/pages/Addresses/Addre
 // ============================================
 const ESHome = React.lazy(() => import('../modules/es/pages/Home/HomePage'));
 const ESShipmentWizard = React.lazy(() => import('../modules/es/pages/ShipmentWizard/ESShipmentWizard'));
+const ESTracking = React.lazy(() => import('../modules/es/pages/TrackingPage/TrackingPage'));
 
 const TenantRouter = () => {
     const { tenant, isLoading } = useTenant();
@@ -153,8 +154,8 @@ const TenantRouter = () => {
                     <>
                         <Route path="/home" element={<ESHome />} />
 
-                        {/* Tracking */}
-                        <Route path="/tracking" element={<Tracking />} />
+                        {/* Tracking */}                        
+                        <Route path="/tracking" element={<ESTracking />} />
 
                         <Route path="/pickup" element={<ESShipmentWizard />} />
                         {/* <Route path="/shipment/new"   element={<ESShipmentWizard />} /> */}

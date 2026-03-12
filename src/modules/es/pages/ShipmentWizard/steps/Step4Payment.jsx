@@ -2,9 +2,19 @@
 // Paso 5 del wizard España — Método de pago + creación de guía post-pago
 
 import React, { useState } from 'react';
-import { createSpainGuia }       from '../../../../../services/es/spainGuiaService';
-import { createSendSeiShipment } from '../../../../../services/es/sendSeiService';
+import { createSpainGuia }                                    from '../../../../../services/es/spainGuiaService';
+import { createSendSeiShipment, createSendSeiPickup }         from '../../../../../services/es/sendSeiService';
 import './Step4Payment.scss';
+
+
+// ── Helper próximo día hábil (añadir antes del componente) ───────────────────
+const getNextBusinessDate = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+  if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+};
 
 // ── Dirección del almacén Kraken España (destino de la recogida SendSei) ─────
 const KRAKEN_WAREHOUSE = {
@@ -168,6 +178,12 @@ const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal }) => 
     <a href="/home" className="btn-wizard-next payment-success__btn">
       Ir al Inicio
     </a>
+    <button
+      className="ke-wizard__btn-track"
+      onClick={() => navigate(`/ke/tracking/${wizardData.nGuia}`)}
+    >
+      🔍 Rastrear mi envío
+    </button>
   </div>
 );
 
@@ -185,9 +201,8 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const eur      = (n) => `€${Number(n || 0).toFixed(2)}`;
   const p        = calculationResult;
   const shipping = p?.cost ?? 0;
-  const courier  = courierQuote ? parseFloat(courierQuote.total) : 0;
-  const iva      = ((shipping + courier) * 0.21);
-  const total    = shipping + courier + iva;
+  const courier  = courierQuote ? parseFloat(courierQuote.total) : 0;    
+  const total = shipping + courier;
 
   // ── Validación tarjeta ────────────────────────────────────────────────────
   const updateCard = (field, value) => {
@@ -206,7 +221,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
   // ── Flujo principal post-pago ─────────────────────────────────────────────
   const handleConfirm = async () => {
-    // 1. Validar tarjeta si aplica
+    // Validar tarjeta si aplica
     if (metodoPago === 'card') {
       const errs = validateCard();
       if (Object.keys(errs).length) { setCardErrors(errs); return; }
@@ -216,75 +231,84 @@ const Step4Payment = ({ data, updateData, onBack }) => {
     setSubmitError(null);
 
     try {
-      // ── FASE 1: Procesar pago ────────────────────────────────────────────
-      // TODO: reemplazar este mock con tu llamada real de pago
-      setSubmitPhase('Procesando pago...');
-      await new Promise((r) => setTimeout(r, 1200)); // ← mock, eliminar en producción
-      // const pagoResult = await procesarPago({ metodoPago, cardData, total });
-      // if (!pagoResult.success) throw new Error(pagoResult.message);
+      // ── FASE 1: Crear shipment en SendSei ─────────────────────────────────
+      setSubmitPhase('Registrando recogida con el courier...');
 
-      // ── FASE 2: Crear envío en SendSei ───────────────────────────────────
-      let sendSeiUuid = null;
-
-      if (data.courierId && data.selectedOriginAddress) {
-        setSubmitPhase('Registrando recogida con el courier...');
-
-        const shipmentRes = await createSendSeiShipment({
-          courierId:        data.courierId,
-          courierServiceId: data.courierServiceId,
-          origin:           data.selectedOriginAddress,
-          destination:      KRAKEN_WAREHOUSE,
-          packages:         data.packages,
-          insuredAmount:    total > 0 ? total.toFixed(2) : null,
-        });
-
-        if (shipmentRes.success) {
-          // La respuesta de SendSei puede devolver el UUID en distintos campos
-          sendSeiUuid = shipmentRes.data?.uuid
-                     ?? shipmentRes.data?.id
-                     ?? shipmentRes.data?.shipment_uuid
-                     ?? null;
-
-          if (sendSeiUuid) {
-            updateData({ sendSeiShipmentUuid: sendSeiUuid });
-          }
-        } else {
-          // SendSei falló pero el pago ya fue procesado → continuar igual
-          console.warn('[Step4Payment] SendSei shipment falló:', shipmentRes.error);
-        }
+      if (!data.courierId || !data.selectedOriginAddress) {
+        throw new Error('Falta courier o dirección de origen seleccionada.');
       }
 
-      // ── FASE 3: Crear guía en Kraken backend ─────────────────────────────
-      setSubmitPhase('Generando guía de envío...');
+      const pkg    = data.packages?.[0] ?? {};
+      const origin = data.selectedOriginAddress;
 
-      const guiaRes = await createSpainGuia(
-        data,
-        sendSeiUuid,
-        null // pickupDate — si tienes el campo en el wizard, pásalo aquí
+      const shipmentRes = await createSendSeiShipment({
+        courierId:        data.courierId,
+        courierServiceId: data.courierServiceId,
+        insuredAmount:    total > 0 ? total.toFixed(2) : null,
+        origin: {
+          fullName:      origin.fullName  ?? origin.alias ?? 'Cliente',
+          company:       null,
+          email:         origin.email     ?? 'noreply@krakencourier.com',
+          phoneNumber:   origin.phone     ?? '000000000',
+          address:       origin.line1     ?? origin.address ?? '',
+          addressNumber: origin.addressNumber || 'S/N',
+          postalCode:    origin.postalCode ?? origin.zip ?? '',
+          city:          origin.city      ?? '',
+        },
+        destination: KRAKEN_WAREHOUSE,
+        packages: [{
+          weightKg:           String(parseFloat(pkg.peso    || pkg.weightKg || 0)),
+          lengthCm:           String(parseFloat(pkg.largo   || pkg.lengthCm || 0)),
+          widthCm:            String(parseFloat(pkg.ancho   || pkg.widthCm  || 0)),
+          heightCm:           String(parseFloat(pkg.alto    || pkg.heightCm || 0)),
+          contentDescription: (pkg.descripcion ?? 'Mercancía general').slice(0, 50),          
+          declaredValue:      String(parseFloat(pkg.valorFOB ?? '0')),
+        }],
+      });
+
+      if (!shipmentRes.success || !shipmentRes.data?.uuid) {
+        throw new Error('No se pudo crear el envío con el courier. Intenta de nuevo.');
+      }
+
+      const shipmentUuid = shipmentRes.data.uuid;
+
+      // ── FASE 2: Agendar pickup ────────────────────────────────────────────
+      setSubmitPhase('Agendando recogida...');
+
+      const pickupRes = await createSendSeiPickup(
+        getNextBusinessDate(), // scheduledDate
+        '09:00',               // scheduledTimeFrom
+        '14:00',               // scheduledTimeTo
+        [shipmentUuid],        // shipmentUuids
+        'Recogida Kraken Courier'
       );
 
-      if (!guiaRes.success) {
-        // El pago ya fue procesado → no bloquear al usuario, mostrar aviso
-        console.error('[Step4Payment] Error creando guía:', guiaRes.error);
-        setGuiaResult({
-          nGuia:         'Error al generar',
-          courierName:   courierQuote?.courier ?? null,
-          courierService:courierQuote?.service ?? null,
-          courierTotal:  courierQuote?.total   ?? null,
-        });
-      } else {
-        updateData({ nGuia: guiaRes.nGuia, guiaId: guiaRes.guiaId });
-        setGuiaResult({
-          nGuia:          guiaRes.nGuia,
-          courierName:    courierQuote?.courier ?? null,
-          courierService: courierQuote?.service ?? null,
-          courierTotal:   courierQuote?.total   ?? null,
-        });
+      if (!pickupRes.success) {
+        // El shipment ya existe — no bloqueamos, continuamos igual
+        console.warn('[Step4Payment] Pickup no agendado:', pickupRes.error);
       }
 
+      const pickupCode = pickupRes.data?.pickups?.[0]?.pickup_code ?? null;
+
+      // ── FASE 3: Crear guía en Kraken ──────────────────────────────────────
+      setSubmitPhase('Generando guía de envío...');
+
+      const guiaRes = await createSpainGuia(data, shipmentUuid, pickupCode);
+
+      if (!guiaRes.success) {
+        console.error('[Step4Payment] Error creando guía:', guiaRes.error);
+      }
+
+      setGuiaResult({
+        nGuia:          guiaRes.nGuia   ?? shipmentUuid,
+        courierName:    courierQuote?.courier ?? null,
+        courierService: courierQuote?.service ?? null,
+        courierTotal:   courierQuote?.total   ?? null,
+      });
+
     } catch (err) {
-      console.error('[Step4Payment] Error en flujo de confirmación:', err);
-      setSubmitError('Error al procesar el pago. Por favor intenta de nuevo.');
+      console.error('[Step4Payment] Error:', err);
+      setSubmitError(err.message ?? 'Error al procesar. Intenta de nuevo.');
     } finally {
       setSubmitting(false);
       setSubmitPhase('');
@@ -371,12 +395,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
               <span>{eur(courierQuote.total)}</span>
             </div>
           )}
-
-          <div className="order-row">
-            <span>IVA (21%)</span>
-            <span>{eur(iva)}</span>
-          </div>
-
+          
           <div className="order-divider" />
 
           <div className="order-total">

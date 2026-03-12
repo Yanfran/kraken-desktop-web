@@ -1,131 +1,155 @@
-// src/modules/us/pages/HomePage.jsx
-// ✅ HOME PAGE ESPECÍFICA PARA USA (KU)
-
-import React from 'react';
+// src/modules/es/pages/HomePage/HomePage.jsx  (o tu ruta equivalente de KE)
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../contexts/AuthContext';
+import axiosInstance from '../../../../services/axiosInstance';
 import './HomePage.scss';
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const getStatusColor = (estatus = '') => {
+  const s = estatus.toLowerCase();
+  if (s.includes('entregad')) return 'green';
+  if (s.includes('tránsito') || s.includes('transito') || s.includes('proceso')) return 'orange';
+  if (s.includes('registrad') || s.includes('recibid')) return 'blue';
+  return 'gray';
+};
+
 const HomePage = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const navigate  = useNavigate();
+  const { user }  = useAuth();
 
-  // Mock data - Envíos recientes
-  const recentShipments = [
-    { id: 'ENV-1001', status: 'En tránsito', statusColor: 'orange', label: 'En tránsito' },
-    { id: 'ENV-1002', status: 'Entregado', statusColor: 'green', label: 'En tránsito' },
-    { id: 'ENV-1003', status: 'Entregado', statusColor: 'green', label: 'En tránsito' },
-    { id: 'ENV-1004', status: 'Entregado', statusColor: 'green', label: 'En tránsito' },
-  ];
+  const [shipments, setShipments]   = useState([]);
+  const [loading,   setLoading]     = useState(true);
 
-  // Mock data - Direcciones guardadas
+  // Direcciones guardadas — puedes conectarlas también si quieres
   const savedAddresses = [
     { id: 1, name: 'Oficina Central', icon: '🏢' },
-    { id: 2, name: 'Hogar', icon: '🏠' },
-    { id: 3, name: 'Venias', icon: '🏠' },
-    { id: 4, name: 'Oficina Centra.', icon: '🏢' },
+    { id: 2, name: 'Hogar',           icon: '🏠' },
   ];
 
-  // Mock data - Estadísticas
+  useEffect(() => {
+    axiosInstance.get('/spain/guia/my-shipments')
+      .then(res => {
+        if (res.data?.success) setShipments(res.data.data ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ── Stats calculadas desde los datos reales ──────────────────────────────
+  const activos     = shipments.filter(s => !s.estatus?.toLowerCase().includes('entregad')).length;
+  const entregados  = shipments.filter(s =>  s.estatus?.toLowerCase().includes('entregad')).length;
+  const estemMes    = shipments.filter(s => {
+    if (!s.fecha) return false;
+    const f = new Date(s.fecha);
+    const now = new Date();
+    return f.getMonth() === now.getMonth() && f.getFullYear() === now.getFullYear();
+  }).length;
+
   const stats = [
-    { label: 'Envíos Activos', value: '3' },
-    { label: 'Total Entregados', value: '25' },
-    { label: 'Envíos Mensual', value: '19' },
-    { label: 'Gasto Mensual', value: '€120.50' },
+    { label: 'Envíos Activos',    value: activos },
+    { label: 'Total Entregados',  value: entregados },
+    { label: 'Envíos Este Mes',   value: estemMes },
+    { label: 'Total Registrados', value: shipments.length },
   ];
-
-  const handleNewPickup = () => {
-    navigate('/pickup');
-  };
-
-  const handleViewShipment = (id) => {
-    navigate(`/tracking/${id}`);
-  };
 
   return (
     <div className="container">
-      {/* Header de Bienvenida */}
-      <div className="us-home__header" style={{ marginLeft: "20px" }}>
-        <h1 className="us-home__title">¡Hola, Bienvenido de nuevo!</h1>
-        <p className="us-home__subtitle">
-          Bienvenido para envíos y su patamentan Kraken Courier.
-        </p>
+      <div className="us-home__header" style={{ marginLeft: '20px' }}>
+        <h1 className="us-home__title">¡Hola, {user?.nombre ?? 'Bienvenido'}!</h1>
+        <p className="us-home__subtitle">Gestiona tus envíos España → Venezuela</p>
       </div>
 
       <div className="us-home">
+        {/* Botón Nueva Recogida */}
+        <button className="us-home__pickup-btn" onClick={() => navigate('/ke/wizard')}>
+          <span className="us-home__pickup-icon">📦</span>
+          <span className="us-home__pickup-text">Nueva Recogida</span>
+        </button>
 
-      {/* Botón Nueva Recogida */}
-      <button className="us-home__pickup-btn" onClick={handleNewPickup}>
-        <span className="us-home__pickup-icon">📦</span>
-        <span className="us-home__pickup-text">Nueva Recogida</span>
-      </button>
+        {/* Grid Principal */}
+        <div className="us-home__grid">
+          {/* Columna Izquierda — Envíos Recientes */}
+          <div className="us-home__left">
+            <section className="us-home__section">
+              <h2 className="us-home__section-title">Envíos Recientes</h2>
 
-      {/* Grid Principal */}
-      <div className="us-home__grid">
-        {/* Columna Izquierda */}
-        <div className="us-home__left">
-          {/* Envíos Recientes */}
-          <section className="us-home__section">
-            <h2 className="us-home__section-title">Envíos Recientes</h2>
-            <div className="us-home__shipments">
-              {recentShipments.map((shipment) => (
-                <div
-                  key={shipment.id}
-                  className="us-home__shipment-item"
-                  onClick={() => handleViewShipment(shipment.id)}
+              {loading && (
+                <p style={{ color: '#999', fontSize: '0.9rem' }}>Cargando envíos...</p>
+              )}
+
+              {!loading && shipments.length === 0 && (
+                <p style={{ color: '#999', fontSize: '0.9rem' }}>
+                  Aún no tienes envíos registrados.
+                </p>
+              )}
+
+              <div className="us-home__shipments">
+                {shipments.slice(0, 5).map((s) => (
+                  <div
+                    key={s.guiaId}
+                    className="us-home__shipment-item"
+                    onClick={() => navigate(`/ke/tracking/${s.nGuia}`)}
+                  >
+                    <div className="us-home__shipment-info">
+                      <span className="us-home__shipment-id">{s.nGuia}</span>
+                      <span className={`us-home__shipment-status us-home__shipment-status--${getStatusColor(s.estatus)}`}>
+                        {s.estatus}
+                      </span>
+                    </div>
+                    <div className="us-home__shipment-action">
+                      <span className="us-home__shipment-label">{s.fechaFormato}</span>
+                      <span className="us-home__shipment-arrow">›</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {shipments.length > 5 && (
+                <button
+                  className="us-home__view-all"
+                  onClick={() => navigate('/ke/shipments')}
                 >
-                  <div className="us-home__shipment-info">
-                    <span className="us-home__shipment-id">{shipment.id}</span>
-                    <span className={`us-home__shipment-status us-home__shipment-status--${shipment.statusColor}`}>
-                      {shipment.status}
-                    </span>
-                  </div>
-                  <div className="us-home__shipment-action">
-                    <span className="us-home__shipment-label">{shipment.label}</span>
-                    <span className="us-home__shipment-arrow">›</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* Columna Derecha */}
-        <div className="us-home__right">
-          {/* Direcciones Guardadas */}
-          <section className="us-home__section">
-            <h2 className="us-home__section-title">Direcciones Guardadas</h2>
-            <div className="us-home__addresses">
-              {savedAddresses.map((address) => (
-                <div key={address.id} className="us-home__address-card">
-                  <span className="us-home__address-icon">{address.icon}</span>
-                  <span className="us-home__address-name">{address.name}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Ruta Frecuente */}
-          <section className="us-home__section">
-            <h2 className="us-home__section-title">Ruta Frecuente</h2>
-            <div className="us-home__route">
-              <span className="us-home__route-flag">🇪🇸</span>
-              <span className="us-home__route-text">España → Venezuela</span>
-              <span className="us-home__route-flag">🇻🇪</span>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      {/* Estadísticas */}
-      <div className="us-home__stats">
-        {stats.map((stat, index) => (
-          <div key={index} className="us-home__stat-card">
-            <h3 className="us-home__stat-label">{stat.label}</h3>
-            <p className="us-home__stat-value">{stat.value}</p>
+                  Ver todos ({shipments.length}) →
+                </button>
+              )}
+            </section>
           </div>
-        ))}
-      </div>
+
+          {/* Columna Derecha */}
+          <div className="us-home__right">
+            <section className="us-home__section">
+              <h2 className="us-home__section-title">Direcciones Guardadas</h2>
+              <div className="us-home__addresses">
+                {savedAddresses.map((a) => (
+                  <div key={a.id} className="us-home__address-card">
+                    <span className="us-home__address-icon">{a.icon}</span>
+                    <span className="us-home__address-name">{a.name}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="us-home__section">
+              <h2 className="us-home__section-title">Ruta Frecuente</h2>
+              <div className="us-home__route">
+                <span className="us-home__route-flag">🇪🇸</span>
+                <span className="us-home__route-text">España → Venezuela</span>
+                <span className="us-home__route-flag">🇻🇪</span>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Estadísticas */}
+        <div className="us-home__stats">
+          {stats.map((stat, i) => (
+            <div key={i} className="us-home__stat-card">
+              <h3 className="us-home__stat-label">{stat.label}</h3>
+              <p className="us-home__stat-value">{stat.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

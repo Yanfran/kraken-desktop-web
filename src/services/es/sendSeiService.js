@@ -88,7 +88,13 @@ export const createSendSeiPickup = async (
       shipmentUuids,
       notes: notes || undefined,
     });
-    return { success: true, data: res.data };
+    // La respuesta del backend envuelve en { success, data }
+    // pero también puede devolver directamente el objeto de SendSei
+    const responseData = res.data?.data ?? res.data;
+    return {
+      success: true,
+      data: responseData,
+    };
   } catch (err) {
     console.error('[sendSeiService] pickups error:', err);
     return { success: false, data: null, error: err?.response?.data ?? err.message };
