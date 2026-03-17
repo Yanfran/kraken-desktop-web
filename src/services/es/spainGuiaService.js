@@ -14,7 +14,13 @@ const BASE = '/spain/guia';
  * @param {string} [pickupDate]  Fecha de recogida agendada
  * @returns {{ success: boolean, nGuia: string, guiaId: number }}
  */
-export const createSpainGuia = async (wizardData, sendSeiUuid = null, pickupCode = null) => {
+export const createSpainGuia = async (
+    wizardData, 
+    sendSeiUuid = null, 
+    pickupCode = null,
+    sendSeiShipmentData = null,  
+    pickupData = null            
+  ) => {
   // ↑ renombrado pickupDate → pickupCode
   try {
     const quote = wizardData?.courierQuote ?? null;

@@ -2,6 +2,7 @@
 // Paso 5 del wizard España — Método de pago + creación de guía post-pago
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createSpainGuia }                                    from '../../../../../services/es/spainGuiaService';
 import { createSendSeiShipment, createSendSeiPickup }         from '../../../../../services/es/sendSeiService';
 import './Step4Payment.scss';
@@ -180,7 +181,7 @@ const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal }) => 
     </a>
     <button
       className="ke-wizard__btn-track"
-      onClick={() => navigate(`/ke/tracking/${wizardData.nGuia}`)}
+      onClick={() => navigate(`/tracking/${nGuia}`)}  // ✅ usar nGuia, no wizardData.nGuia
     >
       🔍 Rastrear mi envío
     </button>
@@ -189,6 +190,7 @@ const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal }) => 
 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step4Payment = ({ data, updateData, onBack }) => {
+  const navigate = useNavigate();
   const [cardErrors,   setCardErrors]   = useState({});
   const [submitting,   setSubmitting]   = useState(false);
   const [submitPhase,  setSubmitPhase]  = useState('');  // texto de estado mientras procesa
@@ -293,7 +295,13 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       // ── FASE 3: Crear guía en Kraken ──────────────────────────────────────
       setSubmitPhase('Generando guía de envío...');
 
-      const guiaRes = await createSpainGuia(data, shipmentUuid, pickupCode);
+      const guiaRes = await createSpainGuia(
+          data,
+          shipmentUuid, 
+          pickupCode,
+          shipmentRes.data, 
+          pickupRes.data       
+        );
 
       if (!guiaRes.success) {
         console.error('[Step4Payment] Error creando guía:', guiaRes.error);
@@ -316,7 +324,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   };
 
   // ── Pantalla de éxito ─────────────────────────────────────────────────────
-  if (guiaResult) return <SuccessScreen {...guiaResult} />;
+  if (guiaResult) return <SuccessScreen {...guiaResult} navigate={navigate} />;
 
   return (
     <div className="step4-layout">
