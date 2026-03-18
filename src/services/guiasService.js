@@ -566,6 +566,29 @@ export const uploadGuiaNONDG = async (guiaId, file) => {
   }
 };
 
+/**
+ * Obtiene las facturas fiscales HKA emitidas para una guía.
+ * Endpoint: GET /api/guias/getFiscalInvoices/{guiaId}
+ */
+// POR esto (consistente con el resto del servicio):
+export const getFiscalInvoices = async (guiaId) => {
+  try {
+    const response = await axiosInstance.get(`/Guias/getFiscalInvoices/${guiaId}`);
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: 'Facturas fiscales cargadas exitosamente'
+    };
+  } catch (error) {
+    console.error('getFiscalInvoices error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error?.message || 'Error de conexión',
+      data: null
+    };
+  }
+};
+
 // Export default object with all functions
 export default {
   getGuias,
@@ -579,5 +602,6 @@ export default {
   uploadGuiaInvoice,
   uploadGuiaMSDS,       
   uploadGuiaNONDG,       
+  getFiscalInvoices,
   getMultipleGuiasPaymentData
 };
