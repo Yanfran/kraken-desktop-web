@@ -53,6 +53,7 @@ const USAddresses = React.lazy(() => import('../modules/us/pages/Addresses/Addre
 const ESHome = React.lazy(() => import('../modules/es/pages/Home/HomePage'));
 const ESShipmentWizard = React.lazy(() => import('../modules/es/pages/ShipmentWizard/ESShipmentWizard'));
 const ESTracking = React.lazy(() => import('../modules/es/pages/TrackingPage/TrackingPage'));
+const RedsysPagoResultado = React.lazy(() => import('../modules/es/pages/RedsysPagoResultado/RedsysPagoResultado'));
 
 const TenantRouter = () => {
     const { tenant, isLoading } = useTenant();
@@ -166,6 +167,7 @@ const TenantRouter = () => {
                         <Route path="/profile/addresses" element={<AddressesPage />} />
                         <Route path="/addresses" element={<AddressesPage />} />
                         <Route path="/change-password" element={<ChangePassword />} />
+                        <Route path="/es/pago/resultado" element={<RedsysPagoResultado />} />
 
                         {/* Si hay home España, puede agregarse aquí; por ahora redirigimos al tracking */}
                         <Route path="/" element={<Navigate to="/tracking" replace />} />

@@ -3,12 +3,12 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createSpainGuia }                                    from '../../../../../services/es/spainGuiaService';
-import { createSendSeiShipment, createSendSeiPickup }         from '../../../../../services/es/sendSeiService';
+import { createSpainGuia }                            from '../../../../../services/es/spainGuiaService';
+import { createSendSeiShipment, createSendSeiPickup } from '../../../../../services/es/sendSeiService';
+import { iniciarPagoRedsys, preRegistrarSesion } from '../../../../../services/es/spainPaymentService';
 import './Step4Payment.scss';
 
-
-// ── Helper próximo día hábil (añadir antes del componente) ───────────────────
+// ── Helper próximo día hábil ──────────────────────────────────────────────────
 const getNextBusinessDate = () => {
   const d = new Date();
   d.setDate(d.getDate() + 1);
@@ -17,7 +17,7 @@ const getNextBusinessDate = () => {
   return d.toISOString().split('T')[0];
 };
 
-// ── Dirección del almacén Kraken España (destino de la recogida SendSei) ─────
+// ── Dirección del almacén Kraken España ──────────────────────────────────────
 const KRAKEN_WAREHOUSE = {
   fullName:      'Kraken Courier España',
   email:         'operaciones@krakencourier.com',
@@ -28,18 +28,6 @@ const KRAKEN_WAREHOUSE = {
   city:          'Madrid',
 };
 
-// ── Formateo de número de tarjeta ────────────────────────────────────────────
-const formatCardNumber = (v) =>
-  v.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})/g, '$1 ').trim();
-
-const detectCardBrand = (v) => {
-  const n = v.replace(/\s/g, '');
-  if (/^4/.test(n))                             return 'Visa';
-  if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return 'Mastercard';
-  if (/^3[47]/.test(n))                        return 'Amex';
-  return '';
-};
-
 // ── Métodos de pago disponibles ───────────────────────────────────────────────
 const PAYMENT_METHODS = [
   { id: 'card',     label: 'Tarjeta de Crédito/Débito', render: () => '💳' },
@@ -47,83 +35,25 @@ const PAYMENT_METHODS = [
   { id: 'transfer', label: 'Transferencia Bancaria',     render: () => '🏦' },
 ];
 
-// ── Formulario de tarjeta ────────────────────────────────────────────────────
-const CardForm = ({ card, onChange, errors }) => {
-  const brand = detectCardBrand(card.numero);
-  return (
-    <div className="card-form">
-      <div className="wizard-grid-2">
-        <div className="wizard-field card-form__numero-field">
-          <label>Número de Tarjeta</label>
-          <div className="card-form__numero-wrap">
-            <span className="card-form__card-icon">💳</span>
-            <input
-              value={card.numero}
-              onChange={(e) => onChange('numero', formatCardNumber(e.target.value))}
-              placeholder="4532 1234 5678 9010"
-              maxLength={19}
-              className={errors?.numero ? 'field-error' : ''}
-            />
-            {brand && <span className="card-form__brand">{brand}</span>}
-          </div>
-          {errors?.numero && <span className="field-error-msg">{errors.numero}</span>}
-        </div>
-
-        <div className="wizard-field">
-          <label>Fecha de Expiración (MM/AA)</label>
-          <input
-            value={card.expiracion}
-            onChange={(e) => {
-              let v = e.target.value.replace(/\D/g, '').slice(0, 4);
-              if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
-              onChange('expiracion', v);
-            }}
-            placeholder="12/25"
-            maxLength={5}
-            className={errors?.expiracion ? 'field-error' : ''}
-          />
-          {errors?.expiracion && <span className="field-error-msg">{errors.expiracion}</span>}
-        </div>
-      </div>
-
-      <div className="wizard-grid-2">
-        <div className="wizard-field" style={{ position: 'relative' }}>
-          <label>CVV <span className="card-form__cvv-hint" title="Código de 3 dígitos en el reverso"> ⓘ</span></label>
-          <input
-            value={card.cvv}
-            onChange={(e) => onChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
-            placeholder="•••"
-            maxLength={4}
-            type="password"
-            className={errors?.cvv ? 'field-error' : ''}
-          />
-          {errors?.cvv && <span className="field-error-msg">{errors.cvv}</span>}
-        </div>
-
-        <div className="wizard-field">
-          <label>Nombre del Titular</label>
-          <input
-            value={card.titular}
-            onChange={(e) => onChange('titular', e.target.value)}
-            placeholder="Carlos Gómez"
-            className={errors?.titular ? 'field-error' : ''}
-          />
-          {errors?.titular && <span className="field-error-msg">{errors.titular}</span>}
-        </div>
-      </div>
-
-      <label className="card-form__save-label">
-        <input
-          type="checkbox"
-          checked={card.guardar}
-          onChange={(e) => onChange('guardar', e.target.checked)}
-          className="card-form__save-check"
-        />
-        Guardar esta tarjeta para futuros pagos de forma segura.
-      </label>
+// ── Bloque informativo Redsys (reemplaza CardForm) ────────────────────────────
+const RedsysInfo = () => (
+  <div className="redsys-info-block">
+    <div className="redsys-info-block__icon">🔒</div>
+    <p className="redsys-info-block__title">Pago Seguro con Redsys</p>
+    <p className="redsys-info-block__desc">
+      Al confirmar serás redirigido al TPV seguro de CaixaBank para
+      introducir los datos de tu tarjeta con total seguridad.
+    </p>
+    <div className="redsys-info-block__logos">
+      <span>VISA</span>
+      <span>Mastercard</span>
+      <span>AMEX</span>
     </div>
-  );
-};
+    <p className="redsys-info-block__hint">
+      🛡️ Tus datos de tarjeta <strong>nunca</strong> pasan por nuestros servidores.
+    </p>
+  </div>
+);
 
 // ── Instrucciones PayPal / Transferencia ──────────────────────────────────────
 const PaypalInfo = () => (
@@ -148,13 +78,12 @@ const TransferInfo = () => (
 );
 
 // ── Pantalla de éxito ─────────────────────────────────────────────────────────
-const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal }) => (
+const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal, navigate }) => (
   <div className="payment-success">
     <div className="payment-success__icon">✅</div>
     <h2 className="payment-success__title">¡Envío Registrado!</h2>
     <p className="payment-success__sub">Tu pedido ha sido registrado y tu guía generada.</p>
 
-    {/* Número de guía — el dato más importante */}
     {nGuia && (
       <div className="payment-success__guia">
         <span className="payment-success__guia-label">Tu número de guía</span>
@@ -165,11 +94,14 @@ const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal }) => 
       </div>
     )}
 
-    {/* Datos del courier */}
     {courierName && (
       <div className="payment-success__courier">
         <span>🚚 {courierName} — {courierService}</span>
-        {courierTotal && <span className="payment-success__courier-price">€{Number(courierTotal).toFixed(2)}</span>}
+        {courierTotal && (
+          <span className="payment-success__courier-price">
+            €{Number(courierTotal).toFixed(2)}
+          </span>
+        )}
       </div>
     )}
 
@@ -181,7 +113,7 @@ const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal }) => 
     </a>
     <button
       className="ke-wizard__btn-track"
-      onClick={() => navigate(`/tracking/${nGuia}`)}  // ✅ usar nGuia, no wizardData.nGuia
+      onClick={() => navigate(`/tracking/${nGuia}`)}
     >
       🔍 Rastrear mi envío
     </button>
@@ -191,143 +123,91 @@ const SuccessScreen = ({ nGuia, courierName, courierService, courierTotal }) => 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step4Payment = ({ data, updateData, onBack }) => {
   const navigate = useNavigate();
-  const [cardErrors,   setCardErrors]   = useState({});
-  const [submitting,   setSubmitting]   = useState(false);
-  const [submitPhase,  setSubmitPhase]  = useState('');  // texto de estado mientras procesa
-  const [guiaResult,   setGuiaResult]   = useState(null); // { nGuia, courierName, ... }
-  const [submitError,  setSubmitError]  = useState(null);
+  const [submitting,  setSubmitting]  = useState(false);
+  const [submitPhase, setSubmitPhase] = useState('');
+  const [guiaResult,  setGuiaResult]  = useState(null);
+  const [submitError, setSubmitError] = useState(null);
 
-  const { metodoPago, cardData, calculationResult, courierQuote } = data;
+  const { metodoPago, calculationResult, courierQuote } = data;
 
-  // ── Precios ──────────────────────────────────────────────────────────────────
+  // ── Precios ───────────────────────────────────────────────────────────────
   const eur      = (n) => `€${Number(n || 0).toFixed(2)}`;
   const p        = calculationResult;
   const shipping = p?.cost ?? 0;
-  const courier  = courierQuote ? parseFloat(courierQuote.total) : 0;    
-  const total = shipping + courier;
+  const courier  = courierQuote ? parseFloat(courierQuote.total) : 0;
+  const total    = shipping + courier;
 
-  // ── Validación tarjeta ────────────────────────────────────────────────────
-  const updateCard = (field, value) => {
-    updateData({ cardData: { ...cardData, [field]: value } });
-    setCardErrors((p) => { const c = { ...p }; delete c[field]; return c; });
-  };
-
-  const validateCard = () => {
-    const e = {};
-    if (!cardData.numero || cardData.numero.replace(/\s/g, '').length < 13) e.numero    = 'Número inválido';
-    if (!cardData.expiracion || !/^\d{2}\/\d{2}$/.test(cardData.expiracion)) e.expiracion = 'Formato MM/AA';
-    if (!cardData.cvv || cardData.cvv.length < 3)                            e.cvv       = 'CVV inválido';
-    if (!cardData.titular?.trim())                                            e.titular   = 'Requerido';
-    return e;
-  };
-
-  // ── Flujo principal post-pago ─────────────────────────────────────────────
+  // ── Flujo principal ───────────────────────────────────────────────────────
+  // handleConfirm — NUEVO orden
   const handleConfirm = async () => {
-    // Validar tarjeta si aplica
-    if (metodoPago === 'card') {
-      const errs = validateCard();
-      if (Object.keys(errs).length) { setCardErrors(errs); return; }
-    }
-
     setSubmitting(true);
     setSubmitError(null);
 
     try {
-      // ── FASE 1: Crear shipment en SendSei ─────────────────────────────────
-      setSubmitPhase('Registrando recogida con el courier...');
+      if (!data.courierId || !data.selectedOriginAddress)
+        throw new Error('Falta courier o dirección de origen.');
 
-      if (!data.courierId || !data.selectedOriginAddress) {
-        throw new Error('Falta courier o dirección de origen seleccionada.');
-      }
+      setSubmitPhase('Iniciando pago seguro...');
 
-      const pkg    = data.packages?.[0] ?? {};
-      const origin = data.selectedOriginAddress;
+      // 1. Generar parámetros firmados
+      const pagoRes = await iniciarPagoRedsys(total, `KE${Date.now()}`);
+      if (!pagoRes.success) throw new Error(pagoRes.message);
 
-      const shipmentRes = await createSendSeiShipment({
-        courierId:        data.courierId,
-        courierServiceId: data.courierServiceId,
-        insuredAmount:    total > 0 ? total.toFixed(2) : null,
-        origin: {
-          fullName:      origin.fullName  ?? origin.alias ?? 'Cliente',
-          company:       null,
-          email:         origin.email     ?? 'noreply@krakencourier.com',
-          phoneNumber:   origin.phone     ?? '000000000',
-          address:       origin.line1     ?? origin.address ?? '',
-          addressNumber: origin.addressNumber || 'S/N',
-          postalCode:    origin.postalCode ?? origin.zip ?? '',
-          city:          origin.city      ?? '',
+      const { urlTPV, ds_SignatureVersion, ds_MerchantParameters,
+              ds_Signature, numeroPedido } = pagoRes.data;
+
+      // 2. ✅ Pre-registrar sesión ANTES de salir — el webhook ya la encontrará
+      await preRegistrarSesion(numeroPedido, total);
+
+      // 3. Guardar datos del wizard en sessionStorage
+      sessionStorage.setItem('ke_pago_pendiente', JSON.stringify({
+        numeroPedido,
+        total,
+        wizardData: {
+          courierId:             data.courierId,
+          courierServiceId:      data.courierServiceId,
+          selectedOriginAddress: data.selectedOriginAddress,
+          packages:              data.packages,
+          calculationResult:     data.calculationResult,
+          courierQuote:          data.courierQuote,
         },
-        destination: KRAKEN_WAREHOUSE,
-        packages: [{
-          weightKg:           String(parseFloat(pkg.peso    || pkg.weightKg || 0)),
-          lengthCm:           String(parseFloat(pkg.largo   || pkg.lengthCm || 0)),
-          widthCm:            String(parseFloat(pkg.ancho   || pkg.widthCm  || 0)),
-          heightCm:           String(parseFloat(pkg.alto    || pkg.heightCm || 0)),
-          contentDescription: (pkg.descripcion ?? 'Mercancía general').slice(0, 50),          
-          declaredValue:      String(parseFloat(pkg.valorFOB ?? '0')),
-        }],
+      }));
+
+      // 4. Redirigir a Redsys
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = urlTPV;
+
+
+      [
+        { name: 'Ds_SignatureVersion',   value: ds_SignatureVersion   },
+        { name: 'Ds_MerchantParameters', value: ds_MerchantParameters },
+        { name: 'Ds_Signature',          value: ds_Signature          },
+      ].forEach(({ name, value }) => {
+        const h = document.createElement('input');
+        h.type = 'hidden'; h.name = name; h.value = value;
+        form.appendChild(h);
       });
 
-      if (!shipmentRes.success || !shipmentRes.data?.uuid) {
-        throw new Error('No se pudo crear el envío con el courier. Intenta de nuevo.');
-      }
-
-      const shipmentUuid = shipmentRes.data.uuid;
-
-      // ── FASE 2: Agendar pickup ────────────────────────────────────────────
-      setSubmitPhase('Agendando recogida...');
-
-      const pickupRes = await createSendSeiPickup(
-        getNextBusinessDate(), // scheduledDate
-        '09:00',               // scheduledTimeFrom
-        '14:00',               // scheduledTimeTo
-        [shipmentUuid],        // shipmentUuids
-        'Recogida Kraken Courier'
-      );
-
-      if (!pickupRes.success) {
-        // El shipment ya existe — no bloqueamos, continuamos igual
-        console.warn('[Step4Payment] Pickup no agendado:', pickupRes.error);
-      }
-
-      const pickupCode = pickupRes.data?.pickups?.[0]?.pickup_code ?? null;
-
-      // ── FASE 3: Crear guía en Kraken ──────────────────────────────────────
-      setSubmitPhase('Generando guía de envío...');
-
-      const guiaRes = await createSpainGuia(
-          data,
-          shipmentUuid, 
-          pickupCode,
-          shipmentRes.data, 
-          pickupRes.data       
-        );
-
-      if (!guiaRes.success) {
-        console.error('[Step4Payment] Error creando guía:', guiaRes.error);
-      }
-
-      setGuiaResult({
-        nGuia:          guiaRes.nGuia   ?? shipmentUuid,
-        courierName:    courierQuote?.courier ?? null,
-        courierService: courierQuote?.service ?? null,
-        courierTotal:   courierQuote?.total   ?? null,
-      });
+      document.body.appendChild(form);
+      form.submit();
+      return;
 
     } catch (err) {
-      console.error('[Step4Payment] Error:', err);
-      setSubmitError(err.message ?? 'Error al procesar. Intenta de nuevo.');
+      console.error('[Step4Payment]', err);
+      setSubmitError(err.message ?? 'Error al procesar.');
     } finally {
       setSubmitting(false);
       setSubmitPhase('');
     }
   };
 
-  // ── Pantalla de éxito ─────────────────────────────────────────────────────
+  // ── Pantalla de éxito (PayPal / Transferencia) ────────────────────────────
   if (guiaResult) return <SuccessScreen {...guiaResult} navigate={navigate} />;
 
   return (
     <div className="step4-layout">
+
       {/* ── Columna izquierda: métodos de pago ── */}
       <div className="step4-layout__left">
         <div className="wizard-card">
@@ -359,15 +239,15 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             ))}
           </div>
 
-          {/* Formulario según método */}
+          {/* Panel según método seleccionado */}
           <div className="payment-form-area">
-            {metodoPago === 'card'     && <CardForm card={cardData} onChange={updateCard} errors={cardErrors} />}
+            {/* ✅ Card → aviso Redsys (ya no hay formulario local) */}
+            {metodoPago === 'card'     && <RedsysInfo />}
             {metodoPago === 'paypal'   && <PaypalInfo />}
             {metodoPago === 'transfer' && <TransferInfo />}
           </div>
         </div>
 
-        {/* Error de submit */}
         {submitError && (
           <div className="payment-submit-error">⚠️ {submitError}</div>
         )}
@@ -384,26 +264,22 @@ const Step4Payment = ({ data, updateData, onBack }) => {
         <div className="cost-card">
           <h3 className="cost-card__title">Resumen del Pedido</h3>
 
-          {/* Envío internacional Kraken */}
           {p ? (
-            <>
-              <div className="order-row">
-                <span>Envío internacional</span>
-                <span>{eur(shipping)}</span>
-              </div>
-            </>
+            <div className="order-row">
+              <span>Envío internacional</span>
+              <span>{eur(shipping)}</span>
+            </div>
           ) : (
             <p style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Tarifa no disponible</p>
           )}
 
-          {/* Recogida SendSei */}
           {courierQuote && (
             <div className="order-row">
               <span>Recogida ({courierQuote.service})</span>
               <span>{eur(courierQuote.total)}</span>
             </div>
           )}
-          
+
           <div className="order-divider" />
 
           <div className="order-total">
@@ -411,7 +287,6 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             <span className="order-total__value">{eur(total)}</span>
           </div>
 
-          {/* Badges de seguridad */}
           <div className="security-badges">
             <span className="security-badge">🔒 SSL</span>
             <span className="security-badge">🛡️ PCI DSS</span>
@@ -421,7 +296,6 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             Tus datos están protegidos con encriptación de grado bancario.
           </p>
 
-          {/* Botón confirmar */}
           <button
             className="btn-wizard-next cost-card__proceed-btn"
             onClick={handleConfirm}
