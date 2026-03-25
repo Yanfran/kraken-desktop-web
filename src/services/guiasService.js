@@ -152,8 +152,8 @@ export const getLastShipment = async () => {
           date: formatDateTime(lastGuia.fechaEstatus || ''),
           origin: lastGuia.origen || 'USA',
           cost: costoEnvio,
-          prealerted: lastGuia.prealertado || false,
-          discount: lastGuia.prealertado ? null : '-10%',
+          prealerted: lastGuia.esPreAlerta || false,
+          discount: lastGuia.esPreAlerta ? null : '-10%',
           trackingNumbers: lastGuia.trackings || [],
           contenido: primerContenido,
           calculationData: costoCalculado // Datos adicionales del cálculo si se necesitan
