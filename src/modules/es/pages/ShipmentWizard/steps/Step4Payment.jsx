@@ -31,8 +31,8 @@ const KRAKEN_WAREHOUSE = {
 // ── Métodos de pago disponibles ───────────────────────────────────────────────
 const PAYMENT_METHODS = [
   { id: 'card',     label: 'Tarjeta de Crédito/Débito', render: () => '💳' },
-  { id: 'paypal',   label: 'PayPal',                    render: () => '🅿️' },
-  { id: 'transfer', label: 'Transferencia Bancaria',     render: () => '🏦' },
+  // { id: 'paypal',   label: 'PayPal',                    render: () => '🅿️' },
+  // { id: 'transfer', label: 'Transferencia Bancaria',     render: () => '🏦' },
 ];
 
 // ── Bloque informativo Redsys (reemplaza CardForm) ────────────────────────────

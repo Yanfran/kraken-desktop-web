@@ -1,5 +1,5 @@
 // src/modules/es/pages/RedsysPagoResultado/RedsysPagoResultado.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef  } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { vincularGuiaASesion } from '../../../../services/es/spainPaymentService'; // ✅ solo esta
 import { createSendSeiShipment, createSendSeiPickup } from '../../../../services/es/sendSeiService';
@@ -31,11 +31,20 @@ export default function RedsysPagoResultado() {
   const [guia,  setGuia]  = useState(null);
   const [error, setError] = useState(null);
 
+    // ✅ Guardia anti-doble ejecución (React Strict Mode ejecuta useEffect 2 veces en dev)
+  const yaEjecutado = useRef(false);
+
   useEffect(() => {
+    // ✅ Si ya se ejecutó, salir inmediatamente
+    if (yaEjecutado.current) return;
+    yaEjecutado.current = true;
+
     if (estado === 'ko') { limpiar(); setFase('ko'); return; }
     if (!pedido)          { setFase('error'); return; }
     procesarPagoOk();
   }, []);
+
+
 
   const limpiar = () => sessionStorage.removeItem('ke_pago_pendiente');
 
