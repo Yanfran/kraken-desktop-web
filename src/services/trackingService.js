@@ -180,37 +180,73 @@ export const generateStepsFromStatus = (estatusActual, historial) => {
     }];
   }
 
+
+  // Estatus que se deben deduplicar (solo mantener el último del grupo)
+  const DEDUP_STATUSES = ['procesado', 'llegó a venezuela', 'llego a venezuela'];
+
   const processedHistorial = [];
-  let lastProcessedEntry = null;
+  let lastDedupEntry = null;
+  let lastDedupKey = null;
 
-  // Procesar el historial para agrupar estados "procesado"
   for (const entry of historial) {
-    const estatusLower = entry.estatus?.toLowerCase();
+    const estatusLower = entry.estatus?.toLowerCase().trim();
+    const isDedupable = DEDUP_STATUSES.includes(estatusLower);
 
-    if (estatusLower === 'procesado') {
-      lastProcessedEntry = entry;
-    } else {
-      if (lastProcessedEntry) {
-        processedHistorial.push({
-          ...lastProcessedEntry,
-          name: 'Procesado'
-        });
-        lastProcessedEntry = null;
+    if (isDedupable) {
+      // Si cambia el tipo de estatus deduplicable, flush del anterior
+      if (lastDedupKey && lastDedupKey !== estatusLower) {
+        processedHistorial.push({ ...lastDedupEntry, name: lastDedupEntry.estatus });
       }
-      processedHistorial.push({
-        ...entry,
-        name: entry.estatus
-      });
+      lastDedupEntry = entry;
+      lastDedupKey = estatusLower;
+    } else {
+      // Flush del pendiente antes de agregar uno nuevo
+      if (lastDedupEntry) {
+        processedHistorial.push({ ...lastDedupEntry, name: lastDedupEntry.estatus });
+        lastDedupEntry = null;
+        lastDedupKey = null;
+      }
+      processedHistorial.push({ ...entry, name: entry.estatus });
     }
   }
 
-  // Agregar el último "procesado" si existe
-  if (lastProcessedEntry) {
-    processedHistorial.push({
-      ...lastProcessedEntry,
-      name: 'Procesado'
-    });
+  // Flush final
+  if (lastDedupEntry) {
+    processedHistorial.push({ ...lastDedupEntry, name: lastDedupEntry.estatus });
   }
+
+
+  // const processedHistorial = [];
+  // let lastProcessedEntry = null;
+
+  // // Procesar el historial para agrupar estados "procesado"
+  // for (const entry of historial) {
+  //   const estatusLower = entry.estatus?.toLowerCase();
+
+  //   if (estatusLower === 'procesado') {
+  //     lastProcessedEntry = entry;
+  //   } else {
+  //     if (lastProcessedEntry) {
+  //       processedHistorial.push({
+  //         ...lastProcessedEntry,
+  //         name: 'Procesado'
+  //       });
+  //       lastProcessedEntry = null;
+  //     }
+  //     processedHistorial.push({
+  //       ...entry,
+  //       name: entry.estatus
+  //     });
+  //   }
+  // }
+
+  // // Agregar el último "procesado" si existe
+  // if (lastProcessedEntry) {
+  //   processedHistorial.push({
+  //     ...lastProcessedEntry,
+  //     name: 'Procesado'
+  //   });
+  // }
 
   // Convertir a formato de pasos
   const steps = processedHistorial.map((entry, index) => {
