@@ -167,8 +167,8 @@ const AddressesPage = () => {
         <h1 className="addresses-page__title">Mis Direcciones</h1>
         <div className="addresses-page__countries">
           <div className="addresses-page__country">
-            <span className="addresses-page__flag">🇪🇸</span>
-            <span>España (Origen)</span>
+            <span className="addresses-page__flag">us</span>
+            <span>USA (Origen)</span>
           </div>
           <div className="addresses-page__country">
             <span className="addresses-page__flag">🇻🇪</span>

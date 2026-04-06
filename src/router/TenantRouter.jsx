@@ -45,6 +45,9 @@ const USStores = React.lazy(() => import('../modules/us/pages/StoresPage'));
 const USCalc = React.lazy(() => import('../modules/us/pages/CalculatorPage'));
 const USTracking = React.lazy(() => import('../modules/us/pages/TrackingPage'));
 const USAddresses = React.lazy(() => import('../modules/us/pages/Addresses/AddressesPage'));
+const USShipmentWizard = React.lazy(() => 
+  import('../modules/us/pages/ShipmentWizard/USShipmentWizard')
+);
 
 
 // ============================================
@@ -103,12 +106,7 @@ const TenantRouter = () => {
                         <Route path="/billing" element={<Billing />} />
                         <Route path="/payment" element={<Payment />} />
                         <Route path="/payment/:id" element={<Payment />} />
-                        
-                        {/* Paquetes */}
-                        {/* <Route path="/packages" element={<Packages />} /> */}
-                        
-                        {/* Dashboard (si existe) */}
-                        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+                                            
                         
                         {/* Redirección por defecto */}
                         <Route path="/" element={<Navigate to="/home" replace />} />
@@ -129,10 +127,10 @@ const TenantRouter = () => {
                 {(tenantId === 'US' || tenantPrefix === 'KU') && (
                     <>
                         <Route path="/home" element={<USHome />} />
-                        <Route path="/pickup" element={<USPickup />} />
+                        <Route path="/pickup"   element={<USShipmentWizard />} /> 
                         <Route path="/stores" element={<USStores />} />
-                        <Route path="/calculator" element={<USCalc />} />
-                        <Route path="/tracking" element={<USTracking />} />
+                        <Route path="/calculator" element={<Calculator />} />
+                        <Route path="/tracking" element={<Tracking />} />
                         <Route path="/profile/addresses" element={<USAddresses />} />
                         
                         {/* Redirección por defecto */}

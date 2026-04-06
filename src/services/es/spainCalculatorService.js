@@ -7,7 +7,7 @@ import axiosInstance from '../axiosInstance';
  * POST /api/Calculator/calculate  (endpoint público, sin JWT)
  * PaisOrigen = "ES" (requiere el fix en ValidateRequest del CalculatorController)
  */
-export const calculateSpainShipping = async ({
+/*export const calculateSpainShipping = async ({
   stateId,
   municipalityId = null,
   declaredValue,
@@ -47,6 +47,53 @@ export const calculateSpainShipping = async ({
       success: false,
       data:    null,
       message: error.response?.data?.message ?? 'Error al calcular tarifa',
+    };
+  }
+};*/
+
+
+/**
+ * Calcula tarifa de Encomienda exclusiva para España.
+ * POST /api/ESP/SpainCalculator/calculate-encomienda
+ * Este endpoint aplica el divisor 5000 y lógica en Euros.
+ */
+export const calculateSpainShipping = async ({
+  weight,
+  length,
+  width,
+  height,
+  declaredValue,
+}) => {
+  try {
+    const payload = {
+      weight: parseFloat(weight),
+      length: parseFloat(length),
+      width: parseFloat(width),
+      height: parseFloat(height),
+      declaredValue: parseFloat(declaredValue)
+    };
+
+    // Llamada al nuevo controlador especializado
+    const response = await axiosInstance.post('/ESP/SpainCalculator/calculate-encomienda', payload);
+    const api = response.data;
+
+    if (api.success) {
+      return {
+        success: true,
+        // El objeto 'data' contiene los 'Detalles' (Flete, Combustible, etc.) 
+        // tal como se ve en el Paso 5 del Admin
+        data: api.data, 
+        billedWeight: api.billedWeight,
+        isVolumetric: api.isVolumetric,
+        message: 'Cálculo completado'
+      };
+    }
+    
+    return { success: false, message: api.message };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message ?? 'Error en la conexión con el calculador de España',
     };
   }
 };

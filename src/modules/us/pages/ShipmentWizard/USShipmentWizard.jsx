@@ -8,7 +8,7 @@ import Step2Addresses from './steps/Step2Addresses';
 import Step3CourierSelection from './steps/Step3CourierSelection';
 import Step4Summary          from './steps/Step3Summary';   // renombrar import alias
 import Step5Payment          from './steps/Step4Payment';   // renombrar import
-import './ESShipmentWizard.scss';
+import './USShipmentWizard.scss'; 
 
 const STEPS = [
   { id: 1, label: 'Detalles del Envío'  },
@@ -211,9 +211,9 @@ const ESShipmentWizard = () => {
   // ──────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="es-wizard">
-      <div className="es-wizard__header">
-        <div className="es-wizard__steps">
+    <div className="us-wizard">
+      <div className="us-wizard__header">
+        <div className="us-wizard__steps">
           {STEPS.map((step, idx) => {
             const status =
               currentStep > step.id  ? 'done'   :
@@ -222,21 +222,21 @@ const ESShipmentWizard = () => {
             return (
               <React.Fragment key={step.id}>
                 <button
-                  className={`es-wizard__step es-wizard__step--${status}`}
+                  className={`us-wizard__step us-wizard__step--${status}`}
                   onClick={() => goToStep(step.id)}
                   disabled={status === 'pending'}
                   aria-current={status === 'active' ? 'step' : undefined}
                 >
-                  <span className="es-wizard__step-circle">
+                  <span className="us-wizard__step-circle">
                     {status === 'done' ? '✓' : step.id}
                   </span>
-                  <span className="es-wizard__step-label">{step.label}</span>
+                  <span className="us-wizard__step-label">{step.label}</span>
                 </button>
 
                 {idx < STEPS.length - 1 && (
                   <div
-                    className={`es-wizard__connector ${
-                      currentStep > step.id ? 'es-wizard__connector--done' : ''
+                    className={`us-wizard__connector ${
+                      currentStep > step.id ? 'us-wizard__connector--done' : ''
                     }`}
                   />
                 )}
@@ -246,7 +246,7 @@ const ESShipmentWizard = () => {
         </div>
       </div>
 
-      <div className="es-wizard__body">
+      <div className="us-wizard__body">
         {renderStep()}
       </div>
     </div>

@@ -147,10 +147,10 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
 
           <div className="wizard-divider" />
 
-          {/* ── Dirección de recogida (España) ───────────────────────────── */}
+          {/* ── Dirección de recogida (USA) ───────────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
-              <span className="summary-section__icon">🇪🇸</span>
+              <span className="summary-section__icon">🇺🇸</span>
               <h3 className="summary-section__title">Dirección de Recogida</h3>
               <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
             </div>

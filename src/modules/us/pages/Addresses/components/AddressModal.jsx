@@ -229,7 +229,7 @@ const AddressModal = ({ address, onSave, onClose }) => {
               onChange={handleChange}
               className="address-modal__select"
             >
-              <option value="origin">🇪🇸 Origen (España)</option>
+             <option value="origin">🇺🇸 Origen (USA)</option>
               <option value="destination">🇻🇪 Destino (Venezuela)</option>
             </select>
           </div>

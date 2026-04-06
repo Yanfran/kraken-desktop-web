@@ -29,7 +29,7 @@ const PersonalData = React.lazy(() => import('./pages/auth/PersonalData/Personal
 const DeliveryOption = React.lazy(() => import('./pages/auth/DeliveryOption/DeliveryOption'));
 const EmailVerify = React.lazy(() => import('./pages/auth/EmailVerify/EmailVerify'));
 const Welcome = React.lazy(() => import('./pages/auth/Welcome/Welcome'));
-const RegisterSpanish = React.lazy(() => import('./pages/auth/QuickRegisterSpain/QuickRegisterSpain'));
+const QuickRegister = React.lazy(() => import('./pages/auth/QuickRegister/QuickRegister'));
 
 // ✅ PÁGINAS LEGALES
 const Terms = React.lazy(() => import('./pages/legal/Terms/Terms'));
@@ -112,9 +112,9 @@ function App() {
                   </PublicRoute>
                 } />
                 
-                <Route path="/register-spain" element={
+                <Route path="/register-pickup" element={
                   <PublicRoute>
-                    <RegisterSpanish />
+                    <QuickRegister  />
                   </PublicRoute>
                 } />
 
