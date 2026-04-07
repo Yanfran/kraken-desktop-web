@@ -1,6 +1,6 @@
 // src/modules/es/pages/ShipmentWizard/ESShipmentWizard.jsx
 import React, { useState, useCallback } from 'react';
-import { calculateSpainShipping } from '../../../../services/es/spainCalculatorService';
+import { calculateUSShipping } from '../../../../services/us/usCalculatorService';
 import toast from 'react-hot-toast';
 import { fetchMunicipios } from '../../../../services/es/spainAddressService';
 import Step1PackageDetails from './steps/Step1PackageDetails';
@@ -121,13 +121,18 @@ const ESShipmentWizard = () => {
       setCalculating(true);
       
       // ── Llamada sincronizada con nuestro SpainCalculatorController ──
-      const result = await calculateSpainShipping({
-        weight:         pesoKg,
-        length:         largo,
-        width:          ancho,
-        height:         alto,
-        declaredValue:  parseFloat(pkg.valorFOB) || 0,
+      const result = await calculateUSShipping({
+        stateId:       stateId,
+        municipalityId: municipioId,
+        weight:        pesoKg,
+        weightUnit:    'Kg',
+        dimensionUnit: 'cm',
+        length:        largo,
+        width:         ancho,
+        height:        alto,
+        declaredValue: parseFloat(pkg.valorFOB) || 0,
       });
+
       
       setCalculating(false)
 

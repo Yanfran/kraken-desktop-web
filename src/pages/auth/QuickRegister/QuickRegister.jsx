@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useAuth } from '../../../hooks/useAuth';
 import { useTenant } from '../../../core/context/TenantContext';
 import toast from 'react-hot-toast';
 import './QuickRegister.styles.scss';
@@ -14,6 +15,7 @@ import { useCountryDetection } from '../../../hooks/useCountryDetection';
 const QuickRegister = () => {
   const navigate = useNavigate();
   const { actualTheme } = useTheme();
+  const { setUser } = useAuth();
   const { tenant } = useTenant();
   const { detectedPrefix, isDetecting, detectionError, SUPPORTED_COUNTRIES } = useCountryDetection();
 
@@ -134,6 +136,7 @@ const QuickRegister = () => {
     e.preventDefault();
     if (!validateForm()) { toast.error('Por favor corrige los errores del formulario'); return; }
     setIsLoading(true);
+    
     try {
       const payload = {
         email:         formData.email.toLowerCase().trim(),
@@ -145,14 +148,54 @@ const QuickRegister = () => {
         telefono:      `${config.telefonoPrefijo}${formData.telefono}`,
         pais:          config.pais,
       };
+
       const res = await axiosInstance.post(config.endpoint, payload);
-      if (res?.data?.success) {
-        toast.success('¡Registro exitoso! Ahora puedes iniciar sesión');
-        navigate('/login');
+      const data = res.data;
+
+      if (data?.success) {
+        toast.success('¡Registro exitoso!');
+
+        if (data.token && data.user) {
+            // ✅ 1. NORMALIZAMOS LOS DATOS (Igual que en tu AuthContext)
+            const normalizedUser = {
+                id: data.user.id,
+                email: data.user.email,
+                
+                // Estos son los que pide el frontend para no bloquearte
+                name: data.user.nombres || data.user.name,
+                lastName: data.user.apellidos || data.user.lastName,
+                phone: data.user.telefonoCelular || data.user.phone,
+                nro: data.user.nroIdentificacionCliente || data.user.nro,
+                
+                // Mantenemos los originales
+                nombres: data.user.nombres,
+                apellidos: data.user.apellidos,
+                telefonoCelular: data.user.telefonoCelular,
+                nroIdentificacionCliente: data.user.nroIdentificacionCliente,
+                idClienteTipoIdentificacion: data.user.idClienteTipoIdentificacion,
+                
+                // Evitamos bloqueos de ruta
+                avatarId: data.user.avatarId || '1',
+                profileComplete: true, // Forzamos a true
+                emailVerified: true,   // Forzamos a true para que no te pida verificar
+                clienteActivo: true,
+                fromGoogle: false,
+                fromEmail: true,
+                codCliente: data.user.codCliente,
+                regCodPais: data.user.regCodPais
+            };
+
+            // ✅ 2. Usamos AWAIT para asegurar que se guarde en caché antes de viajar
+            await setUser(normalizedUser, data.token);
+        }
+
+        // ✅ Redirección exitosa
+        navigate('/pickup');
+        
       } else {
-        toast.error(res?.data?.message || 'Error en el registro');
+        toast.error(data?.message || 'Error en el registro');
       }
-    } catch {
+    } catch (error) {
       toast.error('Error de conexión. Intenta nuevamente.');
     } finally {
       setIsLoading(false);

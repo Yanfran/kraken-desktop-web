@@ -6,11 +6,12 @@
 // Guarda { courierId, courierServiceId, courierQuote } en wizardData.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { fetchSendSeiQuotes } from '../../../../../services/es/sendSeiService';
+import { fetchUpsQuotes } from '../../../../../services/us/upsService';
 import './Step3CourierSelection.scss';
 
-// CP del almacén Kraken España (destino de la recogida)
-const KRAKEN_ES_POSTAL_CODE = '28013';
+
+// CP del almacén Kraken USA (destino de la recogida)
+const KRAKEN_US_WAREHOUSE_ZIP = '22201';
 
 // Logos por courier_id (agrega más según crezca la lista)
 const COURIER_LOGOS = {
@@ -30,22 +31,23 @@ function getBadge(quote, allQuotes) {
 
 // ── Componente de card individual ─────────────────────────────────────────────
 const CourierCard = ({ quote, isSelected, onSelect, badge }) => {
-  const total        = parseFloat(quote.total).toFixed(2);
-  const base         = parseFloat(quote.price).toFixed(2);
-  const fuel         = parseFloat(quote.fuel_surcharge).toFixed(2);
-  const pickup       = parseFloat(quote.pickup_cost).toFixed(2);
-  const logo         = COURIER_LOGOS[quote.courier_id] ?? '🚚';
+  const total  = parseFloat(quote.total).toFixed(2);
+  const base   = parseFloat(quote.price).toFixed(2);
+  const fuel   = parseFloat(quote.fuel_surcharge).toFixed(2);
+  const pickup = parseFloat(quote.pickup_cost).toFixed(2);
+  const logo   = '🚚'; // UPS siempre usa este
 
   return (
-    <button
+    // ✅ div en lugar de button
+    <div
       className={`courier-card ${isSelected ? 'courier-card--selected' : ''}`}
       onClick={() => onSelect(quote)}
-      type="button"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onSelect(quote)}
     >
-      {/* Indicador de selección */}
       <span className={`courier-card__radio ${isSelected ? 'courier-card__radio--on' : ''}`} />
 
-      {/* Cabecera: courier + servicio */}
       <div className="courier-card__header">
         <span className="courier-card__logo">{logo}</span>
         <div className="courier-card__names">
@@ -55,24 +57,21 @@ const CourierCard = ({ quote, isSelected, onSelect, badge }) => {
         {badge && <span className={`courier-card__badge ${badge.cls}`}>{badge.label}</span>}
       </div>
 
-      {/* Precio principal */}
       <div className="courier-card__price">
-        <span className="courier-card__total">{total} €</span>
-        <span className="courier-card__currency">EUR</span>
+        <span className="courier-card__total">{total} $</span>
+        <span className="courier-card__currency">USD</span>
       </div>
 
-      {/* Desglose colapsado en pequeño */}
       <div className="courier-card__breakdown">
-        <span>Base: {base} €</span>
-        {parseFloat(fuel) > 0    && <span>+ Combustible: {fuel} €</span>}
-        {parseFloat(pickup) > 0  && <span>+ Recogida: {pickup} €</span>}
+        <span>Base: {base} $</span>
+        {parseFloat(fuel)   > 0 && <span>+ Combustible: {fuel} $</span>}
+        {parseFloat(pickup) > 0 && <span>+ Recogida: {pickup} $</span>}
       </div>
 
-      {/* Peso cubierto */}
       <div className="courier-card__meta">
-        ⚖️ Hasta {quote.weight_max} kg · 📦 {quote.total_packages} bulto(s)
+        ⚖️ {quote.weight_max} kg · 📦 {quote.total_packages} bulto(s)
       </div>
-    </button>
+    </div>
   );
 };
 
@@ -111,33 +110,31 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
     setLoading(true);
     setError(null);
 
-    const result = await fetchSendSeiQuotes(
+    // ✅ UPS en lugar de SendSei
+    const result = await fetchUpsQuotes(
       originPostalCode,
-      KRAKEN_ES_POSTAL_CODE,
-      weightKg
+      weightKg,
+      parseFloat(pkg.largo  || 0),
+      parseFloat(pkg.ancho  || 0),
+      parseFloat(pkg.alto   || 0),
+      'METRIC'
     );
 
     setLoading(false);
 
     if (!result.success || !Array.isArray(result.data)) {
-      setError('No se pudieron obtener las tarifas de recogida. Intenta de nuevo.');
+      setError('No se pudieron obtener las tarifas UPS. Intenta de nuevo.');
       return;
     }
 
-    // Ordenar por precio ascendente
-    const sorted = [...result.data].sort(
-      (a, b) => parseFloat(a.total) - parseFloat(b.total)
-    );
-    setQuotes(sorted);
+    setQuotes(result.data);
 
-    // Auto-seleccionar el más barato si no hay selección previa
-    if (!data.courierQuote && sorted.length > 0) {
-      const cheapest = sorted[0];
-      setSelected(cheapest);
+    if (!data.courierQuote && result.data.length > 0) {
+      const first = result.data[0];
       updateData({
-        courierId:        cheapest.courier_id,
-        courierServiceId: cheapest.service_id,
-        courierQuote:     cheapest,
+        courierId:        first.courier_id,
+        courierServiceId: first.service_id,
+        courierQuote:     first,
       });
     }
   }, [originPostalCode, weightKg]); // eslint-disable-line
@@ -174,7 +171,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
         <div className="courier-step__meta">
           <span>📦 Peso: <strong>{weightKg} kg</strong></span>
           <span>📍 Origen: <strong>{originPostalCode}</strong></span>
-          <span>🏭 Destino: <strong>{KRAKEN_ES_POSTAL_CODE} (Almacén Kraken)</strong></span>
+          <span>🏭 Destino: <strong>{KRAKEN_US_WAREHOUSE_ZIP} (Almacén Kraken)</strong></span>
         </div>
 
         <div className="wizard-divider" />

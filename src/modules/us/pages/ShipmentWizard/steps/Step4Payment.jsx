@@ -1,27 +1,24 @@
-// src/modules/es/pages/ShipmentWizard/steps/Step4Payment.jsx
-// Paso 5 del wizard España — Método de pago + creación de guía post-pago
+// src/modules/us/pages/ShipmentWizard/steps/Step4Payment.jsx
+// Paso 5 del wizard USA — Método de pago + creación de guía post-pago
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createSpainGuia }            from '../../../../../services/es/spainGuiaService';
-import { createSendSeiShipment, createSendSeiPickup } from '../../../../../services/es/sendSeiService';
-import { iniciarPagoRedsys, preRegistrarSesion } from '../../../../../services/es/spainPaymentService';
-import './Step4Payment.scss';
+import './Step4Payment.scss'; // ← mismo scss que España, reutilizable
 
-// ── Métodos de pago disponibles ───────────────────────────────────────────────
+// ── Métodos de pago USA ───────────────────────────────────────────────────────
 const PAYMENT_METHODS = [
-  { id: 'card',     label: 'Tarjeta de Crédito/Débito', render: () => '💳' },
-  { id: 'bizum',    label: 'Bizum (Pago Manual)',       render: () => '📱' },
+  { id: 'card',  label: 'Credit / Debit Card', render: () => '💳' },
+  { id: 'zelle', label: 'Zelle (Manual Pay)',  render: () => '💜' },
 ];
 
-// ── Bloque informativo Redsys ─────────────────────────────────────────────────
-const RedsysInfo = () => (
+// ── Bloque informativo Stripe/Card ────────────────────────────────────────────
+const CardInfo = () => (
   <div className="redsys-info-block">
     <div className="redsys-info-block__icon">🔒</div>
-    <p className="redsys-info-block__title">Pago Seguro con Redsys</p>
+    <p className="redsys-info-block__title">Secure Card Payment</p>
     <p className="redsys-info-block__desc">
-      Al confirmar serás redirigido al TPV seguro de CaixaBank para
-      introducir los datos de tu tarjeta con total seguridad.
+      Your payment is processed through our secure payment gateway.
+      Your card details are never stored on our servers.
     </p>
     <div className="redsys-info-block__logos">
       <span>VISA</span>
@@ -29,53 +26,81 @@ const RedsysInfo = () => (
       <span>AMEX</span>
     </div>
     <p className="redsys-info-block__hint">
-      🛡️ Tus datos de tarjeta <strong>nunca</strong> pasan por nuestros servidores.
+      🛡️ Your card data <strong>never</strong> passes through our servers.
     </p>
   </div>
 );
 
-// ── Bloque informativo Bizum ──────────────────────────────────────────────────
-const BizumInfo = () => (
-  <div className="redsys-info-block" style={{ borderLeft: '4px solid #00c3a9', backgroundColor: '#f0fdfa' }}>
-    <div className="redsys-info-block__icon" style={{ color: '#00c3a9' }}>📱</div>
-    <p className="redsys-info-block__title" style={{ color: '#064e3b' }}>Pago Seguro con Bizum</p>
-    <p className="redsys-info-block__desc" style={{ color: '#0f766e' }}>
-      Realiza el pago de forma manual a través de la app de tu banco usando Bizum.
+// ── Bloque informativo Zelle ──────────────────────────────────────────────────
+const ZelleInfo = () => (
+  <div
+    className="redsys-info-block"
+    style={{ borderLeft: '4px solid #6d28d9', backgroundColor: '#f5f3ff' }}
+  >
+    <div className="redsys-info-block__icon" style={{ color: '#6d28d9' }}>💜</div>
+    <p className="redsys-info-block__title" style={{ color: '#3b0764' }}>Manual Payment via Zelle</p>
+    <p className="redsys-info-block__desc" style={{ color: '#5b21b6' }}>
+      Send payment manually using Zelle through your bank app.
     </p>
-    <div style={{ background: '#ffffff', padding: '15px', borderRadius: '8px', margin: '15px 0', fontSize: '14px', border: '1px solid #ccfbf1' }}>
-      <p style={{ margin: '0 0 8px 0', color: '#111827' }}><strong>Teléfono Bizum:</strong> +34 600 000 000</p>
-      <p style={{ margin: '0', color: '#111827' }}><strong>Concepto:</strong> Pago Envío Kraken</p>
+    <div style={{
+      background: '#ffffff', padding: '15px', borderRadius: '8px',
+      margin: '15px 0', fontSize: '14px', border: '1px solid #ddd6fe'
+    }}>
+      <p style={{ margin: '0 0 8px 0', color: '#111827' }}>
+        <strong>Zelle Email:</strong> payments@krakencourier.com
+      </p>
+      <p style={{ margin: '0', color: '#111827' }}>
+        <strong>Memo:</strong> Kraken Shipment Payment
+      </p>
     </div>
-    <p className="redsys-info-block__hint" style={{ color: '#0f766e' }}>
-      ⚠️ <strong>Importante:</strong> Tu envío será procesado y la etiqueta generada únicamente tras confirmar la recepción de los fondos.
+    <p className="redsys-info-block__hint" style={{ color: '#5b21b6' }}>
+      ⚠️ <strong>Important:</strong> Your shipment will only be processed after
+      payment is confirmed by our team.
     </p>
   </div>
 );
 
-// ── Pantalla de Éxito (Para pagos manuales) ───────────────────────────────────
-const SuccessScreen = ({ nGuia }) => (
+// ── Pantalla de Éxito ─────────────────────────────────────────────────────────
+const SuccessScreen = ({ nGuia, metodoPago }) => (
   <div className="payment-success" style={{ textAlign: 'center', padding: '40px 20px' }}>
-    <div className="payment-success__icon" style={{ fontSize: '4rem', marginBottom: '20px' }}>✅</div>
-    <h2 className="payment-success__title" style={{ color: '#022364', fontWeight: 'bold', fontSize: '24px' }}>¡Pedido Registrado!</h2>
-    <p className="payment-success__sub" style={{ color: '#4b5563', marginBottom: '20px' }}>
-      Hemos recibido tu solicitud de envío.
+    <div style={{ fontSize: '4rem', marginBottom: '20px' }}>✅</div>
+    <h2 style={{ color: '#022364', fontWeight: 'bold', fontSize: '24px' }}>
+      Order Registered!
+    </h2>
+    <p style={{ color: '#4b5563', marginBottom: '20px' }}>
+      We have received your shipment request.
     </p>
-    
-    <div style={{ background: '#f3f4f6', padding: '20px', borderRadius: '12px', display: 'inline-block', marginBottom: '20px' }}>
-      <span style={{ display: 'block', fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1px' }}>N° de Solicitud</span>
-      <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>{nGuia}</span>
+
+    <div style={{
+      background: '#f3f4f6', padding: '20px', borderRadius: '12px',
+      display: 'inline-block', marginBottom: '20px'
+    }}>
+      <span style={{
+        display: 'block', fontSize: '12px', color: '#6b7280',
+        textTransform: 'uppercase', letterSpacing: '1px'
+      }}>
+        Request Number
+      </span>
+      <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
+        {nGuia}
+      </span>
     </div>
 
-    <p style={{ fontSize: '14px', color: '#6b7280', maxWidth: '400px', margin: '0 auto 30px' }}>
-      Una vez que nuestro equipo de administración verifique tu pago móvil vía Bizum, emitiremos tu etiqueta oficial de recolección y te notificaremos por correo electrónico.
+    <p style={{
+      fontSize: '14px', color: '#6b7280',
+      maxWidth: '400px', margin: '0 auto 30px'
+    }}>
+      {metodoPago === 'zelle'
+        ? 'Once our team verifies your Zelle payment, we will generate your pickup label and notify you by email.'
+        : 'Your shipment has been registered. You will receive a confirmation email shortly.'}
     </p>
-    
+
     <button
       className="btn-wizard-next"
       onClick={() => window.location.href = '/home'}
       style={{ width: '100%', maxWidth: '300px' }}
     >
-      Volver al Inicio
+      Go to Home
     </button>
   </div>
 );
@@ -90,10 +115,8 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
   const { metodoPago, calculationResult, courierQuote } = data;
 
-  // ── Precios Estrictos ✅ ──────────────────────────────────────────────────
-  const eur      = (n) => `€${Number(n || 0).toFixed(2)}`;
-  
-  // Forzamos Number() en cada lectura para evitar Strings ocultos
+  // ── Precios en USD ────────────────────────────────────────────────────────
+  const usd      = (n) => `$${Number(n || 0).toFixed(2)} USD`;
   const shipping = Number(calculationResult?.data?.total || 0);
   const courier  = courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0;
   const total    = Number((shipping + courier).toFixed(2));
@@ -105,69 +128,32 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
     try {
       if (!data.courierId || !data.selectedOriginAddress)
-        throw new Error('Falta courier o dirección de origen.');
+        throw new Error('Missing courier or origin address.');
 
-      // LÓGICA DE BIZUM (Pago Manual / Offline)
-      if (metodoPago === 'bizum') {
-        setSubmitPhase('Registrando solicitud...');
-        
-        // TODO: Llamada a crear guía en status "Por Pagar"
+      // ZELLE — Pago manual offline
+      if (metodoPago === 'zelle') {
+        setSubmitPhase('Registering your request...');
+        // TODO: llamada real al backend para crear guía en estado "Por Pagar"
         setTimeout(() => {
-          setGuiaResult({ nGuia: `REQ-${Date.now().toString().slice(-6)}` });
+          setGuiaResult({
+            nGuia: `KU-${Date.now().toString().slice(-6)}`,
+            metodoPago: 'zelle',
+          });
           setSubmitting(false);
         }, 1500);
         return;
       }
 
-      // LÓGICA DE REDSYS (Pago Online)
-      setSubmitPhase('Iniciando pago seguro...');
-      
-      // ✅ Enviamos 'total' limpio como Number
-      const pagoRes = await iniciarPagoRedsys(total, `KE${Date.now()}`);
-      if (!pagoRes.success) throw new Error(pagoRes.message);
-
-      const { urlTPV, ds_SignatureVersion, ds_MerchantParameters,
-              ds_Signature, numeroPedido } = pagoRes.data;
-
-      // ✅ Enviamos 'total' limpio como Number
-      await preRegistrarSesion(numeroPedido, total);
-
-      sessionStorage.setItem('ke_pago_pendiente', JSON.stringify({
-        numeroPedido,
-        total,
-        wizardData: {
-          courierId:             data.courierId,
-          courierServiceId:      data.courierServiceId,
-          selectedOriginAddress: data.selectedOriginAddress,
-          packages:              data.packages,
-          calculationResult:     data.calculationResult,
-          courierQuote:          data.courierQuote,
-        },
-      }));
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = urlTPV;
-
-      [
-        { name: 'Ds_SignatureVersion',   value: ds_SignatureVersion   },
-        { name: 'Ds_MerchantParameters', value: ds_MerchantParameters },
-        { name: 'Ds_Signature',          value: ds_Signature          },
-      ].forEach(({ name, value }) => {
-        const h = document.createElement('input');
-        h.type = 'hidden'; h.name = name; h.value = value;
-        form.appendChild(h);
-      });
-
-      document.body.appendChild(form);
-      form.submit();
-      return;
+      // CARD — TODO: integrar pasarela USA (Stripe u otro)
+      setSubmitPhase('Initiating secure payment...');
+      // TODO: llamar al endpoint de pago con tarjeta para USA
+      throw new Error('Card payment for USA is not yet configured.');
 
     } catch (err) {
-      console.error('[Step4Payment]', err);
-      setSubmitError(err.message ?? 'Error al procesar.');
+      console.error('[Step4Payment US]', err);
+      setSubmitError(err.message ?? 'Error processing payment.');
     } finally {
-      if (metodoPago !== 'bizum') {
+      if (metodoPago !== 'zelle') {
         setSubmitting(false);
         setSubmitPhase('');
       }
@@ -182,9 +168,9 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       {/* ── Columna izquierda: métodos de pago ── */}
       <div className="step4-layout__left">
         <div className="wizard-card">
-          <h2 className="wizard-card__title">💳 Método de Pago</h2>
+          <h2 className="wizard-card__title">💳 Payment Method</h2>
           <p className="wizard-card__subtitle">
-            Selecciona tu forma de pago para completar el envío.
+            Select your payment method to complete the shipment.
           </p>
 
           <div className="payment-methods">
@@ -210,8 +196,8 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           </div>
 
           <div className="payment-form-area">
-            {metodoPago === 'card'  && <RedsysInfo />}
-            {metodoPago === 'bizum' && <BizumInfo />}
+            {metodoPago === 'card'  && <CardInfo />}
+            {metodoPago === 'zelle' && <ZelleInfo />}
           </div>
         </div>
 
@@ -221,7 +207,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
         <div className="wizard-actions">
           <button className="btn-wizard-back" onClick={onBack} disabled={submitting}>
-            ← Volver
+            ← Back
           </button>
         </div>
       </div>
@@ -229,34 +215,41 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       {/* ── Columna derecha: resumen + botón confirmar ── */}
       <div className="step4-layout__right">
         <div className="cost-card" style={{ borderTop: '4px solid #022364' }}>
-          <h3 className="cost-card__title">Resumen del Pedido</h3>
+          <h3 className="cost-card__title">Order Summary</h3>
 
           <div className="order-row">
-            <span>Envío internacional</span>
-            <span style={{ fontWeight: '600' }}>{eur(shipping)}</span>
+            <span>International shipping</span>
+            <span style={{ fontWeight: '600' }}>{usd(shipping)}</span>
           </div>
 
           {courierQuote && (
             <div className="order-row">
-              <span>Recogida local ({courierQuote.name || courierQuote.service || 'Courier'})</span>
-              <span style={{ fontWeight: '600' }}>{eur(courier)}</span>
+              <span>
+                Local pickup ({courierQuote.name || courierQuote.service || 'UPS'})
+              </span>
+              <span style={{ fontWeight: '600' }}>{usd(courier)}</span>
             </div>
           )}
 
           <div className="order-divider" />
 
-          <div className="order-total" style={{ background: 'linear-gradient(135deg, #022364 0%, #1a3a8a 100%)', padding: '15px', borderRadius: '8px', color: '#fff' }}>
-            <span style={{ color: '#fff' }}>Total a Pagar:</span>
-            <span className="order-total__value" style={{ color: '#fff' }}>{eur(total)}</span>
+          <div className="order-total" style={{
+            background: 'linear-gradient(135deg, #022364 0%, #1a3a8a 100%)',
+            padding: '15px', borderRadius: '8px', color: '#fff'
+          }}>
+            <span style={{ color: '#fff' }}>Total to Pay:</span>
+            <span className="order-total__value" style={{ color: '#fff' }}>
+              {usd(total)}
+            </span>
           </div>
 
           <div className="security-badges" style={{ marginTop: '20px' }}>
             <span className="security-badge">🔒 SSL</span>
             <span className="security-badge">🛡️ PCI DSS</span>
-            <span className="security-badge">🔐 Cifrado</span>
+            <span className="security-badge">🔐 Encrypted</span>
           </div>
           <p className="security-text">
-            Tus datos están protegidos con encriptación de grado bancario.
+            Your data is protected with bank-grade encryption.
           </p>
 
           <button
@@ -266,10 +259,10 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             style={{ marginTop: '15px' }}
           >
             {submitting
-              ? `⏳ ${submitPhase || 'Procesando...'}`
-              : metodoPago === 'bizum' 
-                  ? 'Confirmar Solicitud' 
-                  : `Confirmar Pago ${eur(total)}`}
+              ? `⏳ ${submitPhase || 'Processing...'}`
+              : metodoPago === 'zelle'
+                ? 'Confirm Request'
+                : `Confirm Payment ${usd(total)}`}
           </button>
         </div>
       </div>

@@ -3,13 +3,13 @@ import React from 'react';
 import './Step3Summary.scss';
 
 const fmt    = (n) => Number(n || 0).toFixed(2);
-const fmtEUR = (n) => `€${fmt(n)} EUR`;
+const fmtUSD = (n) => `$${fmt(n)} USD`;
 
 // ── Fila de costo (Euros) ─────────────────────────────────────────────────────
-const CostRow = ({ label, valueEUR, isDiscount }) => (
+const CostRow = ({ label, valueUSD, isDiscount }) => (
   <div className={`cost-row ${isDiscount ? 'cost-row--discount' : ''}`}>
     <span className="cost-row__label">{label}</span>
-    <span className="cost-row__usd-value">{valueEUR}</span>
+    <span className="cost-row__usd-value">{valueUSD}</span>
   </div>
 );
 
@@ -154,7 +154,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
               <h3 className="summary-section__title">Dirección de Recogida</h3>
               <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
             </div>
-            <AddressBlock address={data.selectedOriginAddress} flag="🇪🇸" onEdit={editAddr} />
+            <AddressBlock address={data.selectedOriginAddress} flag="🇺🇸" onEdit={editAddr} />
           </section>
 
           <div className="wizard-divider" />
@@ -179,7 +179,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
       <div className="step3-layout__right">
         <div className="cost-card" style={{ borderTop: '4px solid #022364' }}>
           <h3 className="cost-card__title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🇪🇸 Detalle de Tarifa
+            🇺🇸 Detalle de Tarifa
           </h3>
 
           {!calc ? (
@@ -188,23 +188,34 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
             </p>
           ) : (
             <>
-              {/* ── Desglose siempre abierto ─────────────────────────────────── */}
+              {/* ── Desglose tarifa Kraken ─────────────────────────────────── */}
               <div className="cost-breakdown-body cost-breakdown-body--open" style={{ marginTop: '15px' }}>
                 {lineas.map((d, idx) => (
                   <CostRow
                     key={idx}
                     label={d.descripcionItem}
-                    valueEUR={fmtEUR(Math.abs(d.monto))}
+                    valueUSD={fmtUSD(Math.abs(d.monto))}
                     isDiscount={d.esDescuento || d.monto < 0}
                   />
                 ))}
+
+                {/* ✅ Línea UPS si hay courierQuote */}
+                {data.courierQuote && (
+                  <CostRow
+                    label={`🚚 ${data.courierQuote.courier ?? 'UPS'} ${data.courierQuote.service ?? 'Ground'} (Recogida)`}
+                    valueUSD={fmtUSD(data.courierQuote.total ?? 0)}
+                    isDiscount={false}
+                  />
+                )}
               </div>
 
-              {/* ── Total Estilo Kraken ─────────────────────────────── */}
+              {/* ── Total incluyendo UPS ─────────────────────────────── */}
               <div className="cost-total cost-total--espana">
                 <span className="cost-total__label">Total PREPAID</span>
                 <span className="cost-total__usd" style={{ color: '#fff', fontSize: '18px', fontFamily: 'Courier New, monospace' }}>
-                  {fmtEUR(totalEUR)}
+                  {fmtUSD(
+                    Number(totalEUR) + Number(data.courierQuote?.total ?? 0)
+                  )}
                 </span>
               </div>
             </>
@@ -220,7 +231,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
           </button>
           
           <p style={{ fontSize: '12px', color: '#6c757d', textAlign: 'center', marginTop: '12px' }}>
-            <i className="fas fa-info-circle"></i> Los montos en EUR son referenciales.
+            <i className="fas fa-info-circle"></i> Los montos en USD  son referenciales.
           </p>
         </div>
       </div>

@@ -23,7 +23,7 @@ const GuideDetail = React.lazy(() => import('../pages/GuideDetail/GuideDetail'))
 
 // Perfil
 const PersonalDataPage = React.lazy(() => import('../pages/profile/Profile/PersonalData/PersonalData'));
-const AddressesPage = React.lazy(() => import('../pages/addresses/Addresses'));
+const AddressesPage = React.lazy(() => import('../pages/profile/Profile/Addresses/Addresses'));
 const ChangePassword = React.lazy(() => import('../pages/profile/Profile/ChangePassword/ChangePassword'));
 
 // Billing/Pagos
