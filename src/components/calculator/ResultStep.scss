@@ -325,6 +325,19 @@
       transform: none;
     }
   }
+
+  /* impuestos notice */
+  &__impuestos-text {
+    font-size: 9px;
+    font-style: italic;
+    color: $text-secondary;
+    margin: 8px 0 16px;
+  }
+
+  &__impuestos-link {
+    color: #ff4713;
+    text-decoration: underline;
+  }
 }
 
 // ==========================================

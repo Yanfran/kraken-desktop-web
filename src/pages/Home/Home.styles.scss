@@ -209,17 +209,25 @@
   flex-shrink: 0;
 }
 
-.alert-text {
-  color: #DC2626;
-  font-size: 13px;
-  font-weight: 400;
-}
-
 .alert-discount {
   color: #DC2626;
   font-size: 13px;
   font-weight: 600;
   margin-left: 8px;
+
+  &--success {
+    color: #4CAF50;  // ← esto debe estar aquí
+  }
+}
+
+.alert-text {
+  color: #DC2626;
+  font-size: 13px;
+  font-weight: 400;
+
+  &--success {
+    color: #4CAF50;
+  }
 }
 
 .alert-link {

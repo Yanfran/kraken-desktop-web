@@ -24,7 +24,9 @@ import {
   IoCardOutline,
   IoStorefrontOutline,
   IoHomeOutline,
-  IoDocumentTextOutline
+  IoDocumentTextOutline,
+  IoCheckmarkCircleOutline,  // ← agregar
+  IoBookmarkOutline,         // ← agregar
 } from 'react-icons/io5';
 
 const Home = ({ onNavigateToShipments }) => {
@@ -311,7 +313,7 @@ const Home = ({ onNavigateToShipments }) => {
       
       if (response.success && response.data) {
         setLastShipment(response.data);
-        // console.log('Último envío cargado:', response.data);
+        console.log('Último envío cargado:', response.data);
       } else {
         setErrors(prev => ({ 
           ...prev, 
@@ -644,15 +646,24 @@ const Home = ({ onNavigateToShipments }) => {
                 )}
               </div>
 
-              {!lastShipment.prealerted && lastShipment.discount && (
-                <div className="last-shipment-card__alert">
-                  <span className="alert-text">No pre-alertado</span>
-                  <span className="alert-discount">Perdiste {lastShipment.discount}</span>
-                  <button className="alert-link" onClick={() => navigate('/guide/guides')}>
-                    Ver todos
-                  </button>
-                </div>
-              )}
+              <div className="last-shipment-card__alert">
+                <span className="alert-icon">
+                  {lastShipment.prealerted
+                    ? <IoCheckmarkCircleOutline size={16} color="#4CAF50" />
+                    : <IoBookmarkOutline size={16} color="#DC2626" />
+                  }
+                </span>
+                <span className={`alert-text ${lastShipment.prealerted ? 'alert-text--success' : ''}`}>
+                  {lastShipment.prealerted ? 'Pre-alertado' : 'No pre-alertado'}
+                </span>
+                <span className={`alert-discount ${lastShipment.prealerted ? 'alert-discount--success' : ''}`}>
+                  {lastShipment.prealerted ? 'Ganaste +10%' : 'Perdiste -10%'}
+                </span>
+                <button className="alert-link" onClick={() => navigate('/guide/guides')}>
+                  Ver todas
+                </button>
+              </div>
+
             </div>
           </>
         ) : (
