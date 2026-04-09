@@ -114,7 +114,8 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
     const result = await fetchSendSeiQuotes(
       originPostalCode,
       KRAKEN_ES_POSTAL_CODE,
-      weightKg
+      weightKg,
+      pkg  
     );
 
     setLoading(false);

@@ -18,12 +18,16 @@ const BASE = '/spain/sensei';
  * @param {number|string} weightKg Peso del paquete en kg (ej: 2.5)
  * @returns {{ success: boolean, data: Array }}
  */
-export const fetchSendSeiQuotes = async (postalCodeFrom, postalCodeTo, weightKg) => {
+export const fetchSendSeiQuotes = async (postalCodeFrom, postalCodeTo, weightKg, pkg = {}) => {
   try {
     const res = await axiosInstance.post(`${BASE}/quotes`, {
       postalCodeFrom,
       postalCodeTo,
-      weight: String(Number(weightKg).toFixed(2)),
+      weight:   String(Number(weightKg).toFixed(2)),
+      // ✅ Dimensiones del paquete
+      lengthCm: String(parseFloat(pkg.largo  || 30)),
+      widthCm:  String(parseFloat(pkg.ancho  || 20)),
+      heightCm: String(parseFloat(pkg.alto   || 15)),
     });
     return { success: true, data: res.data?.results ?? res.data };
   } catch (err) {
