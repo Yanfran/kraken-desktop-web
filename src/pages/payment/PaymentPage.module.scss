@@ -774,3 +774,449 @@ $transition-base: 0.3s ease;
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ============================================================
+// ✅ SUCCESS CONTAINER MEJORADO
+// ============================================================
+.successContainer {
+  text-align: center;
+  padding: 1rem 0;
+  animation: fadeInUp 0.5s ease-out;
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+.successIconWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.successCheckCircle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
+  animation: scaleIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+
+  @keyframes scaleIn {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+.successTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: $kraken-success;
+  margin: 1rem 0 0.5rem;
+
+  [data-theme="dark"] & {
+    color: #81C784;
+  }
+}
+
+.successSubtitle {
+  color: $kraken-text-secondary;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+
+  [data-theme="dark"] & {
+    color: #CAC4D0;
+  }
+}
+
+.successAmountBox {
+  background: linear-gradient(135deg, $kraken-primary 0%, $kraken-primary-hover 100%);
+  border-radius: $radius-md;
+  padding: 1.5rem;
+  margin: 0 auto 2rem;
+  max-width: 400px;
+  box-shadow: 0 4px 16px rgba($kraken-primary, 0.25);
+
+  .successAmountLabel {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  .successAmountValue {
+    display: block;
+    color: white;
+    font-size: 2.25rem;
+    font-weight: 700;
+  }
+}
+
+.successDetails {
+  background: white;
+  border-radius: $radius-md;
+  padding: 1.5rem;
+  margin: 0 auto 1.5rem;
+  max-width: 500px;
+  text-align: left;
+  border: 1px solid $kraken-border-light;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  [data-theme="dark"] & {
+    background: #2B2930;
+    border-color: #49454F;
+  }
+}
+
+.successDetailsTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: $kraken-text-primary;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid $kraken-separator;
+
+  [data-theme="dark"] & {
+    color: #E6E0E9;
+    border-bottom-color: #37343B;
+  }
+}
+
+.detailRowCopy {
+  .copyButton {
+    background: rgba($kraken-primary, 0.08);
+    border: 1px dashed rgba($kraken-primary, 0.4);
+    border-radius: $radius-sm;
+    padding: 0.375rem 0.75rem;
+    color: $kraken-primary;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+    transition: all $transition-fast;
+    font-family: monospace;
+
+    [data-theme="dark"] & {
+      background: rgba($kraken-primary, 0.15);
+      border-color: rgba(#FFB085, 0.4);
+      color: #FFB085;
+    }
+
+    small {
+      font-size: 0.65rem;
+      opacity: 0.8;
+      font-family: inherit;
+    }
+
+    &:hover {
+      background: rgba($kraken-primary, 0.15);
+      transform: scale(1.02);
+    }
+  }
+}
+
+.successGuiasList {
+  background: $kraken-input-bg;
+  border-radius: $radius-md;
+  padding: 1.5rem;
+  margin: 0 auto 2rem;
+  max-width: 500px;
+  text-align: left;
+  border: 1px solid $kraken-border-light;
+
+  [data-theme="dark"] & {
+    background: #2B2930;
+    border-color: #49454F;
+  }
+}
+
+.successGuiaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid $kraken-separator;
+
+  [data-theme="dark"] & {
+    border-bottom-color: #37343B;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .successGuiaInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $kraken-text-primary;
+    font-weight: 500;
+    font-size: 0.9rem;
+
+    [data-theme="dark"] & {
+      color: #E6E0E9;
+    }
+
+    svg {
+      color: $kraken-primary;
+
+      [data-theme="dark"] & {
+        color: #FFB085;
+      }
+    }
+  }
+
+  .successGuiaAmount {
+    font-weight: 700;
+    color: $kraken-text-primary;
+
+    [data-theme="dark"] & {
+      color: #E6E0E9;
+    }
+  }
+}
+
+// ============================================================
+// ❌ ERROR CONTAINER MEJORADO
+// ============================================================
+.errorContainerDetailed {
+  text-align: center;
+  padding: 1rem 0;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.errorIconWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: $kraken-error;
+  animation: shake 0.5s ease-in-out;
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+}
+
+.errorTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: $kraken-error;
+  margin: 1rem 0 0.5rem;
+}
+
+.errorMessage {
+  color: $kraken-text-primary;
+  font-size: 1.05rem;
+  margin: 0 auto 2rem;
+  max-width: 500px;
+  line-height: 1.5;
+
+  [data-theme="dark"] & {
+    color: #E6E0E9;
+  }
+}
+
+.errorDetailsCard {
+  background: rgba($kraken-error, 0.05);
+  border: 1px solid rgba($kraken-error, 0.2);
+  border-radius: $radius-md;
+  padding: 1rem 1.5rem;
+  margin: 0 auto 1.5rem;
+  max-width: 500px;
+  text-align: left;
+
+  [data-theme="dark"] & {
+    background: rgba($kraken-error, 0.1);
+    border-color: rgba($kraken-error, 0.3);
+  }
+}
+
+.errorDetailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba($kraken-error, 0.1);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  span:first-child {
+    font-weight: 600;
+    color: $kraken-text-secondary;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+
+    [data-theme="dark"] & {
+      color: #938F99;
+    }
+  }
+
+  .errorCode {
+    font-family: monospace;
+    background: rgba($kraken-error, 0.15);
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    color: $kraken-error;
+    font-weight: 700;
+  }
+
+  .errorTechnical {
+    text-align: right;
+    color: $kraken-text-primary;
+    font-size: 0.85rem;
+    word-break: break-word;
+
+    [data-theme="dark"] & {
+      color: #E6E0E9;
+    }
+  }
+}
+
+.errorSuggestions {
+  background: $kraken-input-bg;
+  border-radius: $radius-md;
+  padding: 1.25rem 1.5rem;
+  margin: 0 auto 2rem;
+  max-width: 500px;
+  text-align: left;
+  border-left: 4px solid $kraken-warning;
+
+  [data-theme="dark"] & {
+    background: #2B2930;
+  }
+
+  h4 {
+    color: $kraken-text-primary;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+
+    [data-theme="dark"] & {
+      color: #E6E0E9;
+    }
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      padding: 0.375rem 0 0.375rem 1.25rem;
+      position: relative;
+      color: $kraken-text-secondary;
+      font-size: 0.875rem;
+      line-height: 1.4;
+
+      [data-theme="dark"] & {
+        color: #CAC4D0;
+      }
+
+      &::before {
+        content: '→';
+        position: absolute;
+        left: 0;
+        color: $kraken-warning;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+// ===== INSTRUCCIONES P2C =====
+.p2cInstructions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: rgba($kraken-secondary, 0.08);
+  border-left: 4px solid $kraken-secondary;
+  border-radius: $radius-sm;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+
+  [data-theme="dark"] & {
+    background: rgba($kraken-secondary, 0.15);
+  }
+
+  svg {
+    color: $kraken-secondary;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    color: $kraken-text-primary;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+
+    [data-theme="dark"] & {
+      color: #E6E0E9;
+    }
+  }
+
+  p {
+    color: $kraken-text-secondary;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+
+    [data-theme="dark"] & {
+      color: #CAC4D0;
+    }
+
+    strong {
+      display: inline;
+      color: $kraken-primary;
+      font-weight: 600;
+
+      [data-theme="dark"] & {
+        color: #FFB085;
+      }
+    }
+  }
+}
