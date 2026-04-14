@@ -706,18 +706,6 @@ export default function PaymentPage() {
       </p>
 
       <div className={styles.methodOptions}>
-        <div
-          className={`${styles.methodOption} ${
-            paymentMethod === 'mobile' ? styles.methodOptionActive : ''
-          }`}
-          onClick={() => setPaymentMethod('mobile')}
-        >
-          <div className={styles.methodIcon}>
-            <IoPhonePortraitOutline size={32} />
-          </div>
-          <h4>Pago Móvil C2P</h4>
-          <p>Autoriza el pago con una clave de 8 dígitos de tu banco</p>
-        </div>
 
         <div
           className={`${styles.methodOption} ${
@@ -731,6 +719,19 @@ export default function PaymentPage() {
           <h4>Pago Móvil P2C</h4>
           <p>Ya realizaste el pago desde tu banco, solo envía la referencia</p>
         </div>
+
+        <div
+          className={`${styles.methodOption} ${
+            paymentMethod === 'mobile' ? styles.methodOptionActive : ''
+          }`}
+          onClick={() => setPaymentMethod('mobile')}
+        >
+          <div className={styles.methodIcon}>
+            <IoPhonePortraitOutline size={32} />
+          </div>
+          <h4>Pago Móvil C2P</h4>
+          <p>Autoriza el pago con una clave de 8 dígitos de tu banco</p>
+        </div>        
 
         <div
           className={`${styles.methodOption} ${
