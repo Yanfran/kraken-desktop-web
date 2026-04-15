@@ -1220,3 +1220,90 @@ $transition-base: 0.3s ease;
     }
   }
 }
+
+
+
+
+// ============================================================
+// 🆕 SELECTOR CUENTA/TELÉFONO PARA DI/CI
+// ============================================================
+.idMethodToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  background: $kraken-input-bg;
+  border-radius: $radius-sm;
+  padding: 0.375rem;
+
+  [data-theme="dark"] & {
+    background: #2B2930;
+  }
+}
+
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: $radius-sm;
+  color: $kraken-text-secondary;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  [data-theme="dark"] & {
+    color: #CAC4D0;
+  }
+
+  &:hover:not(.toggleBtnActive) {
+    background: rgba($kraken-primary, 0.05);
+    color: $kraken-primary;
+
+    [data-theme="dark"] & {
+      background: rgba($kraken-primary, 0.15);
+      color: #FFB085;
+    }
+  }
+}
+
+.toggleBtnActive {
+  background: $kraken-primary;
+  color: white;
+  box-shadow: 0 2px 8px rgba($kraken-primary, 0.3);
+
+  &:hover {
+    background: $kraken-primary-hover;
+  }
+}
+
+// ============================================================
+// 🆕 PASO OTP (Fase 2 Débito Inmediato)
+// ============================================================
+.otpIconWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: $kraken-primary;
+  animation: pulse 2s ease-in-out infinite;
+
+  [data-theme="dark"] & {
+    color: #FFB085;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.85; }
+  }
+}
+
+.otpInput {
+  font-size: 1.75rem !important;
+  letter-spacing: 0.4rem !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+  font-family: monospace !important;
+}
