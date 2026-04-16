@@ -317,6 +317,15 @@ const Addresses = () => {
   };
 
   const handleDelete = async (addressId, addressName) => {
+
+    if (userAddresses.length <= 1) {
+      alert.showError(
+        "Error",
+        "No puedes eliminar la única dirección registrada.",
+      );
+      return;
+    }
+
     alert.showDeleteConfirm(
       addressName,
       // onConfirm
@@ -326,12 +335,14 @@ const Addresses = () => {
           const response = await deleteAddress(addressId);
           
           if (response.success) {
+            alert.hideAlert();
             toast.success('Dirección eliminada exitosamente');
             await refetchAddresses();
           } else {
             toast.error(response.message || 'Error al eliminar la dirección');
           }
         } catch (error) {
+           alert.hideAlert(); 
           console.error('Error deleting address:', error);
           toast.error('Error al eliminar la dirección');
         } finally {
