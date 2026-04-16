@@ -1,5 +1,5 @@
 // src/pages/Payment/PaymentPage.jsx - C2P + P2C + DÉBITO INMEDIATO + CRÉDITO INMEDIATO
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef  } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -162,6 +162,8 @@ export default function PaymentPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedBank, setSelectedBank] = useState('0105');
+
+  const submittingRef = useRef(false);
 
   // C2P
   const [twofactorAuth, setTwofactorAuth] = useState('');
@@ -340,7 +342,14 @@ export default function PaymentPage() {
   // HANDLERS
   // ============================================================
   const handleC2PPayment = async () => {
+
+    if (submittingRef.current) {
+      console.warn('⚠️ Click duplicado bloqueado (C2P)');
+      return;
+    }
+
     if (!validateForm()) return;
+    submittingRef.current = true;
     const customerId = `${idType}${idNumber}`;
     try {
       setIsLoading(true);
@@ -386,11 +395,17 @@ export default function PaymentPage() {
       setStep('error');
     } finally {
       setIsLoading(false);
+      submittingRef.current = false
     }
   };
 
   const handleP2CPayment = async () => {
+    if (submittingRef.current) {
+      console.warn('⚠️ Click duplicado bloqueado (C2P)');
+      return;
+    }
     if (!validateForm()) return;
+    submittingRef.current = true;
     const customerId = `${idType}${idNumber}`;
     try {
       setIsLoading(true);
@@ -436,12 +451,18 @@ export default function PaymentPage() {
       setStep('error');
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 
   // DI Fase 1 — Autorizar
   const handleDIAutorizar = async () => {
+    if (submittingRef.current) {
+      console.warn('⚠️ Click duplicado bloqueado (C2P)');
+      return;
+    }
     if (!validateForm()) return;
+    submittingRef.current = true;
     const customerId = `${idType}${idNumber}`;
     try {
       setIsLoading(true);
@@ -490,11 +511,17 @@ export default function PaymentPage() {
       setStep('error');
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 
   // DI Fase 2 — Confirmar OTP
   const handleDIConfirmar = async () => {
+    if (submittingRef.current) {
+      console.warn('⚠️ Click duplicado bloqueado (C2P)');
+      return;
+    }
+    submittingRef.current = true;
     if (!otpCode || otpCode.length < 4) {
       toast.error('Ingresa el código OTP que recibiste por SMS');
       return;
@@ -538,11 +565,17 @@ export default function PaymentPage() {
       setStep('error');
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 
   // CI — Crédito Inmediato
   const handleCreditoInmediato = async () => {
+    if (submittingRef.current) {
+      console.warn('⚠️ Click duplicado bloqueado (C2P)');
+      return;
+    }
+    submittingRef.current = true;
     if (!validateForm()) return;
     const customerId = `${idType}${idNumber}`;
     try {
@@ -589,6 +622,7 @@ export default function PaymentPage() {
       setStep('error');
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -1079,8 +1113,12 @@ export default function PaymentPage() {
         >
           <IoArrowBack /> Cancelar
         </button>
-        <button
-          onClick={handleDIConfirmar}
+        <button          
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleDIConfirmar();
+          }}
           disabled={isLoading || !otpCode}
           className={styles.btn_primary}
         >
