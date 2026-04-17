@@ -1,35 +1,35 @@
 export const TENANT_CONFIG = {
-  KV: {
-    pais: 'VE',
-    bandera: '🇻🇪',
-    titulo: 'Registro Rápido 🇻🇪',
-    subtitulo: 'Crea tu cuenta en Kraken Venezuela',
-    endpoint: '/auth/register',
-    telefonoPrefijo: '+58',
-    telefonoDigitos: 11,
-    telefonoPlaceholder: '04141234567',
-    telefonoHint: '11 dígitos sin prefijo (ej: 0414...)',
-    tiposDocumento: [
-      { value: 'V', label: 'Venezolano (V)' },
-      { value: 'E', label: 'Extranjero (E)' },
-      { value: 'J', label: 'Jurídico (J)' },
-      { value: 'P', label: 'Pasaporte (P)' },
-    ],
-    documentos: {
-      V: { maxLength: 8,  placeholder: '12345678',      hint: 'Solo números, sin puntos ni guiones' },
-      E: { maxLength: 8,  placeholder: '12345678',      hint: 'Solo números' },
-      J: { maxLength: 9,  placeholder: '123456789',     hint: 'RIF sin guiones' },
-      P: { maxLength: 15, placeholder: 'Nro. pasaporte', hint: '6-15 caracteres alfanuméricos' },
-    },
-    tipoDocumentoDefault: 'V',
-    validateDoc: (tipo, valor) => {
-      if (tipo === 'V' || tipo === 'E') return /^\d{6,8}$/.test(valor);
-      if (tipo === 'J') return /^\d{8,9}$/.test(valor);
-      return valor.length >= 6 && valor.length <= 15;
-    },
-    docErrorMsg: (tipo, documentos) =>
-      `Documento inválido — ${documentos[tipo]?.hint ?? ''}`,
-  },
+  // KV: {
+  //   pais: 'VE',
+  //   bandera: '🇻🇪',
+  //   titulo: 'Registro Rápido 🇻🇪',
+  //   subtitulo: 'Crea tu cuenta en Kraken Venezuela',
+  //   endpoint: '/auth/register',
+  //   telefonoPrefijo: '+58',
+  //   telefonoDigitos: 11,
+  //   telefonoPlaceholder: '04141234567',
+  //   telefonoHint: '11 dígitos sin prefijo (ej: 0414...)',
+  //   tiposDocumento: [
+  //     { value: 'V', label: 'Venezolano (V)' },
+  //     { value: 'E', label: 'Extranjero (E)' },
+  //     { value: 'J', label: 'Jurídico (J)' },
+  //     { value: 'P', label: 'Pasaporte (P)' },
+  //   ],
+  //   documentos: {
+  //     V: { maxLength: 8,  placeholder: '12345678',      hint: 'Solo números, sin puntos ni guiones' },
+  //     E: { maxLength: 8,  placeholder: '12345678',      hint: 'Solo números' },
+  //     J: { maxLength: 9,  placeholder: '123456789',     hint: 'RIF sin guiones' },
+  //     P: { maxLength: 15, placeholder: 'Nro. pasaporte', hint: '6-15 caracteres alfanuméricos' },
+  //   },
+  //   tipoDocumentoDefault: 'V',
+  //   validateDoc: (tipo, valor) => {
+  //     if (tipo === 'V' || tipo === 'E') return /^\d{6,8}$/.test(valor);
+  //     if (tipo === 'J') return /^\d{8,9}$/.test(valor);
+  //     return valor.length >= 6 && valor.length <= 15;
+  //   },
+  //   docErrorMsg: (tipo, documentos) =>
+  //     `Documento inválido — ${documentos[tipo]?.hint ?? ''}`,
+  // },
 
   KE: {
     pais: 'ES',

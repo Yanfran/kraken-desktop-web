@@ -62,7 +62,7 @@ const HomePage = () => {
 
       <div className="us-home">
         {/* Botón Nueva Recogida */}
-        <button className="us-home__pickup-btn" onClick={() => navigate('/ke/wizard')}>
+        <button className="us-home__pickup-btn"  onClick={() => navigate('/pickup')}>
           <span className="us-home__pickup-icon">📦</span>
           <span className="us-home__pickup-text">Nueva Recogida</span>
         </button>

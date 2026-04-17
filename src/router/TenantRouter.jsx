@@ -16,6 +16,8 @@ const Tracking = React.lazy(() => import('../pages/Tracking/Tracking'));
 // Pre-Alertas
 const PreAlertList = React.lazy(() => import('../pages/PreAlert/List/PreAlertList'));
 const PreAlertCreate = React.lazy(() => import('../pages/PreAlert/Create/PreAlertCreate'));
+const PreAlertDetail = React.lazy(() => import('../pages/PreAlert/Detail/PreAlertDetail'));
+const PreAlertEdit = React.lazy(() => import('../pages/PreAlert/Edit/PreAlertEdit'));
 
 // Guías
 const Guides = React.lazy(() => import('../pages/Guide/Guides'));
@@ -87,10 +89,12 @@ const TenantRouter = () => {
                         {/* Pre-Alertas */}
                         <Route path="/pre-alert/list" element={<PreAlertList />} />
                         <Route path="/pre-alert/create" element={<PreAlertCreate />} />
-                        
+                        <Route path="/pre-alert/:id" element={<PreAlertDetail />} />
+                        <Route path="/pre-alert/edit/:id" element={<PreAlertEdit />} />
+
                         {/* Guías */}
                         <Route path="/guide/guides" element={<Guides />} />
-                        <Route path="/guide/:id" element={<GuideDetail />} />
+                        <Route path="/guide/detail/:id" element={<GuideDetail />} />
                         
                         {/* Tracking */}
                         <Route path="/tracking" element={<Tracking />} />
