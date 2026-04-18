@@ -232,7 +232,7 @@ export default function PaymentPage() {
         const response = await getMultipleGuiasPaymentData(guiaIds);
 
         if (response.success && response.data) {
-          const data = response.data;
+          const data = response.data;          
           setPaymentData({
             isMultiple: true,
             guiaIds,
@@ -252,6 +252,7 @@ export default function PaymentPage() {
         }
       } else {
         const response = await getGuiaById(parseInt(id));
+        console.log('Datos de pago múltiple cargados:', response);
         if (response.success) {
           setPaymentData({
             isMultiple: false,
