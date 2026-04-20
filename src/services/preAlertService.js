@@ -343,12 +343,15 @@ export const createPreAlerta = async (payload) => {
     // ✅ Enviar como JSON (NO FormData)
     const response = await axiosInstance.post('/PostPreAlert/create', processedPayload, {
       headers: {
-        'Content-Type': 'application/json', // ✅ Backend acepta JSON
+        'Content-Type': 'application/json',
       },
     });
-    
-    // console.log('✅ Pre-alerta creada:', response.data);
-    
+
+    if (response.data.success === false) {
+      const errMsg = response.data.message || 'Error al crear pre-alerta';
+      throw new Error(errMsg);
+    }
+
     return {
       success: true,
       data: response.data.data || response.data,
@@ -356,13 +359,7 @@ export const createPreAlerta = async (payload) => {
     };
   } catch (error) {
     console.error('❌ Error creating pre-alert:', error);
-    
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al crear pre-alerta',
-      errors: error.response?.data?.errors || [error.message],
-      data: null
-    };
+    throw new Error(error.response?.data?.message || error.message || 'Error al crear pre-alerta');
   }
 };
 
@@ -389,9 +386,12 @@ export const updatePreAlerta = async (id, payload) => {
         'Content-Type': 'application/json',
       },
     });
-    
-    // console.log('✅ Pre-alerta actualizada:', response.data);
-    
+
+    if (response.data.success === false) {
+      const errMsg = response.data.message || 'Error al actualizar pre-alerta';
+      throw new Error(errMsg);
+    }
+
     return {
       success: true,
       data: response.data.data || response.data,
@@ -399,13 +399,7 @@ export const updatePreAlerta = async (id, payload) => {
     };
   } catch (error) {
     console.error('❌ Error updating pre-alert:', error);
-    
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al actualizar pre-alerta',
-      errors: error.response?.data?.errors || [error.message],
-      data: null
-    };
+    throw new Error(error.response?.data?.message || error.message || 'Error al actualizar pre-alerta');
   }
 };
 

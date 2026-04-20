@@ -704,7 +704,6 @@ const PreAlertEdit = () => {
     }
   } catch (error) {
     console.error('Error en submit:', error);
-    toast.error(error.message || 'Error al enviar');
   } finally {
     setIsSubmitting(false);
   }
@@ -729,7 +728,7 @@ const PreAlertEdit = () => {
 
   if (isLoadingPreAlerta || isLoadingContenidos || isLoadingDelivery || isLoadingUserAddresses) {
     return (
-      <div className="prealert-edit">
+      <div className="prealert-edit" translate="no">
         <div className="prealert-edit__loading">
           <LoadingSpinner />
           <p>Cargando pre-alerta...</p>
@@ -739,7 +738,7 @@ const PreAlertEdit = () => {
   }
 
   return (
-    <div className="prealert-edit">
+    <div className="prealert-edit" translate="no">
       <div className="prealert-edit__content">
         <div className="prealert-edit__header">
           <div className="prealert-edit__icon">

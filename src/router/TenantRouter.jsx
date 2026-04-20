@@ -94,7 +94,7 @@ const TenantRouter = () => {
 
                         {/* Guías */}
                         <Route path="/guide/guides" element={<Guides />} />
-                        <Route path="/guide/detail/:id" element={<GuideDetail />} />
+                        <Route path="/guide/detail/:idGuia" element={<GuideDetail />} />
                         
                         {/* Tracking */}
                         <Route path="/tracking" element={<Tracking />} />

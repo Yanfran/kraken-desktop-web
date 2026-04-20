@@ -590,7 +590,6 @@ const PreAlertCreate = () => {
     await createMutation.mutateAsync(payload);
   } catch (error) {
     console.error('Error en submit:', error);
-    toast.error(error.message || 'Error al enviar');
   } finally {
     setIsSubmitting(false);
   }
@@ -622,7 +621,7 @@ const PreAlertCreate = () => {
   }, [formState.trackings, formState.contenidos]);
 
   return (
-    <div className="prealert-create">
+    <div className="prealert-create" translate="no">
       <div className="prealert-create__content">
         <div className="prealert-create__header">
           <div className="prealert-create__icon">

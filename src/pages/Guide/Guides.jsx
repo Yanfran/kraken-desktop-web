@@ -33,6 +33,13 @@ export default function Guides() {
   const [uploadType, setUploadType] = useState(null);
   
   const [openMenuId, setOpenMenuId] = useState(null);
+
+  React.useEffect(() => {
+    if (!openMenuId) return;
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
   
   // Refs para cada tipo de documento
   const fileInputRef = useRef(null);
@@ -47,10 +54,17 @@ export default function Guides() {
   const [selectedGuias, setSelectedGuias] = useState([]);
   const [selectionMode, setSelectionMode] = useState(false);
 
-  const { data: guias = [], isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['guias'],
-    queryFn: fetchGuias,
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  const { data: queryResult, isLoading, isFetching, isError, error, refetch } = useQuery({
+    queryKey: ['guias', currentPage, pageSize, activeTab],
+    queryFn: () => fetchGuias({ page: currentPage, pageSize, tab: activeTab }),
+    keepPreviousData: true,
   });
+
+  const guias = queryResult?.data ?? [];
+  const pagination = queryResult?.pagination ?? null;
 
   // Calcular costo para una guía
   const calculateCost = useCallback(async (guia) => {
@@ -359,34 +373,19 @@ export default function Guides() {
     }
   };
 
-  // Filtrado por tabs y búsqueda
+  // Resetear página al filtrar
+  React.useEffect(() => { setCurrentPage(1); }, [searchQuery, activeTab]);
+
+  // El filtro de tabs lo hace el backend; aquí solo filtramos por búsqueda local
   const filteredGuias = useMemo(() => {
-    let result = guias;
-
-    if (activeTab === 'activos') {
-      const estatusHistorial = ['entregado', 'completado'];
-      result = result.filter(guia => {
-        const estatus = guia.estatus?.toLowerCase();
-        return !estatusHistorial.includes(estatus);
-      });
-    } else if (activeTab === 'historial') {
-      const estatusHistorial = ['entregado'];
-      result = result.filter(guia => {
-        const estatus = guia.estatus?.toLowerCase();
-        return estatusHistorial.includes(estatus);
-      });
-    }
-
-    if (searchQuery) {
-      result = result.filter(guia =>
-        guia.nGuia?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        guia.tracking?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        guia.contenido?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    return result;
-  }, [guias, searchQuery, activeTab]);
+    if (!searchQuery) return guias;
+    const q = searchQuery.toLowerCase();
+    return guias.filter(guia =>
+      guia.nGuia?.toLowerCase().includes(q) ||
+      guia.tracking?.toLowerCase().includes(q) ||
+      guia.contenido?.toLowerCase().includes(q)
+    );
+  }, [guias, searchQuery]);
 
   const payableGuiasCount = useMemo(() => {
     return filteredGuias.filter(guia => sePuedePagar(guia)).length;
@@ -475,10 +474,19 @@ export default function Guides() {
       </header>
 
       <div className={styles.content}>
-        {isLoading && <Loading />}
+        {isLoading && (
+          <div className={styles.loadingSection}>
+            <Loading inline message="Cargando envíos..." />
+          </div>
+        )}
         {isError && <p className={styles.error}>{error.message}</p>}
         {!isLoading && !isError && (
-          <>
+          <div style={{ position: 'relative' }}>
+            {isFetching && (
+              <div className={styles.fetchingOverlay}>
+                <Loading inline message="Actualizando..." />
+              </div>
+            )}
             {viewMode === 'list' ? (
               <div className={styles.tableContainer}>
                 <table className={styles.table}>
@@ -600,9 +608,60 @@ export default function Guides() {
                     )}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageBtn}
+            onClick={() => setCurrentPage(p => p - 1)}
+            disabled={!pagination.hasPreviousPage}
+          >
+            ← Anterior
+          </button>
+
+          <div className={styles.pageNumbers}>
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+              .filter(p =>
+                p === 1 ||
+                p === pagination.totalPages ||
+                Math.abs(p - currentPage) <= 2
+              )
+              .reduce((acc, p, idx, arr) => {
+                if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((item, idx) =>
+                item === '...' ? (
+                  <span key={`ellipsis-${idx}`} className={styles.ellipsis}>…</span>
+                ) : (
+                  <button
+                    key={item}
+                    className={clsx(styles.pageNumber, item === currentPage && styles.pageNumberActive)}
+                    onClick={() => setCurrentPage(item)}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+          </div>
+
+          <button
+            className={styles.pageBtn}
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={!pagination.hasNextPage}
+          >
+            Siguiente →
+          </button>
+
+          <span className={styles.pageInfo}>
+            {pagination.totalRecords} envío{pagination.totalRecords !== 1 ? 's' : ''} en total
+          </span>
+        </div>
+      )}
 
       {selectionMode && selectedGuias.length > 0 && (
         <div className={styles.floatingPayButton}>

@@ -25,18 +25,31 @@ export const getGuias = async () => {
 };
 
 /**
- * Fetch guias (alternative version)
- * @returns {Promise<Array>}
+ * Fetch guias with pagination and tab filter
+ * @param {{ page?: number, pageSize?: number, tab?: string }} params
+ * @returns {Promise<{ data: Array, pagination: object }>}
  */
-export const fetchGuias = async () => {
-  const response = await axiosInstance.get('/PostPreAlert/getGuias');
+export const fetchGuias = async ({ page = 1, pageSize = 10, tab = 'activos' } = {}) => {
+  const response = await axiosInstance.get('/PostPreAlert/getGuias', {
+    params: { page, pageSize, tab },
+  });
   const apiResponse = response.data;
 
   if (!apiResponse.success) {
     throw new Error(apiResponse.message || 'Error al cargar las guías.');
   }
 
-  return Array.isArray(apiResponse.data) ? apiResponse.data : [];
+  return {
+    data: Array.isArray(apiResponse.data) ? apiResponse.data : [],
+    pagination: apiResponse.pagination || {
+      currentPage: page,
+      pageSize,
+      totalRecords: 0,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+  };
 };
 
 /**

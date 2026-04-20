@@ -126,6 +126,26 @@
   min-height: 400px;
 }
 
+.fetchingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 8px;
+  min-height: 120px;
+}
+
+.loadingSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  width: 100%;
+}
+
 // ============================================
 // MODO TABLA (LIST) - ✅ CORREGIDO PARA MENÚ VISIBLE
 // ============================================
@@ -673,6 +693,85 @@
 
 // ============================================
 // 🆕 BOTÓN FLOTANTE DE PAGO
+// ============================================
+// Paginación
+// ============================================
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0 8px;
+  flex-wrap: wrap;
+}
+
+.pageBtn {
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    border-color: #e63500;
+    color: #e63500;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.pageNumbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pageNumber {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #e63500;
+    color: #e63500;
+  }
+
+  &Active {
+    background: #e63500;
+    border-color: #e63500;
+    color: white;
+    font-weight: 600;
+
+    &:hover {
+      color: white;
+    }
+  }
+}
+
+.ellipsis {
+  color: #999;
+  padding: 0 4px;
+  font-size: 14px;
+}
+
+.pageInfo {
+  font-size: 13px;
+  color: #666;
+  margin-left: 8px;
+}
+
 // ============================================
 .floatingPayButton {
   position: fixed;
