@@ -82,7 +82,7 @@ const MEGASOFT_ERROR_HINTS = {
   A0: 'Credenciales del comercio inválidas. Contacta a soporte.',
   V0: 'Datos enviados inválidos. Verifica la cédula, teléfono y banco.',
   P0: 'Error de configuración del servicio de pagos. Intenta más tarde.',
-  EX: 'Ocurrió un error inesperado procesando el pago.',
+  EX: 'Plataforma transaccional no disponible. Por favor intenta más tarde.',
   fondos: 'Fondos insuficientes en tu cuenta. Verifica tu saldo.',
   saldo: 'Saldo insuficiente para completar la operación.',
   clave: 'La clave es incorrecta. Solicita una nueva a tu banco.',
@@ -94,26 +94,37 @@ const MEGASOFT_ERROR_HINTS = {
   'no disponible': 'El servicio del banco no está disponible en este momento.',
 };
 
+const PLATFORM_ERROR_CODES = new Set(['EX', 'P0', 'A0']);
+const PLATFORM_ERROR_KEYWORDS = ['no disponible', 'timeout', 'plataforma', 'servicio', 'interno megasoft'];
+
 const extractMegasoftError = (response) => {
   const data = response?.data || {};
   const backendMessage = response?.message || '';
   const megasoftCode = data.responseCode || data.ResponseCode || '';
   const megasoftMsg = data.responseMessage || data.ResponseMessage || '';
+  const fullText = `${megasoftMsg} ${backendMessage}`.toLowerCase();
+
+  const isPlatformError = (code, text) =>
+    PLATFORM_ERROR_CODES.has(code) ||
+    PLATFORM_ERROR_KEYWORDS.some((kw) => text.includes(kw));
 
   if (megasoftCode && MEGASOFT_ERROR_HINTS[megasoftCode]) {
     return {
-      title: 'Pago rechazado',
+      title: isPlatformError(megasoftCode, fullText)
+        ? 'Servicio no disponible'
+        : 'Pago rechazado',
       message: MEGASOFT_ERROR_HINTS[megasoftCode],
       code: megasoftCode,
       technicalDetail: megasoftMsg || backendMessage,
     };
   }
 
-  const fullText = `${megasoftMsg} ${backendMessage}`.toLowerCase();
   for (const [keyword, hint] of Object.entries(MEGASOFT_ERROR_HINTS)) {
     if (keyword.length > 2 && fullText.includes(keyword)) {
       return {
-        title: 'Pago rechazado',
+        title: isPlatformError(megasoftCode, fullText)
+          ? 'Servicio no disponible'
+          : 'Pago rechazado',
         message: hint,
         code: megasoftCode || 'N/A',
         technicalDetail: megasoftMsg || backendMessage,
@@ -122,9 +133,10 @@ const extractMegasoftError = (response) => {
   }
 
   return {
-    title: 'No pudimos procesar el pago',
-    message:
-      megasoftMsg || backendMessage || 'Error desconocido al procesar el pago.',
+    title: isPlatformError(megasoftCode, fullText)
+      ? 'Servicio no disponible'
+      : 'No pudimos procesar el pago',
+    message: megasoftMsg || backendMessage || 'Error desconocido al procesar el pago.',
     code: megasoftCode || 'N/A',
     technicalDetail: backendMessage,
   };
@@ -189,6 +201,8 @@ export default function PaymentPage() {
   // Resultado
   const [paymentReference, setPaymentReference] = useState('');
   const [authorizationCode, setAuthorizationCode] = useState('');
+  const [paymentVoucher, setPaymentVoucher] = useState('');
+  const [paymentMethodLabel, setPaymentMethodLabel] = useState('');
 
   // Detalles guía múltiple
   const [showGuiasDetails, setShowGuiasDetails] = useState(false);
@@ -375,6 +389,8 @@ export default function PaymentPage() {
         const data = response.data || {};
         setPaymentReference(data.paymentReference || data.PaymentReference || '');
         setAuthorizationCode(data.authorizationCode || data.AuthorizationCode || '');
+        setPaymentVoucher(data.voucher || '');
+        setPaymentMethodLabel('Pago Móvil C2P');
         setStep('success');
         toast.success('¡Pago procesado exitosamente!');
       } else {
@@ -431,6 +447,8 @@ export default function PaymentPage() {
         const data = response.data || {};
         setPaymentReference(data.paymentReference || data.PaymentReference || '');
         setAuthorizationCode(data.authorizationCode || data.AuthorizationCode || '');
+        setPaymentVoucher(data.voucher || '');
+        setPaymentMethodLabel('Pago Móvil P2C');
         setStep('success');
         toast.success('¡Pago P2C procesado exitosamente!');
       } else {
@@ -545,6 +563,8 @@ export default function PaymentPage() {
         const data = response.data || {};
         setPaymentReference(data.paymentReference || data.PaymentReference || '');
         setAuthorizationCode(data.authorizationCode || data.AuthorizationCode || '');
+        setPaymentVoucher(data.voucher || '');
+        setPaymentMethodLabel('Débito Inmediato');
         setStep('success');
         toast.success('¡Pago confirmado exitosamente!');
       } else {
@@ -602,6 +622,8 @@ export default function PaymentPage() {
         const data = response.data || {};
         setPaymentReference(data.paymentReference || data.PaymentReference || '');
         setAuthorizationCode(data.authorizationCode || data.AuthorizationCode || '');
+        setPaymentVoucher(data.voucher || '');
+        setPaymentMethodLabel('Crédito Inmediato');
         setStep('success');
         toast.success('¡Pago procesado exitosamente!');
       } else {
@@ -1137,17 +1159,43 @@ export default function PaymentPage() {
         : paymentMethod === 'creditoInmediato' ? 'Crédito Inmediato'
         : 'Tarjeta de Débito';
 
+    const voucherLines = paymentVoucher
+      ? paymentVoucher.split('\n').map((l) => l.trim())
+      : [];
+
     return (
       <div className={styles.resultContainer}>
-        <IoCheckmarkCircleOutline size={64} color="#4CAF50" />
-        <h2>¡Pago Exitoso!</h2>
-        <p>
+        <div className={styles.successIconWrapper}>
+          <IoCheckmarkCircleOutline size={72} color="#4CAF50" />
+        </div>
+        <h2 className={styles.successTitle}>¡Pago Exitoso!</h2>
+        <p className={styles.successSubtitle}>
           {isMultiplePayment
             ? `El pago para ${multipleIds.split(',').length} guías se procesó correctamente.`
             : `El pago para la guía ${paymentData.trackingNumber} se procesó correctamente.`}
         </p>
 
         <div className={styles.resultDetails}>
+          {voucherLines.length > 0 && (
+            <>
+              <div className={styles.voucherSectionHeader}>
+                <span className={styles.voucherSectionLine} />
+                <span className={styles.voucherSectionLabel}>VOUCHER</span>
+                <span className={styles.voucherSectionLine} />
+              </div>
+              <div className={styles.voucherBody}>
+                {voucherLines.map((line, i) => (
+                  <div key={i} className={styles.voucherLine}>
+                    {line || '\u00A0'}
+                  </div>
+                ))}
+              </div>
+              <div className={styles.voucherSectionHeader}>
+                <span className={styles.voucherSectionLine} />
+              </div>
+            </>
+          )}
+
           <div className={styles.detailRow}>
             <span>Método:</span>
             <span>{methodLabel}</span>
