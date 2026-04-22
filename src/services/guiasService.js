@@ -111,81 +111,46 @@ export const calculateSingleGuiaPrice = async (guiaId) => {
  */
 export const getLastShipment = async () => {
   try {
-    const response = await getGuias();
-    // console.log('Fetched guias for last shipment:', response);
-    
-    if (response.success && response.data && response.data.length > 0) {
-      const sortedGuias = response.data.sort((a, b) => 
-        new Date(b.fechaRaw || b.fecha) - new Date(a.fechaRaw || a.fecha)
-      );
-      const lastGuia = sortedGuias[0];
-      
-      // console.log('📦 Last guia data:', lastGuia);
-      
-      // ✅ Extraer solo el string 'contenido' del primer objeto
-      const primerContenido = Array.isArray(lastGuia.contenidos) && lastGuia.contenidos.length > 0
-        ? lastGuia.contenidos[0].contenido
-        : 'Sin descripción';
-      
-      // ✅ NUEVO: Calcular el precio real usando el CalculatorController
-      let costoEnvio = '$0.00';
-      let costoCalculado = null;
-      
-      try {
-        const calculationResponse = await calculateSingleGuiaPrice(lastGuia.idGuia);
-        
-        if (calculationResponse.success && calculationResponse.data) {
-          // El endpoint retorna { totalOficina, totalDomicilio, breakdown }
-          const precioOficina = calculationResponse.data.detalleFactura.precioBaseUSD || 0;
-          costoEnvio = `$${parseFloat(precioOficina).toFixed(2)}`;
-          costoCalculado = calculationResponse.data; // Guardar datos completos por si se necesitan
-          
-          // console.log('💵 Precio calculado:', costoEnvio);
-        } else {
-          // console.warn('⚠️ No se pudo calcular el precio, usando valor por defecto');
-          // Fallback al valorFOB si falla el cálculo
-          costoEnvio = lastGuia.valorFOB 
-            ? `$${parseFloat(lastGuia.valorFOB).toFixed(2)}` 
-            : '$0.00';
-        }
-      } catch (calcError) {
-        console.error('❌ Error al calcular precio:', calcError);
-        // Fallback al valorFOB si hay error
-        costoEnvio = lastGuia.valorFOB 
-          ? `$${parseFloat(lastGuia.valorFOB).toFixed(2)}` 
-          : '$0.00';
-      }
-      
-      return {
-        success: true,
-        data: {
-          id: lastGuia.idGuia,
-          trackingNumber: lastGuia.nGuia || lastGuia.trackings?.[0] || 'N/A',
-          status: lastGuia.estatus || 'Desconocido',          
-          date: formatDateTime(lastGuia.fechaEstatus || ''),
-          origin: lastGuia.origen || 'USA',
-          cost: costoEnvio,
-          prealerted: lastGuia.esPreAlerta || false,
-          discount: lastGuia.esPreAlerta ? null : '-10%',
-          trackingNumbers: lastGuia.trackings || [],
-          contenido: primerContenido,
-          calculationData: costoCalculado // Datos adicionales del cálculo si se necesitan
-        },
-        message: 'Último envío cargado'
-      };
+    const response = await axiosInstance.get('/PostPreAlert/getUltimaGuia');
+    const apiResponse = response.data;
+
+    if (!apiResponse.success || !apiResponse.data) {
+      return { success: false, message: 'No hay envíos disponibles', data: null };
     }
-    
-    return { 
-      success: false, 
-      message: 'No hay envíos disponibles', 
-      data: null 
+
+    const g = apiResponse.data;
+    const df = g.detalleFactura || {};
+
+    return {
+      success: true,
+      data: {
+        id: g.idGuia,
+        trackingNumber: g.nGuia || g.trackings?.[0] || 'N/A',
+        status: g.estatus || 'Desconocido',
+        date: g.fecha || '',
+        origin: g.origen || 'USA',
+        prealerted: g.esPreAlerta || false,
+        contenido: g.contenido || 'Sin descripción',
+        idEstatusActual: g.idEstatusActual,
+        valorFOB: g.valorFOB,
+        trackingNumbers: g.trackings || [],
+        tasaCambio: df.tasaCambio,
+        calculationData: {
+          detalleFactura: df,
+          tasaCambio: df.tasaCambio,
+          detallePago: g.estaPagado,
+          valorFOB: g.valorFOB,
+          idEstatus: g.idEstatusActual,
+        },
+      },
+      message: 'Último envío cargado',
     };
   } catch (error) {
     console.error('Error fetching last shipment:', error);
-    return { 
-      success: false, 
-      message: error.message || 'Error al cargar último envío', 
-      data: null 
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al cargar último envío',
+      data: null,
     };
   }
 };

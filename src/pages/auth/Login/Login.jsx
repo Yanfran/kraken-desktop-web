@@ -95,10 +95,17 @@ const Login = () => {
     try {
       const result = await signIn(formData.email, formData.password);
       
-      if (result.success) {
+      if (result.success  == true) {
         toast.success('¡Bienvenido de vuelta!');
         navigate('/home');
       } else {
+
+        if (result.tokenVerify) {
+          toast('Tu cuenta no está verificada. Reenvía el correo de confirmación.', { icon: '📧' });
+          navigate('/email-confirmation', { state: { email: formData.email } });
+          return;
+        }
+
         if (result.field) {
           setErrors({ [result.field]: result.message });
         } else {
@@ -107,7 +114,7 @@ const Login = () => {
         toast.error(result.message);
       }
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error('Error en login yyy:', error);
       setErrors({ submit: 'Error de conexión. Intenta de nuevo.' });
       toast.error('Error de conexión. Intenta de nuevo.');
     }

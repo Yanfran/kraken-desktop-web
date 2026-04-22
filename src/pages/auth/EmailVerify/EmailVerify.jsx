@@ -142,6 +142,9 @@ const EmailVerify = () => {
             <p className="kraken-email-verify__message">
               {errorMessage}
             </p>
+            <p className="kraken-email-verify__message-suctitulo">
+              Inicia sesión para verificar tu cuenta o solicita un nuevo correo de confirmación.
+            </p>
             <button
               className="kraken-email-verify__back-button"
               onClick={handleBackToLogin}

@@ -800,13 +800,13 @@ const PreAlertEdit = () => {
               <p className="prealert-edit__error">{errors.tracking}</p>
             )}
 
-            <button
+            {/* <button
               type="button"
               onClick={handleAddTracking}
               className="prealert-edit__add-btn"
             >
               + Añadir Tracking
-            </button>
+            </button> */}
           </div>
 
           {/* SECCIÓN CONTENIDOS */}

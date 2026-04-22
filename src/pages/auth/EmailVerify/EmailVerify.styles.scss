@@ -101,6 +101,17 @@
   font-size: 16px;
   color: var(--color-text-secondary, #757575);
   line-height: 1.5;
+  // margin-bottom: 24px;
+
+  [data-theme="dark"] & {
+    color: #B0B0B0;
+  }
+}
+
+.kraken-email-verify__message-suctitulo {
+  font-size: 16px;
+  color: var(--color-text-secondary, #757575);
+  line-height: 1.5;
   margin-bottom: 24px;
 
   [data-theme="dark"] & {

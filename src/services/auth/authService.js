@@ -139,7 +139,8 @@ export const authService = {
       
       return {
         success: false,
-        message: response.data.message || 'Error en el login'
+        message: response.data.message || 'Error en el login',
+        ...(response.data.tokenVerify && { tokenVerify: response.data.tokenVerify }),
       };
     } catch (error) {
       // console.error('❌ [AuthService] Login error:', error);

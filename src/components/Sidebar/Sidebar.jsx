@@ -218,14 +218,13 @@ const Sidebar = ({ isOpen, onClose }) => {
       </aside>
 
       {/* ========== AVATAR SELECTOR MODAL ========== */}
-      {avatarSelectorVisible && (
-        <AvatarSelector
-          currentAvatarId={currentAvatarId}
-          onSelect={handleAvatarSelect}
-          onClose={() => setAvatarSelectorVisible(false)}
-          isUpdating={isUpdatingAvatar}
-        />
-      )}
+      <AvatarSelector
+        visible={avatarSelectorVisible}
+        currentAvatarId={currentAvatarId}
+        onSelect={handleAvatarSelect}
+        onCancel={() => setAvatarSelectorVisible(false)}
+        isUpdating={isUpdatingAvatar}
+      />
     </>
   );
 };
