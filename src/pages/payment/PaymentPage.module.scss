@@ -458,6 +458,10 @@ $transition-base: 0.3s ease;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
   }
 }
 
@@ -768,12 +772,261 @@ $transition-base: 0.3s ease;
 
   svg {
     color: $kraken-primary;
-    
+
     [data-theme="dark"] & {
       color: #FFB085;
     }
   }
 }
+
+// ============================================================
+// 💳 TARJETA DE CRÉDITO — STEPPER + FORM
+// ============================================================
+
+// ----- Stepper -----
+.tcStepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.tcStepItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+
+  &.tcStepActive {
+    .tcStepCircle {
+      background: $kraken-primary;
+      border-color: $kraken-primary;
+      color: white;
+
+      [data-theme="dark"] & {
+        background: #FFB085;
+        border-color: #FFB085;
+        color: #1D1B20;
+      }
+    }
+
+    .tcStepLabel {
+      color: $kraken-primary;
+      font-weight: 600;
+
+      [data-theme="dark"] & {
+        color: #FFB085;
+      }
+    }
+  }
+
+  &.tcStepCompleted {
+    .tcStepCircle {
+      background: $kraken-success;
+      border-color: $kraken-success;
+      color: white;
+    }
+
+    .tcStepLabel {
+      color: $kraken-success;
+    }
+
+    .tcStepConnector {
+      background: $kraken-primary;
+
+      [data-theme="dark"] & {
+        background: #FFB085;
+      }
+    }
+  }
+}
+
+.tcStepConnector {
+  position: absolute;
+  left: -50%;
+  top: 15px;
+  width: 100%;
+  height: 2px;
+  background: $kraken-border;
+  z-index: 0;
+
+  [data-theme="dark"] & {
+    background: #49454F;
+  }
+}
+
+.tcStepCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  position: relative;
+  z-index: 1;
+  border: 2px solid $kraken-border;
+  background: white;
+  color: $kraken-text-secondary;
+  transition: all $transition-base;
+
+  [data-theme="dark"] & {
+    background: #2B2930;
+    border-color: #49454F;
+    color: #938F99;
+  }
+}
+
+.tcStepLabel {
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: $kraken-text-secondary;
+  text-align: center;
+  white-space: nowrap;
+
+  [data-theme="dark"] & {
+    color: #938F99;
+  }
+}
+
+// ----- PAN input -----
+.tcPanInput {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.15em;
+  font-size: 1.1rem !important;
+}
+
+// ----- Info box (verificación) -----
+.tcInfoBox {
+  display: flex;
+  gap: 1rem;
+  background: #e8f4fd;
+  border: 1.5px solid #2196f3;
+  border-left: 5px solid #2196f3;
+  border-radius: $radius-md;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #0d47a1;
+  align-items: flex-start;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #1976d2;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.95rem;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  [data-theme="dark"] & {
+    background: rgba(33, 150, 243, 0.1);
+    border-color: #42a5f5;
+    color: #90caf9;
+
+    svg { color: #64b5f6; }
+  }
+}
+
+// ----- Error inline -----
+.tcErrorInline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: #fff0f0;
+  border: 1.5px solid $kraken-error;
+  border-left: 5px solid $kraken-error;
+  border-radius: $radius-md;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: darken(#F44336, 20%);
+  line-height: 1.5;
+
+  svg { flex-shrink: 0; margin-top: 2px; }
+
+  &.tcErrorBlocked {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  [data-theme="dark"] & {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: #ef5350;
+    color: #ef9a9a;
+  }
+}
+
+.tcRestartLink {
+  background: none;
+  border: none;
+  color: $kraken-primary;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0;
+
+  [data-theme="dark"] & {
+    color: #FFB085;
+  }
+}
+
+// ----- Summary box (confirmación) -----
+.tcSummaryBox {
+  background: $kraken-input-bg;
+  border: 1px solid $kraken-border-light;
+  border-radius: $radius-md;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+
+  [data-theme="dark"] & {
+    background: #2B2930;
+    border-color: #49454F;
+  }
+}
+
+.tcSummaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid $kraken-separator;
+  font-size: 0.95rem;
+
+  [data-theme="dark"] & {
+    border-bottom-color: #37343B;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  span:first-child {
+    color: $kraken-text-secondary;
+    font-weight: 500;
+
+    [data-theme="dark"] & { color: #938F99; }
+  }
+
+  span:last-child {
+    color: $kraken-text-primary;
+    font-weight: 600;
+
+    [data-theme="dark"] & { color: #E6E0E9; }
+  }
+}
+
 
 
 

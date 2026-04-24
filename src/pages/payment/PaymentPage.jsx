@@ -1,4 +1,4 @@
-// src/pages/Payment/PaymentPage.jsx - C2P + P2C + DÉBITO INMEDIATO + CRÉDITO INMEDIATO
+// src/pages/Payment/PaymentPage.jsx - C2P + P2C + DÉBITO INMEDIATO + CRÉDITO INMEDIATO + TARJETA CRÉDITO
 import React, { useState, useEffect, useRef  } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +19,9 @@ import {
   IoShieldCheckmarkOutline,
   IoReceiptOutline,
   IoBusinessOutline,
+  IoLockClosedOutline,
+  IoInformationCircleOutline,
+  IoWarningOutline,
 } from 'react-icons/io5';
 
 import {
@@ -31,6 +34,10 @@ import {
   processMegasoftDIAutorizar,
   processMegasoftDIConfirmar,
   processMegasoftCreditoInmediato,
+  megasoftTCCrearToken,
+  megasoftTCVerificarToken,
+  megasoftTCPreregistro,
+  megasoftTCCobrar,
 } from '@/services/payment/paymentService';
 
 // ============================================================
@@ -113,6 +120,22 @@ const FUNDS_ERROR_CODES = new Set(['51', '52', '61', '65']);
 const DATA_ERROR_CODES = new Set(['AG', 'V0', '99']);
 const PLATFORM_ERROR_CODES = new Set(['EX', 'P0', 'A0', 'EE', 'XA']);
 const PLATFORM_ERROR_KEYWORDS = ['no disponible', 'timeout', 'plataforma', 'servicio', 'interno megasoft'];
+
+// ============================================================
+// TC SESSION — sessionStorage (se borra al cerrar la pestaña)
+// ============================================================
+const TC_SESSION_KEY = 'megasoft_tc_session';
+
+const tcLoadSessionData = () => {
+  try {
+    const raw = sessionStorage.getItem(TC_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) { return null; }
+};
+
+const tcClearSessionData = () => {
+  try { sessionStorage.removeItem(TC_SESSION_KEY); } catch (_) {}
+};
 
 const extractMegasoftError = (response) => {
   const data = response?.data || {};
@@ -274,6 +297,23 @@ export default function PaymentPage() {
   // Detalles guía múltiple
   const [showGuiasDetails, setShowGuiasDetails] = useState(false);
 
+  // TC — Tarjeta de Crédito Tradicional
+  const [tcSubStep, setTcSubStep] = useState('tc_datos'); // tc_datos | tc_verificar | tc_confirmar
+  const [tcToken, setTcToken] = useState('');
+  const [tcControl, setTcControl] = useState('');
+  const [tcPan, setTcPan] = useState('');
+  const [tcPanLast4, setTcPanLast4] = useState('');
+  const [tcPanDisplay, setTcPanDisplay] = useState('');
+  const [tcCvv, setTcCvv] = useState('');
+  const [tcCvvConfirm, setTcCvvConfirm] = useState('');
+  const [tcExp, setTcExp] = useState('');
+  const [tcNombreTitular, setTcNombreTitular] = useState('');
+  const [tcMonto1, setTcMonto1] = useState('');
+  const [tcMonto2, setTcMonto2] = useState('');
+  const [tcIntentosRestantes, setTcIntentosRestantes] = useState(null);
+  const [tcError, setTcError] = useState('');
+  const [tcVerifiedFromStorage, setTcVerifiedFromStorage] = useState(false);
+
   // ============================================================
   // EFFECTS
   // ============================================================
@@ -313,7 +353,7 @@ export default function PaymentPage() {
         const response = await getMultipleGuiasPaymentData(guiaIds);
 
         if (response.success && response.data) {
-          const data = response.data;          
+          const data = response.data;
           setPaymentData({
             isMultiple: true,
             guiaIds,
@@ -326,7 +366,7 @@ export default function PaymentPage() {
           });
           setGuiasDetails(data.detalle?.guias || []);
           setAmount(data.amount?.toFixed(2) || '0.00');
-          setStep('method');
+          restoreTCSessionIfAvailable(multipleIds);
         } else {
           setDataError(response.message || 'Error al cargar datos de pago múltiple');
           setStep('loading');
@@ -344,7 +384,7 @@ export default function PaymentPage() {
             detalle: response.data.detalleFactura,
           });
           setAmount(response.data.detalleFactura.precioTotal.toFixed(2));
-          setStep('method');
+          restoreTCSessionIfAvailable(id?.toString());
         } else {
           setDataError(response.message || 'Error al cargar datos de pago');
           setStep('loading');
@@ -716,6 +756,275 @@ export default function PaymentPage() {
     }
   };
 
+  // TC — restaurar sesión guardada
+  const restoreTCSessionIfAvailable = (guiaCtx) => {
+    const session = tcLoadSessionData();
+    if (
+      session &&
+      session.guiaContext === guiaCtx &&
+      session.tcToken &&
+      session.tcSubStep &&
+      session.tcSubStep !== 'tc_datos'
+    ) {
+      setIdType(session.idType || 'V');
+      setIdNumber(session.idNumber || '');
+      setTcPanLast4(session.tcPanLast4 || '');
+      setTcExp(session.tcExp || '');
+      setTcNombreTitular(session.tcNombreTitular || '');
+      setTcToken(session.tcToken);
+      setTcSubStep(session.tcSubStep);
+      setPaymentMethod('tarjetaCredito');
+      setStep('form');
+      toast('Retomando tu pago donde lo dejaste', { icon: '↩️', duration: 4000 });
+    } else {
+      setStep('method');
+    }
+  };
+
+  // TC — guardar sesión
+  const tcSaveSession = (overrides = {}) => {
+    const guiaCtx = isMultiplePayment ? multipleIds : id?.toString();
+    try {
+      sessionStorage.setItem(TC_SESSION_KEY, JSON.stringify({
+        guiaContext: guiaCtx,
+        tcSubStep: overrides.tcSubStep ?? tcSubStep,
+        tcToken: overrides.tcToken ?? tcToken,
+        idType,
+        idNumber,
+        tcPanLast4: overrides.tcPanLast4 ?? tcPanLast4,
+        tcExp,
+        tcNombreTitular,
+      }));
+    } catch (_) {}
+  };
+
+  // TC — helpers de localStorage (token verificado permanente)
+  const tcLocalStorageKey = () => `megasoft_tc_token_${idType}${idNumber}`;
+
+  const tcSaveVerifiedToken = (token, pan4) => {
+    try {
+      localStorage.setItem(tcLocalStorageKey(), JSON.stringify({ token, pan4, verified: true }));
+    } catch (_) {}
+  };
+
+  const tcLoadSavedToken = () => {
+    try {
+      const raw = localStorage.getItem(tcLocalStorageKey());
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (_) { return null; }
+  };
+
+  const tcClearSavedToken = () => {
+    try { localStorage.removeItem(tcLocalStorageKey()); } catch (_) {}
+  };
+
+  const tcResetState = () => {
+    tcClearSessionData();
+    setTcSubStep('tc_datos');
+    setTcToken('');
+    setTcControl('');
+    setTcPan('');
+    setTcPanLast4('');
+    setTcPanDisplay('');
+    setTcCvv('');
+    setTcCvvConfirm('');
+    setTcExp('');
+    setTcNombreTitular('');
+    setTcMonto1('');
+    setTcMonto2('');
+    setTcIntentosRestantes(null);
+    setTcError('');
+    setTcVerifiedFromStorage(false);
+  };
+
+  const handleTCPanChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
+    setTcPan(raw);
+    setTcPanDisplay(raw.replace(/(.{4})/g, '$1 ').trim());
+  };
+
+  const handleTCExpChange = (e) => {
+    let val = e.target.value.replace(/\D/g, '').slice(0, 4);
+    if (val.length >= 3) val = val.slice(0, 2) + '/' + val.slice(2);
+    setTcExp(val);
+  };
+
+  // TC Paso 2 — Tokenizar tarjeta
+  const handleTCCrearToken = async () => {
+    if (submittingRef.current) return;
+    setTcError('');
+
+    if (!idNumber || idNumber.length < 6)
+      return toast.error('La cédula debe tener al menos 6 dígitos');
+    if (!tcPan || tcPan.length !== 16)
+      return toast.error('El número de tarjeta debe tener 16 dígitos');
+    if (!tcNombreTitular.trim())
+      return toast.error('Ingresa el nombre del titular');
+    if (!tcExp || tcExp.length !== 5)
+      return toast.error('Ingresa la fecha de vencimiento en formato MM/YY');
+    if (!tcCvv || tcCvv.length < 3)
+      return toast.error('El CVV debe tener 3 o 4 dígitos');
+
+    const [mm, yy] = tcExp.split('/').map(Number);
+    if (!mm || !yy || mm < 1 || mm > 12)
+      return toast.error('Fecha de vencimiento inválida');
+    const now = new Date();
+    const curYear = now.getFullYear() % 100;
+    const curMonth = now.getMonth() + 1;
+    if (yy < curYear || (yy === curYear && mm < curMonth))
+      return toast.error('La tarjeta ha vencido');
+
+    // Revisar token guardado en localStorage
+    const saved = tcLoadSavedToken();
+    if (saved?.verified && saved?.token) {
+      setTcToken(saved.token);
+      setTcVerifiedFromStorage(true);
+      setTcSubStep('tc_confirmar');
+      toast.success(`Tarjeta guardada (****${saved.pan4}) lista para usar`);
+      return;
+    }
+
+    submittingRef.current = true;
+    try {
+      setIsLoading(true);
+      const response = await megasoftTCCrearToken({
+        customerId: `${idType}${idNumber}`,
+        nombreCompleto: getNombreCompleto(),
+        pan: tcPan,
+        cvv: tcCvv,
+        exp: tcExp.replace('/', ''),
+        nombreTitular: tcNombreTitular.toUpperCase(),
+      });
+      if (response.success) {
+        const pan4 = tcPan.slice(-4);
+        setTcToken(response.token);
+        setTcPanLast4(pan4);
+        setTcSubStep('tc_verificar');
+        tcSaveSession({ tcSubStep: 'tc_verificar', tcToken: response.token, tcPanLast4: pan4 });
+        toast.success('Tarjeta tokenizada. Revisa tu estado de cuenta para los cobros de prueba.', { duration: 6000 });
+      } else {
+        setTcError(response.message || 'No se pudo tokenizar la tarjeta. Verifica los datos.');
+      }
+    } catch (err) {
+      setTcError('Error de conexión al tokenizar la tarjeta.');
+    } finally {
+      setIsLoading(false);
+      submittingRef.current = false;
+    }
+  };
+
+  // TC Paso 3 — Verificar montos
+  const handleTCVerificar = async () => {
+    if (submittingRef.current) return;
+    setTcError('');
+
+    if (!tcMonto1.trim() || !tcMonto2.trim())
+      return toast.error('Ingresa ambos montos de verificación');
+
+    submittingRef.current = true;
+    try {
+      setIsLoading(true);
+      const response = await megasoftTCVerificarToken(tcToken, {
+        montoverificacion1: tcMonto1.replace('.', ','),
+        montoverificacion2: tcMonto2.replace('.', ','),
+      });
+      if (response.success) {
+        tcSaveVerifiedToken(tcToken, tcPanLast4 || tcPan.slice(-4));
+        tcSaveSession({ tcSubStep: 'tc_confirmar' });
+        setTcSubStep('tc_confirmar');
+        toast.success('¡Tarjeta verificada exitosamente!');
+      } else {
+        const intentos = response.intentosRestantes ?? null;
+        setTcIntentosRestantes(intentos);
+        if (intentos === 0) {
+          setTcError('Token bloqueado. Los montos fueron incorrectos demasiadas veces. Inicia el proceso con una nueva tarjeta.');
+          tcClearSavedToken();
+        } else {
+          setTcError(
+            intentos !== null
+              ? `Montos incorrectos. Te quedan ${intentos} intento${intentos === 1 ? '' : 's'}.`
+              : response.message || 'Montos de verificación incorrectos.'
+          );
+        }
+      }
+    } catch (err) {
+      setTcError('Error de conexión al verificar la tarjeta.');
+    } finally {
+      setIsLoading(false);
+      submittingRef.current = false;
+    }
+  };
+
+  // TC Pasos 4+5 — Preregistro + Cobrar
+  const handleTCCobrar = async () => {
+    if (submittingRef.current) return;
+    setTcError('');
+
+    if (!tcCvvConfirm || tcCvvConfirm.length < 3)
+      return toast.error('Ingresa el CVV de tu tarjeta para confirmar el pago');
+
+    submittingRef.current = true;
+    try {
+      setIsLoading(true);
+      setError('');
+      setErrorDetails(null);
+
+      const preregistro = await megasoftTCPreregistro();
+      if (!preregistro.success) {
+        setErrorDetails({
+          title: 'Error al iniciar pago',
+          message: preregistro.message || 'No se pudo iniciar la transacción. Intenta de nuevo.',
+          code: 'PREREGISTRO',
+          technicalDetail: '',
+        });
+        setStep('error');
+        return;
+      }
+
+      const response = await megasoftTCCobrar({
+        customerId: `${idType}${idNumber}`,
+        token: tcToken,
+        control: preregistro.control,
+        cvv: tcCvvConfirm,
+        amount: amount.toString(),
+        tasa: paymentData.tasaCambio,
+        idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
+        guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
+        isMultiplePayment,
+      });
+
+      if (response.success) {
+        tcClearSessionData();
+        const data = response.data || {};
+        setPaymentReference(data.paymentReference || data.PaymentReference || '');
+        setAuthorizationCode(data.authorizationCode || data.AuthorizationCode || '');
+        setPaymentVoucher(data.voucher || '');
+        setPaymentMethodLabel('Tarjeta de Crédito');
+        setStep('success');
+        toast.success('¡Pago con tarjeta aprobado!');
+      } else {
+        const errInfo = extractMegasoftError(response);
+        setErrorDetails(errInfo);
+        setError(errInfo.message);
+        setStep('error');
+        toast.error(errInfo.message, { duration: 5000 });
+      }
+    } catch (err) {
+      console.error('Error TC Cobrar:', err);
+      setErrorDetails({
+        title: 'Error de conexión',
+        message: 'No pudimos conectar con el servicio de pagos.',
+        code: 'NETWORK',
+        technicalDetail: err.message || '',
+      });
+      setStep('error');
+    } finally {
+      setIsLoading(false);
+      submittingRef.current = false;
+    }
+  };
+
   const handleBackToGuides = () => navigate('/guide/guides');
 
   const handleRetry = () => {
@@ -844,15 +1153,330 @@ export default function PaymentPage() {
           <h4>Crédito Inmediato</h4>
           <p>Paga con tu cuenta de crédito directamente</p>
         </div>
+
+        <div
+          className={`${styles.methodOption} ${
+            paymentMethod === 'tarjetaCredito' ? styles.methodOptionActive : ''
+          }`}
+          onClick={() => setPaymentMethod('tarjetaCredito')}
+        >
+          <div className={styles.methodIcon}><IoCardOutline size={32} /></div>
+          <h4>Tarjeta de Crédito</h4>
+          <p>Paga con tu tarjeta de crédito de forma segura</p>
+        </div>
       </div>
 
-      <button onClick={() => setStep('form')} className={styles.btn_primary}>
+      <button
+        onClick={() => {
+          if (paymentMethod === 'tarjetaCredito') tcResetState();
+          setStep('form');
+        }}
+        className={styles.btn_primary}
+      >
         Continuar <IoArrowForward />
       </button>
     </div>
   );
 
+  const renderTCStep = (activeIndex) => {
+    const steps = ['Datos de tarjeta', 'Verificación', 'Confirmación'];
+    return (
+      <div className={styles.tcStepper}>
+        {steps.map((label, i) => {
+          const isActive = i === activeIndex;
+          const isCompleted = i < activeIndex;
+          return (
+            <div
+              key={i}
+              className={`${styles.tcStepItem} ${isActive ? styles.tcStepActive : ''} ${isCompleted ? styles.tcStepCompleted : ''}`}
+            >
+              {i > 0 && <div className={styles.tcStepConnector} />}
+              <div className={styles.tcStepCircle}>
+                {isCompleted ? <IoCheckmark size={14} /> : i + 1}
+              </div>
+              <span className={styles.tcStepLabel}>{label}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderTarjetaCreditoForm = () => {
+    // Sub-paso 1: datos de tarjeta
+    if (tcSubStep === 'tc_datos') {
+      return (
+        <div className={styles.formContainer}>
+          <h3 className={styles.stepTitle}>Tarjeta de Crédito</h3>
+          <p className={styles.stepDescription}>Ingresa los datos de tu tarjeta de crédito</p>
+
+          {renderTCStep(0)}
+
+          {/* Cédula */}
+          <div className={styles.inputGroup}>
+            <label>Cédula de Identidad</label>
+            <div className={styles.combinedInput}>
+              <div
+                className={styles.dropdown}
+                onClick={(e) => { e.stopPropagation(); setShowIdTypes(!showIdTypes); setShowPhoneCodes(false); }}
+              >
+                <span>{idType}</span>
+                {showIdTypes ? <IoChevronUp /> : <IoChevronDown />}
+              </div>
+              <input
+                type="text"
+                placeholder="12345678"
+                value={idNumber}
+                onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, ''))}
+                maxLength={9}
+              />
+            </div>
+            {showIdTypes && (
+              <div className={styles.dropdownMenu}>
+                {ID_TYPES.map((type) => (
+                  <div key={type.code} className={styles.dropdownItem}
+                    onClick={(e) => { e.stopPropagation(); setIdType(type.code); setShowIdTypes(false); }}
+                  >
+                    {type.code} - {type.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Número de tarjeta */}
+          <div className={styles.inputGroup}>
+            <label>Número de tarjeta</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="0000 0000 0000 0000"
+              value={tcPanDisplay}
+              onChange={handleTCPanChange}
+              maxLength={19}
+              className={styles.tcPanInput}
+            />
+            <small>{tcPan.length}/16 dígitos</small>
+          </div>
+
+          {/* Titular */}
+          <div className={styles.inputGroup}>
+            <label>Nombre del titular (como aparece en la tarjeta)</label>
+            <input
+              type="text"
+              placeholder="JOSE PEREZ"
+              value={tcNombreTitular}
+              onChange={(e) => setTcNombreTitular(e.target.value.toUpperCase())}
+              maxLength={26}
+            />
+          </div>
+
+          {/* Vencimiento + CVV */}
+          <div className={styles.row}>
+            <div className={styles.inputGroup}>
+              <label>Vencimiento (MM/YY)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="07/27"
+                value={tcExp}
+                onChange={handleTCExpChange}
+                maxLength={5}
+              />
+            </div>
+            <div className={styles.inputGroup}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <IoLockClosedOutline size={15} /> CVV
+              </label>
+              <input
+                type="password"
+                inputMode="numeric"
+                placeholder="•••"
+                value={tcCvv}
+                onChange={(e) => setTcCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                maxLength={4}
+              />
+            </div>
+          </div>
+
+          {tcError && (
+            <div className={styles.tcErrorInline}>
+              <IoWarningOutline size={18} /> {tcError}
+            </div>
+          )}
+
+          <div className={styles.buttonRow}>
+            <button
+              onClick={() => { tcResetState(); setStep('method'); }}
+              className={styles.btn_secondary}
+              disabled={isLoading}
+            >
+              <IoArrowBack /> Volver
+            </button>
+            <button
+              onClick={handleTCCrearToken}
+              disabled={isLoading}
+              className={styles.btn_primary}
+            >
+              {isLoading ? 'Procesando...' : 'Tokenizar Tarjeta'} <IoArrowForward />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Sub-paso 2: verificación de montos
+    if (tcSubStep === 'tc_verificar') {
+      return (
+        <div className={styles.formContainer}>
+          <h3 className={styles.stepTitle}>Verificación de Tarjeta</h3>
+          <p className={styles.stepDescription}>Confirma los cobros de prueba para validar tu tarjeta</p>
+
+          {renderTCStep(1)}
+
+          <div className={styles.tcInfoBox}>
+            <IoInformationCircleOutline size={22} />
+            <div>
+              <strong>Revisa tu estado de cuenta</strong>
+              <p>
+                Realizamos 2 cobros de prueba a tu tarjeta (****{tcPanLast4 || tcPan.slice(-4)}).
+                Ingresa los montos exactos que aparecen en tu estado de cuenta o app bancaria.
+                Usa coma como separador decimal (ej: 0,58).
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.inputGroup}>
+              <label>Monto 1</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="0,00"
+                value={tcMonto1}
+                onChange={(e) => setTcMonto1(e.target.value.replace(/[^0-9,]/g, '').slice(0, 6))}
+              />
+            </div>
+            <div className={styles.inputGroup}>
+              <label>Monto 2</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="0,00"
+                value={tcMonto2}
+                onChange={(e) => setTcMonto2(e.target.value.replace(/[^0-9,]/g, '').slice(0, 6))}
+              />
+            </div>
+          </div>
+
+          {tcError && (
+            <div className={`${styles.tcErrorInline} ${tcIntentosRestantes === 0 ? styles.tcErrorBlocked : ''}`}>
+              <IoWarningOutline size={18} /> {tcError}
+              {tcIntentosRestantes === 0 && (
+                <button
+                  className={styles.tcRestartLink}
+                  onClick={() => { tcClearSavedToken(); tcResetState(); }}
+                >
+                  Iniciar con nueva tarjeta
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className={styles.buttonRow}>
+            <button
+              onClick={() => { setTcError(''); setTcSubStep('tc_datos'); }}
+              className={styles.btn_secondary}
+              disabled={isLoading || tcIntentosRestantes === 0}
+            >
+              <IoArrowBack /> Volver
+            </button>
+            <button
+              onClick={handleTCVerificar}
+              disabled={isLoading || tcIntentosRestantes === 0}
+              className={styles.btn_primary}
+            >
+              {isLoading ? 'Verificando...' : 'Verificar'} <IoCheckmark />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Sub-paso 3: confirmación del pago
+    return (
+      <div className={styles.formContainer}>
+        <h3 className={styles.stepTitle}>Confirmar Pago</h3>
+        <p className={styles.stepDescription}>Revisa el resumen y confirma el pago con tu tarjeta</p>
+
+        {renderTCStep(2)}
+
+        <div className={styles.tcSummaryBox}>
+          <div className={styles.tcSummaryRow}>
+            <span>Tarjeta</span>
+            <span>****{tcVerifiedFromStorage ? tcLoadSavedToken()?.pan4 : (tcPanLast4 || tcPan.slice(-4))}</span>
+          </div>
+          <div className={styles.tcSummaryRow}>
+            <span>{isMultiplePayment ? 'Total a pagar' : 'Monto'}</span>
+            <span><strong>{formatBolivar(parseFloat(amount))}</strong></span>
+          </div>
+          {isMultiplePayment && (
+            <div className={styles.tcSummaryRow}>
+              <span>Guías</span>
+              <span>{paymentData.guiaIds.length} guías</span>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <IoLockClosedOutline size={15} /> CVV (confirma tu tarjeta)
+          </label>
+          <input
+            type="password"
+            inputMode="numeric"
+            placeholder="•••"
+            value={tcCvvConfirm}
+            onChange={(e) => setTcCvvConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            maxLength={4}
+            autoFocus
+          />
+          <small>Por seguridad, ingresa el CVV nuevamente para confirmar el cobro</small>
+        </div>
+
+        {tcError && (
+          <div className={styles.tcErrorInline}>
+            <IoWarningOutline size={18} /> {tcError}
+          </div>
+        )}
+
+        <div className={styles.buttonRow}>
+          <button
+            onClick={() => {
+              setTcError('');
+              setTcCvvConfirm('');
+              setTcSubStep(tcVerifiedFromStorage ? 'tc_datos' : 'tc_verificar');
+            }}
+            className={styles.btn_secondary}
+            disabled={isLoading}
+          >
+            <IoArrowBack /> Volver
+          </button>
+          <button
+            onClick={handleTCCobrar}
+            disabled={isLoading || !tcCvvConfirm}
+            className={styles.btn_primary}
+          >
+            {isLoading ? 'Procesando pago...' : `Pagar ${formatBolivar(parseFloat(amount))}`}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const renderPaymentForm = () => {
+    if (paymentMethod === 'tarjetaCredito') return renderTarjetaCreditoForm();
+
     const isDI = paymentMethod === 'debitoInmediato';
     const isCI = paymentMethod === 'creditoInmediato';
     const isInmediato = isDI || isCI;
@@ -1224,6 +1848,7 @@ export default function PaymentPage() {
         : paymentMethod === 'p2c' ? 'Pago Móvil P2C'
         : paymentMethod === 'debitoInmediato' ? 'Débito Inmediato'
         : paymentMethod === 'creditoInmediato' ? 'Crédito Inmediato'
+        : paymentMethod === 'tarjetaCredito' ? 'Tarjeta de Crédito'
         : 'Tarjeta de Débito';
 
     const voucherLines = paymentVoucher
@@ -1394,6 +2019,7 @@ export default function PaymentPage() {
       if (paymentMethod === 'p2c') return 'Pago Móvil P2C';
       if (paymentMethod === 'debitoInmediato') return 'Débito Inmediato';
       if (paymentMethod === 'creditoInmediato') return 'Crédito Inmediato';
+      if (paymentMethod === 'tarjetaCredito') return 'Tarjeta de Crédito';
     }
     return 'Pago';
   };

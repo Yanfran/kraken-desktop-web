@@ -288,6 +288,121 @@ export const processMegasoftCreditoInmediato = async (paymentData) => {
 };
 
 // ============================================================
+// 🐙 MEGASOFT TARJETA DE CRÉDITO — CREAR TOKEN (Paso 2)
+// ============================================================
+export const megasoftTCCrearToken = async (data) => {
+  try {
+    const response = await axiosPaymentInstance.post(
+      '/Payment/megasoft/tarjeta-credito/crear-token',
+      data
+    );
+    return {
+      success: response.data?.success ?? false,
+      token: response.data?.token || '',
+      message: response.data?.message || 'Token creado exitosamente',
+    };
+  } catch (error) {
+    console.error('❌ [TC CrearToken] Error:', error);
+    const backendData = error.response?.data;
+    if (backendData) {
+      return {
+        success: false,
+        message: backendData.message || 'No se pudo tokenizar la tarjeta. Verifica los datos.',
+      };
+    }
+    return {
+      success: false,
+      message: error.message || 'Error de conexión al tokenizar la tarjeta.',
+    };
+  }
+};
+
+// ============================================================
+// 🐙 MEGASOFT TARJETA DE CRÉDITO — VERIFICAR TOKEN (Paso 3)
+// ============================================================
+export const megasoftTCVerificarToken = async (token, { montoverificacion1, montoverificacion2 }) => {
+  try {
+    const response = await axiosPaymentInstance.post(
+      `/Payment/megasoft/tarjeta-credito/verificar-token/${token}`,
+      { montoverificacion1, montoverificacion2 }
+    );
+    return {
+      success: response.data?.success ?? false,
+      message: response.data?.message || 'Token verificado',
+    };
+  } catch (error) {
+    console.error('❌ [TC VerificarToken] Error:', error);
+    const backendData = error.response?.data;
+    if (backendData) {
+      return {
+        success: false,
+        errorCode: backendData.errorCode || '',
+        intentosRestantes: backendData.intentosRestantes ?? null,
+        message: backendData.message || 'Montos de verificación incorrectos',
+      };
+    }
+    return {
+      success: false,
+      message: error.message || 'Error al verificar la tarjeta.',
+    };
+  }
+};
+
+// ============================================================
+// 🐙 MEGASOFT TARJETA DE CRÉDITO — PREREGISTRO (Paso 4)
+// ============================================================
+export const megasoftTCPreregistro = async () => {
+  try {
+    const response = await axiosPaymentInstance.get(
+      '/Payment/megasoft/tarjeta-credito/preregistro'
+    );
+    return {
+      success: response.data?.success ?? false,
+      control: response.data?.control || '',
+      message: response.data?.message || 'Preregistro exitoso',
+    };
+  } catch (error) {
+    console.error('❌ [TC Preregistro] Error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Error al iniciar la transacción.',
+    };
+  }
+};
+
+// ============================================================
+// 🐙 MEGASOFT TARJETA DE CRÉDITO — COBRAR (Paso 5)
+// ============================================================
+export const megasoftTCCobrar = async (data) => {
+  try {
+    const response = await axiosPaymentInstance.post(
+      '/Payment/megasoft/tarjeta-credito/cobrar',
+      data
+    );
+    return {
+      success: response.data?.success ?? false,
+      data: response.data?.data || response.data,
+      message: response.data?.message || 'Pago con tarjeta aprobado',
+      paymentId: response.data?.paymentId,
+    };
+  } catch (error) {
+    console.error('❌ [TC Cobrar] Error:', error);
+    const backendData = error.response?.data;
+    if (backendData) {
+      return {
+        success: false,
+        data: backendData.data || null,
+        message: backendData.message || 'Pago rechazado',
+      };
+    }
+    return {
+      success: false,
+      message: error.message || 'Error de conexión. Intenta de nuevo.',
+    };
+  }
+};
+
+// ============================================================
 // ⚠️ MERCANTIL - DEPRECADO (mantener por rollback)
 // ============================================================
 export const processMercantilPayment = async (paymentData) => {
@@ -480,6 +595,10 @@ export default {
   processMegasoftDIAutorizar,
   processMegasoftDIConfirmar,
   processMegasoftCreditoInmediato,
+  megasoftTCCrearToken,
+  megasoftTCVerificarToken,
+  megasoftTCPreregistro,
+  megasoftTCCobrar,
   processMercantilDebitCardPayment,
   processMercantilPayment,
   getMercantilCardAuth,
