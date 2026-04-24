@@ -83,8 +83,21 @@ const MEGASOFT_ERROR_HINTS = {
   V0: 'Datos enviados inválidos. Verifica la cédula, teléfono y banco.',
   P0: 'Error de configuración del servicio de pagos. Intenta más tarde.',
   EX: 'Plataforma transaccional no disponible. Por favor intenta más tarde.',
+  EE: 'La transacción venció el tiempo de espera y fue revertida automáticamente. Tu dinero NO fue debitado.',
+  XA: 'El banco tardó demasiado en responder y la operación fue cancelada. Tu dinero NO fue debitado.',
+  51: 'No tienes saldo suficiente en tu cuenta para cubrir este monto.',
+  52: 'La cuenta no está habilitada para este tipo de operación.',
+  54: 'La tarjeta o cuenta ha expirado. Contacta a tu banco.',
+  55: 'Clave o PIN incorrecto. Verifica e intenta nuevamente.',
+  57: 'Transacción no permitida para este tipo de cuenta.',
+  61: 'Has superado el límite de monto permitido por tu banco.',
+  65: 'Has superado el límite de transacciones permitidas hoy.',
+  AG: 'Los datos ingresados no corresponden a ninguna cuenta bancaria registrada. Verifica tu cédula, teléfono y banco.',
+  99: 'El número de referencia ingresado no fue encontrado en el sistema bancario.',
   fondos: 'Fondos insuficientes en tu cuenta. Verifica tu saldo.',
   saldo: 'Saldo insuficiente para completar la operación.',
+  'not sufficient': 'No tienes saldo suficiente en tu cuenta para cubrir este monto.',
+  'insufficient': 'No tienes saldo suficiente en tu cuenta para cubrir este monto.',
   clave: 'La clave es incorrecta. Solicita una nueva a tu banco.',
   codigo: 'El código es incorrecto o ya expiró.',
   otp: 'El código OTP es incorrecto o ya expiró.',
@@ -92,9 +105,13 @@ const MEGASOFT_ERROR_HINTS = {
   timeout: 'Tu banco tardó demasiado en responder. Intenta nuevamente.',
   rechaz: 'Tu banco rechazó la operación. Contacta a tu banco.',
   'no disponible': 'El servicio del banco no está disponible en este momento.',
+  reversada: 'La transacción fue revertida automáticamente. Tu dinero NO fue debitado.',
 };
 
-const PLATFORM_ERROR_CODES = new Set(['EX', 'P0', 'A0']);
+const TIMEOUT_ERROR_CODES = new Set(['EE', 'XA']);
+const FUNDS_ERROR_CODES = new Set(['51', '52', '61', '65']);
+const DATA_ERROR_CODES = new Set(['AG', 'V0', '99']);
+const PLATFORM_ERROR_CODES = new Set(['EX', 'P0', 'A0', 'EE', 'XA']);
 const PLATFORM_ERROR_KEYWORDS = ['no disponible', 'timeout', 'plataforma', 'servicio', 'interno megasoft'];
 
 const extractMegasoftError = (response) => {
@@ -109,25 +126,75 @@ const extractMegasoftError = (response) => {
     PLATFORM_ERROR_KEYWORDS.some((kw) => text.includes(kw));
 
   if (megasoftCode && MEGASOFT_ERROR_HINTS[megasoftCode]) {
+    const isTimeout = TIMEOUT_ERROR_CODES.has(megasoftCode);
+    const isFundsError = FUNDS_ERROR_CODES.has(megasoftCode);
+    const isDataError = DATA_ERROR_CODES.has(megasoftCode);
     return {
-      title: isPlatformError(megasoftCode, fullText)
+      title: isTimeout
+        ? 'Tiempo de espera agotado'
+        : isFundsError
+        ? 'Fondos insuficientes'
+        : isDataError
+        ? 'Datos incorrectos'
+        : isPlatformError(megasoftCode, fullText)
         ? 'Servicio no disponible'
-        : 'Pago rechazado',
+        : 'Pago no procesado',
       message: MEGASOFT_ERROR_HINTS[megasoftCode],
       code: megasoftCode,
       technicalDetail: megasoftMsg || backendMessage,
+      isTimeout,
+      isFundsError,
+      isDataError,
+      suggestions: isTimeout
+        ? [
+            'Tu dinero NO fue debitado — la transacción fue revertida automáticamente.',
+            'Puedes reintentar el pago con seguridad.',
+            'Si el problema persiste, intenta más tarde o contacta a soporte.',
+          ]
+        : isFundsError
+        ? [
+            'Verifica el saldo disponible en tu cuenta bancaria.',
+            'Recuerda que algunos bancos reservan un monto mínimo en cuenta.',
+            'Si crees que tienes saldo, contacta a tu banco para confirmar.',
+          ]
+        : isDataError
+        ? megasoftCode === '99'
+          ? [
+              'Verifica que el número de referencia ingresado sea correcto.',
+              'Las referencias P2C son válidas por tiempo limitado — puede haber expirado.',
+              'Asegúrate de copiar el número completo sin espacios ni errores.',
+              'Si el problema persiste, genera una nueva referencia desde tu banco.',
+            ]
+          : [
+              'Verifica que la cédula ingresada sea correcta.',
+              'Confirma que el número de teléfono esté registrado en tu banco.',
+              'Asegúrate de haber seleccionado el banco correcto.',
+              'Si los datos son correctos, contacta a tu banco para verificar tu cuenta.',
+            ]
+        : null,
     };
   }
 
   for (const [keyword, hint] of Object.entries(MEGASOFT_ERROR_HINTS)) {
     if (keyword.length > 2 && fullText.includes(keyword)) {
+      const isFundsKw = keyword === 'fondos' || keyword === 'saldo' || keyword === 'not sufficient' || keyword === 'insufficient';
       return {
-        title: isPlatformError(megasoftCode, fullText)
+        title: isFundsKw
+          ? 'Fondos insuficientes'
+          : isPlatformError(megasoftCode, fullText)
           ? 'Servicio no disponible'
-          : 'Pago rechazado',
+          : 'Pago no procesado',
         message: hint,
         code: megasoftCode || 'N/A',
         technicalDetail: megasoftMsg || backendMessage,
+        isFundsError: isFundsKw,
+        suggestions: isFundsKw
+          ? [
+              'Verifica el saldo disponible en tu cuenta bancaria.',
+              'Recuerda que algunos bancos reservan un monto mínimo en cuenta.',
+              'Si crees que tienes saldo, contacta a tu banco para confirmar.',
+            ]
+          : null,
       };
     }
   }
@@ -1237,12 +1304,42 @@ export default function PaymentPage() {
       technicalDetail: '',
     };
 
+    const defaultSuggestions = [
+      'Verifica que los datos ingresados sean correctos',
+      'Asegúrate de tener saldo suficiente en tu cuenta',
+      'Si usaste OTP, solicita uno nuevo y vuelve a intentar',
+      'Si el problema persiste, contacta a soporte de Kraken Courier',
+    ];
+    const suggestions = info.suggestions || defaultSuggestions;
+
     return (
       <div className={styles.errorContainerDetailed}>
         <div className={styles.errorIconWrapper}>
           <IoCloseCircleOutline size={80} />
         </div>
         <h2 className={styles.errorTitle}>{info.title}</h2>
+
+        {info.isTimeout && (
+          <div className={styles.timeoutBanner}>
+            Tu dinero <strong>NO fue debitado</strong> — la transacción fue revertida automáticamente por el banco.
+          </div>
+        )}
+
+        {info.isFundsError && (
+          <div className={styles.fundsBanner}>
+            El pago no se completó por <strong>saldo insuficiente</strong>. Tu cuenta no fue afectada.
+          </div>
+        )}
+
+        {info.isDataError && (
+          <div className={styles.dataBanner}>
+            {info.code === '99'
+              ? <>Verifica que el <strong>número de referencia</strong> sea correcto y no haya expirado.</>
+              : <>Revisa los <strong>datos ingresados</strong> — cédula, teléfono y banco — antes de reintentar.</>
+            }
+          </div>
+        )}
+
         <p className={styles.errorMessage}>{info.message}</p>
 
         {(info.code !== 'N/A' || info.technicalDetail) && (
@@ -1265,10 +1362,9 @@ export default function PaymentPage() {
         <div className={styles.errorSuggestions}>
           <h4>¿Qué puedes hacer?</h4>
           <ul>
-            <li>Verifica que los datos ingresados sean correctos</li>
-            <li>Asegúrate de tener saldo suficiente en tu cuenta</li>
-            <li>Si usaste OTP, solicita uno nuevo y vuelve a intentar</li>
-            <li>Si el problema persiste, contacta a soporte de Kraken Courier</li>
+            {suggestions.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
           </ul>
         </div>
 
