@@ -1,4 +1,4 @@
-// src/pages/auth/PersonalData/PersonalData.jsx
+﻿// src/pages/auth/PersonalData/PersonalData.jsx
 // VERSIÓN FUNCIONAL - Adaptada a tu estructura actual
 
 import React, { useState, useEffect } from 'react';
@@ -137,20 +137,19 @@ const PersonalData = () => {
         // console.log('📍 Countries response:', addressRes.data);
 
         if (addressRes.data.success) {
-          const phoneCodes = addressRes.data.data.map((item) => ({
-            label: `+${item.phoneCode} (${item.name})`,
-            value: `+${item.phoneCode}`,
-            iso2: item.iso2,
-            name: item.name
-          }));
+          const phoneCodes = addressRes.data.data
+            .filter(item => item.iso2 === 'VE' || item.iso2 === 'US')
+            .map((item) => ({
+              label: `+${item.phoneCode} (${item.name})`,
+              value: `+${item.phoneCode}`,
+              iso2: item.iso2,
+              name: item.name
+            }));
 
-          // ✅ ORDENAR: Venezuela primero (por código o nombre), luego el resto alfabéticamente
+          // Venezuela primero, luego el resto
           const sortedPhoneCodes = phoneCodes.sort((a, b) => {
-            const isVenezuelaA = a.value === "+58" || a.name.toLowerCase().includes("venezuela");
-            const isVenezuelaB = b.value === "+58" || b.name.toLowerCase().includes("venezuela");
-
-            if (isVenezuelaA && !isVenezuelaB) return -1;
-            if (!isVenezuelaA && isVenezuelaB) return 1;
+            if (a.iso2 === 'VE') return -1;
+            if (b.iso2 === 'VE') return 1;
             return a.label.localeCompare(b.label);
           });
 
@@ -225,16 +224,15 @@ const PersonalData = () => {
   };
 
   const isVenezuelanPhoneValid = () => {
-    if (formData.countryCode === "+58") return true;
+    // VE: no necesita teléfono secundario
+    if (formData.residenceCountry === 'VE') return true;
 
-    if (!formData.venezuelanPhone && !formData.venezuelanOperator) return true;
-
-    if (formData.venezuelanPhone || formData.venezuelanOperator) {
-      return formData.venezuelanOperator &&
-        formData.venezuelanPhone.replace(/\D/g, "").length === 7;
-    }
-
-    return true;
+    // US: teléfono venezolano obligatorio
+    return !!(
+      formData.venezuelanOperator &&
+      formData.venezuelanPhone &&
+      formData.venezuelanPhone.replace(/\D/g, "").length === 7
+    );
   };
 
   const isFormComplete = () => {
@@ -310,11 +308,17 @@ const PersonalData = () => {
   };
 
   const handleResidenceChange = (value) => {
+    const phoneCodeMap = { VE: '+58', US: '+1' };
     setFormData(prev => ({
       ...prev,
       residenceCountry: value,
+      countryCode: phoneCodeMap[value] || '',
       documentType: '',
-      documentNumber: ''
+      documentNumber: '',
+      phone: '',
+      phoneOperator: '',
+      venezuelanPhone: '',
+      venezuelanOperator: ''
     }));
     setErrors(prev => ({ ...prev, documentNumber: '' }));
   };
@@ -448,33 +452,34 @@ const PersonalData = () => {
 
   // ===== HELPERS PARA UI =====
 
-  // Nuevas opciones de documentos basadas en el país de residencia
+  // Opciones de documentos por país de residencia
   const getDocumentOptions = () => {
     if (!formData.residenceCountry) return [];
 
     const config = getCountryConfig(formData.residenceCountry);
 
-    // Si es USA, usamos los definidos en config
+    // US: usa los tipos definidos en countryConfig
     if (formData.residenceCountry === 'US' && config.documentTypes.length > 0) {
       return config.documentTypes;
     }
 
-    // Si es Venezuela o cualquier otro (por ahora), usamos los de la BD
-    // OJO: Si quisieras restringir solo a VE para mostrar los de BD, agrega la condición aquí
-    const sortedDocumentTypeDB = [...documentTypeDB].sort((a, b) => {
-      if (a.displayName.toLowerCase() === "cédula") return -1;
-      if (b.displayName.toLowerCase() === "cédula") return 1;
-      return 0;
-    });
-
-    return sortedDocumentTypeDB.map(item => ({
-      label: item.displayName,
-      value: item.displayName
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/ /g, '')
-    }));
+    // VE y otros: filtra por countryCode desde la BD
+    return documentTypeDB
+      .filter(item => item.countryCode === formData.residenceCountry)
+      .sort((a, b) => {
+        if (a.displayName.toLowerCase() === 'cédula') return -1;
+        if (b.displayName.toLowerCase() === 'cédula') return 1;
+        return 0;
+      })
+      .map(item => ({
+        label: item.displayName,
+        value: item.displayName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[̀-ͯ]/g, '')
+          .replace(/'/g, '')
+          .replace(/ /g, '')
+      }));
   };
 
   const documentOptions = getDocumentOptions();
@@ -576,8 +581,7 @@ const PersonalData = () => {
             <SearchableSelect
               options={[
                 { label: 'Venezuela', value: 'VE' },
-                { label: 'Estados Unidos', value: 'US' },
-                { label: 'España', value: 'ES' }
+                { label: 'Estados Unidos', value: 'US' }
               ]}
               value={formData.residenceCountry}
               onChange={handleResidenceChange}
@@ -632,21 +636,23 @@ const PersonalData = () => {
             )}
           </div>
 
-          {/* Código de País y Operador */}
-          <div className={`kraken-form-field__row ${formData.countryCode !== '+58' ? 'kraken-form-field__row--single' : ''}`}>
-            <div className={`kraken-form-field ${formData.countryCode === '+58' ? 'kraken-form-field--60' : 'kraken-form-field--full'
-              }`}>
-              <label className="kraken-form-field__label">Código de País</label>
-              <SearchableSelect
-                options={countryOptions}
-                value={formData.countryCode}
-                onChange={handleCountryChange}
-                placeholder="Buscar país..."
-              />
-            </div>
-
-            {/* Operador venezolano - solo aparece si país es +58 */}
-            {formData.countryCode === '+58' && (
+          {/* Teléfono principal — VE: con operador, US: formato americano */}
+          {formData.residenceCountry === 'VE' ? (
+            <div className="kraken-form-field__row">
+              <div className="kraken-form-field kraken-form-field--60">
+                <label className="kraken-form-field__label">Número de Celular</label>
+                <input
+                  type="tel"
+                  className="kraken-form-field__input"
+                  placeholder={getPhonePlaceholder()}
+                  value={formData.phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  required
+                />
+                {formData.phone && !isPhoneComplete() && (
+                  <p className="kraken-form-field__error">{getPhoneErrorMessage()}</p>
+                )}
+              </div>
               <div className="kraken-form-field kraken-form-field--38">
                 <label className="kraken-form-field__label">Operador</label>
                 <select
@@ -663,34 +669,28 @@ const PersonalData = () => {
                   ))}
                 </select>
               </div>
-            )}
-          </div>
-
-          {/* Número de Celular */}
-          <div className="kraken-form-field">
-            <label className="kraken-form-field__label">Número de Celular</label>
-            <input
-              type="tel"
-              className="kraken-form-field__input"
-              placeholder={getPhonePlaceholder()}
-              value={formData.phone}
-              onChange={(e) => handlePhoneChange(e.target.value)}
-              required
-            />
-
-            {formData.countryCode && formData.phone && !isPhoneComplete() && (
-              <p className="kraken-form-field__error">
-                {getPhoneErrorMessage()}
-              </p>
-            )}
-          </div>
-
-          {/* Sección venezolana adicional */}
-          {formData.countryCode && formData.countryCode !== "+58" && (
+            </div>
+          ) : formData.residenceCountry === 'US' ? (
             <>
               <div className="kraken-form-field">
+                <label className="kraken-form-field__label">Número de Celular (EE.UU.)</label>
+                <input
+                  type="tel"
+                  className="kraken-form-field__input"
+                  placeholder={getPhonePlaceholder()}
+                  value={formData.phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  required
+                />
+                {formData.phone && !isPhoneComplete() && (
+                  <p className="kraken-form-field__error">{getPhoneErrorMessage()}</p>
+                )}
+              </div>
+
+              {/* Teléfono venezolano — obligatorio para usuarios de EE.UU. */}
+              <div className="kraken-form-field">
                 <label className="kraken-form-field__label kraken-form-field__label--additional">
-                  Número venezolano adicional (opcional)
+                  Número venezolano
                 </label>
               </div>
 
@@ -700,12 +700,12 @@ const PersonalData = () => {
                     +58 (Venezuela)
                   </div>
                 </div>
-
                 <div className="kraken-form-field kraken-form-field--half">
                   <select
                     className="kraken-form-field__select"
                     value={formData.venezuelanOperator}
                     onChange={(e) => handleInputChange('venezuelanOperator', e.target.value)}
+                    required
                   >
                     <option value="">Operador</option>
                     {venezuelanOperators.map((operator) => (
@@ -722,11 +722,11 @@ const PersonalData = () => {
                 <input
                   type="tel"
                   className="kraken-form-field__input"
-                  placeholder="Celular venezolano ###-##-## (opcional)"
+                  placeholder="###-##-##"
                   value={formData.venezuelanPhone}
                   onChange={(e) => handleVenezuelanPhoneChange(e.target.value)}
+                  required
                 />
-
                 {formData.venezuelanPhone &&
                   formData.venezuelanPhone.replace(/\D/g, "").length > 0 &&
                   formData.venezuelanPhone.replace(/\D/g, "").length < 7 && (
@@ -734,23 +734,21 @@ const PersonalData = () => {
                       Ingrese un número venezolano completo ###-##-##
                     </p>
                   )}
-
                 {formData.venezuelanOperator && !formData.venezuelanPhone && (
                   <p className="kraken-form-field__error">
-                    Debe ingresar el número si seleccionó un operador
+                    Ingrese el número venezolano
                   </p>
                 )}
-
                 {formData.venezuelanPhone &&
                   formData.venezuelanPhone.replace(/\D/g, "").length === 7 &&
                   !formData.venezuelanOperator && (
                     <p className="kraken-form-field__error">
-                      Debe seleccionar un operador si ingresó el número
+                      Seleccione un operador
                     </p>
                   )}
               </div>
             </>
-          )}
+          ) : null}
 
           {/* Error general */}
           {errors.submit && (

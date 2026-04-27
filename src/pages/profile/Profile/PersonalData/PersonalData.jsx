@@ -8,13 +8,14 @@ import axiosInstance from '../../../../services/axiosInstance';
 import { API_URL } from '../../../../utils/config';
 
 // Icons
-import { 
+import {
   IoChevronBack,
   IoCallOutline,
   IoCalendarOutline,
   IoPersonOutline,
   IoCardOutline,
-  IoSaveOutline
+  IoSaveOutline,
+  IoGlobeOutline
 } from 'react-icons/io5';
 
 // Components
@@ -30,34 +31,56 @@ const PersonalData = () => {
   const [loading, setLoading] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
-  
+  const [documentTypeDB, setDocumentTypeDB] = useState([]);
+
   const [formData, setFormData] = useState({
     name: '',
     lastName: '',
     email: '',
     phone: '',
     phoneSecondary: '',
-    idType: 'cedula',
+    residenceCountry: '',
+    idType: '',
     idNumber: '',
     birthday: ''
   });
 
   const [errors, setErrors] = useState({});
 
+  // Cargar tipos de documento desde el API
+  useEffect(() => {
+    const loadDocumentTypes = async () => {
+      try {
+        const res = await axiosInstance.get('/Addresses/document-types');
+        const docData = Array.isArray(res.data) ? res.data : (res.data?.success ? res.data.data : []);
+        setDocumentTypeDB(docData);
+      } catch (error) {
+        console.error('Error loading document types:', error);
+      }
+    };
+    loadDocumentTypes();
+  }, []);
+
   // ✅ Cargar datos del usuario desde el contexto
   useEffect(() => {
     if (user) {
-      // console.log('👤 Usuario en contexto:', user);
-      
-      // Mapear los campos del backend a tu formulario
-      const detectedIdType = detectDocumentType(user);
-      
+      // El user del contexto puede venir del servidor sin todos los campos;
+      // localStorage siempre tiene los datos completos como fallback.
+      const stored = (() => {
+        try { return JSON.parse(localStorage.getItem('userData') || '{}'); } catch { return {}; }
+      })();
+
+      const docId = user.idClienteTipoIdentificacion ?? stored.idClienteTipoIdentificacion;
+      const countryCode = user.reg_CodPais ?? stored.reg_CodPais ?? inferCountryFromDocId(docId);
+      const detectedIdType = detectDocumentType({ idClienteTipoIdentificacion: docId });
+
       setFormData({
         name: user.name || user.nombres || '',
         lastName: user.lastName || user.apellidos || '',
         email: user.email || '',
         phone: user.phone || user.telefonoCelular || '',
         phoneSecondary: user.phoneSecondary || user.telefonoCelularSecundario || '',
+        residenceCountry: countryCode,
         idType: detectedIdType,
         idNumber: user.idNumber || user.nroIdentificacionCliente || user.nro || '',
         birthday: user.birthday || user.fechaNacimiento ? formatDateForInput(user.birthday || user.fechaNacimiento) : ''
@@ -65,22 +88,23 @@ const PersonalData = () => {
     }
   }, [user]);
 
+  const inferCountryFromDocId = (docId) => {
+    if ([1, 2, 3].includes(docId)) return 'VE';
+    if ([4, 5].includes(docId)) return 'US';
+    return '';
+  };
+
   const detectDocumentType = (userData) => {
-    if (!userData) return 'cedula';
-    
-    // ✅ MAPEO CORRECTO según tu base de datos:
-    // 1 = Pasaporte, 2 = RIF, 3 = Cédula, 4+ = Otro
+    if (!userData) return '';
     const docId = userData.idClienteTipoIdentificacion;
-    const docMap = { 
-      1: 'pasaporte',  // ✅ Pasaporte
-      2: 'rif',        // ✅ RIF
-      3: 'cedula',     // ✅ Cédula
-      4: 'otro',       // ✅ Driver's license
-      5: 'otro',       // ✅ EIN
-      6: 'otro'        // ✅ Tarjeta de Identidad de Residencia
+    const docMap = {
+      1: 'pasaporte',
+      2: 'rif',
+      3: 'cedula',
+      4: 'driverslicense',
+      5: 'ein'
     };
-    
-    return docMap[docId] || 'cedula';
+    return docMap[docId] || '';
   };
 
   const mapIdTypeToBackend = (idType) => {
@@ -118,9 +142,27 @@ const PersonalData = () => {
     return phone;
   };
 
+  const normalizeDocValue = (displayName) =>
+    displayName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/'/g, '')
+      .replace(/\s+/g, '');
+
+  const getDocumentOptions = () => {
+    if (!formData.residenceCountry) return [];
+    return documentTypeDB
+      .filter(item => item.countryCode === formData.residenceCountry)
+      .map(item => ({
+        label: item.displayName,
+        value: normalizeDocValue(item.displayName)
+      }));
+  };
+
   const validateDocument = (type, number) => {
     const num = number.trim();
-    
+
     switch (type) {
       case 'cedula':
         if (!/^\d{6,8}$/.test(num)) {
@@ -137,6 +179,12 @@ const PersonalData = () => {
           return { isValid: false, message: 'RIF debe tener formato válido (ej: V-12345678-9)' };
         }
         break;
+      case 'driverslicense':
+      case 'ein':
+        if (num.length < 5 || num.length > 20) {
+          return { isValid: false, message: 'Documento debe tener entre 5-20 caracteres' };
+        }
+        break;
       case 'otro':
         if (num.length < 5 || num.length > 20) {
           return { isValid: false, message: 'Documento debe tener entre 5-20 caracteres' };
@@ -145,7 +193,7 @@ const PersonalData = () => {
       default:
         return { isValid: false, message: 'Selecciona un tipo de documento' };
     }
-    
+
     return { isValid: true, message: '' };
   };
 
@@ -162,6 +210,10 @@ const PersonalData = () => {
       newErrors.lastName = 'El apellido es obligatorio';
     } else if (formData.lastName.trim().length < 2) {
       newErrors.lastName = 'El apellido debe tener al menos 2 caracteres';
+    }
+
+    if (!formData.residenceCountry) {
+      newErrors.residenceCountry = 'Selecciona un país de residencia';
     }
 
     if (!formData.idType) {
@@ -208,6 +260,21 @@ const PersonalData = () => {
     }
   };
 
+  const handleResidenceChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      residenceCountry: e.target.value,
+      idType: '',
+      idNumber: ''
+    }));
+    setErrors(prev => ({ ...prev, residenceCountry: '', idType: '', idNumber: '' }));
+  };
+
+  const handleIdTypeChange = (e) => {
+    setFormData(prev => ({ ...prev, idType: e.target.value, idNumber: '' }));
+    setErrors(prev => ({ ...prev, idType: '', idNumber: '' }));
+  };
+
   const handlePhoneSave = (phoneData) => {
     setFormData(prev => ({
       ...prev,
@@ -248,6 +315,7 @@ const PersonalData = () => {
         lastName: formData.lastName,
         phone: formData.phone,
         phoneSecondary: formData.phoneSecondary || null,
+        residenceCountry: formData.residenceCountry,
         idType: formData.idType,
         idNumber: formData.idNumber,
         birthday: new Date(formData.birthday).toISOString()
@@ -271,6 +339,7 @@ const PersonalData = () => {
           phoneSecondary: response.data.user.telefonoCelularSecundario || formData.phoneSecondary,
           telefonoCelular: response.data.user.telefonoCelular || formData.phone,
           telefonoCelularSecundario: response.data.user.telefonoCelularSecundario || formData.phoneSecondary,
+          reg_CodPais: response.data.user.reg_CodPais || formData.residenceCountry,
           idType: formData.idType,
           idNumber: response.data.user.nroIdentificacionCliente || formData.idNumber,
           nroIdentificacionCliente: response.data.user.nroIdentificacionCliente || formData.idNumber,
@@ -423,6 +492,30 @@ const PersonalData = () => {
               </div>
             </div>
 
+            {/* País de Residencia */}
+            <div className="personal-data__section">
+              <div className="personal-data__field full-width">
+                <label className="personal-data__label">
+                  <IoGlobeOutline size={18} />
+                  País de Residencia <span className="personal-data__required">*</span>
+                </label>
+                <select
+                  name="residenceCountry"
+                  value={formData.residenceCountry}
+                  onChange={handleResidenceChange}
+                  className={`personal-data__select ${errors.residenceCountry ? 'error' : ''}`}
+                  disabled={loading}
+                >
+                  <option value="">Seleccione país</option>
+                  <option value="VE">Venezuela</option>
+                  <option value="US">Estados Unidos</option>
+                </select>
+                {errors.residenceCountry && (
+                  <span className="personal-data__error">{errors.residenceCountry}</span>
+                )}
+              </div>
+            </div>
+
             {/* Documento de identidad */}
             <div className="personal-data__section">
               <div className="personal-data__field">
@@ -433,14 +526,16 @@ const PersonalData = () => {
                 <select
                   name="idType"
                   value={formData.idType}
-                  onChange={handleChange}
+                  onChange={handleIdTypeChange}
                   className={`personal-data__select ${errors.idType ? 'error' : ''}`}
-                  disabled={loading}
+                  disabled={loading || !formData.residenceCountry}
                 >
-                  <option value="cedula">Cédula</option>
-                  <option value="pasaporte">Pasaporte</option>
-                  <option value="rif">RIF</option>
-                  <option value="otro">Otro</option>
+                  <option value="">Seleccione tipo de documento</option>
+                  {getDocumentOptions().map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
                 {errors.idType && (
                   <span className="personal-data__error">{errors.idType}</span>
@@ -462,9 +557,11 @@ const PersonalData = () => {
                     formData.idType === 'cedula' ? '12345678' :
                     formData.idType === 'pasaporte' ? 'AB123456' :
                     formData.idType === 'rif' ? 'V-12345678-9' :
+                    formData.idType === 'driverslicense' ? 'Driver license number' :
+                    formData.idType === 'ein' ? 'XX-XXXXXXX' :
                     'Número de documento'
                   }
-                  disabled={loading}
+                  disabled={loading || !formData.idType}
                 />
                 {errors.idNumber && (
                   <span className="personal-data__error">{errors.idNumber}</span>
