@@ -7,7 +7,7 @@ export const countryConfig = {
         documentTypes: [
             {
                 label: "Driver's License",
-                value: "4", // ID from Database
+                value: "drivers license", // TipoIdentificacion de la BD en minúsculas
                 validation: {
                     pattern: /^[A-Za-z0-9]+$/,
                     minLength: 5,
@@ -17,7 +17,7 @@ export const countryConfig = {
             },
             {
                 label: "Passport",
-                value: "1", // ID from Database (Same as VE) or specific US passport ID if different
+                value: "pasaporte", // TipoIdentificacion de la BD en minúsculas
                 validation: {
                     pattern: /^[A-Za-z0-9]+$/,
                     minLength: 6,
@@ -73,7 +73,7 @@ export const countryConfig = {
             },
             {
                 label: "Pasaporte",
-                value: "1", // Use ID 1 for Passport
+                value: "pasaporte", // TipoIdentificacion de la BD en minúsculas
                 validation: {
                     pattern: /^[A-Za-z0-9]+$/,
                     minLength: 6,

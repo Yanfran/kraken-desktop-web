@@ -13,6 +13,8 @@ const Home = React.lazy(() => import('../pages/Home/Home'));
 const Calculator = React.lazy(() => import('../pages/calculator/Calculator/Calculator'));
 const Tracking = React.lazy(() => import('../pages/Tracking/Tracking'));
 
+const Addresses = React.lazy(() => import('../pages/addresses/Addresses'));
+
 // Pre-Alertas
 const PreAlertList = React.lazy(() => import('../pages/PreAlert/List/PreAlertList'));
 const PreAlertCreate = React.lazy(() => import('../pages/PreAlert/Create/PreAlertCreate'));
@@ -85,6 +87,9 @@ const TenantRouter = () => {
                         
                         {/* Calculadora */}
                         <Route path="/calculator" element={<Calculator />} />
+
+                        <Route path="/addresses" element={<Addresses />} />
+
                         
                         {/* Pre-Alertas */}
                         <Route path="/pre-alert/list" element={<PreAlertList />} />
