@@ -285,26 +285,34 @@ export default function GuideDetail() {
 
   const consolidateHistorial = (historial) => {
     if (!historial || historial.length === 0) return [];
+
+    const DEDUP_STATUSES = ['procesado', 'llegó a venezuela', 'llego a venezuela'];
     const result = [];
-    for (let i = 0; i < historial.length; i++) {
-      const current       = historial[i];
-      const currentStatus = current.estatus?.toLowerCase().trim();
-      if (currentStatus === 'procesado') {
-        let j = i + 1;
-        while (
-          j < historial.length &&
-          historial[j].estatus?.toLowerCase().trim() === 'procesado'
-        ) { j++; }
-        if (j > i + 1) {
-          result.push({ ...historial[j - 1], estatus: 'Procesado' });
-          i = j - 1;
-        } else {
-          result.push({ ...current, estatus: 'Procesado' });
+    let lastDedupEntry = null;
+    let lastDedupKey   = null;
+
+    for (const entry of historial) {
+      const estatusLower = entry.estatus?.toLowerCase().trim();
+      const isDedupable  = DEDUP_STATUSES.includes(estatusLower);
+
+      if (isDedupable) {
+        if (lastDedupKey && lastDedupKey !== estatusLower) {
+          result.push(lastDedupEntry);
         }
+        lastDedupEntry = entry;
+        lastDedupKey   = estatusLower;
       } else {
-        result.push(current);
+        if (lastDedupEntry) {
+          result.push(lastDedupEntry);
+          lastDedupEntry = null;
+          lastDedupKey   = null;
+        }
+        result.push(entry);
       }
     }
+
+    if (lastDedupEntry) result.push(lastDedupEntry);
+
     return result;
   };
 
@@ -581,7 +589,7 @@ export default function GuideDetail() {
 
                   return (
                     <div key={detalle.numLinea} className={rowClass}>
-                      <p className={labelClass}>{detalle.descripcionItem}</p>
+                      <p className={labelClass}>{isTotal ? 'Total' : detalle.descripcionItem}</p>
                       <span className={valueClass}>{formatBolivar(detalle.montoBs)}</span>
                     </div>
                   );

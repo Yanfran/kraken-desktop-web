@@ -8,8 +8,8 @@ const USE_PRODUCTION = false; // 👈 true para producción, false para desarrol
 // ═══════════════════════════════════════
 const getApiUrl = () => {
   if (USE_PRODUCTION) {
-    return 'https://api.krakencourier.com/api'; // ✅ Producción
-    // return 'https://api-backup.krakencourier.com/api'; // ✅ Producción
+    // return 'https://api.krakencourier.com/api'; // ✅ Producción
+    return 'https://api-backup.krakencourier.com/api'; // ✅ Producción
   }
   
   // Desarrollo - Backend local

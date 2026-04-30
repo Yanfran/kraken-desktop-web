@@ -309,11 +309,11 @@ const Home = ({ onNavigateToShipments }) => {
       setErrors(prev => ({ ...prev, lastShipment: null }));
       
       const response = await getLastShipment();
-      // console.log('Last shipment response:', response);
+      // console.log('Last shipment response :', response);
       
       if (response.success && response.data) {
         setLastShipment(response.data);
-        console.log('Último envío cargado:', response.data);
+        // console.log('Último envío cargado:', response.data);
       } else {
         setErrors(prev => ({ 
           ...prev, 
@@ -580,7 +580,7 @@ const Home = ({ onNavigateToShipments }) => {
               </div>
 
               <div className="last-shipment-card__cell">
-                <span className="last-shipment-card__label">Costo del envío</span>
+                <span className="last-shipment-card__label">{lastShipment.estaPagado ? 'Total Pagado' : 'Costo del envío'}</span>
                 <span className="last-shipment-card__price">{formatBolivarFromShipment(lastShipment)}</span>
               </div>
 
