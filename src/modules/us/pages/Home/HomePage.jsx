@@ -108,7 +108,7 @@ const HomePage = () => {
               {shipments.length > 5 && (
                 <button
                   className="us-home__view-all"
-                  onClick={() => navigate('/tracking')}
+                  onClick={() => navigate('/guide/guides')}
                 >
                   Ver todos ({shipments.length}) →
                 </button>

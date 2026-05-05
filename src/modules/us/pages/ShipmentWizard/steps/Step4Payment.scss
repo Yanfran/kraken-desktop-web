@@ -22,7 +22,7 @@ $success: #4CAF50;
 // ── Métodos de pago ───────────────────────────────────────────────────────────
 .payment-methods {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 
@@ -206,6 +206,61 @@ $success: #4CAF50;
 
   &__hint { font-size: 0.85rem; color: $text-muted; margin-bottom: 1.75rem; }
   &__btn  { text-decoration: none; padding: 0.8rem 2.5rem; }
+}
+
+// ── HalaraPay Collect.js inline form ─────────────────────────────────────────
+.halarapay-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &__loading {
+    text-align: center;
+    color: $text-muted;
+    font-size: 0.85rem;
+    padding: 2rem 0;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 4px;
+  }
+
+  &__row {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  &__half { flex: 1; }
+
+  &__secure {
+    font-size: 0.75rem;
+    color: #15803d;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    margin: 0.5rem 0 0;
+  }
+}
+
+// Container que Collect.js convierte en iframe
+.halarapay-field {
+  height: 42px;
+  border: 1px solid $border;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s;
+
+  &:focus-within { border-color: $primary; }
+
+  // El iframe ocupa todo el contenedor
+  iframe { width: 100% !important; height: 100% !important; border: none; }
 }
 
 // ── Errores de campo ──────────────────────────────────────────────────────────

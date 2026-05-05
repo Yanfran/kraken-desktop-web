@@ -141,6 +141,8 @@ const TenantRouter = () => {
                         <Route path="/calculator" element={<Calculator />} />
                         <Route path="/tracking" element={<Tracking />} />
                         <Route path="/profile/addresses" element={<USAddresses />} />
+                        <Route path="/guide/guides" element={<Guides />} />
+                        <Route path="/guide/detail/:idGuia" element={<GuideDetail />} />
                         
                         {/* Redirección por defecto */}
                         <Route path="/" element={<Navigate to="/home" replace />} />

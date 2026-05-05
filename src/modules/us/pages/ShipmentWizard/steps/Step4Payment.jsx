@@ -1,35 +1,19 @@
 // src/modules/us/pages/ShipmentWizard/steps/Step4Payment.jsx
 // Paso 5 del wizard USA — Método de pago + creación de guía post-pago
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Step4Payment.scss'; // ← mismo scss que España, reutilizable
+import { axiosPaymentInstance } from '../../../../../services/axiosInstance';
+import './Step4Payment.scss';
+
+const HALARAPAY_TOKENIZATION_KEY = 'XEaBVN-yX978V-PJJ64R-Z6KdqZ';
+const HALARAPAY_SCRIPT_SRC = 'https://halarapay.transactiongateway.com/token/Collect.js';
 
 // ── Métodos de pago USA ───────────────────────────────────────────────────────
 const PAYMENT_METHODS = [
   { id: 'card',  label: 'Credit / Debit Card', render: () => '💳' },
-  { id: 'zelle', label: 'Zelle (Manual Pay)',  render: () => '💜' },
+  // { id: 'zelle', label: 'Zelle (Manual Pay)',  render: () => '💜' },
 ];
-
-// ── Bloque informativo Stripe/Card ────────────────────────────────────────────
-const CardInfo = () => (
-  <div className="redsys-info-block">
-    <div className="redsys-info-block__icon">🔒</div>
-    <p className="redsys-info-block__title">Secure Card Payment</p>
-    <p className="redsys-info-block__desc">
-      Your payment is processed through our secure payment gateway.
-      Your card details are never stored on our servers.
-    </p>
-    <div className="redsys-info-block__logos">
-      <span>VISA</span>
-      <span>Mastercard</span>
-      <span>AMEX</span>
-    </div>
-    <p className="redsys-info-block__hint">
-      🛡️ Your card data <strong>never</strong> passes through our servers.
-    </p>
-  </div>
-);
 
 // ── Bloque informativo Zelle ──────────────────────────────────────────────────
 const ZelleInfo = () => (
@@ -56,6 +40,21 @@ const ZelleInfo = () => (
     <p className="redsys-info-block__hint" style={{ color: '#5b21b6' }}>
       ⚠️ <strong>Important:</strong> Your shipment will only be processed after
       payment is confirmed by our team.
+    </p>
+  </div>
+);
+
+// ── Info de tarjeta (lightbox — HalaraPay muestra su propio modal) ────────────
+const CardInfo = () => (
+  <div className="redsys-info-block" style={{ borderLeft: '4px solid #022364', backgroundColor: '#eff6ff' }}>
+    <div className="redsys-info-block__icon" style={{ color: '#022364' }}>💳</div>
+    <p className="redsys-info-block__title" style={{ color: '#022364' }}>Secure Card Payment</p>
+    <p className="redsys-info-block__desc" style={{ color: '#1e40af' }}>
+      Click <strong>"Confirm Payment"</strong> to open the secure card form.
+      Your card data is tokenized by HalaraPay and never stored on our servers.
+    </p>
+    <p className="redsys-info-block__hint" style={{ color: '#1e40af' }}>
+      🔒 Accepted: VISA, MasterCard, AMEX
     </p>
   </div>
 );
@@ -108,10 +107,11 @@ const SuccessScreen = ({ nGuia, metodoPago }) => (
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step4Payment = ({ data, updateData, onBack }) => {
   const navigate = useNavigate();
-  const [submitting,  setSubmitting]  = useState(false);
-  const [submitPhase, setSubmitPhase] = useState('');
-  const [submitError, setSubmitError] = useState(null);
-  const [guiaResult,  setGuiaResult]  = useState(null);
+  const [submitting,     setSubmitting]     = useState(false);
+  const [submitPhase,    setSubmitPhase]     = useState('');
+  const [submitError,    setSubmitError]     = useState(null);
+  const [guiaResult,     setGuiaResult]      = useState(null);
+  const [collectJsReady, setCollectJsReady]  = useState(false);
 
   const { metodoPago, calculationResult, courierQuote } = data;
 
@@ -120,6 +120,96 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const shipping = Number(calculationResult?.data?.total || 0);
   const courier  = courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0;
   const total    = Number((shipping + courier).toFixed(2));
+
+  const totalRef = useRef(total);
+  useEffect(() => { totalRef.current = total; }, [total]);
+
+  // ── Callback que recibe el token de HalaraPay (lightbox) ──────────────────
+  const handleTokenReceived = async (token) => {
+    setSubmitPhase('Processing payment…');
+    try {
+      // ── 1. Cobrar la tarjeta ─────────────────────────────────────────────
+      const { data: chargeResult } = await axiosPaymentInstance.post('/usa/payment/charge', {
+        token,
+        amountUSD: totalRef.current,
+        nGuia:     '',
+        guiaId:    null,
+      });
+
+      if (!chargeResult.success) {
+        setSubmitError(chargeResult.message ?? 'Payment declined. Please try again.');
+        setSubmitting(false);
+        setSubmitPhase('');
+        return;
+      }
+
+      // ── 2. Pago aprobado → crear la guía ────────────────────────────────
+      setSubmitPhase('Creating your shipment…');
+      const pkg = data.packages?.[0] ?? {};
+
+      const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
+        peso:             Number(pkg.peso  || 0),
+        largo:            Number(pkg.largo || 0),
+        ancho:            Number(pkg.ancho || 0),
+        alto:             Number(pkg.alto  || 0),
+        unidadPeso:       pkg.unidadPeso   || 'lb',
+        declaredValueUSD: Number(pkg.valorFOB || 0),
+        fragil:           pkg.fragil ?? false,
+        courierId:        data.courierId        ?? null,
+        courierServiceId: data.courierServiceId ?? null,
+        courierTotal:     Number(data.courierQuote?.total || data.courierQuote?.cost || 0),
+        courierName:      data.courierQuote?.name    || data.courierQuote?.courier || '',
+        courierService:   data.courierQuote?.service || '',
+        idDireccionOrigen:  data.originAddressId      ?? data.selectedOriginAddress?.id      ?? null,
+        idDireccionDestino: data.destinationAddressId ?? data.selectedDestinationAddress?.id ?? null,
+        contenidosIds:    pkg.contenidos?.map(c => c.id) ?? [],
+        costoBase:        Number(data.calculationResult?.data?.total || 0),
+        tienePago:        true,
+      });
+
+      const nGuia = guiaResult?.nGuia || `KU-${Date.now().toString().slice(-6)}`;
+      setGuiaResult({ nGuia, metodoPago: 'card' });
+
+    } catch (err) {
+      console.error('[Step4Payment US] error', err);
+      setSubmitError(err.message ?? 'Payment failed. Please try again.');
+      setSubmitting(false);
+      setSubmitPhase('');
+    }
+  };
+
+  // Ref estable para el callback — evita stale closures
+  const handleTokenReceivedRef = useRef(null);
+  handleTokenReceivedRef.current = handleTokenReceived;
+
+  // ── Configurar CollectJS (lightbox) ───────────────────────────────────────
+  const configureCollectJS = () => {
+    if (!window.CollectJS) return;
+
+    window.CollectJS.configure({
+      paymentType: 'cc',
+      callback: (response) => handleTokenReceivedRef.current?.(response.token),
+    });
+
+    setCollectJsReady(true);
+  };
+
+  // ── Cargar script de HalaraPay una sola vez ───────────────────────────────
+  useEffect(() => {
+    if (window.CollectJS) {
+      configureCollectJS();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = HALARAPAY_SCRIPT_SRC;
+    script.setAttribute('data-tokenization-key', HALARAPAY_TOKENIZATION_KEY);
+    script.async = true;
+    script.onload  = () => configureCollectJS();
+    script.onerror = () => setSubmitError('Could not load the payment processor. Please refresh and try again.');
+
+    document.head.appendChild(script);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Flujo principal ───────────────────────────────────────────────────────
   const handleConfirm = async () => {
@@ -132,31 +222,30 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
       // ZELLE — Pago manual offline
       if (metodoPago === 'zelle') {
-        setSubmitPhase('Registering your request...');
-        // TODO: llamada real al backend para crear guía en estado "Por Pagar"
+        setSubmitPhase('Registering your request…');
         setTimeout(() => {
-          setGuiaResult({
-            nGuia: `KU-${Date.now().toString().slice(-6)}`,
-            metodoPago: 'zelle',
-          });
+          setGuiaResult({ nGuia: `KU-${Date.now().toString().slice(-6)}`, metodoPago: 'zelle' });
           setSubmitting(false);
         }, 1500);
         return;
       }
 
-      // CARD — TODO: integrar pasarela USA (Stripe u otro)
-      setSubmitPhase('Initiating secure payment...');
-      // TODO: llamar al endpoint de pago con tarjeta para USA
-      throw new Error('Card payment for USA is not yet configured.');
+      // CARD — HalaraPay Lightbox
+      if (metodoPago === 'card') {
+        if (!window.CollectJS || !collectJsReady)
+          throw new Error('Payment form not ready. Please wait a moment and try again.');
+
+        setSubmitPhase('Opening secure payment form…');
+        // Abre el lightbox de HalaraPay; el callback gestiona el resto
+        window.CollectJS.startPaymentRequest();
+        return;
+      }
 
     } catch (err) {
       console.error('[Step4Payment US]', err);
       setSubmitError(err.message ?? 'Error processing payment.');
-    } finally {
-      if (metodoPago !== 'zelle') {
-        setSubmitting(false);
-        setSubmitPhase('');
-      }
+      setSubmitting(false);
+      setSubmitPhase('');
     }
   };
 
@@ -255,14 +344,16 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           <button
             className="btn-wizard-next cost-card__proceed-btn"
             onClick={handleConfirm}
-            disabled={submitting}
+            disabled={submitting || (metodoPago === 'card' && !collectJsReady)}
             style={{ marginTop: '15px' }}
           >
             {submitting
               ? `⏳ ${submitPhase || 'Processing...'}`
-              : metodoPago === 'zelle'
-                ? 'Confirm Request'
-                : `Confirm Payment ${usd(total)}`}
+              : metodoPago === 'card' && !collectJsReady
+                ? '⏳ Loading payment form…'
+                : metodoPago === 'zelle'
+                  ? 'Confirm Request'
+                  : `Confirm Payment ${usd(total)}`}
           </button>
         </div>
       </div>
