@@ -4,7 +4,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosPaymentInstance } from '../../../../../services/axiosInstance';
+import { createUpsPickup, createUpsShipment } from '../../../../../services/us/upsService';
 import './Step4Payment.scss';
+
+// Devuelve el próximo día hábil (lunes si cae en fin de semana)
+const getNextBusinessDay = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  if (d.getDay() === 6) d.setDate(d.getDate() + 2); // sábado → lunes
+  if (d.getDay() === 0) d.setDate(d.getDate() + 1); // domingo → lunes
+  return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+};
 
 const HALARAPAY_TOKENIZATION_KEY = 'XEaBVN-yX978V-PJJ64R-Z6KdqZ';
 const HALARAPAY_SCRIPT_SRC = 'https://halarapay.transactiongateway.com/token/Collect.js';
@@ -60,49 +70,92 @@ const CardInfo = () => (
 );
 
 // ── Pantalla de Éxito ─────────────────────────────────────────────────────────
-const SuccessScreen = ({ nGuia, metodoPago }) => (
-  <div className="payment-success" style={{ textAlign: 'center', padding: '40px 20px' }}>
-    <div style={{ fontSize: '4rem', marginBottom: '20px' }}>✅</div>
-    <h2 style={{ color: '#022364', fontWeight: 'bold', fontSize: '24px' }}>
-      Order Registered!
-    </h2>
-    <p style={{ color: '#4b5563', marginBottom: '20px' }}>
-      We have received your shipment request.
-    </p>
+const SuccessScreen = ({ nGuia, metodoPago, labelBase64, trackingNumber }) => {
+  const downloadLabel = () => {
+    if (!labelBase64) return;
+    const bytes = Uint8Array.from(atob(labelBase64), c => c.charCodeAt(0));
+    const blob  = new Blob([bytes], { type: 'application/pdf' });
+    const url   = URL.createObjectURL(blob);
+    const a     = document.createElement('a');
+    a.href     = url;
+    a.download = `label-${nGuia}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
-    <div style={{
-      background: '#f3f4f6', padding: '20px', borderRadius: '12px',
-      display: 'inline-block', marginBottom: '20px'
-    }}>
-      <span style={{
-        display: 'block', fontSize: '12px', color: '#6b7280',
-        textTransform: 'uppercase', letterSpacing: '1px'
+  return (
+    <div className="payment-success" style={{ textAlign: 'center', padding: '40px 20px' }}>
+      <div style={{ fontSize: '4rem', marginBottom: '20px' }}>✅</div>
+      <h2 style={{ color: '#022364', fontWeight: 'bold', fontSize: '24px' }}>
+        Order Registered!
+      </h2>
+      <p style={{ color: '#4b5563', marginBottom: '20px' }}>
+        We have received your shipment request.
+      </p>
+
+      <div style={{
+        background: '#f3f4f6', padding: '20px', borderRadius: '12px',
+        display: 'inline-block', marginBottom: '20px'
       }}>
-        Request Number
-      </span>
-      <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
-        {nGuia}
-      </span>
+        <span style={{
+          display: 'block', fontSize: '12px', color: '#6b7280',
+          textTransform: 'uppercase', letterSpacing: '1px'
+        }}>
+          Request Number
+        </span>
+        <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
+          {nGuia}
+        </span>
+      </div>
+
+      {trackingNumber && (
+        <div style={{
+          background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px',
+          padding: '12px 20px', marginBottom: '20px', fontSize: '14px', color: '#1e40af'
+        }}>
+          <strong>UPS Tracking:</strong> {trackingNumber}
+        </div>
+      )}
+
+      {labelBase64 && (
+        <div style={{ marginBottom: '20px' }}>
+          <button
+            onClick={downloadLabel}
+            style={{
+              background: '#022364', color: '#fff', border: 'none', borderRadius: '8px',
+              padding: '12px 28px', fontSize: '15px', fontWeight: '600',
+              cursor: 'pointer', width: '100%', maxWidth: '300px'
+            }}
+          >
+            🖨️ Download Shipping Label (PDF)
+          </button>
+          <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>
+            Print this label and attach it to your package before UPS pickup.
+          </p>
+        </div>
+      )}
+
+      <p style={{
+        fontSize: '14px', color: '#6b7280',
+        maxWidth: '400px', margin: '0 auto 30px'
+      }}>
+        {metodoPago === 'zelle'
+          ? 'Once our team verifies your Zelle payment, we will generate your pickup label and notify you by email.'
+          : 'Your shipment has been registered. You will receive a confirmation email shortly.'}
+      </p>
+
+      <button
+        className="btn-wizard-next"
+        onClick={() => window.location.href = '/home'}
+        style={{ width: '100%', maxWidth: '300px' }}
+      >
+        Go to Home
+      </button>
     </div>
-
-    <p style={{
-      fontSize: '14px', color: '#6b7280',
-      maxWidth: '400px', margin: '0 auto 30px'
-    }}>
-      {metodoPago === 'zelle'
-        ? 'Once our team verifies your Zelle payment, we will generate your pickup label and notify you by email.'
-        : 'Your shipment has been registered. You will receive a confirmation email shortly.'}
-    </p>
-
-    <button
-      className="btn-wizard-next"
-      onClick={() => window.location.href = '/home'}
-      style={{ width: '100%', maxWidth: '300px' }}
-    >
-      Go to Home
-    </button>
-  </div>
-);
+  );
+};
 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step4Payment = ({ data, updateData, onBack }) => {
@@ -143,9 +196,77 @@ const Step4Payment = ({ data, updateData, onBack }) => {
         return;
       }
 
-      // ── 2. Pago aprobado → crear la guía ────────────────────────────────
+      // ── 2. Pago aprobado → crear pickup UPS ─────────────────────────────────
+      setSubmitPhase('Scheduling UPS pickup…');
+      const pkg  = data.packages?.[0] ?? {};
+      const addr = data.selectedOriginAddress ?? {};
+
+      const weightKg = pkg.unidadPeso?.toLowerCase() === 'lb'
+        ? parseFloat(pkg.peso || 0) / 2.20462
+        : parseFloat(pkg.peso || 0);
+
+      const pickupResult = await createUpsPickup({
+        pickupDate:           getNextBusinessDay(),
+        readyTime:            '0900',
+        closeTime:            '1700',
+        contactName:          addr.alias || 'Client',
+        companyName:          addr.alias || '',
+        addressLine:          addr.line1 || '',
+        city:                 addr.city  || '',
+        stateProvince:        addr.province || addr.state || addr.stateProvince || '',
+        postalCode:           addr.zip   || '',
+        residentialIndicator: 'Y',
+        phone:                (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
+        weight:               parseFloat(weightKg.toFixed(2)),
+        unitSystem:           'METRIC',
+        quantity:             1,
+        serviceCode:          '003',
+        referenceNumber:      '',
+      });
+
+      const prn           = pickupResult.success ? (pickupResult.data?.prn                   ?? '') : '';
+      const transactionId = pickupResult.success ? (pickupResult.data?.transactionIdentifier ?? '') : '';
+      const pickupDate    = pickupResult.success ? (pickupResult.data?.pickupDate             ?? null) : null;
+      const pickupReady   = pickupResult.success ? (pickupResult.data?.readyTime              ?? '0900') : '0900';
+      const pickupClose   = pickupResult.success ? (pickupResult.data?.closeTime              ?? '1700') : '1700';
+
+      if (!pickupResult.success) {
+        console.warn('[UPS Pickup] No se pudo crear el pickup:', pickupResult.message);
+      }
+
+      // ── 3. Crear envío UPS (label PDF + tracking number) ─────────────────────
+      setSubmitPhase('Generating shipping label…');
+      const shipmentResult = await createUpsShipment({
+        contactName:   addr.alias || 'Client',
+        companyName:   addr.alias || '',
+        addressLine:   addr.line1 || '',
+        city:          addr.city  || '',
+        stateProvince: addr.province || addr.state || addr.stateProvince || '',
+        postalCode:    addr.zip   || '',
+        phone:         (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
+        weight:        parseFloat(weightKg.toFixed(2)),
+        length:        parseFloat(pkg.largo || 0),
+        width:         parseFloat(pkg.ancho || 0),
+        height:        parseFloat(pkg.alto  || 0),
+        unitSystem:    'METRIC',
+        serviceCode:   data.courierQuote?.service_code ?? '03',
+      });
+
+      const trackingNumber = shipmentResult.success ? (shipmentResult.data?.trackingNumber ?? '') : '';
+      const labelBase64    = shipmentResult.success ? (shipmentResult.data?.labelBase64    ?? '') : '';
+      const labelUrl       = shipmentResult.success ? (shipmentResult.data?.labelUrl       ?? '') : '';
+
+      if (!shipmentResult.success) {
+        console.warn('[UPS Shipment] No se pudo generar el label:', shipmentResult.message);
+      }
+
+      // ── 4. Crear la guía ─────────────────────────────────────────────────────
       setSubmitPhase('Creating your shipment…');
-      const pkg = data.packages?.[0] ?? {};
+
+      // Convertir "yyyyMMdd" → ISO para que el backend lo parsee como DateTime
+      const pickupFechaIso = pickupDate
+        ? `${pickupDate.slice(0,4)}-${pickupDate.slice(4,6)}-${pickupDate.slice(6,8)}`
+        : null;
 
       const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
         peso:             Number(pkg.peso  || 0),
@@ -165,10 +286,18 @@ const Step4Payment = ({ data, updateData, onBack }) => {
         contenidosIds:    pkg.contenidos?.map(c => c.id) ?? [],
         costoBase:        Number(data.calculationResult?.data?.total || 0),
         tienePago:        true,
+        pickupCode:           prn,
+        sendSeiPickupUuid:    prn,
+        sendSeiShipmentUuid:  transactionId,
+        pickupFecha:          pickupFechaIso,
+        pickupHoraDesde:      pickupReady,
+        pickupHoraHasta:      pickupClose,
+        sendSeiTrackingNumber: trackingNumber,
+        labelUrl:              labelUrl,
       });
 
       const nGuia = guiaResult?.nGuia || `KU-${Date.now().toString().slice(-6)}`;
-      setGuiaResult({ nGuia, metodoPago: 'card' });
+      setGuiaResult({ nGuia, metodoPago: 'card', labelBase64, trackingNumber });
 
     } catch (err) {
       console.error('[Step4Payment US] error', err);
@@ -349,7 +478,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           >
             {submitting
               ? `⏳ ${submitPhase || 'Processing...'}`
-              : metodoPago === 'card' && !collectJsReady
+              : (metodoPago === 'card' && !collectJsReady)
                 ? '⏳ Loading payment form…'
                 : metodoPago === 'zelle'
                   ? 'Confirm Request'

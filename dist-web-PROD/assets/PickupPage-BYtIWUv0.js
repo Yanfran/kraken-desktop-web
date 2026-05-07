@@ -1,0 +1,1 @@
+import{j as e}from"./index-D-DQDBGN.js";const c=()=>e.jsxs("div",{className:"p-4",children:[e.jsx("h1",{className:"text-2xl font-bold",children:"📦 Schedule a Pickup"}),e.jsx("p",{children:"US Pickup Service (Tenant: KU)"})]});export{c as default};

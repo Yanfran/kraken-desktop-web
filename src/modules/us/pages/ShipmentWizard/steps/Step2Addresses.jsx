@@ -629,12 +629,13 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
     if (!res.success) { toast.error(res.message); return; }
 
     const card = {
-      id:              res.data.id,
-      alias:           res.data.alias,
-      line1:           res.data.line1,
-      city:            res.data.city,
-      zip:             res.data.zip,
-      phone:           res.data.phone,
+      id:               res.data.id,
+      alias:            res.data.alias,
+      line1:            res.data.line1,
+      city:             res.data.city,
+      province:         res.data.province,
+      zip:              res.data.zip,
+      phone:            res.data.phone,
       esPredeterminada: res.data.esPredeterminada ?? formData.setAsDefault,
     };
     setOriginList((p) => {

@@ -18,3 +18,39 @@ export const fetchUpsQuotes = async (originZip, weight, length, width, height, u
     return { success: false, message: err.response?.data?.message ?? 'Error consultando UPS.' };
   }
 };
+
+export const createUpsPickup = async (pickupData) => {
+  try {
+    const res = await axiosInstance.post(`${BASE}/pickup/create`, pickupData);
+    return { success: true, data: res.data };
+  } catch (err) {
+    return {
+      success: false,
+      message: err.response?.data?.message ?? 'Error creando pickup UPS.',
+    };
+  }
+};
+
+export const createUpsShipment = async (shipmentData) => {
+  try {
+    const res = await axiosInstance.post(`${BASE}/shipment/create`, shipmentData);
+    return { success: true, data: res.data };
+  } catch (err) {
+    return {
+      success: false,
+      message: err.response?.data?.message ?? 'Error creando envío UPS.',
+    };
+  }
+};
+
+export const getUpsTracking = async (trackingNumber) => {
+  try {
+    const res = await axiosInstance.get(`${BASE}/tracking/${trackingNumber}`);
+    return { success: true, data: res.data };
+  } catch (err) {
+    return {
+      success: false,
+      message: err.response?.data?.message ?? 'Error consultando tracking UPS.',
+    };
+  }
+};

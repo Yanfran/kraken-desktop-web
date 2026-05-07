@@ -11,7 +11,7 @@ import './Step3CourierSelection.scss';
 
 
 // CP del almacén Kraken USA (destino de la recogida)
-const KRAKEN_US_WAREHOUSE_ZIP = '22201';
+const KRAKEN_US_WAREHOUSE_ZIP = '33122';
 
 // Logos por courier_id (agrega más según crezca la lista)
 const COURIER_LOGOS = {
