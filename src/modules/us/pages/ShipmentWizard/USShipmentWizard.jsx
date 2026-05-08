@@ -6,16 +6,24 @@ import { fetchMunicipios } from '../../../../services/es/spainAddressService';
 import Step1PackageDetails from './steps/Step1PackageDetails';
 import Step2Addresses from './steps/Step2Addresses';
 import Step3CourierSelection from './steps/Step3CourierSelection';
-import Step4Summary          from './steps/Step3Summary';   // renombrar import alias
-import Step5Payment          from './steps/Step4Payment';   // renombrar import
-import './USShipmentWizard.scss'; 
+import Step4Summary          from './steps/Step3Summary';
+import Step5Payment          from './steps/Step4Payment';
+import {
+  IoCubeOutline,
+  IoLocationOutline,
+  IoCarOutline,
+  IoDocumentTextOutline,
+  IoCardOutline,
+  IoCheckmarkOutline,
+} from 'react-icons/io5';
+import './USShipmentWizard.scss';
 
 const STEPS = [
-  { id: 1, label: 'Detalles del Envío'  },
-  { id: 2, label: 'Recogida y Entrega'  },
-  { id: 3, label: 'Servicio de Recogida'},  // ← nuevo paso SendSei
-  { id: 4, label: 'Resumen'             },
-  { id: 5, label: 'Pago'                },
+  { id: 1, label: 'Detalles del Envío',   icon: <IoCubeOutline size={18} /> },
+  { id: 2, label: 'Recogida y Entrega',   icon: <IoLocationOutline size={18} /> },
+  { id: 3, label: 'Servicio de Recogida', icon: <IoCarOutline size={18} /> },
+  { id: 4, label: 'Resumen',              icon: <IoDocumentTextOutline size={18} /> },
+  { id: 5, label: 'Pago',                 icon: <IoCardOutline size={18} /> },
 ];
 
 const INITIAL_STATE = {
@@ -26,7 +34,7 @@ const INITIAL_STATE = {
       ancho: '',
       alto: '',
       peso: '',
-      unidadPeso: 'kg',
+      unidadPeso: 'lb',
       tipoPaquete: 'Caja',
       valorFOB: '',
       descripcion: '',
@@ -226,7 +234,7 @@ const ESShipmentWizard = () => {
                   aria-current={status === 'active' ? 'step' : undefined}
                 >
                   <span className="us-wizard__step-circle">
-                    {status === 'done' ? '✓' : step.id}
+                    {status === 'done' ? <IoCheckmarkOutline size={18} /> : step.icon}
                   </span>
                   <span className="us-wizard__step-label">{step.label}</span>
                 </button>

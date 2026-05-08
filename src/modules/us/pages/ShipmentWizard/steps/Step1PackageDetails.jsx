@@ -487,9 +487,9 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
 
       {/* Acciones */}
       <div className="step1-footer">
-        <button className="btn-add-box" disabled onClick={handleAdd}>
+        {/* <button className="btn-add-box" disabled onClick={handleAdd}>
           + Añadir otra caja
-        </button>
+        </button> */}
 
         <div className="wizard-actions">
           <button className="btn-wizard-next" onClick={handleNext}>

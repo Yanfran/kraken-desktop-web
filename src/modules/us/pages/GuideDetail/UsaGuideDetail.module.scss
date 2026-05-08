@@ -1,0 +1,383 @@
+@use "sass:color";
+
+$primary-color: #FF4500;
+$background-color: #FFFFFF;
+$card-background-color: #F8F8F8;
+$text-primary-color: #000000;
+$text-secondary-color: #757575;
+$success-color: #4CAF50;
+$error-color: #F44336;
+$separator-color: #EEEEEE;
+
+.container {
+  padding: 1rem 1.5rem;
+  background-color: $background-color;
+  flex: 1;
+}
+
+.scrollView {
+  width: 100%;
+}
+
+.loadingContainer, .errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  text-align: center;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: $primary-color;
+  animation: spin 1s ease infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+
+.errorDescription {
+  color: $text-secondary-color;
+  margin-bottom: 1.5rem;
+}
+
+.backButton {
+  background-color: $primary-color;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+  &:hover { background-color: color.scale($primary-color, $lightness: -10%); }
+}
+
+.alertContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 1.25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid;
+}
+
+.alertSuccess {
+  background-color: #E8F5E8;
+  border-color: $success-color;
+  .alertText { color: $success-color; }
+}
+
+.alertInfo {
+  background-color: #E8F0FE;
+  border-color: #3b82f6;
+  .alertText { color: #1d4ed8; }
+}
+
+.alertText {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.section {
+  margin-bottom: 1.25rem;
+}
+
+.row {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.rowItem {
+  flex: 1;
+}
+
+.sectionLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $text-primary-color;
+  margin-bottom: 0.25rem;
+}
+
+.sectionValue {
+  font-size: 1rem;
+  color: $text-primary-color;
+  line-height: 1.4;
+}
+
+.sectionSubtext {
+  font-size: 0.75rem;
+  color: $text-secondary-color;
+  margin-top: 0.125rem;
+}
+
+// Tracking number grande
+.trackingValue {
+  font-size: 1rem;
+  font-weight: 700;
+  color: $text-primary-color;
+  word-break: break-all;
+  font-family: monospace;
+}
+
+// Pickup code destacado
+.pickupCodeValue {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: $primary-color;
+  letter-spacing: 0.08em;
+}
+
+.expandableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-top: 1px solid $separator-color;
+  cursor: pointer;
+}
+
+.expandableTitle {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.expandableContent {
+  padding-bottom: 1rem;
+}
+
+.historyItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.historyContent {
+  flex: 1;
+}
+
+.historyStatus {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.125rem;
+}
+
+.historyDate {
+  font-size: 0.75rem;
+  color: $text-secondary-color;
+}
+
+// ── Sección de factura / recibo ────────────────────────────────────────────
+.facturaSection, .pagoSection {
+  margin-top: 1.25rem;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.facturaTitle, .pagoTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.facturaTable, .pagoTable {
+  background-color: $card-background-color;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.facturaRow, .pagoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid $separator-color;
+  &:last-child { border-bottom: none; }
+}
+
+.facturaLabel, .pagoLabel {
+  font-size: 0.95rem;
+  color: #555;
+  font-weight: 400;
+  flex: 1;
+}
+
+.facturaValue, .pagoValue {
+  font-size: 0.95rem;
+  color: $text-primary-color;
+  font-weight: 500;
+  text-align: right;
+}
+
+.facturaRowDescuento {
+  background-color: rgba(76, 175, 80, 0.05);
+  .facturaValue { color: #16a34a; font-weight: 600; }
+}
+
+.facturaRowTotal {
+  background-color: rgba(33, 150, 243, 0.1);
+  border-top: 3px double $text-primary-color;
+  border-bottom: 3px double $text-primary-color;
+  padding: 16px 0;
+  margin-top: 8px;
+}
+
+.facturaTotalLabel {
+  font-size: 1.1rem;
+  color: $text-primary-color;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  flex: 1;
+}
+
+.facturaTotalValue {
+  font-size: 1.3rem;
+  color: $text-primary-color;
+  font-weight: 700;
+  text-align: right;
+}
+
+.noDataText {
+  text-align: center;
+  padding: 32px 20px;
+  color: #999;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+// ── Label section ────────────────────────────────────────────────────────
+.labelSection {
+  margin: 1.5rem 0;
+  width: 60%;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.labelNotice {
+  display: flex;
+  gap: 0.75rem;
+  background: #FFFBEB;
+  border: 1.5px solid #F59E0B;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.labelNoticeIcon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+.labelNoticeTitle {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #92400E;
+}
+
+.labelNoticeText {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #78350F;
+  line-height: 1.55;
+}
+
+.labelButton {
+  width: 100%;
+  background-color: #022364;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s;
+  &:hover { background-color: color.scale(#022364, $lightness: 10%); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  padding: 0;
+  color: $primary-color;
+  font-size: 1em;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  &:disabled {
+    color: $text-secondary-color;
+    text-decoration: none;
+    cursor: not-allowed;
+  }
+}
+
+// ── Sección de pago (detalle) ───────────────────────────────────────────
+.pagoSection {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pagoTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+// ── Sección de recibo (factura) ─────────────────────────────────────────
+.facturaSection {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.facturaTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .facturaSection, .pagoSection, .labelSection {
+    width: 100%;
+  }
+}

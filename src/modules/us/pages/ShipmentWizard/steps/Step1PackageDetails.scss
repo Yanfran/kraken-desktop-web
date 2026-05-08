@@ -261,7 +261,7 @@ $radius-sm: 8px;
 .step1-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 1rem;
   margin-top: 0.5rem;

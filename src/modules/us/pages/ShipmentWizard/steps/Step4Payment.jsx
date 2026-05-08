@@ -5,6 +5,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosPaymentInstance } from '../../../../../services/axiosInstance';
 import { createUpsPickup, createUpsShipment } from '../../../../../services/us/upsService';
+import { API_URL } from '../../../../../utils/config';
+import {
+  IoCheckmarkCircle,
+  IoWarningOutline,
+  IoCloudDownloadOutline,
+} from 'react-icons/io5';
 import './Step4Payment.scss';
 
 // Devuelve el próximo día hábil (lunes si cae en fin de semana)
@@ -70,31 +76,43 @@ const CardInfo = () => (
 );
 
 // ── Pantalla de Éxito ─────────────────────────────────────────────────────────
-const SuccessScreen = ({ nGuia, metodoPago, labelBase64, trackingNumber }) => {
+const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumber }) => {
+  const hasLabel = !!labelBase64 || !!labelUrl;
+
   const downloadLabel = () => {
-    if (!labelBase64) return;
-    const bytes = Uint8Array.from(atob(labelBase64), c => c.charCodeAt(0));
-    const blob  = new Blob([bytes], { type: 'application/pdf' });
-    const url   = URL.createObjectURL(blob);
-    const a     = document.createElement('a');
-    a.href     = url;
-    a.download = `label-${nGuia}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (labelBase64) {
+      // Descargar directamente desde base64 (sin red)
+      const bytes = Uint8Array.from(atob(labelBase64), c => c.charCodeAt(0));
+      const blob  = new Blob([bytes], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `label-${nGuia}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } else if (labelUrl) {
+      // Fallback: abrir desde el backend
+      const backendBase = API_URL.replace(/\/api$/, '');
+      const fullUrl = labelUrl.startsWith('http') ? labelUrl : `${backendBase}${labelUrl}`;
+      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
     <div className="payment-success" style={{ textAlign: 'center', padding: '40px 20px' }}>
-      <div style={{ fontSize: '4rem', marginBottom: '20px' }}>✅</div>
+      <div style={{ marginBottom: '20px', color: '#22c55e' }}>
+        <IoCheckmarkCircle size={72} />
+      </div>
       <h2 style={{ color: '#022364', fontWeight: 'bold', fontSize: '24px' }}>
-        Order Registered!
+        ¡Envío Registrado!
       </h2>
       <p style={{ color: '#4b5563', marginBottom: '20px' }}>
-        We have received your shipment request.
+        Hemos recibido tu solicitud de recogida correctamente.
       </p>
 
+      {/* Número de guía */}
       <div style={{
         background: '#f3f4f6', padding: '20px', borderRadius: '12px',
         display: 'inline-block', marginBottom: '20px'
@@ -103,13 +121,14 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, trackingNumber }) => {
           display: 'block', fontSize: '12px', color: '#6b7280',
           textTransform: 'uppercase', letterSpacing: '1px'
         }}>
-          Request Number
+          Número de Guía
         </span>
         <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
           {nGuia}
         </span>
       </div>
 
+      {/* Tracking UPS */}
       {trackingNumber && (
         <div style={{
           background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px',
@@ -119,21 +138,31 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, trackingNumber }) => {
         </div>
       )}
 
-      {labelBase64 && (
-        <div style={{ marginBottom: '20px' }}>
+      {/* Aviso de etiqueta */}
+      {hasLabel && (
+        <div style={{
+          background: '#FFFBEB', border: '2px solid #F59E0B', borderRadius: '10px',
+          padding: '16px 20px', marginBottom: '20px', textAlign: 'left',
+          maxWidth: '420px', margin: '0 auto 20px'
+        }}>
+          <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: '700', color: '#92400E', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <IoWarningOutline size={20} /> Acción requerida — Etiqueta de envío
+          </p>
+          <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#78350F', lineHeight: '1.55' }}>
+            Descarga tu etiqueta, imprímela y <strong>pégala en tu caja</strong> antes
+            de que llegue el courier a recoger el paquete. Sin la etiqueta visible el
+            conductor no podrá retirar el envío.
+          </p>
           <button
             onClick={downloadLabel}
             style={{
               background: '#022364', color: '#fff', border: 'none', borderRadius: '8px',
               padding: '12px 28px', fontSize: '15px', fontWeight: '600',
-              cursor: 'pointer', width: '100%', maxWidth: '300px'
+              cursor: 'pointer', width: '100%'
             }}
           >
-            🖨️ Download Shipping Label (PDF)
+            <IoCloudDownloadOutline size={20} /> Descargar Etiqueta de Envío (PDF)
           </button>
-          <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>
-            Print this label and attach it to your package before UPS pickup.
-          </p>
         </div>
       )}
 
@@ -142,16 +171,16 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, trackingNumber }) => {
         maxWidth: '400px', margin: '0 auto 30px'
       }}>
         {metodoPago === 'zelle'
-          ? 'Once our team verifies your Zelle payment, we will generate your pickup label and notify you by email.'
-          : 'Your shipment has been registered. You will receive a confirmation email shortly.'}
+          ? 'Una vez que nuestro equipo verifique tu pago por Zelle, generaremos tu etiqueta y te notificaremos por correo.'
+          : 'Tu envío ha sido registrado. Recibirás un correo de confirmación en breve.'}
       </p>
 
       <button
         className="btn-wizard-next"
         onClick={() => window.location.href = '/home'}
-        style={{ width: '100%', maxWidth: '300px' }}
+        style={{ width: '100%', maxWidth: '300px', textAlign: 'center' }}
       >
-        Go to Home
+        Ir al Inicio
       </button>
     </div>
   );
@@ -174,11 +203,13 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const courier  = courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0;
   const total    = Number((shipping + courier).toFixed(2));
 
-  const totalRef = useRef(total);
+  const totalRef      = useRef(total);
+  const lightboxOpen  = useRef(false);  // true mientras el lightbox está abierto
   useEffect(() => { totalRef.current = total; }, [total]);
 
   // ── Callback que recibe el token de HalaraPay (lightbox) ──────────────────
   const handleTokenReceived = async (token) => {
+    lightboxOpen.current = false;       // token recibido → pago en curso
     setSubmitPhase('Processing payment…');
     try {
       // ── 1. Cobrar la tarjeta ─────────────────────────────────────────────
@@ -298,7 +329,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       });
 
       const nGuia = guiaResult?.nGuia || `KU-${Date.now().toString().slice(-6)}`;
-      setGuiaResult({ nGuia, metodoPago: 'card', labelBase64, trackingNumber });
+      setGuiaResult({ nGuia, metodoPago: 'card', labelBase64, labelUrl, trackingNumber });
 
     } catch (err) {
       console.error('[Step4Payment US] error', err);
@@ -366,8 +397,25 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           throw new Error('Payment form not ready. Please wait a moment and try again.');
 
         setSubmitPhase('Opening secure payment form…');
-        // Abre el lightbox de HalaraPay; el callback gestiona el resto
+        lightboxOpen.current = true;
         window.CollectJS.startPaymentRequest();
+
+        // Detectar cierre del lightbox sin completar el pago.
+        // CollectJS no tiene callback de cancelación; cuando el usuario cierra
+        // el modal, la ventana recupera el foco. Si el token aún no llegó
+        // (lightboxOpen.current sigue true) reseteamos el estado.
+        setTimeout(() => {
+          if (!lightboxOpen.current) return;
+          const handleFocus = () => {
+            if (lightboxOpen.current) {
+              lightboxOpen.current = false;
+              setSubmitting(false);
+              setSubmitPhase('');
+            }
+          };
+          window.addEventListener('focus', handleFocus, { once: true });
+        }, 800);
+
         return;
       }
 

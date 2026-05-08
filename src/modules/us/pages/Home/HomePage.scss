@@ -258,6 +258,42 @@
     color: #1a1a1a;
     margin: 0;
   }
+
+  // Botón Ver todos
+  &__view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: #2d5ba6;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+
+    &:hover {
+      background-color: #f0f4f8;
+      color: #1e4480;
+      transform: translateX(2px);
+    }
+
+    &:active {
+      transform: translateX(0);
+    }
+  }
+
+  &__view-all-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+  }
+
+  &__view-all:hover &__view-all-arrow {
+    transform: translateX(2px);
+  }
 }
 
 // Responsive adjustments

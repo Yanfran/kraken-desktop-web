@@ -112,7 +112,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                 <span className="summary-pkg-item__icon">⚖️</span>
                 <div>
                   <p className="summary-pkg-item__label">Peso Físico:</p>
-                  <p className="summary-pkg-item__value">{pkg?.peso || '–'} {pkg?.unidadPeso || 'kg'}</p>
+                  <p className="summary-pkg-item__value">{pkg?.peso || '–'} {pkg?.unidadPeso || 'lb'}</p>
                 </div>
               </div>
               <div className="summary-pkg-item">
@@ -137,7 +137,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                   <div>
                     <p className="summary-pkg-item__label">Peso facturado:</p>
                     <p className="summary-pkg-item__value">
-                      {fmt(calc.billedWeight)} kg {calc.isVolumetric ? '(Volumétrico)' : ''}
+                      {fmt(calc.billedWeight * 2.20462)} lb {calc.isVolumetric ? '(Volumétrico)' : ''}
                     </p>
                   </div>
                 </div>

@@ -31,6 +31,9 @@ const getClientId = () => {
   }
 };
 
+// ── Helper: solo permite caracteres válidos de teléfono ─────────────────────
+const sanitizePhone = (v) => v.replace(/[^\d\s+\-()]/g, '');
+
 // ════════════════════════════════════════════════════════════════════════════
 // ██  TARJETA DE DIRECCIÓN
 // ════════════════════════════════════════════════════════════════════════════
@@ -155,20 +158,35 @@ const OriginModal = ({ onSave, onClose, saving }) => {
         <div className="addr-modal__body">
           <div className="wizard-field">
             <label>Nombre / Alias *</label>
-            <input placeholder="Ej. Casa, Oficina..." value={form.alias} onChange={(e) => set('alias', e.target.value)} />
+            <input
+              placeholder="Ej. Casa, Oficina..."
+              value={form.alias}
+              onChange={(e) => { set('alias', e.target.value); setErrors(p => ({ ...p, alias: '' })); }}
+              className={errors.alias ? 'input--error' : ''}
+            />
             {errors.alias && <span className="field-error">{errors.alias}</span>}
           </div>
 
           <div className="wizard-field">
             <label>Dirección *</label>
-            <input placeholder="Calle de Alcalá 123, 2º A" value={form.line1} onChange={(e) => set('line1', e.target.value)} />
+            <input
+              placeholder="Calle de Alcalá 123, 2º A"
+              value={form.line1}
+              onChange={(e) => { set('line1', e.target.value); setErrors(p => ({ ...p, line1: '' })); }}
+              className={errors.line1 ? 'input--error' : ''}
+            />
             {errors.line1 && <span className="field-error">{errors.line1}</span>}
           </div>
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
               <label>Ciudad *</label>
-              <input placeholder="Miami" value={form.city} onChange={(e) => set('city', e.target.value)} />
+              <input
+                placeholder="Miami"
+                value={form.city}
+                onChange={(e) => { set('city', e.target.value); setErrors(p => ({ ...p, city: '' })); }}
+                className={errors.city ? 'input--error' : ''}
+              />
               {errors.city && <span className="field-error">{errors.city}</span>}
             </div>
             <div className="wizard-field">
@@ -184,7 +202,13 @@ const OriginModal = ({ onSave, onClose, saving }) => {
             </div>
             <div className="wizard-field">
               <label>Teléfono</label>
-              <input placeholder="+1 305 555 0123" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
+              <input
+                placeholder="+1 305 555 0123"
+                value={form.phone}
+                onChange={(e) => set('phone', sanitizePhone(e.target.value))}
+                maxLength={20}
+                inputMode="tel"
+              />
             </div>
           </div>
 
@@ -417,7 +441,8 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                   <label>Ciudad *</label>
                   <select
                     value={storeForm.city}
-                    onChange={(e) => setStore('city', e.target.value)}
+                    onChange={(e) => { setStore('city', e.target.value); setErrors(p => ({ ...p, city: '' })); }}
+                    className={errors.city ? 'input--error' : ''}
                   >
                     <option value="">Seleccione una ciudad</option>
                     {ciudades.map((c) => (
@@ -427,13 +452,13 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                   {errors.city && <span className="field-error">{errors.city}</span>}
                 </div>
 
-                
                 <div className="wizard-field">
                   <label>Tienda *</label>
                   <select
                     value={storeForm.store}
-                    onChange={(e) => setStore('store', e.target.value)}
+                    onChange={(e) => { setStore('store', e.target.value); setErrors(p => ({ ...p, store: '' })); }}
                     disabled={!storeForm.city}
+                    className={errors.store ? 'input--error' : ''}
                   >
                     <option value="">Seleccione una tienda</option>
                     {filteredTiendas.map((t) => (
@@ -457,7 +482,8 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 <input
                   placeholder="Ej. Casa, Oficina, etc."
                   value={homeForm.alias}
-                  onChange={(e) => setHome('alias', e.target.value)}
+                  onChange={(e) => { setHome('alias', e.target.value); setErrors(p => ({ ...p, alias: '' })); }}
+                  className={errors.alias ? 'input--error' : ''}
                 />
                 {errors.alias && <span className="field-error">{errors.alias}</span>}
               </div>
@@ -466,7 +492,11 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <div className="wizard-grid-3">
                 <div className="wizard-field">
                   <label>Estado *</label>
-                  <select value={homeForm.idEstado} onChange={(e) => setHome('idEstado', e.target.value)}>
+                  <select
+                    value={homeForm.idEstado}
+                    onChange={(e) => { setHome('idEstado', e.target.value); setErrors(p => ({ ...p, idEstado: '' })); }}
+                    className={errors.idEstado ? 'input--error' : ''}
+                  >
                     <option value="">Seleccione un estado</option>
                     {estados.map((e) => (
                       <option key={e.id} value={e.id}>{e.name}</option>
@@ -479,8 +509,9 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                   <label>Municipio *</label>
                   <select
                     value={homeForm.idMunicipio}
-                    onChange={(e) => setHome('idMunicipio', e.target.value)}
+                    onChange={(e) => { setHome('idMunicipio', e.target.value); setErrors(p => ({ ...p, idMunicipio: '' })); }}
                     disabled={!homeForm.idEstado || loadingGeo}
+                    className={errors.idMunicipio ? 'input--error' : ''}
                   >
                     <option value="">
                       {loadingGeo ? 'Cargando...' : 'Seleccione un municipio'}
@@ -511,11 +542,11 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <div className="wizard-field">
                 <label>Dirección Completa *</label>
                 <textarea
-                  className="addr-modal__textarea"
+                  className={`addr-modal__textarea${errors.direccion ? ' input--error' : ''}`}
                   placeholder="Ej: Barrio, Vicario 3, Carrera 9 entre Calles 5 y 7"
                   rows={3}
                   value={homeForm.direccion}
-                  onChange={(e) => setHome('direccion', e.target.value)}
+                  onChange={(e) => { setHome('direccion', e.target.value); setErrors(p => ({ ...p, direccion: '' })); }}
                 />
                 {errors.direccion && <span className="field-error">{errors.direccion}</span>}
               </div>
@@ -557,7 +588,8 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <input
                 placeholder="Ej. Juan"
                 value={contactoForm.nombres}
-                onChange={(e) => setContacto('nombres', e.target.value)}
+                onChange={(e) => { setContacto('nombres', e.target.value); setErrors(p => ({ ...p, nombres: '' })); }}
+                className={errors.nombres ? 'input--error' : ''}
               />
               {errors.nombres && <span className="field-error">{errors.nombres}</span>}
             </div>
@@ -577,7 +609,10 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <input
                 placeholder="Ej. 0412-1234567"
                 value={contactoForm.telefono}
-                onChange={(e) => setContacto('telefono', e.target.value)}
+                onChange={(e) => { setContacto('telefono', sanitizePhone(e.target.value)); setErrors(p => ({ ...p, telefono: '' })); }}
+                className={errors.telefono ? 'input--error' : ''}
+                maxLength={20}
+                inputMode="tel"
               />
               {errors.telefono && <span className="field-error">{errors.telefono}</span>}
             </div>
@@ -586,7 +621,9 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <input
                 placeholder="Opcional"
                 value={contactoForm.telefonoAdicional}
-                onChange={(e) => setContacto('telefonoAdicional', e.target.value)}
+                onChange={(e) => setContacto('telefonoAdicional', sanitizePhone(e.target.value))}
+                maxLength={20}
+                inputMode="tel"
               />
             </div>
           </div>
@@ -818,24 +855,28 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         )}
 
         <div className="addr-columns">
-          <AddressColumn
-            title="Origen" flag="🇺🇸" country="USA"
-            addresses={originList} selectedId={data.originAddressId}
-            loading={loading.origin}
-            onSelect={(id) => { updateData({ originAddressId: id }); setErrors((p) => ({ ...p, origin: null })); }}
-            onAdd={() => setModal('origin')}
-            onDelete={(id) => handleDelete('origin', id)}
-            onSetDefault={(id) => handleSetDefault('origin', id)}
-          />
-          <AddressColumn
-            title="Destino" flag="🇻🇪" country="Venezuela"
-            addresses={destList} selectedId={data.destinationAddressId}
-            loading={loading.dest}
-            onSelect={(id) => { updateData({ destinationAddressId: id }); setErrors((p) => ({ ...p, dest: null })); }}
-            onAdd={() => setModal('dest')}
-            onDelete={(id) => handleDelete('dest', id)}
-            onSetDefault={(id) => handleSetDefault('dest', id)}
-          />
+          <div className={errors.origin ? 'addr-col--error' : ''}>
+            <AddressColumn
+              title="Origen" flag="🇺🇸" country="USA"
+              addresses={originList} selectedId={data.originAddressId}
+              loading={loading.origin}
+              onSelect={(id) => { updateData({ originAddressId: id }); setErrors((p) => ({ ...p, origin: null })); }}
+              onAdd={() => setModal('origin')}
+              onDelete={(id) => handleDelete('origin', id)}
+              onSetDefault={(id) => handleSetDefault('origin', id)}
+            />
+          </div>
+          <div className={errors.dest ? 'addr-col--error' : ''}>
+            <AddressColumn
+              title="Destino" flag="🇻🇪" country="Venezuela"
+              addresses={destList} selectedId={data.destinationAddressId}
+              loading={loading.dest}
+              onSelect={(id) => { updateData({ destinationAddressId: id }); setErrors((p) => ({ ...p, dest: null })); }}
+              onAdd={() => setModal('dest')}
+              onDelete={(id) => handleDelete('dest', id)}
+              onSetDefault={(id) => handleSetDefault('dest', id)}
+            />
+          </div>
         </div>
       </div>
 

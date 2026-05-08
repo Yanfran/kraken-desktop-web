@@ -49,8 +49,14 @@ const USStores = React.lazy(() => import('../modules/us/pages/StoresPage'));
 const USCalc = React.lazy(() => import('../modules/us/pages/CalculatorPage'));
 const USTracking = React.lazy(() => import('../modules/us/pages/TrackingPage'));
 const USAddresses = React.lazy(() => import('../modules/us/pages/Addresses/AddressesPage'));
-const USShipmentWizard = React.lazy(() => 
+const USShipmentWizard = React.lazy(() =>
   import('../modules/us/pages/ShipmentWizard/USShipmentWizard')
+);
+const UsaGuideDetail = React.lazy(() =>
+  import('../modules/us/pages/GuideDetail/UsaGuideDetail')
+);
+const UsaGuidesList = React.lazy(() =>
+  import('../modules/us/pages/GuidesList/UsaGuidesList')
 );
 
 
@@ -137,16 +143,17 @@ const TenantRouter = () => {
                     <>
                         <Route path="/home" element={<USHome />} />
                         <Route path="/pickup"   element={<USShipmentWizard />} /> 
-                        <Route path="/stores" element={<USStores />} />
+                        <Route path="/stores" element={<Addresses />} />
                         <Route path="/calculator" element={<Calculator />} />
                         <Route path="/tracking" element={<Tracking />} />
                         <Route path="/profile/addresses" element={<USAddresses />} />
-                        <Route path="/guide/guides" element={<Guides />} />
-                        <Route path="/guide/detail/:idGuia" element={<GuideDetail />} />
-                        
+                        <Route path="/profile/personal-data" element={<PersonalDataPage />} />
+                        <Route path="/guide/guides" element={<UsaGuidesList />} />
+                        <Route path="/guide/detail/:idGuia" element={<UsaGuideDetail />} />
+
                         {/* Redirección por defecto */}
                         <Route path="/" element={<Navigate to="/home" replace />} />
-                        
+
                         {/* 404 para USA */}
                         <Route path="*" element={
                             <div className="p-10 text-center">

@@ -169,7 +169,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
         </p>
 
         <div className="courier-step__meta">
-          <span>📦 Peso: <strong>{weightKg} kg</strong></span>
+          <span>📦 Peso: <strong>{parseFloat(pkg.peso || 0).toFixed(2)} {pkg.unidadPeso || 'lb'}</strong></span>
           <span>📍 Origen: <strong>{originPostalCode}</strong></span>
           <span>🏭 Destino: <strong>{KRAKEN_US_WAREHOUSE_ZIP} (Almacén Kraken)</strong></span>
         </div>

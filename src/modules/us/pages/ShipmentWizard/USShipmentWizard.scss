@@ -216,6 +216,7 @@ $transition:    0.2s ease;
   transition: background $transition, transform $transition;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
 
   &:hover { background: $primary-hover; transform: translateY(-1px); }

@@ -1,0 +1,1 @@
+import{j as a}from"./index-DymJqIoo.js";const s=()=>a.jsxs("div",{className:"p-4",children:[a.jsx("h1",{className:"text-2xl font-bold",children:"📍 Track your Package"}),a.jsx("p",{children:"US Tracking System (Tenant: KU)"})]});export{s as default};

@@ -69,14 +69,14 @@ export const TENANTS = {
         showStoresButton: true,    // ✅ Mostrar tiendas
         menuItems: [
           { id: 'shipments', label: 'Mis Envíos', path: '/guide/guides' },
-          { 
-            id: 'profile', 
-            label: 'Perfil de Usuario', 
-            path: '/profile', 
+          {
+            id: 'profile',
+            label: 'Perfil de Usuario',
+            path: '/profile',
             hasSubMenu: true,
             subItems: [
               { id: 'personal', label: 'Datos Personales', path: '/profile/personal-data' },
-              { id: 'addresses', label: 'Mis Direcciones', path: '/profile/addresses' },
+              // { id: 'addresses', label: 'Mis Direcciones', path: '/profile/addresses' },
               { id: 'password', label: 'Cambiar Contraseña', path: '/change-password' }
             ]
           }

@@ -89,7 +89,7 @@ const HomePage = () => {
                   <div
                     key={s.guiaId}
                     className="us-home__shipment-item"
-                    onClick={() => navigate(`/tracking/${s.nGuia}`)}
+                    onClick={() => navigate(`/guide/detail/${s.guiaId}`)}
                   >
                     <div className="us-home__shipment-info">
                       <span className="us-home__shipment-id">{s.nGuia}</span>
@@ -109,8 +109,10 @@ const HomePage = () => {
                 <button
                   className="us-home__view-all"
                   onClick={() => navigate('/guide/guides')}
+                  aria-label={`Ver todos los ${shipments.length} envíos`}
                 >
-                  Ver todos ({shipments.length}) →
+                  <span>Ver todos ({shipments.length})</span>
+                  <span className="us-home__view-all-arrow">→</span>
                 </button>
               )}
             </section>
@@ -149,14 +151,14 @@ const HomePage = () => {
                   <span className="us-home__address-icon">🧮</span>
                   <span className="us-home__address-name">Calculadora</span>
                 </div>
-                <div
+                {/* <div
                   className="us-home__address-card"
                   onClick={() => navigate('/profile/addresses')}
                   style={{ cursor: 'pointer' }}
                 >
                   <span className="us-home__address-icon">📍</span>
                   <span className="us-home__address-name">Mis direcciones</span>
-                </div>
+                </div> */}
                 <div
                   className="us-home__address-card"
                   onClick={() => navigate('/pickup')}
