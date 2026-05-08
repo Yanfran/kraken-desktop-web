@@ -269,6 +269,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
         : null;
 
       const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
+        halaraPayTransactionId: chargeResult.transactionId ?? '',
         peso:             Number(pkg.peso  || 0),
         largo:            Number(pkg.largo || 0),
         ancho:            Number(pkg.ancho || 0),

@@ -9,8 +9,8 @@ import axiosInstance from '../../../../../services/axiosInstance';
 
 
 // ── Opciones de tipo de paquete ──────────────────────────────────────────────
-const PACKAGE_TYPES = ['Caja', 'Sobre'];
-const WEIGHT_UNITS  = ['kg', 'lb'];
+const PACKAGE_TYPES = ['Caja'];
+const WEIGHT_UNITS  = ['lb'];
 
 // ── Paquete vacío generador ──────────────────────────────────────────────────
 const newPackage = () => ({
@@ -19,7 +19,7 @@ const newPackage = () => ({
   ancho: '',
   alto: '',
   peso: '',
-  unidadPeso: 'kg',
+  unidadPeso: 'lb',
   tipoPaquete: 'Caja',
   valorFOB: '',
   descripcion: '',
@@ -487,7 +487,7 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
 
       {/* Acciones */}
       <div className="step1-footer">
-        <button className="btn-add-box" onClick={handleAdd}>
+        <button className="btn-add-box" disabled onClick={handleAdd}>
           + Añadir otra caja
         </button>
 

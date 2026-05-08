@@ -1,66 +1,48 @@
 // src/services/us/usCalculatorService.js
+// Calcula tarifa Encomiendas USA (Prime Box / Family Box) en USD.
+// Endpoint: POST api/usa/tarifa/calcular
 import axiosInstance from '../axiosInstance';
 
 export const calculateUSShipping = async ({
   stateId,
   municipalityId = null,
+  lockerId       = null,
   weight,
   declaredValue,
-  weightUnit    = 'Kg',
-  dimensionUnit = 'cm',
-  length        = 0,
-  width         = 0,
-  height        = 0,
+  weightUnit     = 'Kg',
 }) => {
   try {
-    const payload = {
-      stateId:        Number(stateId),
+    const { data: api } = await axiosInstance.post('/usa/tarifa/calcular', {
+      stateId:        stateId        ? Number(stateId)        : null,
       municipalityId: municipalityId ? Number(municipalityId) : null,
-      declaredValue:  parseFloat(declaredValue),
-      currency:       'USD',
-      content:        'General',
-      paisOrigen:     'US',
+      lockerId:       lockerId       ? Number(lockerId)       : null,
       weight:         parseFloat(weight),
       weightUnit,
-      dimensionUnit,
-      dimensions: {
-        length: parseFloat(length),
-        width:  parseFloat(width),
-        height: parseFloat(height),
-      },
-    };
-
-    const response = await axiosInstance.post('/Calculator/calculate', payload);
-    const api = response.data;
+      declaredValue:  parseFloat(declaredValue) || 0,
+    });
 
     if (!api.success) {
       return { success: false, data: null, message: api.message };
     }
 
     const raw = api.data;
-    const breakdown = raw?.breakdowns?.oficina ?? raw?.breakdowns?.domicilio ?? null;
-
-    // ✅ CalculatorController devuelve montoUSD en cada detalle
-    // Step3Summary espera d.monto → remapeamos aquí para no tocar el componente
-    const detallesNormalizados = (breakdown?.detalles ?? []).map(d => ({
-      descripcionItem: d.descripcionItem,
-      monto:           d.montoUSD ?? d.monto ?? 0,
-      esDescuento:     d.esDescuento ?? false,
-      categoria:       d.categoria  ?? '',
-    }));
 
     const normalizedData = {
-      detalles: detallesNormalizados,
-      total:    breakdown?.total ?? raw?.cost ?? 0,
+      detalles: (raw.detalles ?? []).map(d => ({
+        descripcionItem: d.descripcionItem,
+        monto:           d.monto,
+        esDescuento:     d.esDescuento ?? false,
+        categoria:       d.categoria   ?? '',
+      })),
+      total: raw.totalUSD,
     };
 
     return {
-      success:         true,
-      data:            normalizedData,
-      billedWeight:    raw?.weightLbVol ?? null,
-      isVolumetric:    false,
-      message:         'Cálculo completado',
-      deliveryOptions: raw?.deliveryOptions ?? [],
+      success:  true,
+      data:     normalizedData,
+      tipoBox:  raw.tipoBox,
+      pesoLbs:  raw.pesoLbs,
+      message:  'Cálculo completado',
     };
 
   } catch (error) {

@@ -168,12 +168,12 @@ const OriginModal = ({ onSave, onClose, saving }) => {
           <div className="wizard-grid-2">
             <div className="wizard-field">
               <label>Ciudad *</label>
-              <input placeholder="Madrid" value={form.city} onChange={(e) => set('city', e.target.value)} />
+              <input placeholder="Miami" value={form.city} onChange={(e) => set('city', e.target.value)} />
               {errors.city && <span className="field-error">{errors.city}</span>}
             </div>
             <div className="wizard-field">
               <label>Provincia</label>
-              <input placeholder="Madrid" value={form.province} onChange={(e) => set('province', e.target.value)} />
+              <input placeholder="Florida" value={form.province} onChange={(e) => set('province', e.target.value)} />
             </div>
           </div>
 
@@ -184,7 +184,7 @@ const OriginModal = ({ onSave, onClose, saving }) => {
             </div>
             <div className="wizard-field">
               <label>Teléfono</label>
-              <input placeholder="+34 600 000 000" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
+              <input placeholder="+1 305 555 0123" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
             </div>
           </div>
 
@@ -231,6 +231,14 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
     referencia:  '',
     setAsDefault: false,
   });
+
+  // ── Datos del contacto de entrega (compartido para home y store) ───────────
+  const [contactoForm, setContactoForm] = useState({
+    nombres: '', apellidos: '', email: '', telefono: '',
+    telefonoAdicional: '', numeroIdentificacion: '',
+    informacionAdicional: '', referenciaContacto: '',
+  });
+  const setContacto = (k, v) => setContactoForm((p) => ({ ...p, [k]: v }));
 
   // ── Datos GEO ──────────────────────────────────────────────────────────────
   const [ciudades,    setCiudades]    = useState([]);  // [{ id, name }]
@@ -314,6 +322,8 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
       if (!homeForm.idMunicipio)     e.idMunicipio = 'Selecciona un municipio';
       if (!homeForm.direccion.trim()) e.direccion = 'La dirección es obligatoria';
     }
+    if (!contactoForm.nombres.trim())  e.nombres  = 'El nombre del contacto es obligatorio';
+    if (!contactoForm.telefono.trim()) e.telefono = 'El teléfono del contacto es obligatorio';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -321,6 +331,17 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
   // ── Guardar ────────────────────────────────────────────────────────────────
   const handleSave = () => {
     if (!validate()) return;
+
+    const contactoPayload = {
+      contactoNombres:              contactoForm.nombres,
+      contactoApellidos:            contactoForm.apellidos,
+      contactoEmail:                contactoForm.email,
+      contactoTelefono:             contactoForm.telefono,
+      contactoTelefonoAdicional:    contactoForm.telefonoAdicional,
+      contactoNumeroIdentificacion: contactoForm.numeroIdentificacion,
+      contactoInformacionAdicional: contactoForm.informacionAdicional,
+      contactoReferencia:           contactoForm.referenciaContacto,
+    };
 
     if (tipo === 'store') {
       const tiendaSeleccionada = allTiendas.find((t) => t.id === parseInt(storeForm.store));
@@ -334,6 +355,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
         direccion:     null,
         referencia:    null,
         setAsDefault:  false,
+        ...contactoPayload,
       });
     } else {
       onSave({
@@ -346,6 +368,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
         direccion:     homeForm.direccion.trim(),
         referencia:    homeForm.referencia.trim(),
         setAsDefault:  homeForm.setAsDefault,
+        ...contactoPayload,
       });
     }
   };
@@ -362,7 +385,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
         <div className="addr-modal__body">
 
           {/* ── Selector de tipo ─────────────────────────────────────────── */}
-           {/* 🚧 TEMPORALMENTE DESHABILITADO: Retiro en tienda pendiente de implementación
+           
           <div className="addr-modal__type-selector">
             <button
               type="button"
@@ -379,16 +402,14 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <span>🏠</span> Enviar a otra dirección
             </button>
           </div>
-           */}
+           
           {/* ══════════════════════════════════════════════════════════════
               SECCIÓN TIENDA — Ciudad + Tienda (filtrada)
           ══════════════════════════════════════════════════════════════ */}
 
-          {/* ══════════════════════════════════════════════════════════════
-              SECCIÓN TIENDA — 🚧 TEMPORALMENTE DESHABILITADO
-          ══════════════════════════════════════════════════════════════ */}
+  
           
-          {/* {tipo === 'store' && (
+          {tipo === 'store' && (
             <>
               <div className="wizard-grid-2">
                 
@@ -423,7 +444,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 </div>
               </div>
             </>
-          )} */}
+          )} 
 
           {/* ══════════════════════════════════════════════════════════════
               SECCIÓN DOMICILIO — Nombre + Estado + Municipio + Parroquia + Dirección
@@ -522,6 +543,92 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               </label>
             </>
           )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              SECCIÓN CONTACTO — Datos de quien recibe (home y store)
+          ══════════════════════════════════════════════════════════════ */}
+          <div className="addr-modal__section-divider">
+            <span>👤 Datos del Contacto de Entrega</span>
+          </div>
+
+          <div className="wizard-grid-2">
+            <div className="wizard-field">
+              <label>Nombres *</label>
+              <input
+                placeholder="Ej. Juan"
+                value={contactoForm.nombres}
+                onChange={(e) => setContacto('nombres', e.target.value)}
+              />
+              {errors.nombres && <span className="field-error">{errors.nombres}</span>}
+            </div>
+            <div className="wizard-field">
+              <label>Apellidos</label>
+              <input
+                placeholder="Ej. Pérez"
+                value={contactoForm.apellidos}
+                onChange={(e) => setContacto('apellidos', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="wizard-grid-2">
+            <div className="wizard-field">
+              <label>Teléfono *</label>
+              <input
+                placeholder="Ej. 0412-1234567"
+                value={contactoForm.telefono}
+                onChange={(e) => setContacto('telefono', e.target.value)}
+              />
+              {errors.telefono && <span className="field-error">{errors.telefono}</span>}
+            </div>
+            <div className="wizard-field">
+              <label>Teléfono Adicional <span className="label-optional">(opcional)</span></label>
+              <input
+                placeholder="Opcional"
+                value={contactoForm.telefonoAdicional}
+                onChange={(e) => setContacto('telefonoAdicional', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="wizard-grid-2">
+            <div className="wizard-field">
+              <label>Email <span className="label-optional">(opcional)</span></label>
+              <input
+                type="email"
+                placeholder="correo@ejemplo.com"
+                value={contactoForm.email}
+                onChange={(e) => setContacto('email', e.target.value)}
+              />
+            </div>
+            <div className="wizard-field">
+              <label>N° Identificación <span className="label-optional">(opcional)</span></label>
+              <input
+                placeholder="Ej. V-12345678"
+                value={contactoForm.numeroIdentificacion}
+                onChange={(e) => setContacto('numeroIdentificacion', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="wizard-grid-2">
+            <div className="wizard-field">
+              <label>Información Adicional <span className="label-optional">(opcional)</span></label>
+              <input
+                placeholder="Notas sobre el contacto"
+                value={contactoForm.informacionAdicional}
+                onChange={(e) => setContacto('informacionAdicional', e.target.value)}
+              />
+            </div>
+            <div className="wizard-field">
+              <label>Referencia del Contacto <span className="label-optional">(opcional)</span></label>
+              <input
+                placeholder="Referencia o nota adicional"
+                value={contactoForm.referenciaContacto}
+                onChange={(e) => setContacto('referenciaContacto', e.target.value)}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="addr-modal__footer">

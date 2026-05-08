@@ -107,29 +107,22 @@ const ESShipmentWizard = () => {
         }
       }
 
-      // ── Para España necesitamos enviarlo en KG al backend ──
+      const lockerId = destino?.idLocker ?? null;
+
+      // ── Peso en KG para enviar al backend (que convierte internamente a lbs) ──
       const pesoRaw = parseFloat(pkg.peso) || 0;
       const pesoKg  = pkg.unidadPeso?.toLowerCase() === 'lb'
         ? parseFloat((pesoRaw / 2.20462).toFixed(2))
         : pesoRaw;
 
-      // ── Dimensiones ──
-      const largo = parseFloat(pkg.largo) || 0;
-      const ancho = parseFloat(pkg.ancho) || 0;
-      const alto  = parseFloat(pkg.alto)  || 0;
-
       setCalculating(true);
-      
-      // ── Llamada sincronizada con nuestro SpainCalculatorController ──
+
       const result = await calculateUSShipping({
-        stateId:       stateId,
+        stateId,
         municipalityId: municipioId,
+        lockerId,
         weight:        pesoKg,
         weightUnit:    'Kg',
-        dimensionUnit: 'cm',
-        length:        largo,
-        width:         ancho,
-        height:        alto,
         declaredValue: parseFloat(pkg.valorFOB) || 0,
       });
 

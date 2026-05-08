@@ -384,6 +384,27 @@ $radius: 10px;
   }
 }
 
+// ── Divisor de sección dentro del modal ──────────────────────────────────────
+.addr-modal__section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+}
+
 // ── Columna vacía ─────────────────────────────────────────────────────────────
 .addr-col__empty {
   font-size: 0.85rem;

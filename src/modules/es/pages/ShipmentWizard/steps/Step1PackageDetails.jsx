@@ -10,7 +10,7 @@ import axiosInstance from '../../../../../services/axiosInstance';
 
 // ── Opciones de tipo de paquete ──────────────────────────────────────────────
 const PACKAGE_TYPES = ['Caja', 'Sobre'];
-const WEIGHT_UNITS  = ['kg', 'lb'];
+const WEIGHT_UNITS  = ['kg'];
 
 // ── Paquete vacío generador ──────────────────────────────────────────────────
 const newPackage = () => ({
