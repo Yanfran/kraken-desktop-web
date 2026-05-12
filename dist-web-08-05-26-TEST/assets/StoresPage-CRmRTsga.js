@@ -1,1 +1,0 @@
-import{j as s}from"./index-DymJqIoo.js";const t=()=>s.jsxs("div",{className:"p-4",children:[s.jsx("h1",{className:"text-2xl font-bold",children:"🏪 Our Stores"}),s.jsx("p",{children:"Find Kraken locations in USA (Tenant: KU)"})]});export{t as default};

@@ -1,1 +1,0 @@
-import{j as a}from"./index-D-DQDBGN.js";const t=()=>a.jsxs("div",{className:"p-4",children:[a.jsx("h1",{className:"text-2xl font-bold",children:"🧮 Calculator"}),a.jsx("p",{children:"US Shipping Calculator (Tenant: KU)"})]});export{t as default};
