@@ -56,30 +56,16 @@ const PersonalData = () => {
 
   // Validaciones de documentos
   const documentValidations = {
-    cedula: {
-      pattern: /^[0-9]+$/,
-      minLength: 4,
-      maxLength: 9,
-      description: "Solo números (0-9), entre 4 y 9 dígitos"
-    },
-    pasaporte: {
-      pattern: /^[A-Za-z0-9]+$/,
-      minLength: 6,
-      maxLength: 12,
-      description: "Letras y números, entre 6 y 12 caracteres"
-    },
-    rif: {
-      pattern: /^[A-Za-z0-9]+$/,
-      minLength: 6,
-      maxLength: 12,
-      description: "Letras y números, entre 6 y 12 caracteres"
-    },
-    otro: {
-      pattern: /^[A-Za-z0-9]+$/,
-      minLength: 4,
-      maxLength: 20,
-      description: "Letras y números, entre 4 y 20 caracteres"
-    }
+    cedula:            { pattern: /^[0-9]+$/,          minLength: 4,  maxLength: 9,  description: "Solo números, entre 4 y 9 dígitos" },
+    cedulavenezolana:  { pattern: /^[0-9]+$/,          minLength: 4,  maxLength: 9,  description: "Solo números, entre 4 y 9 dígitos" },
+    cedulaextranjera:  { pattern: /^[A-Za-z0-9]+$/,    minLength: 4,  maxLength: 12, description: "Letras y números, entre 4 y 12 caracteres" },
+    pasaporte:         { pattern: /^[A-Za-z0-9]+$/,    minLength: 6,  maxLength: 12, description: "Letras y números, entre 6 y 12 caracteres" },
+    rif:               { pattern: /^[A-Za-z0-9\-]+$/,  minLength: 6,  maxLength: 12, description: "Letras, números y guiones, entre 6 y 12 caracteres" },
+    rifjuridico:       { pattern: /^[A-Za-z0-9\-]+$/,  minLength: 6,  maxLength: 12, description: "Letras, números y guiones, entre 6 y 12 caracteres" },
+    rifgubernamental:  { pattern: /^[A-Za-z0-9\-]+$/,  minLength: 6,  maxLength: 12, description: "Letras, números y guiones, entre 6 y 12 caracteres" },
+    rifcomuna:         { pattern: /^[A-Za-z0-9\-]+$/,  minLength: 6,  maxLength: 12, description: "Letras, números y guiones, entre 6 y 12 caracteres" },
+    riffirmapersonal:  { pattern: /^[A-Za-z0-9\-]+$/,  minLength: 6,  maxLength: 12, description: "Letras, números y guiones, entre 6 y 12 caracteres" },
+    otro:              { pattern: /^[A-Za-z0-9]+$/,    minLength: 4,  maxLength: 20, description: "Letras y números, entre 4 y 20 caracteres" },
   };
 
   // Formatos de teléfono por país
@@ -356,15 +342,23 @@ const PersonalData = () => {
     } else {
       switch (formData.documentType) {
         case 'cedula':
+        case 'cedulavenezolana':
           cleaned = text.replace(/[^0-9]/g, '');
           break;
+        case 'cedulaextranjera':
         case 'pasaporte':
-        case 'rif':
         case 'otro':
           cleaned = text.replace(/[^A-Za-z0-9]/g, '');
           break;
+        case 'rif':
+        case 'rifjuridico':
+        case 'rifgubernamental':
+        case 'rifcomuna':
+        case 'riffirmapersonal':
+          cleaned = text.replace(/[^A-Za-z0-9\-]/g, '');
+          break;
         default:
-          cleaned = text;
+          cleaned = text.replace(/[^A-Za-z0-9]/g, '');
       }
     }
 
@@ -474,11 +468,12 @@ const PersonalData = () => {
       .map(item => ({
         label: item.displayName,
         value: item.displayName
+          .replace(/\s*\([^)]*\)/g, '')
           .toLowerCase()
           .normalize('NFD')
           .replace(/[̀-ͯ]/g, '')
           .replace(/'/g, '')
-          .replace(/ /g, '')
+          .replace(/\s+/g, '')
       }));
   };
 
@@ -499,15 +494,16 @@ const PersonalData = () => {
 
     switch (formData.documentType) {
       case 'cedula':
-        return "Ej: 12345678";
-      case 'pasaporte':
-        return "Ej: A1234567";
+      case 'cedulavenezolana':  return "Ej: 12345678";
+      case 'cedulaextranjera':  return "Ej: E12345678";
+      case 'pasaporte':         return "Ej: A1234567";
       case 'rif':
-        return "Ej: J123456789";
-      case 'otro':
-        return "Documento de identidad";
-      default:
-        return "Número de documento";
+      case 'rifjuridico':       return "Ej: J-12345678-9";
+      case 'rifgubernamental':  return "Ej: G-12345678-9";
+      case 'rifcomuna':         return "Ej: C-12345678-9";
+      case 'riffirmapersonal':  return "Ej: R-12345678-9";
+      case 'otro':              return "Documento de identidad";
+      default:                  return "Número de documento";
     }
   };
 
@@ -639,20 +635,6 @@ const PersonalData = () => {
           {/* Teléfono principal — VE: con operador, US: formato americano */}
           {formData.residenceCountry === 'VE' ? (
             <div className="kraken-form-field__row">
-              <div className="kraken-form-field kraken-form-field--60">
-                <label className="kraken-form-field__label">Número de Celular</label>
-                <input
-                  type="tel"
-                  className="kraken-form-field__input"
-                  placeholder={getPhonePlaceholder()}
-                  value={formData.phone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  required
-                />
-                {formData.phone && !isPhoneComplete() && (
-                  <p className="kraken-form-field__error">{getPhoneErrorMessage()}</p>
-                )}
-              </div>
               <div className="kraken-form-field kraken-form-field--38">
                 <label className="kraken-form-field__label">Operador</label>
                 <select
@@ -668,6 +650,20 @@ const PersonalData = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="kraken-form-field kraken-form-field--60">
+                <label className="kraken-form-field__label">Número de Celular</label>
+                <input
+                  type="tel"
+                  className="kraken-form-field__input"
+                  placeholder={getPhonePlaceholder()}
+                  value={formData.phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  required
+                />
+                {formData.phone && !isPhoneComplete() && (
+                  <p className="kraken-form-field__error">{getPhoneErrorMessage()}</p>
+                )}
               </div>
             </div>
           ) : formData.residenceCountry === 'US' ? (

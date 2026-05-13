@@ -89,7 +89,7 @@ const PersonalData = () => {
   }, [user]);
 
   const inferCountryFromDocId = (docId) => {
-    if ([1, 2, 3].includes(docId)) return 'VE';
+    if ([1, 2, 3, 7, 8, 9, 10].includes(docId)) return 'VE';
     if ([4, 5].includes(docId)) return 'US';
     return '';
   };
@@ -98,24 +98,32 @@ const PersonalData = () => {
     if (!userData) return '';
     const docId = userData.idClienteTipoIdentificacion;
     const docMap = {
-      1: 'pasaporte',
-      2: 'rif',
-      3: 'cedula',
-      4: 'driverslicense',
-      5: 'ein'
+      1:  'pasaporte',
+      2:  'rifjuridico',
+      3:  'cedulavenezolana',
+      4:  'driverslicense',
+      5:  'ein',
+      7:  'cedulaextranjera',
+      8:  'rifgubernamental',
+      9:  'rifcomuna',
+      10: 'riffirmapersonal',
     };
     return docMap[docId] || '';
   };
 
   const mapIdTypeToBackend = (idType) => {
-    // ✅ MAPEO INVERSO CORRECTO
-    const typeMap = { 
-      'pasaporte': 1,  // ✅ Pasaporte
-      'rif': 2,        // ✅ RIF
-      'cedula': 3,     // ✅ Cédula
-      'otro': 4        // ✅ Otros documentos
+    const typeMap = {
+      'pasaporte':        1,
+      'rifjuridico':      2,
+      'cedulavenezolana': 3,
+      'driverslicense':   4,
+      'ein':              5,
+      'cedulaextranjera': 7,
+      'rifgubernamental': 8,
+      'rifcomuna':        9,
+      'riffirmapersonal': 10,
     };
-    return typeMap[idType] || 3; // Default: Cédula
+    return typeMap[idType] || 3;
   };
 
   const formatDateForInput = (dateString) => {
@@ -127,14 +135,11 @@ const PersonalData = () => {
 
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return 'Seleccionar fecha';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Seleccionar fecha';
-    
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    
-    // ✅ Solo mostrar día y mes (sin año)
-    return `${day}/${month}`;
+    // Parse string directly to avoid UTC-offset shifting the day
+    const str = String(dateString).split('T')[0]; // "2000-06-17"
+    const parts = str.split('-');
+    if (parts.length < 3) return 'Seleccionar fecha';
+    return `${parts[2]}/${parts[1]}`; // "17/06"
   };
 
   const formatPhoneForDisplay = (phone) => {
@@ -144,6 +149,7 @@ const PersonalData = () => {
 
   const normalizeDocValue = (displayName) =>
     displayName
+      .replace(/\s*\([^)]*\)/g, '')
       .toLowerCase()
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
@@ -165,30 +171,31 @@ const PersonalData = () => {
 
     switch (type) {
       case 'cedula':
-        if (!/^\d{6,8}$/.test(num)) {
-          return { isValid: false, message: 'Cédula debe tener entre 6-8 dígitos' };
-        }
+      case 'cedulavenezolana':
+        if (!/^\d{4,9}$/.test(num))
+          return { isValid: false, message: 'Cédula debe tener entre 4-9 dígitos' };
+        break;
+      case 'cedulaextranjera':
+        if (!/^[A-Za-z0-9]{4,12}$/.test(num))
+          return { isValid: false, message: 'Cédula Extranjera debe tener entre 4-12 caracteres' };
         break;
       case 'pasaporte':
-        if (num.length < 5 || num.length > 15) {
+        if (num.length < 5 || num.length > 15)
           return { isValid: false, message: 'Pasaporte debe tener entre 5-15 caracteres' };
-        }
         break;
       case 'rif':
-        if (!/^[VEJPG]-?\d{8,9}-?\d?$/.test(num)) {
-          return { isValid: false, message: 'RIF debe tener formato válido (ej: V-12345678-9)' };
-        }
+      case 'rifjuridico':
+      case 'rifgubernamental':
+      case 'rifcomuna':
+      case 'riffirmapersonal':
+        if (num.length < 6 || num.length > 12)
+          return { isValid: false, message: 'RIF debe tener entre 6-12 caracteres' };
         break;
       case 'driverslicense':
       case 'ein':
-        if (num.length < 5 || num.length > 20) {
-          return { isValid: false, message: 'Documento debe tener entre 5-20 caracteres' };
-        }
-        break;
       case 'otro':
-        if (num.length < 5 || num.length > 20) {
+        if (num.length < 5 || num.length > 20)
           return { isValid: false, message: 'Documento debe tener entre 5-20 caracteres' };
-        }
         break;
       default:
         return { isValid: false, message: 'Selecciona un tipo de documento' };
@@ -275,6 +282,52 @@ const PersonalData = () => {
     setErrors(prev => ({ ...prev, idType: '', idNumber: '' }));
   };
 
+  const handleIdNumberChange = (e) => {
+    const raw = e.target.value;
+    const type = formData.idType;
+    let filtered = raw;
+    let maxLen = 20;
+
+    switch (type) {
+      case 'cedula':
+      case 'cedulavenezolana':
+        filtered = raw.replace(/\D/g, '');
+        maxLen = 9;
+        break;
+      case 'cedulaextranjera':
+        filtered = raw.replace(/[^A-Za-z0-9]/g, '');
+        maxLen = 12;
+        break;
+      case 'pasaporte':
+        filtered = raw.replace(/[^A-Za-z0-9]/g, '');
+        maxLen = 15;
+        break;
+      case 'rif':
+      case 'rifjuridico':
+      case 'rifgubernamental':
+      case 'rifcomuna':
+      case 'riffirmapersonal':
+        filtered = raw.replace(/[^A-Za-z0-9\-]/g, '');
+        maxLen = 12;
+        break;
+      case 'driverslicense':
+        filtered = raw.replace(/[^A-Za-z0-9]/g, '');
+        maxLen = 20;
+        break;
+      case 'ein':
+        filtered = raw.replace(/[^A-Za-z0-9\-]/g, '');
+        maxLen = 10;
+        break;
+      default:
+        filtered = raw.replace(/[^A-Za-z0-9]/g, '');
+        maxLen = 20;
+    }
+
+    const value = filtered.slice(0, maxLen);
+    setFormData(prev => ({ ...prev, idNumber: value }));
+    if (errors.idNumber) setErrors(prev => ({ ...prev, idNumber: '' }));
+  };
+
   const handlePhoneSave = (phoneData) => {
     setFormData(prev => ({
       ...prev,
@@ -318,7 +371,7 @@ const PersonalData = () => {
         residenceCountry: formData.residenceCountry,
         idType: formData.idType,
         idNumber: formData.idNumber,
-        birthday: new Date(formData.birthday).toISOString()
+        birthday: formData.birthday ? `${formData.birthday}T12:00:00.000Z` : undefined
       };
 
       // console.log('📤 Payload FINAL:', JSON.stringify(payload, null, 2));
@@ -551,14 +604,18 @@ const PersonalData = () => {
                   type="text"
                   name="idNumber"
                   value={formData.idNumber}
-                  onChange={handleChange}
+                  onChange={handleIdNumberChange}
                   className={`personal-data__input ${errors.idNumber ? 'error' : ''}`}
                   placeholder={
-                    formData.idType === 'cedula' ? '12345678' :
-                    formData.idType === 'pasaporte' ? 'AB123456' :
-                    formData.idType === 'rif' ? 'V-12345678-9' :
-                    formData.idType === 'driverslicense' ? 'Driver license number' :
-                    formData.idType === 'ein' ? 'XX-XXXXXXX' :
+                    ['cedula', 'cedulavenezolana'].includes(formData.idType) ? '12345678' :
+                    formData.idType === 'cedulaextranjera'  ? 'E12345678' :
+                    formData.idType === 'pasaporte'         ? 'AB123456' :
+                    formData.idType === 'rifjuridico'       ? 'J-12345678-9' :
+                    formData.idType === 'rifgubernamental'  ? 'G-12345678-9' :
+                    formData.idType === 'rifcomuna'         ? 'C-12345678-9' :
+                    formData.idType === 'riffirmapersonal'  ? 'R-12345678-9' :
+                    formData.idType === 'driverslicense'    ? 'Driver license number' :
+                    formData.idType === 'ein'               ? 'XX-XXXXXXX' :
                     'Número de documento'
                   }
                   disabled={loading || !formData.idType}
