@@ -29,14 +29,22 @@ const PreAlertDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Redirect if id is not a valid number (e.g. route matched /pre-alert/create or /pre-alert/edit)
+  useEffect(() => {
+    if (!id || isNaN(Number(id))) {
+      navigate('/pre-alert/list', { replace: true });
+    }
+  }, [id, navigate]);
+
   // Load pre-alert data
   const loadData = async () => {
-    if (!id) return;
+    const numericId = Number(id);
+    if (!id || isNaN(numericId)) return;
 
     try {
-      // console.log('📥 Cargando pre-alerta ID:', id);
-      const response = await getPreAlertaById(Number(id));
-      
+      // console.log('📥 Cargando pre-alerta ID:', numericId);
+      const response = await getPreAlertaById(numericId);
+
       if (response.success) {
         setPreAlerta(response.data);
         setError('');
@@ -54,6 +62,7 @@ const PreAlertDetail = () => {
 
   // Initial load
   useEffect(() => {
+    if (!id || isNaN(Number(id))) return;
     setLoading(true);
     loadData().finally(() => setLoading(false));
   }, [id]);

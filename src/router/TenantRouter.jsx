@@ -97,11 +97,11 @@ const TenantRouter = () => {
                         <Route path="/addresses" element={<Addresses />} />
 
                         
-                        {/* Pre-Alertas */}
+                        {/* Pre-Alertas — rutas estáticas ANTES de la dinámica */}
                         <Route path="/pre-alert/list" element={<PreAlertList />} />
                         <Route path="/pre-alert/create" element={<PreAlertCreate />} />
-                        <Route path="/pre-alert/:id" element={<PreAlertDetail />} />
                         <Route path="/pre-alert/edit/:id" element={<PreAlertEdit />} />
+                        <Route path="/pre-alert/:id" element={<PreAlertDetail />} />
 
                         {/* Guías */}
                         <Route path="/guide/guides" element={<Guides />} />

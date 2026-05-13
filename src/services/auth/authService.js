@@ -137,6 +137,14 @@ export const authService = {
         };
       }
       
+      if (response.data.user?.clienteActivo === false) {
+        return {
+          success: false,
+          message: 'Tu cuenta ha sido deshabilitada. Contacta al administrador.',
+          code: 'ACCOUNT_INACTIVE',
+        };
+      }
+
       return {
         success: false,
         message: response.data.message || 'Error en el login',

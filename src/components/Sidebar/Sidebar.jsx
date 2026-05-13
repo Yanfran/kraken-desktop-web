@@ -9,6 +9,8 @@ import { useTenant } from '../../core/context/TenantContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { updateAvatar } from '../../services/profile/profileService';
 import AvatarSelector from '../AvatarSelector/AvatarSelector';
+import CustomAlert from '../common/CustomAlert/CustomAlert';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 import KrakenOriginal from '../../../src/assets/images/avatars/Kraken-Original.png'; 
 import KrakenChino from '../../../src/assets/images/avatars/Kraken-Chino.png'; 
 import KrakenSam from '../../../src/assets/images/avatars/Kraken-Sam.png'; 
@@ -30,7 +32,8 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { actualTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  
+  const { alertProps, showConfirm } = useCustomAlert();
+
   // ✅ ESTADO CORRECTO: Solo un booleano para el submenú de perfil
   const [profileSubMenuOpen, setProfileSubMenuOpen] = useState(false);
   const [avatarSelectorVisible, setAvatarSelectorVisible] = useState(false);
@@ -83,9 +86,20 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const handleLogout = () => {
-    signOut();
-    navigate('/login');
-    onClose();
+    showConfirm(
+      {
+        title: 'Cerrar sesión',
+        message: '¿Estás seguro de que deseas cerrar sesión?',
+        type: 'warning',
+        confirmText: 'Cerrar sesión',
+        cancelText: 'Cancelar',
+      },
+      async () => {
+        await signOut();
+        navigate('/login');
+        onClose();
+      }
+    );
   };
 
   const handleSubItemClick = (path) => {
@@ -103,6 +117,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   return (
     <>
+      <CustomAlert {...alertProps} />
       {/* Overlay para cerrar en mobile */}
       {isOpen && <div className="dashboard-sidebar__overlay" onClick={onClose} />}
       

@@ -1,9 +1,10 @@
 // src/contexts/AuthContext.jsx - COMPLETO con Google Auth y todas las funciones
-import React, { createContext, useContext, useEffect, useReducer, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useCallback, useMemo, useState } from 'react';
 import { authService } from '../services/auth/authService';
 import { googleService } from '../services/auth/googleService';
 import { useQueryClient } from '@tanstack/react-query';
 import Cookies from 'js-cookie';
+import CustomAlert from '../components/common/CustomAlert/CustomAlert';
 
 // ===== ESTADO INICIAL =====
 const initialState = {
@@ -80,7 +81,22 @@ export const AuthContext = createContext({
 // ===== PROVIDER =====
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
-  const queryClient = useQueryClient(); 
+  const [showInactiveAlert, setShowInactiveAlert] = useState(false);
+  const queryClient = useQueryClient();
+
+  // ===== LISTENER: cuenta deshabilitada desde axiosInstance =====
+  useEffect(() => {
+    const handleAccountInactive = () => {
+      // El localStorage ya fue limpiado por axiosInstance
+      Cookies.remove('authToken');
+      queryClient.clear();
+      dispatch({ type: 'LOGOUT' });
+      setShowInactiveAlert(true);
+    };
+
+    window.addEventListener('kraken:account-inactive', handleAccountInactive);
+    return () => window.removeEventListener('kraken:account-inactive', handleAccountInactive);
+  }, [queryClient]);
 
   // ===== VERIFICAR TOKEN AL CARGAR =====
   useEffect(() => {
@@ -137,22 +153,25 @@ export const AuthProvider = ({ children }) => {
         // Guardar en localStorage y cookies
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userData', JSON.stringify(response.user));
-        localStorage.setItem('userId', response.user.id); // ✅ AGREGAR
+        localStorage.setItem('userId', response.user.id);
         Cookies.set('authToken', response.token, { expires: 7 });
-        
+
         // ✅ LIMPIAR caché anterior al hacer login
         queryClient.clear();
-        
+
         dispatch({ type: 'LOGIN_SUCCESS', payload: response.user });
         // console.log('✅ [Auth] Login exitoso:', response.user.email);
         return { success: true };
       } else {
         dispatch({ type: 'ERROR', payload: response.message });
+        if (response.code === 'ACCOUNT_INACTIVE') {
+          setShowInactiveAlert(true);
+        }
         return response;
       }
     } catch (error) {
       console.error('❌ [Auth] Error en login:', error);
-      // const errorMessage = error.message || 'Error de conexión. Intenta de nuevo.';
+      const errorMessage = error.message || 'Error de conexión. Intenta de nuevo.';
       dispatch({ type: 'ERROR', payload: errorMessage });
       return { success: false, message: errorMessage };
     }
@@ -404,6 +423,25 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      <CustomAlert
+        visible={showInactiveAlert}
+        title="Cuenta deshabilitada"
+        message="Tu cuenta ha sido deshabilitada. Contacta al administrador."
+        type="error"
+        confirmText="Entendido"
+        onConfirm={() => {
+          setShowInactiveAlert(false);
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+        }}
+        onClose={() => {
+          setShowInactiveAlert(false);
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+        }}
+      />
     </AuthContext.Provider>
   );
 };

@@ -115,7 +115,13 @@ const errorInterceptor = (error) => {
         // No autorizado - limpiar sesión y redirigir
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
-        window.location.href = '/login';
+        localStorage.removeItem('userId');
+        if (data?.message === 'ACCOUNT_INACTIVE') {
+          // Notificar al AuthContext para que muestre CustomAlert y cierre sesión
+          window.dispatchEvent(new CustomEvent('kraken:account-inactive'));
+        } else {
+          window.location.href = '/login';
+        }
         break;
         
       case 403:

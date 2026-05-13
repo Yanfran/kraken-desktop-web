@@ -1,14 +1,17 @@
 // src/components/common/Layout/Layout.jsx - IMPORT CORREGIDO
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext'; // ✅ CORREGIDO
+import { useAuth } from '../../../contexts/AuthContext';
+import CustomAlert from '../CustomAlert/CustomAlert';
+import { useCustomAlert } from '../../../hooks/useCustomAlert';
 import './Layout.styles.scss';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { user, signOut } = useAuth(); // ✅ CAMBIO: usar signOut
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { alertProps, showConfirm } = useCustomAlert();
 
   const navigationItems = [
     {
@@ -38,17 +41,29 @@ const Layout = ({ children }) => {
     },
   ];
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/login');
-    } catch (error) {
-      console.error('Error en logout:', error);
-    }
+  const handleLogout = () => {
+    showConfirm(
+      {
+        title: 'Cerrar sesión',
+        message: '¿Estás seguro de que deseas cerrar sesión?',
+        type: 'warning',
+        confirmText: 'Cerrar sesión',
+        cancelText: 'Cancelar',
+      },
+      async () => {
+        try {
+          await signOut();
+          navigate('/login');
+        } catch (error) {
+          console.error('Error en logout:', error);
+        }
+      }
+    );
   };
 
   return (
     <div className="layout">
+      <CustomAlert {...alertProps} />
       {/* Sidebar */}
       <aside className={`layout__sidebar ${sidebarOpen ? 'layout__sidebar--open' : 'layout__sidebar--closed'}`}>
         <div className="layout__sidebar-header">

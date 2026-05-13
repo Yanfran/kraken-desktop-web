@@ -20,7 +20,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { signIn, signInWithGoogle, isLoading } = useAuth();
   const { colors, actualTheme } = useTheme();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -103,6 +103,10 @@ const Login = () => {
         if (result.tokenVerify) {
           toast('Tu cuenta no está verificada. Reenvía el correo de confirmación.', { icon: '📧' });
           navigate('/email-confirmation', { state: { email: formData.email } });
+          return;
+        }
+
+        if (result.code === 'ACCOUNT_INACTIVE') {
           return;
         }
 
