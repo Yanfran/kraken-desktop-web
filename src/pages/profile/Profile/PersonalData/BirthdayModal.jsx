@@ -1,25 +1,27 @@
 // src/pages/profile/Profile/PersonalData/BirthdayModal.jsx
 import React, { useState, useEffect } from 'react';
 import { IoClose, IoCalendarOutline } from 'react-icons/io5';
+import { useTranslation } from 'react-i18next';
 import './BirthdayModal.styles.scss';
 
 const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
+  const { t } = useTranslation();
   const [selectedDay, setSelectedDay] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
 
   const months = [
-    { value: '01', label: 'Enero' },
-    { value: '02', label: 'Febrero' },
-    { value: '03', label: 'Marzo' },
-    { value: '04', label: 'Abril' },
-    { value: '05', label: 'Mayo' },
-    { value: '06', label: 'Junio' },
-    { value: '07', label: 'Julio' },
-    { value: '08', label: 'Agosto' },
-    { value: '09', label: 'Septiembre' },
-    { value: '10', label: 'Octubre' },
-    { value: '11', label: 'Noviembre' },
-    { value: '12', label: 'Diciembre' }
+    { value: '01', label: t('profile.birthday_jan') },
+    { value: '02', label: t('profile.birthday_feb') },
+    { value: '03', label: t('profile.birthday_mar') },
+    { value: '04', label: t('profile.birthday_apr') },
+    { value: '05', label: t('profile.birthday_may') },
+    { value: '06', label: t('profile.birthday_jun') },
+    { value: '07', label: t('profile.birthday_jul') },
+    { value: '08', label: t('profile.birthday_aug') },
+    { value: '09', label: t('profile.birthday_sep') },
+    { value: '10', label: t('profile.birthday_oct') },
+    { value: '11', label: t('profile.birthday_nov') },
+    { value: '12', label: t('profile.birthday_dec') },
   ];
 
   // Generar días del 1 al 31
@@ -64,7 +66,7 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
         <div className="birthday-modal__header">
           <h2>
             <IoCalendarOutline size={24} />
-            Seleccionar Cumpleaños
+            {t('profile.birthday_modal_title')}
           </h2>
           <button className="birthday-modal__close" onClick={handleClose}>
             <IoClose size={24} />
@@ -72,17 +74,17 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
         </div>
 
         <div className="birthday-modal__body">
-          <p className="birthday-modal__subtitle">Selecciona tu día y mes de nacimiento</p>
-          
+          <p className="birthday-modal__subtitle">{t('profile.birthday_modal_subtitle')}</p>
+
           <div className="birthday-modal__selectors">
             <div className="birthday-modal__field">
-              <label>Mes</label>
+              <label>{t('profile.birthday_modal_month')}</label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="birthday-modal__select"
               >
-                <option value="">Seleccionar mes</option>
+                <option value="">{t('profile.birthday_modal_select_month')}</option>
                 {months.map((month) => (
                   <option key={month.value} value={month.value}>
                     {month.label}
@@ -92,14 +94,14 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
             </div>
 
             <div className="birthday-modal__field">
-              <label>Día</label>
+              <label>{t('profile.birthday_modal_day')}</label>
               <select
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(e.target.value)}
                 className="birthday-modal__select"
                 disabled={!selectedMonth}
               >
-                <option value="">Seleccionar día</option>
+                <option value="">{t('profile.birthday_modal_select_day')}</option>
                 {days.map((day) => (
                   <option key={day.value} value={day.value}>
                     {day.label}
@@ -111,7 +113,7 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
 
           {isValid && (
             <div className="birthday-modal__preview">
-              Cumpleaños seleccionado: <strong>{selectedDay}/{selectedMonth}</strong>
+              {t('profile.birthday_modal_preview')} <strong>{selectedDay}/{selectedMonth}</strong>
             </div>
           )}
         </div>
@@ -122,7 +124,7 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
             className="birthday-modal__btn birthday-modal__btn--cancel"
             onClick={handleClose}
           >
-            Cancelar
+            {t('profile.birthday_modal_cancel')}
           </button>
           <button
             type="button"
@@ -130,7 +132,7 @@ const BirthdayModal = ({ show, onClose, onSave, initialDate }) => {
             onClick={handleSave}
             disabled={!isValid}
           >
-            Guardar
+            {t('profile.birthday_modal_save')}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import './Addresses.styles.scss';
 
 // ✅ ICONOS DE IONICONS (mismo estilo que la app)
@@ -43,6 +44,7 @@ import CustomAlert from '../../../../components/common/CustomAlert/CustomAlert';
 const Addresses = () => {
   const navigate = useNavigate();
   const alert = useCustomAlert();
+  const { t } = useTranslation();
   
   const [showForm, setShowForm] = useState(false);
   const [settingDefault, setSettingDefault] = useState(null);
@@ -190,40 +192,38 @@ const Addresses = () => {
 
   const validateForm = () => {
     if (!selectedOption) {
-      toast.error('Seleccione un tipo de dirección');
+      toast.error(t('my_addresses.error_select_type'));
       return false;
     }
 
     if (selectedOption === 'store') {
-      // ✅ Para TIENDA: solo validar ciudad y locker
       if (!selectedCity) {
-        toast.error('Seleccione una ciudad');
+        toast.error(t('my_addresses.error_select_city'));
         return false;
       }
       if (!selectedLocker) {
-        toast.error('Seleccione una tienda');
+        toast.error(t('my_addresses.error_select_store'));
         return false;
       }
     } else if (selectedOption === 'home') {
-      // ✅ Para DOMICILIO: validar alias, estado, municipio y dirección
       if (!alias.trim()) {
-        toast.error('Ingrese un nombre para la dirección');
+        toast.error(t('my_addresses.error_address_name'));
         return false;
       }
       if (!selectedState) {
-        toast.error('Seleccione un estado');
+        toast.error(t('my_addresses.error_select_state'));
         return false;
       }
       if (!selectedMunicipality) {
-        toast.error('Seleccione un municipio');
+        toast.error(t('my_addresses.error_select_municipality'));
         return false;
       }
       if (!selectedParish) {
-        toast.error('Seleccione una parroquia');
+        toast.error(t('my_addresses.error_select_parish'));
         return false;
       }
       if (!address.trim()) {
-        toast.error('Ingrese una dirección');
+        toast.error(t('my_addresses.error_enter_address'));
         return false;
       }
     }
@@ -247,7 +247,7 @@ const Addresses = () => {
       const userEmail = userData.email; 
 
       if (!userId) {
-        toast.error('Usuario no autenticado');
+        toast.error(t('my_addresses.no_auth'));
         setSubmitting(false);
         return;
       }
@@ -285,19 +285,19 @@ const Addresses = () => {
 
       if (response.success) {
         toast.success(
-          setAsDefault 
-            ? '¡Dirección agregada y establecida como predeterminada!' 
-            : '¡Dirección agregada exitosamente!'
+          setAsDefault
+            ? t('my_addresses.save_success_default')
+            : t('my_addresses.save_success')
         );
         resetForm();
         setShowForm(false);
         await refetchAddresses();
       } else {
-        toast.error(response.message || 'Error al agregar la dirección');
+        toast.error(response.message || t('my_addresses.save_error'));
       }
     } catch (error) {
       console.error('Error adding address:', error);
-      toast.error(error.message || 'Error al agregar la dirección');
+      toast.error(error.message || t('my_addresses.save_error'));
     } finally {
       setSubmitting(false);
     }
@@ -321,7 +321,7 @@ const Addresses = () => {
     if (userAddresses.length <= 1) {
       alert.showError(
         "Error",
-        "No puedes eliminar la única dirección registrada.",
+        t('my_addresses.cannot_delete_only'),
       );
       return;
     }
@@ -336,15 +336,15 @@ const Addresses = () => {
           
           if (response.success) {
             alert.hideAlert();
-            toast.success('Dirección eliminada exitosamente');
+            toast.success(t('my_addresses.delete_success'));
             await refetchAddresses();
           } else {
-            toast.error(response.message || 'Error al eliminar la dirección');
+            toast.error(response.message || t('my_addresses.delete_error'));
           }
         } catch (error) {
-           alert.hideAlert(); 
+           alert.hideAlert();
           console.error('Error deleting address:', error);
-          toast.error('Error al eliminar la dirección');
+          toast.error(t('my_addresses.delete_error'));
         } finally {
           setDeleting(null);
         }
@@ -362,14 +362,14 @@ const Addresses = () => {
       const response = await setDefaultAddress(addressId);
       
       if (response.success) {
-        toast.success(`"${addressName}" establecida como predeterminada`);
+        toast.success(`"${addressName}" ${t('my_addresses.default_success')}`);
         await refetchAddresses();
       } else {
-        toast.error(response.message || 'Error al establecer dirección predeterminada');
+        toast.error(response.message || t('my_addresses.default_error'));
       }
     } catch (error) {
       console.error('Error setting default address:', error);
-      toast.error('Error al establecer dirección predeterminada');
+      toast.error(t('my_addresses.default_error'));
     } finally {
       setSettingDefault(null);
     }
@@ -377,7 +377,7 @@ const Addresses = () => {
 
   const formatAddress = (address) => {
     if (address.tipoDireccion === 'store') {
-      return `Retiro en tienda: ${address.nombreLocker || 'Locker'}`;
+      return `${t('my_addresses.type_store')}: ${address.nombreLocker || 'Locker'}`;
     }
     
     const parts = [];
@@ -393,7 +393,7 @@ const Addresses = () => {
     return (
       <div className="addresses__loading">
         <LoadingSpinner size="large" />
-        <p>Cargando direcciones...</p>
+        <p>{t('my_addresses.loading')}</p>
       </div>
     );
   }
@@ -406,16 +406,16 @@ const Addresses = () => {
       <div className="addresses__container">
         {/* Header */}
         <div className="addresses__header">
-          <button 
+          <button
             className="addresses__back-btn"
             onClick={() => navigate(-1)}
           >
             <IoChevronBack size={20} />
-            <span>Volver</span>
+            <span>{t('my_addresses.back')}</span>
           </button>
-          <h1 className="addresses__title">Mis Direcciones</h1>
+          <h1 className="addresses__title">{t('my_addresses.title')}</h1>
           <p className="addresses__subtitle">
-            Gestiona tus direcciones de entrega
+            {t('my_addresses.subtitle')}
           </p>
         </div>
 
@@ -427,7 +427,7 @@ const Addresses = () => {
             className="addresses__add-btn"
           >
             <IoAdd size={20} />
-            <span>Nueva Dirección</span>
+            <span>{t('my_addresses.add_btn')}</span>
           </Button>
         )}
 
@@ -436,9 +436,9 @@ const Addresses = () => {
           <div className="addresses__max-limit">
             <IoAlertCircleOutline size={24} />
             <div className="addresses__max-limit-text">
-              <p className="addresses__max-limit-title">Límite de direcciones alcanzado</p>
+              <p className="addresses__max-limit-title">{t('my_addresses.max_limit_title')}</p>
               <p className="addresses__max-limit-message">
-                Has alcanzado el máximo de 4 direcciones guardadas. Elimina una dirección existente para agregar una nueva.
+                {t('my_addresses.max_limit_msg')}
               </p>
             </div>
           </div>
@@ -448,7 +448,7 @@ const Addresses = () => {
         {showForm && (
           <div className="addresses__form-card">
             <div className="addresses__form-header">
-              <h3>Nueva Dirección</h3>
+              <h3>{t('my_addresses.form_title')}</h3>
               <button 
                 className="addresses__form-close"
                 onClick={() => {
@@ -464,7 +464,7 @@ const Addresses = () => {
             {isFormLoading ? (
               <div className="addresses__form-loading">
                 <LoadingSpinner size="medium" />
-                <p>Cargando formulario...</p>
+                <p>{t('my_addresses.form_loading')}</p>
               </div>
             ) : (
               <div className="addresses__form-body">
@@ -480,7 +480,7 @@ const Addresses = () => {
                       disabled={submitting}
                     />
                     <IoStorefrontOutline size={20} />
-                    <span className="address-option__text">Retiro en Tienda</span>
+                    <span className="address-option__text">{t('my_addresses.type_store')}</span>
                   </label>
 
                   <label className={`address-option ${selectedOption === 'home' ? 'selected' : ''}`}>
@@ -493,7 +493,7 @@ const Addresses = () => {
                       disabled={submitting}
                     />
                     <IoHomeOutline size={20} />
-                    <span className="address-option__text">Enviar a otra dirección</span>
+                    <span className="address-option__text">{t('my_addresses.type_home')}</span>
                   </label>
                 </div>
 
@@ -504,31 +504,31 @@ const Addresses = () => {
                     {/* Formulario para TIENDA */}
                     {selectedOption === 'store' && (
                       <>
-                        <h4 className="form-section-title">Retiro en Tienda</h4>                                                
+                        <h4 className="form-section-title">{t('my_addresses.store_title')}</h4>
 
                         <div className="form-row">
                           <div className="form-group">
                             <label className="form-label">
-                              CIUDAD <span className="required">*</span>
+                              {t('my_addresses.city')} <span className="required">*</span>
                             </label>
                             <SearchableSelect
                               options={availableCities}
                               value={selectedCity}
-                              onChange={handleCityChange} // ⬅️ Usar nuevo handler
-                              placeholder="Seleccione una ciudad"
+                              onChange={handleCityChange}
+                              placeholder={t('my_addresses.city_placeholder')}
                               disabled={isLoadingDelivery}
                             />
                           </div>
 
                           <div className="form-group">
                             <label className="form-label">
-                              TIENDA <span className="required">*</span>
+                              {t('my_addresses.store')} <span className="required">*</span>
                             </label>
                             <SearchableSelect
                               options={filteredTiendas}
                               value={selectedLocker}
                               onChange={setSelectedLocker}
-                              placeholder="Seleccione una tienda"
+                              placeholder={t('my_addresses.store_placeholder')}
                               disabled={!selectedCity || submitting}
                             />
                           </div>
@@ -542,54 +542,54 @@ const Addresses = () => {
                         {/* Alias */}
                         <div className="form-group">
                           <label className="form-label">
-                            NOMBRE DE LA DIRECCIÓN <span className="required">*</span>
+                            {t('my_addresses.address_name')} <span className="required">*</span>
                           </label>
                           <input
                             type="text"
                             className="form-input"
-                            placeholder="Ej: Casa, Oficina, etc."
+                            placeholder={t('my_addresses.address_name_placeholder')}
                             value={alias}
                             onChange={e => setAlias(e.target.value)}
                             disabled={submitting}
                           />
                         </div>
 
-                        <h4 className="form-section-title">Entrega a Domicilio</h4>
+                        <h4 className="form-section-title">{t('my_addresses.home_title')}</h4>
 
                         <div className="form-row">
                           <div className="form-group">
                             <label className="form-label">
-                              ESTADO <span className="required">*</span>
+                              {t('my_addresses.state')} <span className="required">*</span>
                             </label>
                             <SearchableSelect
                               options={statesData || []}
                               value={selectedState}
                               onChange={setSelectedState}
-                              placeholder="Seleccione un estado"
+                              placeholder={t('my_addresses.state_placeholder')}
                               disabled={submitting || isLoadingStates}
                             />
                           </div>
 
                           <div className="form-group">
                             <label className="form-label">
-                              MUNICIPIO <span className="required">*</span>
+                              {t('my_addresses.municipality')} <span className="required">*</span>
                             </label>
                             <SearchableSelect
                               options={municipalitiesData || []}
                               value={selectedMunicipality}
                               onChange={setSelectedMunicipality}
-                              placeholder="Seleccione un municipio"
+                              placeholder={t('my_addresses.municipality_placeholder')}
                               disabled={!selectedState || isLoadingMunicipalities || submitting}
                             />
                           </div>
 
                           <div className="form-group">
-                            <label className="form-label">PARROQUIA <span className="required">*</span></label>
+                            <label className="form-label">{t('my_addresses.parish')} <span className="required">*</span></label>
                               <SearchableSelect
                                 options={parishesData || []}
                                 value={selectedParish}
                                 onChange={setSelectedParish}
-                                placeholder="Seleccione una parroquia"
+                                placeholder={t('my_addresses.parish_placeholder')}
                                 disabled={!selectedMunicipality || isLoadingParishes || submitting}
                               />
                           </div>
@@ -597,11 +597,11 @@ const Addresses = () => {
 
                         <div className="form-group">
                           <label className="form-label">
-                            DIRECCIÓN COMPLETA <span className="required">*</span>
+                            {t('my_addresses.full_address')} <span className="required">*</span>
                           </label>
                           <textarea
                             className="form-textarea"
-                            placeholder="Ej: Barrio, Vicario 3, Carrera 9 entre Calles 5 y 7"
+                            placeholder={t('my_addresses.full_address_placeholder')}
                             value={address}
                             onChange={e => setAddress(e.target.value)}
                             rows={3}
@@ -610,10 +610,10 @@ const Addresses = () => {
                         </div>
 
                         <div className="form-group">
-                          <label className="form-label">PUNTO DE REFERENCIA</label>
+                          <label className="form-label">{t('my_addresses.reference')}</label>
                           <textarea
                             className="form-textarea"
-                            placeholder="Punto de referencia adicional (opcional)"
+                            placeholder={t('my_addresses.reference_placeholder')}
                             value={reference}
                             onChange={e => setReference(e.target.value)}
                             rows={2}
@@ -632,7 +632,7 @@ const Addresses = () => {
                           onChange={e => setSetAsDefault(e.target.checked)}
                           disabled={submitting}
                         />
-                        <span>Establecer como dirección predeterminada</span>
+                        <span>{t('my_addresses.set_default')}</span>
                       </label>
                     </div>
 
@@ -646,7 +646,7 @@ const Addresses = () => {
                         }}
                         disabled={submitting}
                       >
-                        Cancelar
+                        {t('common.cancel')}
                       </Button>
                       <Button
                         variant="primary"
@@ -656,10 +656,10 @@ const Addresses = () => {
                         {submitting ? (
                           <>
                             <LoadingSpinner size="small" />
-                            <span>Guardando...</span>
+                            <span>{t('my_addresses.saving')}</span>
                           </>
                         ) : (
-                          'Guardar Dirección'
+                          t('my_addresses.save')
                         )}
                       </Button>
                     </div>
@@ -674,9 +674,9 @@ const Addresses = () => {
         {sortedAddresses.length === 0 && !showForm ? (
           <div className="addresses__empty">
             <IoLocationOutline size={48} className="addresses__empty-icon" />
-            <h3 className="addresses__empty-title">No tienes direcciones guardadas</h3>
+            <h3 className="addresses__empty-title">{t('my_addresses.empty_title')}</h3>
             <p className="addresses__empty-message">
-              Agrega tu primera dirección para facilitar tus entregas
+              {t('my_addresses.empty_msg')}
             </p>
           </div>
         ) : (
@@ -702,7 +702,7 @@ const Addresses = () => {
                       {address.esPredeterminada && (
                         <span className="address-card__default-badge">
                           <IoStar size={14} />
-                          <span>Predeterminada</span>
+                          <span>{t('my_addresses.default_badge')}</span>
                         </span>
                       )}
                     </div>
@@ -710,12 +710,12 @@ const Addresses = () => {
                       {address.tipoDireccion === 'store' ? (
                         <>
                           <IoStorefrontOutline size={16} />
-                          <span>Tienda</span>
+                          <span>{t('my_addresses.type_store_label')}</span>
                         </>
                       ) : (
                         <>
                           <IoHomeOutline size={16} />
-                          <span>Domicilio</span>
+                          <span>{t('my_addresses.type_home_label')}</span>
                         </>
                       )}
                     </span>
@@ -728,7 +728,7 @@ const Addresses = () => {
                   </p>
                   {address.referencia && (
                     <p className="address-card__reference">
-                      <strong>Referencia:</strong> {address.referencia}
+                      <strong>{t('my_addresses.reference_label')}</strong> {address.referencia}
                     </p>
                   )}
                 </div>
@@ -743,12 +743,12 @@ const Addresses = () => {
                       {settingDefault === address.id ? (
                         <>
                           <LoadingSpinner size="small" />
-                          <span>Estableciendo...</span>
+                          <span>{t('my_addresses.setting_default')}</span>
                         </>
                       ) : (
                         <>
                           <IoStarOutline size={16} />
-                          <span>Predeterminada</span>
+                          <span>{t('my_addresses.set_as_default')}</span>
                         </>
                       )}
                     </button>
@@ -761,12 +761,12 @@ const Addresses = () => {
                     {deleting === address.id ? (
                       <>
                         <LoadingSpinner size="small" />
-                        <span>Eliminando...</span>
+                        <span>{t('my_addresses.deleting')}</span>
                       </>
                     ) : (
                       <>
                         <IoTrashOutline size={16} />
-                        <span>Eliminar</span>
+                        <span>{t('my_addresses.delete')}</span>
                       </>
                     )}
                   </button>

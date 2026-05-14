@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import './PreAlertDetail.styles.scss';
 import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png'; 
 
@@ -23,6 +24,7 @@ import { getPreAlertaById } from '@services/preAlertService';
 const PreAlertDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // States
   const [preAlerta, setPreAlerta] = useState(null);
@@ -50,13 +52,13 @@ const PreAlertDetail = () => {
         setError('');
         // console.log('✅ Pre-alerta cargada:', response.data);
       } else {
-        setError(response.message || 'Error al cargar pre-alerta');
-        toast.error(response.message || 'Error al cargar pre-alerta');
+        setError(response.message || t('pre_alert.load_error'));
+        toast.error(response.message || t('pre_alert.load_error'));
       }
     } catch (error) {
       console.error('❌ Error loading pre-alert:', error);
-      setError(error.message || 'Error al cargar pre-alerta');
-      toast.error(error.message || 'Error al cargar pre-alerta');
+      setError(error.message || t('pre_alert.load_error'));
+      toast.error(error.message || t('pre_alert.load_error'));
     }
   };
 
@@ -123,7 +125,7 @@ const PreAlertDetail = () => {
       <div className="pre-alert-detail">
         <div className="pre-alert-detail__loading">
           <div className="spinner"></div>
-          <p>Cargando detalles de la pre-alerta...</p>
+          <p>{t('pre_alert.detail_loading')}</p>
         </div>
       </div>
     );
@@ -135,14 +137,14 @@ const PreAlertDetail = () => {
       <div className="pre-alert-detail">
         <div className="pre-alert-detail__error">
           <div className="pre-alert-detail__error-icon">❌</div>
-          <h2 className="pre-alert-detail__error-title">Error al cargar</h2>
+          <h2 className="pre-alert-detail__error-title">{t('pre_alert.detail_error_title')}</h2>
           <p className="pre-alert-detail__error-message">{error}</p>
           <div className="pre-alert-detail__error-actions">
             <button onClick={handleBack} className="btn btn--outline">
-              Volver al inicio
+              {t('pre_alert.detail_back_home')}
             </button>
             <button onClick={loadData} className="btn btn--primary">
-              Reintentar
+              {t('pre_alert.detail_retry')}
             </button>
           </div>
         </div>
@@ -174,7 +176,7 @@ const PreAlertDetail = () => {
             
             <button onClick={handleBack} className="pre-alert-detail__back-btn">
               <IoArrowBack size={18} style={{ marginBottom: -3, marginRight: 8 }} />
-              Volver
+              {t('pre_alert.detail_back')}
             </button>
             
             <div className="pre-alert-detail__header-info">
@@ -185,7 +187,7 @@ const PreAlertDetail = () => {
             
             {!preAlerta?.idGuia && !preAlerta?.IdGuia && (
               <button onClick={handleEdit} className="btn btn--primary">
-                <IoCreateOutline size={18} style={{ marginBottom: -3}} /> Editar
+                <IoCreateOutline size={18} style={{ marginBottom: -3}} /> {t('pre_alert.detail_edit')}
               </button>
             )}
           </div>
@@ -198,7 +200,7 @@ const PreAlertDetail = () => {
           <div className="pre-alert-detail__section">
             <h2 className="pre-alert-detail__section-title">
               <IoCubeOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Números de Tracking
+              {t('pre_alert.detail_tracking_section')}
             </h2>
             <div className="pre-alert-detail__trackings">
               {trackings.length > 0 ? (
@@ -211,7 +213,7 @@ const PreAlertDetail = () => {
                 ))
               ) : (
                 <p className="pre-alert-detail__no-data">
-                  Sin números de tracking
+                  {t('pre_alert.detail_no_tracking')}
                 </p>
               )}
             </div>
@@ -221,16 +223,16 @@ const PreAlertDetail = () => {
           <div className="pre-alert-detail__section">
             <h2 className="pre-alert-detail__section-title">
               <IoCarOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Dirección de Entrega
+              {t('pre_alert.detail_delivery_section')}
             </h2>
             <div className="pre-alert-detail__delivery-info">
               <p className="pre-alert-detail__delivery-text">
-                {preAlerta?.direccionResumen || 'Sin dirección especificada'}
+                {preAlerta?.direccionResumen || t('pre_alert.detail_no_address')}
               </p>
               {preAlerta?.nombreLocker && (
                 <p className="pre-alert-detail__delivery-locker">
                   <IoLocationOutline size={18} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                  Locker: {preAlerta.nombreLocker}
+                  {t('pre_alert.detail_locker')}: {preAlerta.nombreLocker}
                 </p>
               )}
             </div>
@@ -240,42 +242,42 @@ const PreAlertDetail = () => {
           <div className="pre-alert-detail__section">
             <h2 className="pre-alert-detail__section-title">
               <IoClipboardOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Información del Paquete
+              {t('pre_alert.detail_package_section')}
             </h2>
             <div className="pre-alert-detail__info-grid">
               
               <div className="pre-alert-detail__info-item">
-                <label className="pre-alert-detail__label">Contenido</label>
+                <label className="pre-alert-detail__label">{t('pre_alert.detail_content')}</label>
                 <span className="pre-alert-detail__value">
-                  {preAlerta?.contenido || 'Sin especificar'}
+                  {preAlerta?.contenido || t('pre_alert.detail_no_data')}
                 </span>
               </div>
 
               <div className="pre-alert-detail__info-item">
-                <label className="pre-alert-detail__label">Tipo de Contenido</label>
+                <label className="pre-alert-detail__label">{t('pre_alert.detail_content_type')}</label>
                 <span className="pre-alert-detail__value">
-                  {preAlerta?.tipoContenido || 'Sin especificar'}
+                  {preAlerta?.tipoContenido || t('pre_alert.detail_no_data')}
                 </span>
               </div>
 
               <div className="pre-alert-detail__info-item">
-                <label className="pre-alert-detail__label">Valor Declarado</label>
+                <label className="pre-alert-detail__label">{t('pre_alert.detail_declared_value')}</label>
                 <span className="pre-alert-detail__value">
                   ${preAlerta?.valorDeclarado?.parsedValue || preAlerta?.valorDeclarado || preAlerta?.valor || '0.00'}
                 </span>
-              </div>      
+              </div>
 
               <div className="pre-alert-detail__info-item">
-                <label className="pre-alert-detail__label">Facturas</label>
+                <label className="pre-alert-detail__label">{t('pre_alert.detail_invoices')}</label>
                 <span className="pre-alert-detail__value pre-alert-detail__value--invoices">
                   <IoDocumentTextOutline size={18} />
-                  {preAlerta?.archivosActuales?.length || 0} archivo(s) adjunto(s)
+                  {preAlerta?.archivosActuales?.length || 0} {t('pre_alert.detail_attachments')}
                 </span>
-              </div>                  
+              </div>
 
               {preAlerta?.tipoEnvio && (
                 <div className="pre-alert-detail__info-item">
-                  <label className="pre-alert-detail__label">Tipo de Envío</label>
+                  <label className="pre-alert-detail__label">{t('pre_alert.detail_shipping_type')}</label>
                   <span className="pre-alert-detail__value">
                     {preAlerta.tipoEnvio}
                   </span>

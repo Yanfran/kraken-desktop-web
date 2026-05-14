@@ -1,20 +1,25 @@
 // src/components/calculator/CalculatorHeader.jsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './CalculatorHeader.scss';
 import calculatorIcon from '../../assets/images/icon-kraken-web-calculadora.png';
 
-const TABS = [
-  { id: 1, label: 'Ruta' },
-  { id: 2, label: 'Mi Paquete' },
-  { id: 3, label: 'Resultado' },
-];
-
-const CalculatorHeader = ({ 
-  currentStep, 
+const CalculatorHeader = ({
+  currentStep,
   onTabPress,
-  title = "Calcula tu envío",
-  subtitle = "Descubre cuánto te costará traer tus compras desde USA"
+  title,
+  subtitle
 }) => {
+  const { t } = useTranslation();
+
+  const TABS = [
+    { id: 1, label: t('calculator.tab_route') },
+    { id: 2, label: t('calculator.tab_package') },
+    { id: 3, label: t('calculator.tab_result') },
+  ];
+
+  const resolvedTitle = title ?? t('calculator.title');
+  const resolvedSubtitle = subtitle ?? t('calculator.subtitle');
   return (
     <div className="calculator-header">
       {/* Logo/Icon */}
@@ -27,8 +32,8 @@ const CalculatorHeader = ({
       </div>
 
       {/* Title and Subtitle */}
-      <h1 className="calculator-header__title">{title}</h1>
-      <p className="calculator-header__subtitle">{subtitle}</p>
+      <h1 className="calculator-header__title">{resolvedTitle}</h1>
+      <p className="calculator-header__subtitle">{resolvedSubtitle}</p>
 
       {/* Tab Navigation */}
       <div className="calculator-header__tabs">

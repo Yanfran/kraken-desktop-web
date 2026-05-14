@@ -1,6 +1,7 @@
 // src/components/calculator/LocationStep.jsx
 // ✅ COMPLETO - Con selector de país Y parroquia
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchableSelect from '../../components/common/SearchableSelect/SearchableSelect';
 import './LocationStep.scss';
 
@@ -19,9 +20,9 @@ const LocationStep = ({
   onNext,
   isLoading
 }) => {
+  const { t } = useTranslation();
   const [validationError, setValidationError] = useState('');
 
-  // 🆕 Opciones de países de origen
   const originCountryOptions = [
     { label: '🇺🇸 Estados Unidos', value: 'US' },
     { label: '🇨🇳 China', value: 'CN' }
@@ -31,12 +32,12 @@ const LocationStep = ({
     setValidationError('');
 
     if (!selectedState || selectedState.trim() === '') {
-      setValidationError('Por favor selecciona un estado');
+      setValidationError(t('calculator.error_select_state'));
       return;
     }
 
     if (!selectedMunicipality || selectedMunicipality.trim() === '') {
-      setValidationError('Por favor selecciona un municipio');
+      setValidationError(t('calculator.error_select_municipality'));
       return;
     }
 
@@ -67,20 +68,18 @@ const LocationStep = ({
         <div className="location-step__grid"> 
           {/* 🆕 País de Origen - AHORA ES SELECCIONABLE */}
           <div className="location-step__col">
-            <label className="location-step__label">País de Origen *</label>
+            <label className="location-step__label">{t('calculator.origin_country')} *</label>
             <SearchableSelect
               options={originCountryOptions}
               value={originCountry}
               onChange={handleOriginCountryChangeInternal}
-              placeholder="Seleccione un país"
+              placeholder={t('calculator.select_country')}
               disabled={isLoading}
-              // className="location-step__select"
             />
           </div>
 
-          {/* País de Destino - FIJO */}
           <div className="location-step__col">
-            <label className="location-step__label">País de Destino</label>
+            <label className="location-step__label">{t('calculator.destination_country')}</label>
             <div className="location-step__fixed-country">
               <span className="location-step__flag">🇻🇪</span>
               <span className="location-step__fixed-country-text">Venezuela</span>
@@ -90,29 +89,27 @@ const LocationStep = ({
 
         {/* ✅ CONTENEDOR 2: ESTADO Y MUNICIPIO EN 2 COLUMNAS */}
         <div className="location-step__grid"> 
-          {/* Estado */}
           <div className="location-step__col">
-            <label className="location-step__label">Estado *</label>
+            <label className="location-step__label">{t('calculator.state')} *</label>
             <SearchableSelect
               options={statesList}
               value={selectedState}
               onChange={handleStateChange}
-              placeholder="Seleccione un estado"
+              placeholder={t('calculator.select_state')}
               disabled={isLoading}
-              className={validationError && !selectedState ? 
-                'location-step__select location-step__select--error' : 
+              className={validationError && !selectedState ?
+                'location-step__select location-step__select--error' :
                 'location-step__select'}
             />
           </div>
 
-          {/* Municipio */}
           <div className="location-step__col">
-            <label className="location-step__label">Municipio *</label>
+            <label className="location-step__label">{t('calculator.municipality')} *</label>
             <SearchableSelect
               options={municipalitiesList}
               value={selectedMunicipality}
               onChange={handleMunicipalityChange}
-              placeholder={selectedState ? "Seleccione un municipio" : "Primero seleccione estado"}
+              placeholder={selectedState ? t('calculator.select_municipality') : t('calculator.select_municipality_first')}
               disabled={isLoading || !selectedState || municipalitiesList.length === 0}
               className={validationError && !selectedMunicipality ? 
                 'location-step__select location-step__select--error' : 
@@ -151,7 +148,7 @@ const LocationStep = ({
           onClick={handleNext}
           disabled={isLoading}
         >
-          {isLoading ? 'Cargando...' : 'Siguiente'}
+          {isLoading ? t('calculator.loading') : t('calculator.next')}
         </button>
       </div>
     </div>

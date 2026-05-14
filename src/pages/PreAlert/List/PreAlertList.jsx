@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import './PreAlertList.styles.scss';
 import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png'; 
 
@@ -38,18 +39,24 @@ import { useAuth } from '@hooks/useAuth';
 const PreAlertList = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   // States
   const [preAlertas, setPreAlertas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [visibleMenus, setVisibleMenus] = useState({});
-  const [alert, setAlert] = useState({ 
-    show: false, 
-    type: '', 
-    title: '', 
-    message: '', 
-    onConfirm: null 
+  const [alert, setAlert] = useState({
+    visible: false,
+    type: 'info',
+    title: '',
+    message: '',
+    showCancel: false,
+    confirmText: undefined,
+    cancelText: undefined,
+    onConfirm: null,
+    onCancel: null,
+    onClose: null,
   });
 
   // Load pre-alerts
@@ -85,12 +92,23 @@ const PreAlertList = () => {
   };
 
   // Alert utilities
-  const showAlert = (type, title, message, onConfirm = null) => {
-    setAlert({ show: true, type, title, message, onConfirm });
+  const hideAlert = () => {
+    setAlert(prev => ({ ...prev, visible: false }));
   };
 
-  const hideAlert = () => {
-    setAlert({ show: false, type: '', title: '', message: '', onConfirm: null });
+  const showAlert = (type, title, message, onConfirm = null) => {
+    setAlert({
+      visible: true,
+      type,
+      title,
+      message,
+      showCancel: false,
+      confirmText: undefined,
+      cancelText: undefined,
+      onConfirm,
+      onCancel: null,
+      onClose: hideAlert,
+    });
   };
 
   // Format tracking number - handle arrays
@@ -153,21 +171,36 @@ const PreAlertList = () => {
   // };
 
 
-  const handleDelete = async (preAlerta) => {
-    if (window.confirm(`¿Estás seguro de eliminar la pre-alerta ${formatTrackingNumber(preAlerta.trackings)}?`)) {
-      setVisibleMenus({});
-      try {
-        const response = await deletePreAlerta(preAlerta.id);
-        if (response.success) {          
-          setPreAlertas(prev => prev.filter(p => p.id !== preAlerta.id));
-        } else {
-          alert('Error al eliminar la pre-alerta');
-        }
-      } catch (error) {
-        console.error('Error deleting pre-alert:', error);
-        alert('Error de conexión al eliminar la pre-alerta');
+  const confirmDelete = async (preAlertaId) => {
+    hideAlert();
+    try {
+      const response = await deletePreAlerta(preAlertaId);
+      if (response.success) {
+        setPreAlertas(prev => prev.filter(p => p.id !== preAlertaId));
+        toast.success(t('pre_alert.delete_success'));
+      } else {
+        toast.error(t('pre_alert.delete_error'));
       }
+    } catch (error) {
+      console.error('Error deleting pre-alert:', error);
+      toast.error(t('pre_alert.delete_connection_error'));
     }
+  };
+
+  const handleDelete = (preAlerta) => {
+    closeAllMenus();
+    setAlert({
+      visible: true,
+      type: 'error',
+      title: t('pre_alert.delete_confirm_title'),
+      message: `${t('pre_alert.delete_confirm')} "${formatTrackingNumber(preAlerta.trackings)}"?`,
+      showCancel: true,
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
+      onConfirm: () => confirmDelete(preAlerta.id),
+      onCancel: hideAlert,
+      onClose: hideAlert,
+    });
   };
 
 
@@ -193,9 +226,9 @@ const PreAlertList = () => {
   const EmptyState = () => (
     <div className="pre-alert-list__empty">
       {/* <div className="pre-alert-list__empty-icon">📦</div> */}
-      <h3 className="pre-alert-list__empty-title">No hay pre-alertas</h3>
+      <h3 className="pre-alert-list__empty-title">{t('pre_alert.empty_title')}</h3>
       <p className="pre-alert-list__empty-message">
-        Aún no has creado ninguna pre-alerta. ¡Crea tu primera pre-alerta para empezar!
+        {t('pre_alert.empty_message')}
       </p>
       {/* <Button
         variant="primary"
@@ -211,7 +244,7 @@ const PreAlertList = () => {
     return (
       <div className="pre-alert-list__loading">
         <LoadingSpinner size="large" />
-        <p>Cargando pre-alertas...</p>
+        <p>{t('pre_alert.loading')}</p>
       </div>
     );
   }
@@ -234,7 +267,7 @@ const PreAlertList = () => {
           </div>
 
           <div className="pre-alert-list__header-left">
-            <h1 className="pre-alert-list__title">Pre-Alertas</h1>
+            <h1 className="pre-alert-list__title">{t('pre_alert.list_title')}</h1>
             {/* <p className="pre-alert-list__subtitle">
               {preAlertas.length} pre-alerta{preAlertas.length !== 1 ? 's' : ''} • {' '}
               {preAlertas.filter(p => !p.IdGuia).length} pendiente{preAlertas.filter(p => !p.IdGuia).length !== 1 ? 's' : ''} • {' '}
@@ -249,14 +282,14 @@ const PreAlertList = () => {
               className="pre-alert-list__refresh-btn"
             >
               {refreshing ? <LoadingSpinner size="small" /> : <IoRefreshOutline size={18} style={{ marginBottom: -4 }} />}
-              {refreshing ? 'Actualizando...' : 'Actualizar'}
+              {refreshing ? t('common.refreshing') : t('common.refresh')}
             </Button>
             <Button
               variant="primary"
               onClick={() => navigate('/pre-alert/create')}
               className="pre-alert-list__create-btn"
             >
-              + Nueva Pre-Alerta
+              {t('pre_alert.new_pre_alert')}
             </Button>
           </div>
         </div>
@@ -270,10 +303,10 @@ const PreAlertList = () => {
             <div className="pre-alert-list__section">
               <div className="pre-alert-list__table-container">
                 <div className="pre-alert-list__table-header">
-                  <span className="pre-alert-list__table-header-text">Tracking</span>
-                  <span className="pre-alert-list__table-header-text">Estatus</span>
+                  <span className="pre-alert-list__table-header-text">{t('pre_alert.tracking_col')}</span>
+                  <span className="pre-alert-list__table-header-text">{t('pre_alert.status_col')}</span>
                   <span className="pre-alert-list__table-header-text pre-alert-list__table-header-text--actions">
-                    Acciones
+                    {t('pre_alert.actions_col')}
                   </span>
                 </div>
                 <div className="pre-alert-list__table-body">
@@ -337,21 +370,21 @@ const PreAlertList = () => {
                                   onClick={() => handleViewDetail(preAlerta)}
                                   className="pre-alert-list__menu-item"
                                 >
-                                  <IoEyeOutline size={18}/> Ver detalle
+                                  <IoEyeOutline size={18}/> {t('common.view')}
                                 </button>
                                 {!preAlerta.IdGuia && (
                                   <button
                                     onClick={() => handleEdit(preAlerta)}
                                     className="pre-alert-list__menu-item"
                                   >
-                                    <IoCreateOutline size={18}/> Editar
+                                    <IoCreateOutline size={18}/> {t('common.edit')}
                                   </button>
                                 )}
                                 <button
                                   onClick={() => handleDelete(preAlerta)}
                                   className="pre-alert-list__menu-item pre-alert-list__menu-item--danger"
                                 >
-                                  <IoTrashOutline size={18}/> Eliminar
+                                  <IoTrashOutline size={18}/> {t('common.delete')}
                                 </button>
                               </div>
                             )}

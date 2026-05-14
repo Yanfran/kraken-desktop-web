@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import './Login.styles.scss';
@@ -20,6 +21,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { signIn, signInWithGoogle, isLoading } = useAuth();
   const { colors, actualTheme } = useTheme();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -74,13 +76,13 @@ const Login = () => {
     const newErrors = {};
     
     if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido';
+      newErrors.email = t('auth.email_required');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = t('auth.email_invalid');
     }
-    
+
     if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
+      newErrors.password = t('auth.password_required');
     }
     
     setErrors(newErrors);
@@ -96,7 +98,7 @@ const Login = () => {
       const result = await signIn(formData.email, formData.password);
       
       if (result.success  == true) {
-        toast.success('¡Bienvenido de vuelta!');
+        toast.success(t('auth.welcome_back'));
         navigate('/home');
       } else {
 
@@ -150,7 +152,7 @@ const Login = () => {
         </div>
 
         {/* Título */}
-        <h1 className="kraken-login__title">Iniciar Sesión</h1>
+        <h1 className="kraken-login__title">{t('auth.login_title')}</h1>
 
         {/* 🔥 BOTÓN GOOGLE PERSONALIZADO */}
         <button
@@ -164,13 +166,13 @@ const Login = () => {
             alt="Google"
             className="kraken-login__google-icon"
           />
-          <span>Continuar con Google</span>
+          <span>{t('auth.google')}</span>
         </button>
 
         {/* Separador */}
         <div className="kraken-login__separator">
           <div className="kraken-login__separator-line"></div>
-          <span className="kraken-login__separator-text">o</span>
+          <span className="kraken-login__separator-text">{t('auth.or')}</span>
           <div className="kraken-login__separator-line"></div>
         </div>
 
@@ -178,12 +180,12 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="kraken-login__form">
           {/* Email */}
           <div className="kraken-input-field">
-            <label className="kraken-input-field__label">Email</label>
+            <label className="kraken-input-field__label">{t('auth.email')}</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="Ingresa tu email"
+              placeholder={t('auth.email_placeholder')}
               className={`kraken-input-field__input ${errors.email ? 'kraken-input-field__input--error' : ''}`}
               disabled={isLoading}
               autoComplete="email"
@@ -195,13 +197,13 @@ const Login = () => {
 
           {/* Password */}
           <div className="kraken-input-field">
-            <label className="kraken-input-field__label">Contraseña</label>
+            <label className="kraken-input-field__label">{t('auth.password')}</label>
             <div className="kraken-input-field__password-container">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                placeholder="Ingresa tu contraseña"
+                placeholder={t('auth.password_placeholder')}
                 className={`kraken-input-field__input ${errors.password ? 'kraken-input-field__input--error' : ''}`}
                 disabled={isLoading}
                 autoComplete="current-password"
@@ -247,10 +249,10 @@ const Login = () => {
             {isLoading ? (
               <div className="kraken-login__loading">
                 <div className="kraken-login__spinner"></div>
-                Iniciando sesión...
+                {t('auth.signing_in')}
               </div>
             ) : (
-              'Inicia sesión con e-mail'
+              t('auth.sign_in')
             )}
           </button>
         </form>
@@ -262,42 +264,42 @@ const Login = () => {
             className="kraken-login__forgot-link"
             onClick={() => navigate('/forgot-password')}
           >
-            ¿Olvidaste tu contraseña?
+            {t('auth.forgot_password')}
           </button>
         </div>
 
         {/* Link de registro */}
         <div className="kraken-login__register">
           <span className="kraken-login__register-text">
-            ¿No tienes cuenta? 
+            {t('auth.no_account')}{' '}
           </span>
           <button
             type="button"
             className="kraken-login__register-link"
             onClick={() => navigate('/register')}
           >
-            Regístrate aquí
+            {t('auth.register_link')}
           </button>
         </div>
 
         {/* Términos y condiciones */}
         <div className="kraken-login__terms">
           <p className="kraken-login__terms-text">
-            Al continuar, aceptas nuestros{' '}
-            <a 
-              href="/terms" 
-              className="kraken-login__terms-link"            
+            {t('auth.terms_start')}
+            <a
+              href="/terms"
+              className="kraken-login__terms-link"
               rel="noopener noreferrer"
             >
-              Términos y Condiciones
+              {t('auth.terms')}
             </a>
-            {' '}y{' '}
-            <a 
-              href="/privacy" 
-              className="kraken-login__terms-link"            
+            {t('auth.privacy_start')}
+            <a
+              href="/privacy"
+              className="kraken-login__terms-link"
               rel="noopener noreferrer"
             >
-              Política de Privacidad
+              {t('auth.privacy')}
             </a>
           </p>
         </div>

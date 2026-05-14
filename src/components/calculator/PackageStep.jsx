@@ -1,6 +1,7 @@
 // src/components/calculator/PackageStep.jsx
 // ✅ CORREGIDO - Dimensiones solo si FOB > 100 (CN y US)
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import CurrencyInput from '../common/CurrencyInput/CurrencyInput';
 import SearchableSelect from '../common/SearchableSelect/SearchableSelect';
 import './PackageStep.scss';
@@ -28,6 +29,7 @@ const PackageStep = ({
   isCalculating,
   onHighValueChange
 }) => {
+  const { t } = useTranslation();
   const [localContenidos, setLocalContenidos] = useState(contenidos || []);
 
   useEffect(() => {
@@ -91,7 +93,7 @@ const PackageStep = ({
             {/* Valor Declarado */}
             <div className="package-step__field">
               <label className="package-step__label">
-                Valor Declarado (FOB) *
+                {t('calculator.declared_value')} *
               </label>
               <CurrencyInput
                 value={declaredValue}
@@ -106,8 +108,7 @@ const PackageStep = ({
 
            {/* Peso con toggle */}
             <div className="package-step__field">
-              {/* Label principal del peso */}
-              <label className="package-step__label">Peso *</label>
+              <label className="package-step__label">{t('calculator.weight')} *</label>
 
               {/* Input del peso */}
               <CurrencyInput
@@ -153,7 +154,7 @@ const PackageStep = ({
             <div className="package-step__dimensions-section">
               <div className="package-step__dimensions-header">
                 <label className="package-step__label">
-                  Dimensiones del paquete
+                  {t('calculator.dimensions')}
                 </label>
                 {/* <span className="package-step__dimension-note">
                   {originCountry === 'CN' 
@@ -164,7 +165,7 @@ const PackageStep = ({
               
               <div className="package-step__dimensions-grid">
                 <div className="package-step__dimension-input">
-                  <label className="package-step__dimension-label">Largo</label>
+                  <label className="package-step__dimension-label">{t('calculator.length')}</label>
                   <CurrencyInput
                     value={dimensions.length}
                     onChange={handleDimensionCurrencyInputChange('length')}
@@ -176,7 +177,7 @@ const PackageStep = ({
                 </div>
                 
                 <div className="package-step__dimension-input">
-                  <label className="package-step__dimension-label">Ancho</label>
+                  <label className="package-step__dimension-label">{t('calculator.width')}</label>
                   <CurrencyInput
                     value={dimensions.width}
                     onChange={handleDimensionCurrencyInputChange('width')}
@@ -188,7 +189,7 @@ const PackageStep = ({
                 </div>
                 
                 <div className="package-step__dimension-input">
-                  <label className="package-step__dimension-label">Alto</label>
+                  <label className="package-step__dimension-label">{t('calculator.height')}</label>
                   <CurrencyInput
                     value={dimensions.height}
                     onChange={handleDimensionCurrencyInputChange('height')}
@@ -201,7 +202,7 @@ const PackageStep = ({
               </div>
               
               <span className="package-step__unit-label">
-                Unidad: {dimensionUnit}
+                {t('calculator.unit_label')}: {dimensionUnit}
               </span>
             </div>
           )}
@@ -210,7 +211,7 @@ const PackageStep = ({
           <div className="package-step__field">
             <div className="package-step__label-container">
               <label className="package-step__label">
-                Contenido * {localContenidos.length > 0 && `(${localContenidos.length} seleccionado${localContenidos.length !== 1 ? 's' : ''})`}
+                {t('calculator.content')} * {localContenidos.length > 0 && `(${localContenidos.length} ${t('calculator.content_selected')})`}
               </label>
             </div>
             
@@ -219,9 +220,9 @@ const PackageStep = ({
               value=""
               onChange={handleSearchableContentChange}
               placeholder={
-                localContenidos.length > 0 
-                  ? `${localContenidos.length} contenido(s) seleccionado(s)` 
-                  : "Seleccionar contenidos"
+                localContenidos.length > 0
+                  ? `${localContenidos.length} ${t('calculator.content_selected')}`
+                  : t('calculator.select_content')
               }
               disabled={isCalculating}
               className="package-step__content-select"
@@ -265,10 +266,10 @@ const PackageStep = ({
           {isCalculating ? (
             <div className="package-step__loading">
               <span className="package-step__spinner"></span>
-              <span>Calculando...</span>
+              <span>{t('calculator.calculating')}</span>
             </div>
           ) : (
-            'Calcular'
+            t('calculator.calculate')
           )}
         </button>
         
@@ -278,7 +279,7 @@ const PackageStep = ({
           onClick={onBack}
           disabled={isCalculating}
         >
-          Volver
+          {t('calculator.back')}
         </button>
       </div>
     </div>

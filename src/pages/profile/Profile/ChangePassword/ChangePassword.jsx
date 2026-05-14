@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import './ChangePassword.styles.scss';
 import axiosInstance from '../../../../services/axiosInstance';
 
@@ -28,7 +29,8 @@ import { useCustomAlert } from '@hooks/useCustomAlert';
 const ChangePassword = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+  const { t } = useTranslation();
+
   const [loading, setLoading] = useState(false);
   
   // Hook de alertas personalizado
@@ -58,14 +60,12 @@ const ChangePassword = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Validar contraseña actual
     if (!formData.currentPassword.trim()) {
-      newErrors.currentPassword = 'La contraseña actual es requerida';
+      newErrors.currentPassword = t('change_password.error_current_required');
     }
 
-    // Validar nueva contraseña usando el validador del componente
     if (!formData.newPassword.trim()) {
-      newErrors.newPassword = 'La nueva contraseña es requerida';
+      newErrors.newPassword = t('change_password.error_new_required');
     } else {
       const passwordValidation = validatePassword(formData.newPassword);
       if (!passwordValidation.isValid) {
@@ -73,17 +73,15 @@ const ChangePassword = () => {
       }
     }
 
-    // Validar que la nueva contraseña sea diferente a la actual
-    if (formData.newPassword && formData.currentPassword && 
+    if (formData.newPassword && formData.currentPassword &&
         formData.newPassword === formData.currentPassword) {
-      newErrors.newPassword = 'La nueva contraseña debe ser diferente a la actual';
+      newErrors.newPassword = t('change_password.error_new_same');
     }
 
-    // Validar confirmación de contraseña
     if (!formData.confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Debes confirmar la nueva contraseña';
+      newErrors.confirmPassword = t('change_password.error_confirm_required');
     } else if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+      newErrors.confirmPassword = t('change_password.error_confirm_mismatch');
     }
 
     setErrors(newErrors);
@@ -129,7 +127,7 @@ const ChangePassword = () => {
     e.preventDefault();
     
     if (!validateForm()) {
-      toast.error('Por favor corrige los errores en el formulario');
+      toast.error(t('change_password.error_form_invalid'));
       return;
     }
 
@@ -143,10 +141,9 @@ const ChangePassword = () => {
       });
 
       if (response.data.success) {
-        // Mostrar alerta de éxito
         alert.showSuccess(
-          'Contraseña actualizada',
-          'Tu contraseña se ha cambiado correctamente. Por seguridad, te recomendamos no compartirla con nadie.',
+          t('change_password.success_title'),
+          t('change_password.success_msg'),
           () => {
             // Limpiar formulario
             setFormData({
@@ -163,17 +160,17 @@ const ChangePassword = () => {
           }
         );
       } else {
-        toast.error(response.data.message || 'Error al cambiar la contraseña');
+        toast.error(response.data.message || t('change_password.error_generic'));
       }
     } catch (error) {
       console.error('Error al cambiar contraseña:', error);
-      
+
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else if (error.response?.status === 401) {
-        toast.error('La contraseña actual es incorrecta');
+        toast.error(t('change_password.error_wrong_current'));
       } else {
-        toast.error('Error al cambiar la contraseña. Intenta nuevamente.');
+        toast.error(t('change_password.error_retry'));
       }
     } finally {
       setLoading(false);
@@ -203,10 +200,10 @@ const ChangePassword = () => {
           disabled={loading}
         >
           <IoChevronBack size={20} />
-          <span>Volver</span>
+          <span>{t('change_password.back')}</span>
         </button>
-        <h1 className="change-password__main-title">Cambiar Contraseña</h1>
-        <p className="change-password__subtitle">Actualiza tu contraseña de forma segura</p>
+        <h1 className="change-password__main-title">{t('change_password.title')}</h1>
+        <p className="change-password__subtitle">{t('change_password.subtitle')}</p>
       </div>
 
       {/* Card con el formulario */}
@@ -227,7 +224,7 @@ const ChangePassword = () => {
               <div className="change-password__field full-width">
                 <label className="change-password__label">
                   <IoLockClosedOutline size={18} />
-                  Contraseña Actual <span className="change-password__required">*</span>
+                  {t('change_password.current_password')} <span className="change-password__required">*</span>
                 </label>
                 <div className="change-password__password-wrapper">
                   <input
@@ -236,7 +233,7 @@ const ChangePassword = () => {
                     value={formData.currentPassword}
                     onChange={handleChange}
                     className={`change-password__input ${errors.currentPassword ? 'error' : ''}`}
-                    placeholder="Ingresa tu contraseña actual"
+                    placeholder={t('change_password.current_password_placeholder')}
                     disabled={loading}
                     autoComplete="current-password"
                   />
@@ -261,7 +258,7 @@ const ChangePassword = () => {
               <div className="change-password__field full-width">
                 <label className="change-password__label">
                   <IoLockClosedOutline size={18} />
-                  Nueva Contraseña <span className="change-password__required">*</span>
+                  {t('change_password.new_password')} <span className="change-password__required">*</span>
                 </label>
                 <div className="change-password__password-wrapper">
                   <input
@@ -270,7 +267,7 @@ const ChangePassword = () => {
                     value={formData.newPassword}
                     onChange={handleChange}
                     className={`change-password__input ${errors.newPassword ? 'error' : ''}`}
-                    placeholder="Ingresa tu nueva contraseña"
+                    placeholder={t('change_password.new_password_placeholder')}
                     disabled={loading}
                     autoComplete="new-password"
                   />
@@ -301,7 +298,7 @@ const ChangePassword = () => {
               <div className="change-password__field full-width">
                 <label className="change-password__label">
                   <IoLockClosedOutline size={18} />
-                  Confirmar Nueva Contraseña <span className="change-password__required">*</span>
+                  {t('change_password.confirm_password')} <span className="change-password__required">*</span>
                 </label>
                 <div className="change-password__password-wrapper">
                   <input
@@ -310,7 +307,7 @@ const ChangePassword = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     className={`change-password__input ${errors.confirmPassword ? 'error' : ''}`}
-                    placeholder="Confirma tu nueva contraseña"
+                    placeholder={t('change_password.confirm_password_placeholder')}
                     disabled={loading}
                     autoComplete="new-password"
                   />
@@ -341,7 +338,7 @@ const ChangePassword = () => {
                 }
                 icon={loading ? null : <IoSaveOutline size={20} />}
               >
-                {loading ? 'Cambiando contraseña...' : 'Cambiar Contraseña'}
+                {loading ? t('change_password.submitting') : t('change_password.submit')}
               </Button>
             </div>
           </form>

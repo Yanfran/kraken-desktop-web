@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import './Register.styles.scss';
@@ -21,6 +22,7 @@ const Register = () => {
   const navigate = useNavigate();
   const { signUp, signInWithGoogle, isLoading } = useAuth();
   const { colors, actualTheme } = useTheme();
+  const { t } = useTranslation();
   
   // Estados del formulario
   const [formData, setFormData] = useState({
@@ -105,33 +107,31 @@ const Register = () => {
     const newErrors = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es requerido';
+      newErrors.name = t('auth.name_required');
     }
-    
+
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'El apellido es requerido';
+      newErrors.lastName = t('auth.last_name_required');
     }
-    
+
     if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido';
+      newErrors.email = t('auth.email_required');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = t('auth.email_invalid');
     }
-    
+
     if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
+      newErrors.password = t('auth.password_required');
     } else {
-      // Validar contraseña segura
       const passwordValidation = validatePassword(formData.password);
       if (!passwordValidation.isValid) {
         newErrors.password = passwordValidation.errors[0];
       }
     }
-    
-    // Si hay errores, detener
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error('Por favor, corrige los errores del formulario');
+      toast.error(t('auth.register_form_errors'));
       return;
     }
     
@@ -144,12 +144,11 @@ const Register = () => {
       });
       
       if (result.success) {
-        toast.success('¡Registro exitoso! Verifica tu email para continuar.');
-        navigate('/email-confirmation', { 
+        toast.success(t('auth.register_success'));
+        navigate('/email-confirmation', {
           state: { email: formData.email }
         });
       } else {
-        // Manejar errores específicos del backend
         if (result.field) {
           setErrors({ [result.field]: result.message });
         } else {
@@ -159,8 +158,8 @@ const Register = () => {
       }
     } catch (error) {
       console.error('Error en registro:', error);
-      setErrors({ submit: 'Error de conexión. Intenta de nuevo.' });
-      toast.error('Error de conexión. Intenta de nuevo.');
+      setErrors({ submit: t('auth.connection_error') });
+      toast.error(t('auth.connection_error'));
     }
   };
 
@@ -190,7 +189,7 @@ const Register = () => {
         </div>
 
         {/* Título */}
-        <h1 className="kraken-register__title">Crear cuenta</h1>
+        <h1 className="kraken-register__title">{t('auth.register_title')}</h1>
 
         {/* Botón Google */}
         <button
@@ -204,13 +203,13 @@ const Register = () => {
             alt="Google"
             className="kraken-register__google-icon"
           />
-          <span>Continuar con Google</span>
+          <span>{t('auth.google')}</span>
         </button>
 
         {/* Separador */}
         <div className="kraken-register__separator">
           <div className="kraken-register__separator-line"></div>
-          <span className="kraken-register__separator-text">o</span>
+          <span className="kraken-register__separator-text">{t('auth.or')}</span>
           <div className="kraken-register__separator-line"></div>
         </div>
 
@@ -218,12 +217,12 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="kraken-register__form">
           {/* Nombre */}
           <div className="kraken-input-field">
-            <label className="kraken-input-field__label">Nombre</label>
+            <label className="kraken-input-field__label">{t('auth.name')}</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Ingresa tu nombre"
+              placeholder={t('auth.name_placeholder')}
               className={`kraken-input-field__input ${errors.name ? 'kraken-input-field__input--error' : ''}`}
               disabled={isLoading}
               autoComplete="given-name"
@@ -235,12 +234,12 @@ const Register = () => {
 
           {/* Apellido */}
           <div className="kraken-input-field">
-            <label className="kraken-input-field__label">Apellido</label>
+            <label className="kraken-input-field__label">{t('auth.last_name')}</label>
             <input
               type="text"
               value={formData.lastName}
               onChange={(e) => handleInputChange('lastName', e.target.value)}
-              placeholder="Ingresa tu apellido"
+              placeholder={t('auth.last_name_placeholder')}
               className={`kraken-input-field__input ${errors.lastName ? 'kraken-input-field__input--error' : ''}`}
               disabled={isLoading}
               autoComplete="family-name"
@@ -252,12 +251,12 @@ const Register = () => {
 
           {/* Email */}
           <div className="kraken-input-field">
-            <label className="kraken-input-field__label">Email</label>
+            <label className="kraken-input-field__label">{t('auth.email')}</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="Ingresa tu email"
+              placeholder={t('auth.email_placeholder')}
               className={`kraken-input-field__input ${errors.email ? 'kraken-input-field__input--error' : ''}`}
               disabled={isLoading}
               autoComplete="email"
@@ -269,13 +268,13 @@ const Register = () => {
 
           {/* Password */}
           <div className="kraken-input-field">
-            <label className="kraken-input-field__label">Contraseña</label>
+            <label className="kraken-input-field__label">{t('auth.password')}</label>
             <div className="kraken-input-field__password-container">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
-                placeholder="Ingresa tu contraseña"
+                placeholder={t('auth.password_placeholder')}
                 className={`kraken-input-field__input ${errors.password ? 'kraken-input-field__input--error' : ''}`}
                 disabled={isLoading}
                 autoComplete="new-password"
@@ -323,17 +322,17 @@ const Register = () => {
             type="submit"
             className="kraken-register__submit-button"
             disabled={
-              isLoading || 
+              isLoading ||
               (formData.password && !validatePassword(formData.password).isValid)
             }
           >
             {isLoading ? (
               <div className="kraken-register__loading">
                 <div className="kraken-register__spinner"></div>
-                Registrando...
+                {t('auth.registering')}
               </div>
             ) : (
-              'Registro con e-mail'
+              t('auth.register_submit')
             )}
           </button>
         </form>
@@ -341,37 +340,37 @@ const Register = () => {
         {/* Link de login */}
         <div className="kraken-register__login">
           <span className="kraken-register__login-text">
-            ¿Ya tienes cuenta? 
+            {t('auth.have_account')}{' '}
           </span>
           <button
             type="button"
             className="kraken-register__login-link"
             onClick={() => navigate('/login')}
           >
-            Inicia sesión aquí
+            {t('auth.login_link_text')}
           </button>
         </div>
 
         {/* Términos y condiciones */}
         <div className="kraken-register__terms">
           <p className="kraken-register__terms-text">
-            Al continuar, aceptas nuestros{' '}
-            <a 
-              href="/terms" 
+            {t('auth.terms_start')}
+            <a
+              href="/terms"
               className="kraken-register__terms-link"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Términos y Condiciones
+              {t('auth.terms')}
             </a>
-            {' '}y{' '}
-            <a 
-              href="/privacy" 
+            {t('auth.privacy_start')}
+            <a
+              href="/privacy"
               className="kraken-register__terms-link"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Política de Privacidad
+              {t('auth.privacy')}
             </a>
           </p>
         </div>

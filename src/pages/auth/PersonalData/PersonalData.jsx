@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../../services/axiosInstance';
 import './PersonalData.styles.scss';
 import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
@@ -29,6 +30,7 @@ const ThemeToggle = () => {
 const PersonalData = () => {
   const navigate = useNavigate();
   const { actualTheme } = useTheme();
+  const { t } = useTranslation();
 
   // Estados principales
   const [isLoading, setIsLoading] = useState(true);
@@ -151,7 +153,7 @@ const PersonalData = () => {
         }
       } catch (error) {
         console.error("❌ Error al cargar datos iniciales:", error);
-        setErrors({ submit: 'Error al cargar datos iniciales. Verifica tu conexión.' });
+        setErrors({ submit: t('auth.pd_load_error') });
       } finally {
         setIsLoading(false);
       }
@@ -174,28 +176,28 @@ const PersonalData = () => {
       validation = docConfig.validation;
     }
 
-    if (!validation) return { isValid: false, message: "Tipo de documento no válido" };
+    if (!validation) return { isValid: false, message: t('auth.pd_doc_invalid') };
 
     const { pattern, minLength, maxLength } = validation;
 
     if (!pattern.test(value)) {
       return {
         isValid: false,
-        message: "Contiene caracteres no permitidos. " + validation.description
+        message: t('auth.pd_doc_chars_error') + '. ' + validation.description
       };
     }
 
     if (value.length < minLength) {
       return {
         isValid: false,
-        message: `Debe tener al menos ${minLength} caracteres`
+        message: t('auth.pd_doc_min', { min: minLength })
       };
     }
 
     if (value.length > maxLength) {
       return {
         isValid: false,
-        message: `No puede tener más de ${maxLength} caracteres`
+        message: t('auth.pd_doc_max', { max: maxLength })
       };
     }
 
@@ -362,6 +364,13 @@ const PersonalData = () => {
       }
     }
 
+    // Strip prefix if user pasted the full document number (e.g. "J-12345678-9")
+    const prefix = getDocumentPrefix(formData.documentType);
+    if (prefix && cleaned.length > 0) {
+      const re = new RegExp(`^${prefix.replace('-', '[-]?')}`, 'i');
+      cleaned = cleaned.replace(re, '');
+    }
+
     const limited = cleaned.slice(0, validation.maxLength);
     handleInputChange('documentNumber', limited);
   };
@@ -400,12 +409,12 @@ const PersonalData = () => {
     );
 
     if (!documentValidation.isValid) {
-      setErrors({ submit: `Error en documento: ${documentValidation.message}` });
+      setErrors({ submit: documentValidation.message });
       return;
     }
 
     if (!isFormComplete()) {
-      setErrors({ submit: 'Por favor, complete todos los campos requeridos' });
+      setErrors({ submit: t('auth.pd_required_fields') });
       return;
     }
 
@@ -438,13 +447,25 @@ const PersonalData = () => {
       navigate('/delivery-option', { state: submitData });
     } catch (error) {
       console.error('❌ Error al guardar:', error);
-      setErrors({ submit: 'Error al guardar los datos. Intenta nuevamente.' });
+      setErrors({ submit: t('auth.pd_save_error') });
     } finally {
       setIsSaving(false);
     }
   };
 
   // ===== HELPERS PARA UI =====
+
+  const getDocumentPrefix = (idType) => {
+    const prefixes = {
+      'cedulavenezolana': 'V-',
+      'cedulaextranjera': 'E-',
+      'rifjuridico':      'J-',
+      'rifgubernamental': 'G-',
+      'rifcomuna':        'C-',
+      'riffirmapersonal': 'R-',
+    };
+    return prefixes[idType] || '';
+  };
 
   // Opciones de documentos por país de residencia
   const getDocumentOptions = () => {
@@ -480,43 +501,43 @@ const PersonalData = () => {
   const documentOptions = getDocumentOptions();
 
   const getDocumentPlaceholder = () => {
-    if (!formData.documentType) return "Seleccione tipo de documento primero";
+    if (!formData.documentType) return t('auth.pd_select_doc_first');
 
     // Check config validations first
     const config = getCountryConfig(formData.residenceCountry);
     const docConfig = config.documentTypes?.find(d => d.value === formData.documentType);
     if (docConfig && docConfig.validation) {
-      return docConfig.validation.description || "Número de documento";
+      return docConfig.validation.description || t('auth.pd_doc_number');
     }
 
     const validation = documentValidations[formData.documentType];
-    if (!validation) return "Número de documento";
+    if (!validation) return t('auth.pd_doc_number');
 
     switch (formData.documentType) {
       case 'cedula':
       case 'cedulavenezolana':  return "Ej: 12345678";
-      case 'cedulaextranjera':  return "Ej: E12345678";
+      case 'cedulaextranjera':  return "Ej: 12345678";
       case 'pasaporte':         return "Ej: A1234567";
       case 'rif':
-      case 'rifjuridico':       return "Ej: J-12345678-9";
-      case 'rifgubernamental':  return "Ej: G-12345678-9";
-      case 'rifcomuna':         return "Ej: C-12345678-9";
-      case 'riffirmapersonal':  return "Ej: R-12345678-9";
-      case 'otro':              return "Documento de identidad";
-      default:                  return "Número de documento";
+      case 'rifjuridico':       return "Ej: 12345678-9";
+      case 'rifgubernamental':  return "Ej: 12345678-9";
+      case 'rifcomuna':         return "Ej: 12345678-9";
+      case 'riffirmapersonal':  return "Ej: 12345678-9";
+      case 'otro':              return t('auth.pd_doc_number');
+      default:                  return t('auth.pd_doc_number');
     }
   };
 
   const getPhonePlaceholder = () => {
     const format = phoneFormats[formData.countryCode];
-    if (!format) return "Celular";
-    return `Celular ${format.mask}`;
+    if (!format) return t('auth.pd_phone');
+    return `${t('auth.pd_phone')} ${format.mask}`;
   };
 
   const getPhoneErrorMessage = () => {
     const format = phoneFormats[formData.countryCode];
-    if (!format) return "Ingrese un número válido";
-    return `Ingrese un número completo ${format.mask}`;
+    if (!format) return t('auth.pd_phone_invalid');
+    return `${t('auth.pd_phone_invalid')} ${format.mask}`;
   };
 
   const currentDocumentValidation = validateDocument(
@@ -538,7 +559,7 @@ const PersonalData = () => {
       <div className="kraken-personal-data" data-theme={actualTheme}>
         <div className="kraken-personal-data__loading">
           <div className="kraken-personal-data__spinner"></div>
-          <p>Cargando datos...</p>
+          <p>{t('auth.pd_loading')}</p>
         </div>
       </div>
     );
@@ -568,33 +589,33 @@ const PersonalData = () => {
 
       {/* Contenido principal */}
       <div className="kraken-personal-data__content">
-        <h1 className="kraken-personal-data__title">Datos personales</h1>
+        <h1 className="kraken-personal-data__title">{t('auth.pd_title')}</h1>
 
         <form onSubmit={handleSubmit} className="kraken-personal-data__form">
           {/* País de Residencia */}
           <div className="kraken-form-field">
-            <label className="kraken-form-field__label">País de Residencia</label>
+            <label className="kraken-form-field__label">{t('auth.pd_residence_country')}</label>
             <SearchableSelect
               options={[
                 { label: 'Venezuela', value: 'VE' },
-                { label: 'Estados Unidos', value: 'US' }
+                { label: 'United States', value: 'US' }
               ]}
               value={formData.residenceCountry}
               onChange={handleResidenceChange}
-              placeholder="Seleccione país de residencia"
+              placeholder={t('auth.pd_residence_placeholder')}
             />
           </div>
 
           {/* Tipo de documento */}
           <div className="kraken-form-field">
-            <label className="kraken-form-field__label">Tipo de documento</label>
+            <label className="kraken-form-field__label">{t('auth.pd_doc_type')}</label>
             <select
               className="kraken-form-field__select"
               value={formData.documentType}
               onChange={(e) => handleDocumentTypeChange(e.target.value)}
               required
             >
-              <option value="">Seleccione</option>
+              <option value="">{t('auth.pd_select')}</option>
               {documentOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -605,19 +626,36 @@ const PersonalData = () => {
 
           {/* Número de documento */}
           <div className="kraken-form-field">
-            <label className="kraken-form-field__label">Número de documento</label>
-            <input
-              type="text"
-              className={`kraken-form-field__input ${formData.documentNumber && !currentDocumentValidation.isValid
-                ? 'kraken-form-field__input--error'
-                : ''
-                }`}
-              placeholder={getDocumentPlaceholder()}
-              value={formData.documentNumber}
-              onChange={(e) => handleDocumentNumberChange(e.target.value)}
-              disabled={!formData.documentType}
-              required
-            />
+            <label className="kraken-form-field__label">{t('auth.pd_doc_number')}</label>
+            {getDocumentPrefix(formData.documentType) ? (
+              <div className={`kraken-form-field__prefix-wrapper ${formData.documentNumber && !currentDocumentValidation.isValid ? 'kraken-form-field__prefix-wrapper--error' : ''}`}>
+                <span className="kraken-form-field__prefix-badge">
+                  {getDocumentPrefix(formData.documentType)}
+                </span>
+                <input
+                  type="text"
+                  className="kraken-form-field__input--prefixed"
+                  placeholder={getDocumentPlaceholder()}
+                  value={formData.documentNumber}
+                  onChange={(e) => handleDocumentNumberChange(e.target.value)}
+                  disabled={!formData.documentType}
+                  required
+                />
+              </div>
+            ) : (
+              <input
+                type="text"
+                className={`kraken-form-field__input ${formData.documentNumber && !currentDocumentValidation.isValid
+                  ? 'kraken-form-field__input--error'
+                  : ''
+                  }`}
+                placeholder={getDocumentPlaceholder()}
+                value={formData.documentNumber}
+                onChange={(e) => handleDocumentNumberChange(e.target.value)}
+                disabled={!formData.documentType}
+                required
+              />
+            )}
 
             {formData.documentNumber && !currentDocumentValidation.isValid && (
               <p className="kraken-form-field__error">
@@ -636,14 +674,14 @@ const PersonalData = () => {
           {formData.residenceCountry === 'VE' ? (
             <div className="kraken-form-field__row">
               <div className="kraken-form-field kraken-form-field--38">
-                <label className="kraken-form-field__label">Operador</label>
+                <label className="kraken-form-field__label">{t('auth.pd_operator')}</label>
                 <select
                   className="kraken-form-field__select"
                   value={formData.phoneOperator}
                   onChange={(e) => handleInputChange('phoneOperator', e.target.value)}
                   required
                 >
-                  <option value="">Operador</option>
+                  <option value="">{t('auth.pd_operator')}</option>
                   {venezuelanOperators.map((operator) => (
                     <option key={operator.value} value={operator.value}>
                       {operator.label}
@@ -652,7 +690,7 @@ const PersonalData = () => {
                 </select>
               </div>
               <div className="kraken-form-field kraken-form-field--60">
-                <label className="kraken-form-field__label">Número de Celular</label>
+                <label className="kraken-form-field__label">{t('auth.pd_phone')}</label>
                 <input
                   type="tel"
                   className="kraken-form-field__input"
@@ -669,7 +707,7 @@ const PersonalData = () => {
           ) : formData.residenceCountry === 'US' ? (
             <>
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Número de Celular (EE.UU.)</label>
+                <label className="kraken-form-field__label">{t('auth.pd_phone_us')}</label>
                 <input
                   type="tel"
                   className="kraken-form-field__input"
@@ -686,14 +724,14 @@ const PersonalData = () => {
               {/* Teléfono venezolano — obligatorio para usuarios de EE.UU. */}
               <div className="kraken-form-field">
                 <label className="kraken-form-field__label kraken-form-field__label--additional">
-                  Número venezolano
+                  {t('auth.pd_ve_phone_label')}
                 </label>
               </div>
 
               <div className="kraken-form-field__row">
                 <div className="kraken-form-field kraken-form-field--half">
                   <div className="kraken-form-field__fixed-country">
-                    +58 (Venezuela)
+                    {t('auth.pd_ve_prefix')}
                   </div>
                 </div>
                 <div className="kraken-form-field kraken-form-field--half">
@@ -703,7 +741,7 @@ const PersonalData = () => {
                     onChange={(e) => handleInputChange('venezuelanOperator', e.target.value)}
                     required
                   >
-                    <option value="">Operador</option>
+                    <option value="">{t('auth.pd_operator')}</option>
                     {venezuelanOperators.map((operator) => (
                       <option key={operator.value} value={operator.value}>
                         {operator.label}
@@ -714,7 +752,7 @@ const PersonalData = () => {
               </div>
 
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Celular Venezolano</label>
+                <label className="kraken-form-field__label">{t('auth.pd_ve_phone')}</label>
                 <input
                   type="tel"
                   className="kraken-form-field__input"
@@ -727,19 +765,19 @@ const PersonalData = () => {
                   formData.venezuelanPhone.replace(/\D/g, "").length > 0 &&
                   formData.venezuelanPhone.replace(/\D/g, "").length < 7 && (
                     <p className="kraken-form-field__error">
-                      Ingrese un número venezolano completo ###-##-##
+                      {t('auth.pd_ve_phone_complete')}
                     </p>
                   )}
                 {formData.venezuelanOperator && !formData.venezuelanPhone && (
                   <p className="kraken-form-field__error">
-                    Ingrese el número venezolano
+                    {t('auth.pd_ve_phone_required')}
                   </p>
                 )}
                 {formData.venezuelanPhone &&
                   formData.venezuelanPhone.replace(/\D/g, "").length === 7 &&
                   !formData.venezuelanOperator && (
                     <p className="kraken-form-field__error">
-                      Seleccione un operador
+                      {t('auth.pd_operator_required')}
                     </p>
                   )}
               </div>
@@ -763,23 +801,23 @@ const PersonalData = () => {
             {isSaving ? (
               <div className="kraken-personal-data__loading-inline">
                 <div className="kraken-personal-data__spinner-small"></div>
-                Guardando...
+                {t('auth.pd_saving')}
               </div>
             ) : (
-              'Finalizar Registro'
+              t('auth.pd_submit')
             )}
           </button>
 
           {/* Términos y condiciones */}
           <div className="kraken-personal-data__terms">
             <p>
-              Al continuar, aceptas nuestros{' '}
+              {t('auth.terms_start')}
               <a href="/terms" target="_blank" rel="noopener noreferrer">
-                Términos y Condiciones
-              </a>{' '}
-              y nuestra{' '}
+                {t('auth.terms')}
+              </a>
+              {t('auth.privacy_start')}
               <a href="/privacy" target="_blank" rel="noopener noreferrer">
-                Política de Privacidad
+                {t('auth.privacy')}
               </a>
             </p>
           </div>

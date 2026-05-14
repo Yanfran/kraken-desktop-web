@@ -2,11 +2,14 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import NewsCarousel from '../../components/NewsCarousel/NewsCarousel';
 import { getLastShipment, uploadGuiaInvoice } from '../../services/guiasService';
 import { getPreAlertasPendientes, deletePreAlerta } from '../../services/preAlertService';
 import { getNovedades } from '../../services/novedadesService';
-import { useAddresses } from '@hooks/useAddresses'; 
+import { useAddresses } from '@hooks/useAddresses';
+import toast from 'react-hot-toast';
+import CustomAlert from '@components/alert/CustomAlert/CustomAlert';
 import './Home.styles.scss';
 
 // Icons
@@ -31,7 +34,8 @@ import {
 
 const Home = ({ onNavigateToShipments }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();  
+  const { user } = useAuth();
+  const { t } = useTranslation();  
   const { 
     defaultAddressText, 
     isLoading: isLoadingAddress,
@@ -70,6 +74,22 @@ const Home = ({ onNavigateToShipments }) => {
     preAlerts: null,
     news: null
   });
+
+  // Alert state
+  const [alertState, setAlertState] = useState({
+    visible: false,
+    type: 'info',
+    title: '',
+    message: '',
+    showCancel: false,
+    confirmText: undefined,
+    cancelText: undefined,
+    onConfirm: null,
+    onCancel: null,
+    onClose: null,
+  });
+
+  const hideAlert = () => setAlertState(prev => ({ ...prev, visible: false }));
 
   // 🆕 REF PARA INPUT DE ARCHIVO (INVISIBLE)
   const fileInputRef = useRef(null);
@@ -420,9 +440,8 @@ const Home = ({ onNavigateToShipments }) => {
   };
 
   const handleHelpShipment = (shipment) => {
-    // console.log('Ayuda shipment:', shipment);
     setVisibleMenus({});
-    alert('Para obtener ayuda, contacta nuestro soporte');
+    window.open('https://krakencourier.com/', '_blank', 'noopener,noreferrer');
   };
 
   /**
@@ -440,27 +459,41 @@ const Home = ({ onNavigateToShipments }) => {
     navigate(`/pre-alert/edit/${alert.id}`);
   };
 
-  const handleHelp = (alert) => {
-    // console.log('Ayuda:', alert);
+  const handleHelp = (preAlert) => {
     setVisibleMenus({});
-    alert('Para obtener ayuda, contacta nuestro soporte');
+    window.open('https://krakencourier.com/', '_blank', 'noopener,noreferrer');
   };
 
-  const handleDelete = async (alert) => {
-    if (window.confirm(`¿Estás seguro de eliminar la pre-alerta ${alert.trackingNumber}?`)) {
-      setVisibleMenus({});
-      try {
-        const response = await deletePreAlerta(alert.id);
-        if (response.success) {
-          setPreAlerts(prev => prev.filter(p => p.id !== alert.id));
-        } else {
-          alert('Error al eliminar la pre-alerta');
-        }
-      } catch (error) {
-        console.error('Error deleting pre-alert:', error);
-        alert('Error de conexión al eliminar la pre-alerta');
+  const confirmDeletePreAlert = async (preAlertId) => {
+    hideAlert();
+    try {
+      const response = await deletePreAlerta(preAlertId);
+      if (response.success) {
+        setPreAlerts(prev => prev.filter(p => p.id !== preAlertId));
+        toast.success(t('pre_alert.delete_success'));
+      } else {
+        toast.error(t('home.delete_error'));
       }
+    } catch (error) {
+      console.error('Error deleting pre-alert:', error);
+      toast.error(t('home.delete_connection_error'));
     }
+  };
+
+  const handleDelete = (preAlert) => {
+    setVisibleMenus({});
+    setAlertState({
+      visible: true,
+      type: 'error',
+      title: t('pre_alert.delete_confirm_title'),
+      message: `${t('home.delete_confirm')} ${preAlert.trackingNumber}?`,
+      showCancel: true,
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
+      onConfirm: () => confirmDeletePreAlert(preAlert.id),
+      onCancel: hideAlert,
+      onClose: hideAlert,
+    });
   };
 
   /**
@@ -525,7 +558,7 @@ const Home = ({ onNavigateToShipments }) => {
 
       {/* Dirección de entrega */}
       <div className="delivery-address">
-        <span className="delivery-address__label">Tu dirección de entrega</span>
+        <span className="delivery-address__label">{t('home.delivery_address')}</span>
         <div className="delivery-address__location">
           <span className="delivery-address__name">
             {defaultAddressText}
@@ -539,10 +572,10 @@ const Home = ({ onNavigateToShipments }) => {
       {/* Último Envío */}
       <section className="last-shipment-card">
         <div className="last-shipment-card__header">
-          <h2 className="last-shipment-card__title">Último Envío</h2>
+          <h2 className="last-shipment-card__title">{t('home.last_shipment')}</h2>
           {lastShipment && (
             <div className="last-shipment-card__origin">
-              <span className="last-shipment-card__origin-label">Origen</span>
+              <span className="last-shipment-card__origin-label">{t('home.origin')}</span>
               <div className="last-shipment-card__origin-info">
                 <span className="last-shipment-card__origin-flag">
                   {getOriginFlag(lastShipment.origin)}
@@ -558,13 +591,13 @@ const Home = ({ onNavigateToShipments }) => {
         {loading.lastShipment ? (
           <div className="last-shipment-card__loading">
             <div className="spinner"></div>
-            <p>Cargando último envío...</p>
+            <p>{t('home.loading_shipment')}</p>
           </div>
         ) : lastShipment ? (
           <>
             <div className="last-shipment-card__row">
               <div className="last-shipment-card__cell">
-                <span className="last-shipment-card__label">N° Guía</span>
+                <span className="last-shipment-card__label">{t('home.guide_number')}</span>
                 <div className="last-shipment-card__value">
                   <span className="last-shipment-card__tracking">{lastShipment.trackingNumber}</span>
                   <span className="last-shipment-card__content">{lastShipment.contenido || 'TV'}</span>
@@ -572,7 +605,7 @@ const Home = ({ onNavigateToShipments }) => {
               </div>
 
               <div className="last-shipment-card__cell">
-                <span className="last-shipment-card__label">Estatus</span>
+                <span className="last-shipment-card__label">{t('home.status')}</span>
                 <div className="last-shipment-card__value">
                   {lastShipment.status}
                   <span className="last-shipment-card__date">{lastShipment.date}</span>
@@ -580,7 +613,7 @@ const Home = ({ onNavigateToShipments }) => {
               </div>
 
               <div className="last-shipment-card__cell">
-                <span className="last-shipment-card__label">{lastShipment.estaPagado ? 'Total Pagado' : 'Costo del envío'}</span>
+                <span className="last-shipment-card__label">{lastShipment.estaPagado ? t('home.total_paid') : t('home.shipping_cost')}</span>
                 <span className="last-shipment-card__price">{formatBolivarFromShipment(lastShipment)}</span>
               </div>
 
@@ -602,7 +635,7 @@ const Home = ({ onNavigateToShipments }) => {
                       className="menu-dropdown__item"
                     >
                       <span className="menu-dropdown__icon"><IoEyeOutline size={18}/></span>
-                      Ver detalle
+                      {t('home.view_detail')}
                     </button>
 
                     {/* 🆕 OPCIÓN: Cargar Factura (solo si necesita factura) */}
@@ -619,7 +652,7 @@ const Home = ({ onNavigateToShipments }) => {
                             <IoDocumentTextOutline size={18} style={{ color: '#f59e0b' }}/>
                           )}
                         </span>
-                        {loading.uploadingInvoice ? 'Cargando...' : 'Cargar Factura'}
+                        {loading.uploadingInvoice ? t('common.loading') : t('home.upload_invoice')}
                       </button>
                     )}
 
@@ -630,7 +663,7 @@ const Home = ({ onNavigateToShipments }) => {
                         className="menu-dropdown__item menu-dropdown__item--pagar"
                       >
                         <span className="menu-dropdown__icon"><IoCardOutline size={18}/></span>
-                        Pagar
+                        {t('home.pay')}
                       </button>
                     )}
 
@@ -640,7 +673,7 @@ const Home = ({ onNavigateToShipments }) => {
                       className="menu-dropdown__item"
                     >
                       <span className="menu-dropdown__icon"><IoHelpOutline size={18}/></span>
-                      Ayuda
+                      {t('home.help')}
                     </button>
                   </div>
                 )}
@@ -654,13 +687,13 @@ const Home = ({ onNavigateToShipments }) => {
                   }
                 </span>
                 <span className={`alert-text ${lastShipment.prealerted ? 'alert-text--success' : ''}`}>
-                  {lastShipment.prealerted ? 'Pre-alertado' : 'No pre-alertado'}
+                  {lastShipment.prealerted ? t('home.pre_alerted') : t('home.not_pre_alerted')}
                 </span>
                 <span className={`alert-discount ${lastShipment.prealerted ? 'alert-discount--success' : ''}`}>
                   {lastShipment.prealerted ? 'Ganaste +10%' : 'Perdiste -10%'}
                 </span>
                 <button className="alert-link" onClick={() => navigate('/guide/guides')}>
-                  Ver todas
+                  {t('home.view_all')}
                 </button>
               </div>
 
@@ -668,7 +701,7 @@ const Home = ({ onNavigateToShipments }) => {
           </>
         ) : (
           <div className="last-shipment-card__empty">
-            <p>No tienes envíos registrados</p>
+            <p>{t('home.no_shipments')}</p>
           </div>
         )}
       </section>
@@ -676,20 +709,20 @@ const Home = ({ onNavigateToShipments }) => {
       {/* Pre-Alertas Pendientes */}
       <section className="pre-alerts-card">
         <h2 className="pre-alerts-card__title">
-          Pre-Alertas Pendientes ({preAlerts.length})
+          {t('home.pending_pre_alerts')} ({preAlerts.length})
         </h2>
         
         {/* Table Header */}
         <div className="pre-alerts-card__header">
-          <span className="pre-alerts-card__header-text">Tracking</span>
-          <span className="pre-alerts-card__header-text">Estatus</span>
-          <span className="pre-alerts-card__header-text">Entrega en</span>
+          <span className="pre-alerts-card__header-text">{t('pre_alert.tracking_col')}</span>
+          <span className="pre-alerts-card__header-text">{t('pre_alert.status_col')}</span>
+          <span className="pre-alerts-card__header-text">{t('home.delivery_in')}</span>
         </div>
 
         {loading.preAlerts ? (
           <div className="pre-alerts-card__loading">
             <div className="spinner"></div>
-            <p>Cargando pre-alertas...</p>
+            <p>{t('home.loading_pre_alerts')}</p>
           </div>
         ) : preAlerts.length > 0 ? (
           <>
@@ -736,19 +769,19 @@ const Home = ({ onNavigateToShipments }) => {
                       <div className="menu-dropdown">
                         <button onClick={() => handleViewDetail(alert)} className="menu-dropdown__item">
                           <span className="menu-dropdown__icon"><IoEyeOutline size={18}/></span>
-                          Ver detalle
+                          {t('common.view')}
                         </button>
                         <button onClick={() => handleEdit(alert)} className="menu-dropdown__item">
                           <span className="menu-dropdown__icon"><IoCreateOutline size={18}/></span>
-                          Editar
+                          {t('common.edit')}
                         </button>
                         <button onClick={() => handleHelp(alert)} className="menu-dropdown__item">
                           <span className="menu-dropdown__icon"><IoHelpOutline size={18}/></span>
-                          Ayuda
+                          {t('home.help')}
                         </button>
                         <button onClick={() => handleDelete(alert)} className="menu-dropdown__item menu-dropdown__item--danger">
                           <span className="menu-dropdown__icon"><IoTrashOutline size={18}/></span>
-                          Eliminar
+                          {t('common.delete')}
                         </button>
                       </div>
                     )}
@@ -759,23 +792,25 @@ const Home = ({ onNavigateToShipments }) => {
 
             {preAlerts.length > 3 && (
               <button className="pre-alerts-card__view-all" onClick={() => navigate('/pre-alert/list')}>
-                Ver todos
+                {t('home.view_all_guides')}
               </button>
             )}
           </>
         ) : (
           <div className="pre-alerts-card__empty">
-            <p>No tienes pre-alertas pendientes</p>
+            <p>{t('home.no_pre_alerts')}</p>
           </div>
         )}
       </section>
 
       {/* Carousel de Novedades */}
-      <NewsCarousel 
+      <NewsCarousel
         newsItems={newsItems}
         cardWidth={620}
         cardMargin={10}
       />
+
+      <CustomAlert {...alertState} />
     </div>
   );
 };

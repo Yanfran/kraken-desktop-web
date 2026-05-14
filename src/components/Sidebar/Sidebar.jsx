@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../core/context/TenantContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -33,6 +34,13 @@ const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { alertProps, showConfirm } = useCustomAlert();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'es' ? 'en' : 'es';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('lang', newLang);
+  };
 
   // ✅ ESTADO CORRECTO: Solo un booleano para el submenú de perfil
   const [profileSubMenuOpen, setProfileSubMenuOpen] = useState(false);
@@ -50,31 +58,39 @@ const Sidebar = ({ isOpen, onClose }) => {
     setAvatarSelectorVisible(true);
   };
 
+  const safeParseUserData = () => {
+    try {
+      const raw = localStorage.getItem('userData');
+      if (!raw || raw === 'undefined' || raw === 'null') return {};
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  };
+
   const handleAvatarSelect = async (avatarId) => {
     try {
       setIsUpdatingAvatar(true);
-      const response = await updateAvatar(avatarId);
-      
+      const email = user?.email || safeParseUserData().email;
+      if (!email) {
+        toast.error(t('profile.email_error'));
+        return;
+      }
+      const response = await updateAvatar(avatarId, email);
+
       if (response.success) {
-        setUserState(prev => ({
-          ...prev,
-          avatarId: avatarId
-        }));
-        
-        const updatedUserData = {
-          ...JSON.parse(localStorage.getItem('userData') || '{}'),
-          avatarId: avatarId
-        };
-        localStorage.setItem('userData', JSON.stringify(updatedUserData));
-        
-        toast.success('Avatar actualizado correctamente');
+        const baseUser = (user && typeof user === 'object') ? user : safeParseUserData();
+        const updatedUserData = { ...baseUser, avatarId };
+        setUserState(updatedUserData);
+
+        toast.success(t('profile.avatar_updated'));
         setAvatarSelectorVisible(false);
       } else {
-        toast.error(response.message || 'Error al actualizar avatar');
+        toast.error(response.message || t('profile.avatar_error'));
       }
     } catch (error) {
       console.error('Error updating avatar:', error);
-      toast.error('Error al actualizar el avatar');
+      toast.error(t('profile.avatar_error'));
     } finally {
       setIsUpdatingAvatar(false);
     }
@@ -88,11 +104,11 @@ const Sidebar = ({ isOpen, onClose }) => {
   const handleLogout = () => {
     showConfirm(
       {
-        title: 'Cerrar sesión',
-        message: '¿Estás seguro de que deseas cerrar sesión?',
+        title: t('auth.logout_confirm_title'),
+        message: t('auth.logout_confirm_message'),
         type: 'warning',
-        confirmText: 'Cerrar sesión',
-        cancelText: 'Cancelar',
+        confirmText: t('auth.logout'),
+        cancelText: t('common.cancel'),
       },
       async () => {
         await signOut();
@@ -186,7 +202,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                       onClick={toggleProfileSubmenu}
                       className={`dashboard-sidebar__menu-item ${profileSubMenuOpen ? 'active' : ''}`}
                     >
-                      <span className="dashboard-sidebar__menu-text">{item.label}</span>
+                      <span className="dashboard-sidebar__menu-text">{t(`nav.${item.id}`, { defaultValue: item.label })}</span>
                       <span className={`dashboard-sidebar__menu-arrow ${profileSubMenuOpen ? 'open' : ''}`}>
                         ›
                       </span>
@@ -203,7 +219,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                               location.pathname === subItem.path ? 'active' : ''
                             }`}
                           >
-                            {subItem.label}
+                            {t(`nav.${subItem.id}`, { defaultValue: subItem.label })}
                           </button>
                         ))}
                       </div>
@@ -218,16 +234,36 @@ const Sidebar = ({ isOpen, onClose }) => {
                     }`}
                     onClick={() => window.innerWidth <= 768 && onClose()}
                   >
-                    <span className="dashboard-sidebar__menu-text">{item.label}</span>
+                    <span className="dashboard-sidebar__menu-text">{t(`nav.${item.id}`, { defaultValue: item.label })}</span>
                   </Link>
                 )}
               </div>
             ))}
           </nav>
 
+          {/* ========== LANGUAGE TOGGLE ========== */}
+          {/* <button className="dashboard-sidebar__lang-btn" onClick={toggleLanguage} title={t('sidebar.language')}>
+            🌐 {i18n.language === 'es' ? 'EN' : 'ES'}
+          </button> */}
+
+        {/* Idioma */}
+        <div className="dashboard-sidebar__language-selector">
+          <span className="dashboard-sidebar__language-label">{t('sidebar.language')}</span>
+          <div className="dashboard-sidebar__language-buttons">
+            <button
+              className={`dashboard-sidebar__language-btn ${i18n.language === 'es' ? 'active' : ''}`}
+              onClick={() => { i18n.changeLanguage('es'); localStorage.setItem('lang', 'es'); }}
+            >ES</button>
+            <button
+              className={`dashboard-sidebar__language-btn ${i18n.language === 'en' ? 'active' : ''}`}
+              onClick={() => { i18n.changeLanguage('en'); localStorage.setItem('lang', 'en'); }}
+            >EN</button>
+          </div>
+        </div>
+
           {/* ========== LOGOUT BUTTON ========== */}
           <button className="dashboard-sidebar__logout-btn" onClick={handleLogout}>
-            🚪 Cerrar Sesión
+            🚪 {t('auth.logout')}
           </button>
         </div>
       </aside>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import './ResetPassword.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg';
@@ -11,6 +12,7 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { colors, actualTheme } = useTheme();
+  const { t } = useTranslation();
   
   const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +31,7 @@ const ResetPassword = () => {
     if (urlToken) {
       setToken(urlToken);
     } else {
-      setTokenError('Token no encontrado. Por favor solicita un nuevo enlace de recuperación.');
+      setTokenError(t('auth.reset_token_error'));
     }
   }, [searchParams]);
 
@@ -63,18 +65,18 @@ const ResetPassword = () => {
     const newErrors = {};
 
     if (!password) {
-      newErrors.password = 'Por favor ingresa tu nueva contraseña';
+      newErrors.password = t('auth.reset_password_required');
     } else {
       const validation = validatePassword(password);
       if (!validation.isValid) {
-        newErrors.password = 'La contraseña no cumple con los requisitos de seguridad';
+        newErrors.password = t('auth.reset_password_requirements');
       }
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = 'Por favor confirma tu contraseña';
+      newErrors.confirmPassword = t('auth.reset_confirm_required');
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+      newErrors.confirmPassword = t('auth.reset_passwords_mismatch');
     }
 
     setErrors(newErrors);
@@ -98,22 +100,13 @@ const ResetPassword = () => {
       });
 
       if (response.data.success) {
-        setSuccessMessage('Tu contraseña ha sido restablecida exitosamente.');
+        setSuccessMessage(t('auth.reset_success_api'));
       } else {
-        setErrors({
-          general: response.data.message || 'Error al restablecer la contraseña'
-        });
+        setErrors({ general: response.data.message || t('auth.reset_error_general') });
       }
     } catch (error) {
       console.error('❌ Error al restablecer contraseña:', error);
-      
-      if (error.response?.data?.message) {
-        setErrors({ general: error.response.data.message });
-      } else {
-        setErrors({
-          general: 'Error al restablecer la contraseña. Por favor intenta nuevamente.'
-        });
-      }
+      setErrors({ general: error.response?.data?.message || t('auth.reset_error_general') });
     } finally {
       setIsLoading(false);
     }
@@ -135,27 +128,15 @@ const ResetPassword = () => {
         </div>
         
         <h1 className="kraken-reset-password__title" style={{color: colors.error}}>
-          Enlace inválido o expirado
+          {t('auth.reset_invalid_title')}
         </h1>
-        
-        <p className="kraken-reset-password__subtitle">
-          {tokenError}
-        </p>
-        
-        <button
-          onClick={() => navigate('/forgot-password')}
-          className="kraken-reset-password__submit-button"
-        >
-          Solicitar nuevo enlace
+        <p className="kraken-reset-password__subtitle">{tokenError}</p>
+        <button onClick={() => navigate('/forgot-password')} className="kraken-reset-password__submit-button">
+          {t('auth.reset_request_link')}
         </button>
-
         <div className="kraken-reset-password__back">
-          <button
-            type="button"
-            className="kraken-reset-password__back-link"
-            onClick={() => navigate('/login')}
-          >
-            Volver al inicio
+          <button type="button" className="kraken-reset-password__back-link" onClick={() => navigate('/login')}>
+            {t('auth.back_to_login')}
           </button>
         </div>
       </div>
@@ -175,27 +156,13 @@ const ResetPassword = () => {
         </div>
                 
         <h1 className="kraken-reset-password__title" style={{color: colors.secondary}}>
-        ¡Listo! Tu contraseña ha sido restablecida.
-        </h1>        
-        
-        <div style={{
-          color: colors.textPlaceholder,
-          fontSize: '14px',
-          textAlign: 'center',
-          marginBottom: '30px',
-          width: '100%',
-          maxWidth: '380px',
-          padding: '12px',                  
-          lineHeight: '1.5'
-        }}>
-          {successMessage} Ahora puedes iniciar sesión con tu nueva contraseña.
+          {t('auth.reset_success_title')}
+        </h1>
+        <div style={{ color: colors.textPlaceholder, fontSize: '14px', textAlign: 'center', marginBottom: '30px', width: '100%', maxWidth: '380px', padding: '12px', lineHeight: '1.5' }}>
+          {successMessage} {t('auth.reset_success_msg')}
         </div>
-        
-        <button
-          onClick={() => navigate('/login')}
-          className="kraken-reset-password__submit-button"
-        >
-          Ir al inicio de sesión
+        <button onClick={() => navigate('/login')} className="kraken-reset-password__submit-button">
+          {t('auth.reset_go_login')}
         </button>
       </div>
     );
@@ -217,9 +184,9 @@ const ResetPassword = () => {
         </a>
       </div>
 
-      <h1 className="kraken-reset-password__title">Restablecer contraseña</h1>
+      <h1 className="kraken-reset-password__title">{t('auth.reset_title')}</h1>
       <p className="kraken-reset-password__subtitle">
-        Ingresa tu nueva contraseña a continuación
+        {t('auth.reset_subtitle')}
       </p>
 
       <form onSubmit={handleSubmit} className="kraken-reset-password__form">
@@ -243,11 +210,11 @@ const ResetPassword = () => {
 
         {/* Campo Nueva Contraseña */}
         <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Nueva contraseña</label>
+          <label className="kraken-input-field__label">{t('auth.reset_new_password')}</label>
           <div className="kraken-input-field__wrapper">
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Nueva contraseña"
+              placeholder={t('auth.reset_new_password')}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -276,23 +243,23 @@ const ResetPassword = () => {
         {showPasswordValidator && (
           <div className="kraken-reset-password__password-validator">
             <p className="kraken-reset-password__validator-title">
-              Tu contraseña debe contener:
+              {t('auth.reset_validator_title')}
             </p>
             <ul className="kraken-reset-password__validator-list">
               <li className={passwordValidation.minLength ? 'valid' : ''}>
-                {passwordValidation.minLength ? '✓' : '○'} Mínimo 8 caracteres
+                {passwordValidation.minLength ? '✓' : '○'} {t('auth.reset_req_length')}
               </li>
               <li className={passwordValidation.hasUpperCase ? 'valid' : ''}>
-                {passwordValidation.hasUpperCase ? '✓' : '○'} Una letra mayúscula
+                {passwordValidation.hasUpperCase ? '✓' : '○'} {t('auth.reset_req_upper')}
               </li>
               <li className={passwordValidation.hasLowerCase ? 'valid' : ''}>
-                {passwordValidation.hasLowerCase ? '✓' : '○'} Una letra minúscula
+                {passwordValidation.hasLowerCase ? '✓' : '○'} {t('auth.reset_req_lower')}
               </li>
               <li className={passwordValidation.hasNumber ? 'valid' : ''}>
-                {passwordValidation.hasNumber ? '✓' : '○'} Un número
+                {passwordValidation.hasNumber ? '✓' : '○'} {t('auth.reset_req_number')}
               </li>
               <li className={passwordValidation.hasSpecialChar ? 'valid' : ''}>
-                {passwordValidation.hasSpecialChar ? '✓' : '○'} Un carácter especial (!@#$%^&*)
+                {passwordValidation.hasSpecialChar ? '✓' : '○'} {t('auth.reset_req_special')}
               </li>
             </ul>
           </div>
@@ -300,11 +267,11 @@ const ResetPassword = () => {
 
         {/* Campo Confirmar Contraseña */}
         <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Confirmar contraseña</label>
+          <label className="kraken-input-field__label">{t('auth.reset_confirm_password')}</label>
           <div className="kraken-input-field__wrapper">
             <input
               type={showConfirmPassword ? 'text' : 'password'}
-              placeholder="Confirmar contraseña"
+              placeholder={t('auth.reset_confirm_password')}
               value={confirmPassword}
               onChange={(e) => {
                 setConfirmPassword(e.target.value);
@@ -337,10 +304,10 @@ const ResetPassword = () => {
           {isLoading ? (
             <div className="kraken-reset-password__loading">
               <div className="kraken-reset-password__spinner"></div>
-              Restableciendo...
+              {t('auth.reset_submitting')}
             </div>
           ) : (
-            'Restablecer contraseña'
+            t('auth.reset_submit')
           )}
         </button>
       </form>
@@ -352,7 +319,7 @@ const ResetPassword = () => {
           className="kraken-reset-password__back-link"
           onClick={() => navigate('/login')}
         >
-          Volver al inicio
+          {t('auth.back_to_login')}
         </button>
       </div>
     </div>

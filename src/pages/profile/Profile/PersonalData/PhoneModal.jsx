@@ -1,9 +1,11 @@
 // src/pages/profile/Profile/PersonalData/PhoneModal.jsx
 import React, { useState, useEffect } from 'react';
 import { IoClose } from 'react-icons/io5';
+import { useTranslation } from 'react-i18next';
 import './PhoneModal.styles.scss';
 
 const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary }) => {
+  const { t } = useTranslation();
   const [countryCode, setCountryCode] = useState('+58');
   const [phoneOperator, setPhoneOperator] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -11,10 +13,8 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
   const [venezuelanPhone, setVenezuelanPhone] = useState('');
 
   const countries = [
-    { code: '+58', name: 'Venezuela', flag: '🇻🇪' },
-    { code: '+1', name: 'Estados Unidos', flag: '🇺🇸' },
-    { code: '+86', name: 'China', flag: '🇨🇳' },
-    { code: '+34', name: 'España', flag: '🇪🇸' },
+    { code: '+58', name: t('profile.venezuela'), flag: '🇻🇪' },
+    { code: '+1', name: t('profile.united_states'), flag: '🇺🇸' },
   ];
 
   const venezuelanOperators = [
@@ -28,8 +28,6 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
   const phoneFormats = {
     '+58': { mask: '###-##-##', length: 7 },
     '+1': { mask: '(###) ###-####', length: 10 },
-    '+86': { mask: '(###) ####-####', length: 11 },
-    '+34': { mask: '(###) ###-###', length: 9 },
   };
 
   useEffect(() => {
@@ -42,17 +40,22 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
   }, [show, initialPhone, initialPhoneSecondary]);
 
   const parsePhone = (phone) => {
-    const match = phone.match(/^\+(\d+)\s*(\([^)]+\))?\s*(.+)$/);
-    if (!match) return;
+    const country = countries.find(c => phone.startsWith(c.code));
+    if (!country) return;
 
-    const code = '+' + match[1];
+    const code = country.code;
     setCountryCode(code);
 
+    const rest = phone.slice(code.length).trim();
+
     if (code === '+58') {
-      if (match[2]) setPhoneOperator(match[2]);
-      if (match[3]) setPhoneNumber(formatPhone(match[3], code));
+      const operatorMatch = rest.match(/^(\([^)]+\))\s*(.+)$/);
+      if (operatorMatch) {
+        setPhoneOperator(operatorMatch[1]);
+        setPhoneNumber(formatPhone(operatorMatch[2], code));
+      }
     } else {
-      if (match[3]) setPhoneNumber(formatPhone(match[3], code));
+      setPhoneNumber(formatPhone(rest, code));
     }
   };
 
@@ -168,7 +171,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
     <div className="phone-modal-overlay" onClick={handleClose}>
       <div className="phone-modal" onClick={(e) => e.stopPropagation()}>
         <div className="phone-modal__header">
-          <h2>Editar Teléfono</h2>
+          <h2>{t('profile.phone_modal_title')}</h2>
           <button className="phone-modal__close" onClick={handleClose}>
             <IoClose size={24} />
           </button>
@@ -177,7 +180,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
         <div className="phone-modal__body">
           {/* Selector de país */}
           <div className="phone-modal__field">
-            <label>País</label>
+            <label>{t('profile.phone_modal_country')}</label>
             <select
               value={countryCode}
               onChange={(e) => {
@@ -198,7 +201,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
           {/* Operadora (solo para Venezuela) */}
           {countryCode === '+58' && (
             <div className="phone-modal__field">
-              <label>Operadora</label>
+              <label>{t('profile.phone_modal_operator')}</label>
               <div className="phone-modal__operators">
                 {venezuelanOperators.map((op) => (
                   <button
@@ -216,7 +219,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
 
           {/* Número de teléfono */}
           <div className="phone-modal__field">
-            <label>Número de teléfono</label>
+            <label>{t('profile.phone_modal_number')}</label>
             <input
               type="tel"
               value={phoneNumber}
@@ -225,7 +228,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
               className="phone-modal__input"
             />
             {phoneNumber && !isPhoneComplete() && (
-              <span className="phone-modal__error">Número incompleto</span>
+              <span className="phone-modal__error">{t('profile.phone_modal_incomplete')}</span>
             )}
           </div>
 
@@ -233,11 +236,11 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
           {showVenezuelanSection && (
             <>
               <div className="phone-modal__divider">
-                <span>Número Venezolano (Opcional)</span>
+                <span>{t('profile.phone_modal_ve_section')}</span>
               </div>
 
               <div className="phone-modal__field">
-                <label>Operadora Venezolana</label>
+                <label>{t('profile.phone_modal_ve_operator')}</label>
                 <div className="phone-modal__operators">
                   {venezuelanOperators.map((op) => (
                     <button
@@ -253,7 +256,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
               </div>
 
               <div className="phone-modal__field">
-                <label>Número Venezolano</label>
+                <label>{t('profile.phone_modal_ve_number')}</label>
                 <input
                   type="tel"
                   value={venezuelanPhone}
@@ -262,7 +265,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
                   className="phone-modal__input"
                 />
                 {venezuelanPhone && !isVenezuelanPhoneValid() && (
-                  <span className="phone-modal__error">Número venezolano incompleto</span>
+                  <span className="phone-modal__error">{t('profile.phone_modal_ve_incomplete')}</span>
                 )}
               </div>
             </>
@@ -275,7 +278,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
             className="phone-modal__btn phone-modal__btn--cancel"
             onClick={handleClose}
           >
-            Cancelar
+            {t('profile.phone_modal_cancel')}
           </button>
           <button
             type="button"
@@ -283,7 +286,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
             onClick={handleSave}
             disabled={!isPhoneComplete() || !isVenezuelanPhoneValid()}
           >
-            Guardar
+            {t('profile.phone_modal_save')}
           </button>
         </div>
       </div>

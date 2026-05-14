@@ -1,5 +1,6 @@
 // src/components/calculator/ResultStep.jsx
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './ResultStep.scss';
 import bannerCalculadora from '@/assets/images/banner-seguro-calculadora.gif';
 
@@ -18,6 +19,7 @@ const ResultStep = ({
   originCountry,
   onNewCalculation 
 }) => {
+  const { t } = useTranslation();
   const [expandedCards, setExpandedCards] = useState({
     oficina: false,
     domicilio: false
@@ -63,7 +65,7 @@ const ResultStep = ({
   // 🆕 ACTUALIZADO: Renderizar detalles con DOS COLUMNAS
   const renderDetallesCompletos = (breakdown) => {
     if (!breakdown || !breakdown.detalles || breakdown.detalles.length === 0) {
-      return <p className="result-step__no-data">No hay detalles disponibles</p>;
+      return <p className="result-step__no-data">{t('calculator.no_details')}</p>;
     }
 
     // ✅ Calcular SUBTOTAL excluyendo SOLO el Descuento Prealerta (Tarifa Full)
@@ -109,10 +111,12 @@ const ResultStep = ({
           <div className="result-step__header-row">
             <div className="result-step__empty-header-cell" />
             <div className="result-step__header-cell result-step__header-cell--full">
-              <span>Tarifa Full</span>
+              <span>{t('calculator.full_rate')}</span>
             </div>
             <div className="result-step__header-cell result-step__header-cell--discount">
-              <span>Con Prealerta<br/>ahorra 10%</span>
+              <span>{t('calculator.with_prealert').split('\n').map((line, i) => (
+                <React.Fragment key={i}>{line}{i === 0 && <br/>}</React.Fragment>
+              ))}</span>
             </div>
           </div>
         </div>
@@ -303,7 +307,7 @@ const ResultStep = ({
         <button 
           type="button"
           className="result-step__eye-button"
-          aria-label={isExpanded ? "Ocultar detalles" : "Ver detalles"}
+          aria-label={isExpanded ? t('calculator.hide_details') : t('calculator.show_details')}
         >
           {isExpanded ? <IoEyeOffOutline size={24} /> : <IoEyeOutline size={24} />}
         </button>
@@ -326,28 +330,28 @@ const ResultStep = ({
     <div className="result-step">
       <div className="result-step__container">
         <p className="result-step__title">
-          Envío desde {originCountry === 'US' ? '🇺🇸 Estados Unidos' : originCountry} 
-          {' '}hasta {selectedState?.label}, {selectedMunicipality?.label} 🇻🇪
+          {t('calculator.shipment_from')} {originCountry === 'US' ? '🇺🇸 Estados Unidos' : originCountry}
+          {' '}{t('calculator.to')} {selectedState?.label}, {selectedMunicipality?.label} 🇻🇪
         </p>
 
         <div className="result-step__package-info">
           <p className="result-step__package-text">
-            Valor declarado: ${declaredValue.toFixed(2)} USD
+            {t('calculator.declared_value_label')}: ${declaredValue.toFixed(2)} USD
           </p>
         </div>
 
         <div className="result-step__cards">
           
 
-          {isOptionAvailable('domicilio') && result?.data?.breakdowns?.domicilio && 
-            renderCard('Entrega a Domicilio', result.data.breakdowns.domicilio, 'domicilio')}                           
+          {isOptionAvailable('domicilio') && result?.data?.breakdowns?.domicilio &&
+            renderCard(t('calculator.home_delivery'), result.data.breakdowns.domicilio, 'domicilio')}
 
-          {isOptionAvailable('oficina') && result?.data?.breakdowns?.oficina && 
-            renderCard('Retiro en Tienda', result.data.breakdowns.oficina, 'oficina')}   
-          
+          {isOptionAvailable('oficina') && result?.data?.breakdowns?.oficina &&
+            renderCard(t('calculator.store_pickup'), result.data.breakdowns.oficina, 'oficina')}
+
           {(!result?.data?.deliveryOptions || result.data.deliveryOptions.length === 0) && (
             <div className="result-step__no-options">
-              <p>No hay opciones de entrega disponibles para esta ubicación.</p>
+              <p>{t('calculator.no_delivery_options')}</p>
             </div>
           )}
         </div>
@@ -357,20 +361,18 @@ const ResultStep = ({
           className="result-step__new-calculation-button"
           onClick={onNewCalculation}
         >
-          Nuevo Cálculo
+          {t('calculator.new_calculation')}
         </button>
 
         <p className="result-step__impuestos-text">
-          Los impuestos de importación no están incluidos en nuestra tarifa ni
-          pueden calcularse con antelación. Si la aduana aplica cargos
-          adicionales, deberán ser asumidos por el cliente. Más información{" "}
+          {t('calculator.tax_disclaimer')}{" "}
           <a
             href="https://krakencourier.com/wiki/aranceles-aduana-como-afectan-tu-envio/"
             target="_blank"
             rel="noopener noreferrer"
             className="result-step__impuestos-link"
           >
-            aquí
+            {t('calculator.here')}
           </a>
           .
         </p>

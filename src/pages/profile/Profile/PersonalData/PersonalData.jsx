@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import './PersonalData.styles.scss';
 import axiosInstance from '../../../../services/axiosInstance';
 import { API_URL } from '../../../../utils/config';
@@ -27,6 +28,7 @@ import BirthdayModal from './BirthdayModal';
 const PersonalData = () => {
   const navigate = useNavigate();
   const { user, updateProfile: updateUserContext } = useAuth();
+  const { t } = useTranslation();
   
   const [loading, setLoading] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
@@ -82,7 +84,10 @@ const PersonalData = () => {
         phoneSecondary: user.phoneSecondary || user.telefonoCelularSecundario || '',
         residenceCountry: countryCode,
         idType: detectedIdType,
-        idNumber: user.idNumber || user.nroIdentificacionCliente || user.nro || '',
+        idNumber: stripDocumentPrefix(
+          user.idNumber || user.nroIdentificacionCliente || user.nro || '',
+          detectedIdType
+        ),
         birthday: user.birthday || user.fechaNacimiento ? formatDateForInput(user.birthday || user.fechaNacimiento) : ''
       });
     }
@@ -156,6 +161,41 @@ const PersonalData = () => {
       .replace(/'/g, '')
       .replace(/\s+/g, '');
 
+  const getDocumentPrefix = (idType) => {
+    const prefixes = {
+      'cedulavenezolana': 'V-',
+      'cedulaextranjera': 'E-',
+      'rifjuridico':      'J-',
+      'rifgubernamental': 'G-',
+      'rifcomuna':        'C-',
+      'riffirmapersonal': 'R-',
+    };
+    return prefixes[idType] || '';
+  };
+
+  const stripDocumentPrefix = (value, idType) => {
+    const prefix = getDocumentPrefix(idType);
+    if (!prefix || !value) return value;
+    const re = new RegExp(`^${prefix.replace('-', '[-]?')}`, 'i');
+    return value.replace(re, '');
+  };
+
+  const getPlaceholderForType = (idType) => {
+    const placeholders = {
+      'cedula':           '12345678',
+      'cedulavenezolana': '12345678',
+      'cedulaextranjera': '12345678',
+      'pasaporte':        'AB123456',
+      'rifjuridico':      '12345678-9',
+      'rifgubernamental': '12345678-9',
+      'rifcomuna':        '12345678-9',
+      'riffirmapersonal': '12345678-9',
+      'driverslicense':   'Driver license number',
+      'ein':              'XX-XXXXXXX',
+    };
+    return placeholders[idType] || 'Número de documento';
+  };
+
   const getDocumentOptions = () => {
     if (!formData.residenceCountry) return [];
     return documentTypeDB
@@ -208,27 +248,27 @@ const PersonalData = () => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es obligatorio';
+      newErrors.name = t('profile.name_required');
     } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'El nombre debe tener al menos 2 caracteres';
+      newErrors.name = t('profile.name_min');
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'El apellido es obligatorio';
+      newErrors.lastName = t('profile.last_name_required');
     } else if (formData.lastName.trim().length < 2) {
-      newErrors.lastName = 'El apellido debe tener al menos 2 caracteres';
+      newErrors.lastName = t('profile.last_name_min');
     }
 
     if (!formData.residenceCountry) {
-      newErrors.residenceCountry = 'Selecciona un país de residencia';
+      newErrors.residenceCountry = t('profile.country_required');
     }
 
     if (!formData.idType) {
-      newErrors.idType = 'Selecciona un tipo de documento';
+      newErrors.idType = t('profile.doc_type_required');
     }
 
     if (!formData.idNumber.trim()) {
-      newErrors.idNumber = 'El número de documento es obligatorio';
+      newErrors.idNumber = t('profile.doc_number_required');
     } else if (formData.idType && formData.idNumber) {
       const docValidation = validateDocument(formData.idType, formData.idNumber);
       if (!docValidation.isValid) {
@@ -323,6 +363,13 @@ const PersonalData = () => {
         maxLen = 20;
     }
 
+    // Strip prefix if user pasted the full document number (e.g. "J-12345678-9")
+    const prefix = getDocumentPrefix(type);
+    if (prefix && filtered.length > 0) {
+      const re = new RegExp(`^${prefix.replace('-', '[-]?')}`, 'i');
+      filtered = filtered.replace(re, '');
+    }
+
     const value = filtered.slice(0, maxLen);
     setFormData(prev => ({ ...prev, idNumber: value }));
     if (errors.idNumber) setErrors(prev => ({ ...prev, idNumber: '' }));
@@ -346,7 +393,7 @@ const PersonalData = () => {
     e.preventDefault();
     
     if (!validateForm()) {
-      toast.error('Por favor corrige los errores en el formulario');
+      toast.error(t('profile.form_errors'));
       return;
     }
 
@@ -357,7 +404,7 @@ const PersonalData = () => {
       
       if (!emailToSend) {
         console.error('❌ No se encontró email');
-        toast.error('Error: No se pudo obtener tu email');
+        toast.error(t('profile.email_error'));
         setLoading(false);
         return;
       }
@@ -408,7 +455,7 @@ const PersonalData = () => {
           await updateUserContext(updatedUser);
         }
 
-        toast.success(response.data.message || 'Datos actualizados exitosamente');
+        toast.success(response.data.message || t('profile.update_success'));
         
         // Volver al perfil
         navigate('/home');
@@ -416,7 +463,7 @@ const PersonalData = () => {
         if (response.data.field) {
           setErrors({ [response.data.field]: response.data.message });
         }
-        toast.error(response.data.message || 'Error al actualizar los datos');
+        toast.error(response.data.message || t('profile.update_error'));
       }
     } catch (error) {
       console.error('❌ Error updating profile:', error);
@@ -433,7 +480,7 @@ const PersonalData = () => {
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error('Error de conexión. Intenta nuevamente.');
+        toast.error(t('common.connection_error'));
       }
     } finally {
       setLoading(false);
@@ -450,10 +497,10 @@ const PersonalData = () => {
           disabled={loading}
         >
           <IoChevronBack size={20} />
-          <span>Volver</span>
+          <span>{t('common.back')}</span>
         </button>
-        <h1 className="personal-data__main-title">Datos Personales</h1>
-        <p className="personal-data__subtitle">Gestiona tu información personal</p>
+        <h1 className="personal-data__main-title">{t('profile.personal_data')}</h1>
+        <p className="personal-data__subtitle">{t('profile.personal_data_subtitle')}</p>
       </div>
 
       {/* Card con el formulario */}
@@ -465,7 +512,7 @@ const PersonalData = () => {
               <div className="personal-data__field">
                 <label className="personal-data__label">
                   <IoPersonOutline size={18} />
-                  Nombre <span className="personal-data__required">*</span>
+                  {t('profile.name')} <span className="personal-data__required">*</span>
                 </label>
                 <input
                   type="text"
@@ -484,7 +531,7 @@ const PersonalData = () => {
               <div className="personal-data__field">
                 <label className="personal-data__label">
                   <IoPersonOutline size={18} />
-                  Apellido <span className="personal-data__required">*</span>
+                  {t('profile.last_name')} <span className="personal-data__required">*</span>
                 </label>
                 <input
                   type="text"
@@ -505,7 +552,7 @@ const PersonalData = () => {
             <div className="personal-data__section">
               <div className="personal-data__field full-width">
                 <label className="personal-data__label">
-                  Correo Electrónico
+                  {t('profile.email')}
                 </label>
                 <input
                   type="email"
@@ -515,7 +562,7 @@ const PersonalData = () => {
                   disabled
                 />
                 <span className="personal-data__hint">
-                  El correo no se puede modificar
+                  {t('profile.email_readonly')}
                 </span>
               </div>
             </div>
@@ -525,7 +572,7 @@ const PersonalData = () => {
               <div className="personal-data__field full-width">
                 <label className="personal-data__label">
                   <IoCallOutline size={18} />
-                  Teléfono Principal <span className="personal-data__required">*</span>
+                  {t('profile.phone')} <span className="personal-data__required">*</span>
                 </label>
                 <div 
                   className="personal-data__clickable-field"
@@ -550,7 +597,7 @@ const PersonalData = () => {
               <div className="personal-data__field full-width">
                 <label className="personal-data__label">
                   <IoGlobeOutline size={18} />
-                  País de Residencia <span className="personal-data__required">*</span>
+                  {t('profile.residence_country')} <span className="personal-data__required">*</span>
                 </label>
                 <select
                   name="residenceCountry"
@@ -559,9 +606,9 @@ const PersonalData = () => {
                   className={`personal-data__select ${errors.residenceCountry ? 'error' : ''}`}
                   disabled={loading}
                 >
-                  <option value="">Seleccione país</option>
-                  <option value="VE">Venezuela</option>
-                  <option value="US">Estados Unidos</option>
+                  <option value="">{t('profile.select_country')}</option>
+                  <option value="VE">{t('profile.venezuela')}</option>
+                  <option value="US">{t('profile.united_states')}</option>
                 </select>
                 {errors.residenceCountry && (
                   <span className="personal-data__error">{errors.residenceCountry}</span>
@@ -574,7 +621,7 @@ const PersonalData = () => {
               <div className="personal-data__field">
                 <label className="personal-data__label">
                   <IoCardOutline size={18} />
-                  Tipo de Documento <span className="personal-data__required">*</span>
+                  {t('profile.document_type')} <span className="personal-data__required">*</span>
                 </label>
                 <select
                   name="idType"
@@ -583,7 +630,7 @@ const PersonalData = () => {
                   className={`personal-data__select ${errors.idType ? 'error' : ''}`}
                   disabled={loading || !formData.residenceCountry}
                 >
-                  <option value="">Seleccione tipo de documento</option>
+                  <option value="">{t('profile.select_document_type')}</option>
                   {getDocumentOptions().map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -598,28 +645,34 @@ const PersonalData = () => {
               <div className="personal-data__field">
                 <label className="personal-data__label">
                   <IoCardOutline size={18} />
-                  Número de Documento <span className="personal-data__required">*</span>
+                  {t('profile.document_number')} <span className="personal-data__required">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="idNumber"
-                  value={formData.idNumber}
-                  onChange={handleIdNumberChange}
-                  className={`personal-data__input ${errors.idNumber ? 'error' : ''}`}
-                  placeholder={
-                    ['cedula', 'cedulavenezolana'].includes(formData.idType) ? '12345678' :
-                    formData.idType === 'cedulaextranjera'  ? 'E12345678' :
-                    formData.idType === 'pasaporte'         ? 'AB123456' :
-                    formData.idType === 'rifjuridico'       ? 'J-12345678-9' :
-                    formData.idType === 'rifgubernamental'  ? 'G-12345678-9' :
-                    formData.idType === 'rifcomuna'         ? 'C-12345678-9' :
-                    formData.idType === 'riffirmapersonal'  ? 'R-12345678-9' :
-                    formData.idType === 'driverslicense'    ? 'Driver license number' :
-                    formData.idType === 'ein'               ? 'XX-XXXXXXX' :
-                    'Número de documento'
-                  }
-                  disabled={loading || !formData.idType}
-                />
+                {getDocumentPrefix(formData.idType) ? (
+                  <div className={`personal-data__input-prefix-wrapper ${errors.idNumber ? 'error' : ''}`}>
+                    <span className="personal-data__prefix-badge">
+                      {getDocumentPrefix(formData.idType)}
+                    </span>
+                    <input
+                      type="text"
+                      name="idNumber"
+                      value={formData.idNumber}
+                      onChange={handleIdNumberChange}
+                      className="personal-data__input personal-data__input--prefixed"
+                      placeholder={getPlaceholderForType(formData.idType)}
+                      disabled={loading || !formData.idType}
+                    />
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    name="idNumber"
+                    value={formData.idNumber}
+                    onChange={handleIdNumberChange}
+                    className={`personal-data__input ${errors.idNumber ? 'error' : ''}`}
+                    placeholder={getPlaceholderForType(formData.idType)}
+                    disabled={loading || !formData.idType}
+                  />
+                )}
                 {errors.idNumber && (
                   <span className="personal-data__error">{errors.idNumber}</span>
                 )}
@@ -631,7 +684,7 @@ const PersonalData = () => {
               <div className="personal-data__field full-width">
                 <label className="personal-data__label">
                   <IoCalendarOutline size={18} />
-                  Fecha de Nacimiento <span className="personal-data__required">*</span>
+                  {t('profile.birthday')} <span className="personal-data__required">*</span>
                 </label>
                 <div 
                   className="personal-data__clickable-field"
@@ -654,7 +707,7 @@ const PersonalData = () => {
                 disabled={loading}
                 icon={loading ? null : <IoSaveOutline size={20} />}
               >
-                {loading ? 'Guardarndo Cambios...' : 'Guardar Cambios'}
+                {loading ? t('profile.saving') : t('profile.save')}
               </Button>
             </div>
           </form>

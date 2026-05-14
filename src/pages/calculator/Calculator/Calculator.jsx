@@ -2,6 +2,7 @@
 // ✅ ACTUALIZADO CON SELECTOR DE PAÍS Y LÓGICA DE DIMENSIONES
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import CalculatorHeader from '../../../components/calculator/CalculatorHeader';
 import LocationStep from '../../../components/calculator/LocationStep';
 import PackageStep from '../../../components/calculator/PackageStep';
@@ -40,6 +41,8 @@ const getInitialCalculation = () => ({
 });
 
 const Calculator = () => {
+  const { t } = useTranslation();
+
   const [state, setState] = useState({
     currentStep: 1,
     isLoading: false,
@@ -109,8 +112,8 @@ const Calculator = () => {
         }));
         setContentOptions(lista);
       }
-    } catch (error) {      
-      toast.error('No se pudo cargar los datos iniciales');
+    } catch (error) {
+      toast.error(t('calculator.error_load_data'));
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -139,8 +142,8 @@ const Calculator = () => {
           parish: ''
         }
       }));
-    } catch (error) {      
-      toast.error('No se pudo cargar los municipios');
+    } catch (error) {
+      toast.error(t('calculator.error_load_municipalities'));
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -168,8 +171,8 @@ const Calculator = () => {
           parish: ''
         }
       }));
-    } catch (error) {      
-      toast.error('No se pudo cargar las parroquias');
+    } catch (error) {
+      toast.error(t('calculator.error_load_parishes'));
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -177,7 +180,7 @@ const Calculator = () => {
 
   const handleLocationNext = () => {
     if (!state.calculation.state || !state.calculation.municipality) {
-      toast.error('Por favor selecciona estado y municipio');
+      toast.error(t('calculator.error_select_state_municipality'));
       return;
     }
     setState(prev => ({ ...prev, currentStep: 2 }));
@@ -195,15 +198,15 @@ const Calculator = () => {
 
   const handlePackageCalculate = async () => {
     if (!state.calculation.contenidos || state.calculation.contenidos.length === 0) {
-      toast.error('Por favor selecciona al menos un contenido');
+      toast.error(t('calculator.error_select_content'));
       return;
     }
-    
+
     const declaredValueNum = parseFormattedValue(state.calculation.declaredValue);
     const weightNum = parseFormattedValue(state.calculation.weight);
-    
+
     if (declaredValueNum <= 0 || weightNum <= 0) {
-      toast.error('Por favor complete todos los campos obligatorios');
+      toast.error(t('calculator.error_complete_fields'));
       return;
     }
 
@@ -216,7 +219,7 @@ const Calculator = () => {
     
     // ✅ Validación corregida: Solo si es China Y faltan dimensiones
     if (state.calculation.originCountry === 'CN' && (lengthNum <= 0 || widthNum <= 0 || heightNum <= 0)) {
-      toast.error('Para paquetes desde China, todas las dimensiones son requeridas y deben ser mayores a 0');
+      toast.error(t('calculator.error_china_dimensions'));
       return;
     }
      
@@ -251,7 +254,7 @@ const Calculator = () => {
           result: response.data,
           currentStep: 3 
         }));
-        toast.success('Cotización calculada exitosamente');
+        toast.success(t('calculator.success_calculated'));
       } else {
         throw new Error(response.data?.message || 'Error al calcular');
       }
@@ -438,11 +441,11 @@ const Calculator = () => {
   return (
     <div className="calculator-page">
       <div className="calculator-page__container">
-        <CalculatorHeader 
+        <CalculatorHeader
           currentStep={state.currentStep}
-          title={state.currentStep === 2 ? "Calcula tu envío" : undefined}
-          subtitle={state.currentStep === 2 ? "Ingresa los detalles de tu paquete" : 
-                   state.currentStep === 3 ? "Resultado de tu cotización" : undefined}
+          title={state.currentStep === 2 ? t('calculator.step2_title') : undefined}
+          subtitle={state.currentStep === 2 ? t('calculator.step2_subtitle') :
+                   state.currentStep === 3 ? t('calculator.step3_subtitle') : undefined}
         />
         {renderCurrentStep()}
       </div>

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import './EmailConfirmation.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg';
@@ -47,6 +48,7 @@ const EmailConfirmation = () => {
   const location = useLocation();
   const { signOut, resendVerificationEmail, user } = useAuth();
   const { actualTheme } = useTheme();
+  const { t } = useTranslation();
   
   const [isResending, setIsResending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -62,7 +64,7 @@ const EmailConfirmation = () => {
     // 3. Del localStorage
     try {
       const userData = localStorage.getItem('userData');
-      if (userData) {
+      if (userData && userData !== 'undefined' && userData !== 'null') {
         const parsed = JSON.parse(userData);
         if (parsed.email) return parsed.email;
       }
@@ -76,36 +78,30 @@ const EmailConfirmation = () => {
   // ✅ MOSTRAR ALERTA SI NO HAY EMAIL
   React.useEffect(() => {
     if (!email) {
-      toast.error('No se encontró el email. Redirigiendo...');
+      toast.error(t('auth.email_conf_no_email'));
       setTimeout(() => navigate('/register'), 2000);
     }
   }, [email, navigate]);
 
   const handleResendEmail = async () => {
-    // ✅ DESCOMENTAR ESTA VALIDACIÓN
     if (isResending || emailSent || !email) {
-      if (!email) {
-        toast.error('No se encontró el email. Intenta registrarte nuevamente.');
-      }
+      if (!email) toast.error(t('auth.email_conf_no_email_retry'));
       return;
     }
 
     try {
       setIsResending(true);
-      // console.log('📧 Enviando email a:', email); // Debug
-      
       const result = await resendVerificationEmail(email);
-      
       if (result.success) {
         setEmailSent(true);
-        toast.success('¡Correo enviado! Revisa tu bandeja de entrada y spam.');
+        toast.success(t('auth.email_conf_sent_toast'));
         setTimeout(() => setEmailSent(false), 20000);
       } else {
-        toast.error(result.message || 'No se pudo reenviar el correo.');
+        toast.error(result.message || t('auth.connection_error'));
       }
     } catch (error) {
       console.error('Error al reenviar email:', error);
-      toast.error('Error de conexión.');
+      toast.error(t('auth.connection_error'));
     } finally {
       setIsResending(false);
     }
@@ -122,7 +118,7 @@ const EmailConfirmation = () => {
       <div className="kraken-email-confirmation" data-theme={actualTheme}>
         {/* <ThemeToggle /> */}
         <div className="kraken-email-confirmation__content">
-          <p>Cargando...</p>
+          <p>{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -150,23 +146,23 @@ const EmailConfirmation = () => {
 
       <div className="kraken-email-confirmation__content">
         <h1 className="kraken-email-confirmation__title">
-          Falta un solo paso para terminar tu registro
+          {t('auth.email_conf_title')}
         </h1>
 
         <p className="kraken-email-confirmation__description">
-          Revisa tu bandeja de entrada o carpeta de spam y confirma tu e-mail.
+          {t('auth.email_conf_desc')}
         </p>
 
         <p className="kraken-email-confirmation__problems">
-          ¿Problemas?
+          {t('auth.email_conf_problems')}
         </p>
 
         <a
           href="#"
           className="kraken-email-confirmation__resend-link"
-          style={{ 
+          style={{
             pointerEvents: (isResending || emailSent) ? 'none' : 'auto',
-            opacity: (isResending || emailSent) ? 0.6 : 1 
+            opacity: (isResending || emailSent) ? 0.6 : 1
           }}
           onClick={(e) => {
             e.preventDefault();
@@ -176,12 +172,12 @@ const EmailConfirmation = () => {
           {isResending ? (
             <div className="kraken-email-confirmation__loading">
               <div className="kraken-email-confirmation__spinner"></div>
-              Reenviando...
+              {t('auth.email_conf_resending')}
             </div>
           ) : emailSent ? (
-            <span style={{ color: '#4CAF50' }}>✓ Enviado</span>
+            <span style={{ color: '#4CAF50' }}>{t('auth.email_conf_sent')}</span>
           ) : (
-            'Reenviar correo de confirmación'
+            t('auth.email_conf_resend')
           )}
         </a>
 
@@ -189,7 +185,7 @@ const EmailConfirmation = () => {
           className="kraken-email-confirmation__back-link"
           onClick={handleBackToLogin}
         >
-          Volver al inicio de sesión
+          {t('auth.email_conf_back')}
         </button>
       </div>
     </div>

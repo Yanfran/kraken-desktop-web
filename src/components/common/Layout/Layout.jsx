@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import CustomAlert from '../CustomAlert/CustomAlert';
 import { useCustomAlert } from '../../../hooks/useCustomAlert';
+import { useTranslation } from 'react-i18next';
 import './Layout.styles.scss';
 
 const Layout = ({ children }) => {
@@ -12,31 +13,32 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { alertProps, showConfirm } = useCustomAlert();
+  const { t } = useTranslation();
 
   const navigationItems = [
     {
       path: '/home',
-      label: 'Inicio',
+      label: t('nav.home'),
       icon: '📊',
     },
     {
       path: '/calculator',
-      label: 'Calculadora',
+      label: t('nav.calculator'),
       icon: '🧮',
-    },    
+    },
     {
       path: '/pre-alert',
-      label: 'Pre-Alertar',
+      label: t('nav.pre_alert'),
       icon: '➕',
     },
     {
       path: '/pre-alert/list',
-      label: 'Mis Pre-Alertas',
+      label: t('nav.my_pre_alerts'),
       icon: '📋',
     },
     {
       path: '/profile',
-      label: 'Perfil',
+      label: t('nav.profile'),
       icon: '👤',
     },
   ];
@@ -44,11 +46,11 @@ const Layout = ({ children }) => {
   const handleLogout = () => {
     showConfirm(
       {
-        title: 'Cerrar sesión',
-        message: '¿Estás seguro de que deseas cerrar sesión?',
+        title: t('auth.logout_confirm_title'),
+        message: t('auth.logout_confirm_message'),
         type: 'warning',
-        confirmText: 'Cerrar sesión',
-        cancelText: 'Cancelar',
+        confirmText: t('auth.logout'),
+        cancelText: t('common.cancel'),
       },
       async () => {
         try {
@@ -108,10 +110,10 @@ const Layout = ({ children }) => {
           <button 
             className="layout__logout-button"
             onClick={handleLogout}
-            title="Cerrar sesión"
+            title={t('auth.logout')}
           >
             🚪
-            {sidebarOpen && <span>Salir</span>}
+            {sidebarOpen && <span>{t('auth.logout')}</span>}
           </button>
         </div>
       </aside>

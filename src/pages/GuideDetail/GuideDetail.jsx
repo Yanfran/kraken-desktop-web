@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
+import { useTranslation } from 'react-i18next';
 import {
   getGuiaById,
   getGuiaInvoices,
@@ -31,6 +32,7 @@ export default function GuideDetail() {
   const navigate   = useNavigate();
   const { user, isSignedIn } = useAuth();
   const alert = useCustomAlert();
+  const { t } = useTranslation();
 
   const [guiaDetail, setGuiaDetail]                       = useState(null);
   const [isLoading, setIsLoading]                         = useState(true);
@@ -70,12 +72,12 @@ export default function GuideDetail() {
 
       } else {
         alert.showError(
-          'Error al cargar la guía',
+          t('guide_detail.error_loading'),
           response.message || 'No se pudieron obtener los detalles.'
         );
       }
     } catch (error) {
-      alert.showError('Error de Conexión', 'No se pudieron cargar los detalles de la guía.');
+      alert.showError(t('guide_detail.connection_error'), 'No se pudieron cargar los detalles de la guía.');
       console.error('Error loading guia detail:', error);
     } finally {
       setIsLoading(false);
@@ -115,10 +117,10 @@ export default function GuideDetail() {
 
     alert.showConfirm(
       {
-        title      : 'Proceder al Pago',
-        message    : `¿Deseas proceder al pago de la guía ${guiaDetail.nGuia}?\n\nMonto: ${montoFormateado}`,
+        title      : t('guide_detail.proceed_payment'),
+        message    : t('guide_detail.proceed_payment_msg', { guide: guiaDetail.nGuia, amount: montoFormateado }),
         type       : 'info',
-        confirmText: 'Pagar Ahora',
+        confirmText: t('guide_detail.pay_now'),
       },
       () => navigate(`/payment/${guiaDetail.idGuia}`)
     );
@@ -159,11 +161,11 @@ export default function GuideDetail() {
 
       alert.showConfirm(
         {
-          title      : 'Facturas disponibles',
-          message    : `Esta guía tiene ${facturasDisponibles.length} factura(s). ¿Deseas descargar todas?`,
+          title      : t('guide_detail.invoices_available'),
+          message    : t('guide_detail.invoices_available_msg', { count: facturasDisponibles.length }),
           type       : 'info',
-          confirmText: 'Descargar todas',
-          cancelText : 'Cancelar',
+          confirmText: t('guide_detail.download_all'),
+          cancelText : t('common.cancel'),
         },
         async () => {
           try {
@@ -321,7 +323,7 @@ export default function GuideDetail() {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner}></div>
-        <p>Cargando detalles...</p>
+        <p>{t('guide_detail.loading')}</p>
       </div>
     );
   }
@@ -330,12 +332,12 @@ export default function GuideDetail() {
     return (
       <div className={styles.errorContainer}>
         <IoAlertCircleOutline size={64} color="#ff6b6b" />
-        <h2 className={styles.errorTitle}>Guía no encontrada</h2>
+        <h2 className={styles.errorTitle}>{t('guide_detail.not_found')}</h2>
         <p className={styles.errorDescription}>
-          No se pudieron cargar los detalles. Intenta de nuevo más tarde.
+          {t('guide_detail.not_found_desc')}
         </p>
         <button onClick={() => navigate(-1)} className={styles.backButton}>
-          Volver
+          {t('guide_detail.back')}
         </button>
       </div>
     );
@@ -362,26 +364,26 @@ export default function GuideDetail() {
             : <IoCloseCircleOutline    size={24} style={{ color: '#F44336' }} />}
           <p className={styles.alertText}>
             {prealertado
-              ? 'Pre-alertado - Ahorraste 10% en tu envío'
-              : 'No pre-alertado - Perdiste -10% de descuento'}
+              ? t('guide_detail.pre_alerted')
+              : t('guide_detail.not_pre_alerted')}
           </p>
         </div>
 
         {/* N° Guía */}
         <div className={styles.section}>
-          <label className={styles.sectionLabel}>N° Guía</label>
+          <label className={styles.sectionLabel}>{t('guide_detail.guide_number')}</label>
           <p className={styles.sectionValue}>{nGuia}</p>
         </div>
 
         {/* Estatus y Origen */}
         <div className={styles.row}>
           <div className={styles.rowItem}>
-            <label className={styles.sectionLabel}>Estatus</label>
+            <label className={styles.sectionLabel}>{t('guide_detail.status')}</label>
             <p className={styles.sectionValue}>{estatus}</p>
             <span className={styles.sectionSubtext}>{fecha}</span>
           </div>
           <div className={styles.rowItem}>
-            <label className={styles.sectionLabel}>Origen</label>
+            <label className={styles.sectionLabel}>{t('guide_detail.origin')}</label>
             <p className={styles.sectionValue}>{origen}</p>
           </div>
         </div>
@@ -389,24 +391,24 @@ export default function GuideDetail() {
         {/* Contenido y Valor */}
         <div className={styles.row}>
           <div className={styles.rowItem}>
-            <label className={styles.sectionLabel}>Contenido</label>
+            <label className={styles.sectionLabel}>{t('guide_detail.content')}</label>
             <p className={styles.sectionValue}>{contenido}</p>
           </div>
           <div className={styles.rowItem}>
-            <label className={styles.sectionLabel}>Valor (FOB)</label>
+            <label className={styles.sectionLabel}>{t('guide_detail.value_fob')}</label>
             <p className={styles.sectionValue}>${valorFOB?.toFixed(2)} USD</p>
           </div>
         </div>
 
         {/* Dirección */}
         <div className={styles.section}>
-          <label className={styles.sectionLabel}>Dirección de Entrega</label>
+          <label className={styles.sectionLabel}>{t('guide_detail.delivery_address')}</label>
           <p className={styles.sectionValue}>{direccionEntrega}</p>
         </div>
 
         {/* Otros Detalles */}
         <div className={styles.expandableHeader} onClick={() => toggleSection('otrosDetalles')}>
-          <h2 className={styles.expandableTitle}>Otros Detalles</h2>
+          <h2 className={styles.expandableTitle}>{t('guide_detail.other_details')}</h2>
           {expandedSections.otrosDetalles
             ? <IoChevronUpOutline size={24} />
             : <IoChevronDownOutline size={24} />}
@@ -418,16 +420,16 @@ export default function GuideDetail() {
 
               {/* Tipo de Contenido */}
               <div className={styles.rowItem}>
-                <label className={styles.sectionLabel}>Tipo de Contenido</label>
+                <label className={styles.sectionLabel}>{t('guide_detail.content_type')}</label>
                 <p className={styles.sectionValue}>
-                  {contieneLiquidos ? 'Líquidos' : ''}
-                  {esFragil ? (contieneLiquidos ? ', Frágil' : 'Frágil') : ''}
+                  {contieneLiquidos ? t('guide_detail.liquids') : ''}
+                  {esFragil ? (contieneLiquidos ? `, ${t('guide_detail.fragile')}` : t('guide_detail.fragile')) : ''}
                 </p>
               </div>
 
               {/* Factura */}
               <div className={styles.rowItem}>
-                <label className={styles.sectionLabel}>Factura</label>
+                <label className={styles.sectionLabel}>{t('guide_detail.invoice')}</label>
 
                 {/* 1. Factura comercial — Ver + Descargar */}
                 {facturaUrl && (
@@ -439,7 +441,7 @@ export default function GuideDetail() {
                       style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
                       <IoDocumentTextOutline size={18} />
-                      {isDownloadingInvoices ? 'Cargando...' : 'Ver factura'}
+                      {isDownloadingInvoices ? t('guide_detail.loading_invoice') : t('guide_detail.view_invoice')}
                     </button>
 
                     <button
@@ -447,10 +449,9 @@ export default function GuideDetail() {
                       disabled={isDownloadingComercial}
                       className={styles.linkButton}
                       style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-                      title="Descargar factura"
                     >
                       <IoCloudDownloadOutline size={18} />
-                      {isDownloadingComercial ? 'Descargando…' : 'Descargar'}
+                      {isDownloadingComercial ? t('guide_detail.downloading') : t('guide_detail.download')}
                     </button>
                   </div>
                 )}
@@ -458,7 +459,7 @@ export default function GuideDetail() {
                 {/* 2. Cargando fiscal */}
                 {isLoadingFiscal && (
                   <span style={{ fontSize: '12px', color: '#757575' }}>
-                    Cargando factura fiscal…
+                    {t('guide_detail.loading_fiscal')}
                   </span>
                 )}
 
@@ -468,7 +469,6 @@ export default function GuideDetail() {
                     key={fact.numeroDocumento}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}
                   >
-                    {/* Ver en nueva pestaña */}
                     <button
                       onClick={() => handleVerFiscalInvoice(fact)}
                       disabled={openingPdfId === fact.numeroDocumento || !fact.pdfBase64}
@@ -482,23 +482,21 @@ export default function GuideDetail() {
                     >
                       <IoDocumentTextOutline size={18} />
                       {openingPdfId === fact.numeroDocumento
-                        ? 'Abriendo…'
+                        ? t('guide_detail.opening')
                         : fact.pdfBase64
-                          ? `Factura fiscal ${fact.numeroDocumento}`
-                          : `Factura ${fact.numeroDocumento} (no disponible)`}
+                          ? `${t('guide_detail.fiscal_invoice')} ${fact.numeroDocumento}`
+                          : `${t('guide_detail.fiscal_invoice')} ${fact.numeroDocumento} ${t('guide_detail.not_available')}`}
                     </button>
 
-                    {/* Descargar PDF */}
                     {fact.pdfBase64 && (
                       <button
                         onClick={() => handleDescargarFiscalInvoice(fact)}
                         disabled={downloadingPdfId === fact.numeroDocumento}
                         className={styles.linkButton}
                         style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-                        title="Descargar PDF"
                       >
                         <IoCloudDownloadOutline size={18} />
-                        {downloadingPdfId === fact.numeroDocumento ? 'Descargando…' : 'Descargar'}
+                        {downloadingPdfId === fact.numeroDocumento ? t('guide_detail.downloading') : t('guide_detail.download')}
                       </button>
                     )}
                   </div>
@@ -512,7 +510,7 @@ export default function GuideDetail() {
                     style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
                     <IoDocumentTextOutline size={18} />
-                    Sin factura
+                    {t('guide_detail.no_invoice')}
                   </button>
                 )}
               </div>
@@ -522,11 +520,11 @@ export default function GuideDetail() {
             {/* Peso y Medidas */}
             <div className={styles.row}>
               <div className={styles.rowItem}>
-                <label className={styles.sectionLabel}>Peso</label>
+                <label className={styles.sectionLabel}>{t('guide_detail.weight')}</label>
                 <p className={styles.sectionValue}>{peso?.toFixed(2)} ({unidadPeso})</p>
               </div>
               <div className={styles.rowItem}>
-                <label className={styles.sectionLabel}>Medidas</label>
+                <label className={styles.sectionLabel}>{t('guide_detail.dimensions')}</label>
                 <p className={styles.sectionValue}>
                   L {medidas?.largo?.toFixed(2)} A {medidas?.ancho?.toFixed(2)}{' '}
                   H {medidas?.alto?.toFixed(2)} ({medidas?.unidad})

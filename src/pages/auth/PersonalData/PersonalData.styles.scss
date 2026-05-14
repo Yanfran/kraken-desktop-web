@@ -237,6 +237,72 @@
   }
 }
 
+/* ===== PREFIX WRAPPER PARA DOCUMENTOS ===== */
+.kraken-form-field__prefix-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 48px;
+  border: 1px solid transparent;
+  border-radius: 25px;
+  background-color: var(--color-input-background);
+  transition: all 0.3s ease;
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    background-color: var(--color-background);
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+  }
+
+  &--error {
+    border-color: var(--color-error);
+    background-color: rgba(244, 67, 54, 0.05);
+
+    &:focus-within {
+      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+    }
+  }
+}
+
+.kraken-form-field__prefix-badge {
+  padding: 0 4px 0 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.kraken-form-field__input--prefixed {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0 16px 0 4px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  border-radius: 0 25px 25px 0;
+
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  &::placeholder {
+    color: var(--color-text-placeholder);
+    font-size: 14px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
 /* ===== CAMPO DE PAÍS FIJO (VENEZUELA) ===== */
 .kraken-form-field__fixed-country {
   width: 100%;

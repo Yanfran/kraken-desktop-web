@@ -107,29 +107,32 @@ export const AuthProvider = ({ children }) => {
         const token = localStorage.getItem('authToken') || Cookies.get('authToken');
         const userDataStr = localStorage.getItem('userData');
 
-        if (token && userDataStr) {
+        const isValidDataStr = userDataStr && userDataStr !== 'undefined' && userDataStr !== 'null';
+
+        if (token) {
           try {
-            const userData = JSON.parse(userDataStr);
-            
-            // Validar token con el servidor (opcional pero recomendado)
-            try {
-              const validatedUser = await authService.validateToken(token);
-              // console.log('✅ [Auth] Sesión válida:', validatedUser.email);
-              dispatch({ type: 'LOGIN_SUCCESS', payload: validatedUser });
-            } catch (error) {
-              // Si falla la validación, usar datos del localStorage
-              // console.warn('⚠️ [Auth] No se pudo validar token, usando datos locales');
-              dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
-            }
+            const validatedUser = await authService.validateToken(token);
+            localStorage.setItem('userData', JSON.stringify(validatedUser));
+            dispatch({ type: 'LOGIN_SUCCESS', payload: validatedUser });
           } catch (error) {
-            // console.warn('⚠️ [Auth] Token inválido, limpiando sesión');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            Cookies.remove('authToken');
-            dispatch({ type: 'LOGOUT' });
+            if (isValidDataStr) {
+              try {
+                const userData = JSON.parse(userDataStr);
+                dispatch({ type: 'LOGIN_SUCCESS', payload: userData });
+              } catch {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+                Cookies.remove('authToken');
+                dispatch({ type: 'LOGOUT' });
+              }
+            } else {
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('userData');
+              Cookies.remove('authToken');
+              dispatch({ type: 'LOGOUT' });
+            }
           }
         } else {
-          // console.log('ℹ️ [Auth] No hay sesión previa');
           dispatch({ type: 'LOGOUT' });
         }
       } catch (error) {

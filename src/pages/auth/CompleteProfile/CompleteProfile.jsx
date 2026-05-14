@@ -1,8 +1,9 @@
 // src/pages/auth/CompleteProfile/CompleteProfile.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext'; // ✅ Importar desde contexts
+import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import './CompleteProfile.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg'; 
 
@@ -46,6 +47,7 @@ const ThemeToggle = () => {
 const CompleteProfile = () => {
   const navigate = useNavigate();
   const { actualTheme } = useTheme();
+  const { t } = useTranslation();
   const [isCompleting, setIsCompleting] = useState(false);
 
   // Completar perfil con loading visible
@@ -64,7 +66,7 @@ const CompleteProfile = () => {
       
     } catch (error) {
       console.error('❌ [CompleteProfile] Error:', error);
-      alert('Error al completar el perfil. Por favor intenta de nuevo.');
+      alert(t('auth.complete_error'));
     } finally {
       setIsCompleting(false);
     }
@@ -103,24 +105,20 @@ const CompleteProfile = () => {
 
       {/* Contenido principal */}
       <div className="kraken-complete-profile__content">
-        {/* Badge de verificación */}
         <div className="kraken-complete-profile__verification-badge">
           <span className="kraken-complete-profile__check-icon">✓</span>
           <span className="kraken-complete-profile__verification-text">
-            Tu cuenta ha sido verificada
+            {t('auth.complete_verified')}
           </span>
         </div>
 
-        {/* Descripción */}
         <p className="kraken-complete-profile__description">
-          Solo necesitamos unos últimos datos para que podamos traer tus compras online.
+          {t('auth.complete_desc')}
         </p>
 
-        {/* Card de completar perfil */}
         <div className="kraken-complete-profile__card">
           <div className="kraken-complete-profile__card-content">
             <div className="kraken-complete-profile__card-icon">
-              {/* Usando el mismo ícono que React Native: person-circle-outline */}
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" stroke="#FF4500" strokeWidth="1.5"/>
                 <circle cx="12" cy="9" r="3" stroke="#FF4500" strokeWidth="1.5"/>
@@ -128,12 +126,11 @@ const CompleteProfile = () => {
               </svg>
             </div>
             <div className="kraken-complete-profile__card-text">
-              <h3>Completa tu perfil para acceder a todas las funcionalidades</h3>
+              <h3>{t('auth.complete_card_title')}</h3>
             </div>
           </div>
         </div>
 
-        {/* Botón de completar perfil con loading mejorado */}
         <button
           className="kraken-complete-profile__complete-button"
           onClick={handleCompleteProfile}
@@ -142,20 +139,19 @@ const CompleteProfile = () => {
           {isCompleting ? (
             <div className="kraken-complete-profile__loading">
               <div className="kraken-complete-profile__spinner"></div>
-              <span>Procesando...</span>
+              <span>{t('auth.complete_processing')}</span>
             </div>
           ) : (
             <span>
-              Termina tu registro 
+              {t('auth.complete_button')}
               <span className="kraken-complete-profile__arrow">→</span>
             </span>
           )}
         </button>
 
-        {/* Mensaje adicional durante el loading */}
         {isCompleting && (
           <p className="kraken-complete-profile__loading-message">
-            Esto solo tomará un momento...
+            {t('auth.complete_loading_msg')}
           </p>
         )}
       </div>

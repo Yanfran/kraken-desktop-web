@@ -4,6 +4,7 @@ import { useAuth } from '../../../src/contexts/AuthContext';
 import { getAddresses } from '../../../src/services/address/addressService';
 import { toast } from 'react-hot-toast';
 import { Copy, Share2, HelpCircle, Loader } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import './Addresses.scss';
 
 // Flags
@@ -12,7 +13,7 @@ import usaFlag from '../../../src/assets/images/usa.png';
 import chinaFlag from '../../../src/assets/images/china.png';
 
 // Sub-component for displaying an address block
-const AddressBlock = ({ 
+const AddressBlock = ({
   casilleroName,
   country,
   state,
@@ -20,9 +21,10 @@ const AddressBlock = ({
   line1,
   line2,
   zip,
-  name,  
+  name,
   phone,
-  isChina = false
+  isChina = false,
+  t
 }) => {
   const Row = ({ label, value }) => (
     <div className="address-block__row">
@@ -35,7 +37,7 @@ const AddressBlock = ({
   if (!isChina) {
     return (
       <div className="address-block__wrapper">
-        {casilleroName && <Row label="Tu Casillero Kraken:" value={casilleroName} />}
+        {casilleroName && <Row label={t('addresses.locker_label')} value={casilleroName} />}
         {name && <Row label="Full Name:" value={name} />}
         {line1 && <Row label="Address Line 1:" value={line1} />}
         {line2 && <Row label="Address Line 2:" value={line2} />}
@@ -51,7 +53,7 @@ const AddressBlock = ({
   // Orden para China
   return (
     <div className="address-block__wrapper">
-      {casilleroName && <Row label="Tu Casillero Kraken:" value={casilleroName} />}
+      {casilleroName && <Row label={t('addresses.locker_label')} value={casilleroName} />}
       {country && <Row label="Country:" value={country} />}
       {state && <Row label="Province:" value={state} />}
       {city && <Row label="City:" value={city} />}
@@ -65,6 +67,7 @@ const AddressBlock = ({
 
 export default function AddressesPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [addresses, setAddresses] = useState(null);
 
@@ -80,11 +83,11 @@ export default function AddressesPage() {
       if (response.success) {
         setAddresses(response.data);
       } else {
-        toast.error(response.message || 'Error al cargar direcciones.');
+        toast.error(response.message || t('addresses.load_error'));
       }
     } catch (error) {
       console.error('Error loading addresses:', error);
-      toast.error('Error de conexión al cargar direcciones.');
+      toast.error(t('addresses.connection_error'));
     } finally {
       setIsLoading(false);
     }
@@ -93,10 +96,10 @@ export default function AddressesPage() {
   const copyToClipboard = async (value) => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success('✅ Copiado al portapapeles');
+      toast.success(t('addresses.copied'));
     } catch (error) {
       console.error('Error copying to clipboard:', error);
-      toast.error('❌ Error al copiar');
+      toast.error(t('addresses.copy_error'));
     }
   };
 
@@ -150,7 +153,7 @@ export default function AddressesPage() {
     const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
     const userCode = user?.codCliente || "KVXXXXXXXX";
     
-    let text = "📦 DIRECCIONES PARA ENVIAR COMPRAS\n\n";
+    let text = `${t('addresses.share_header')}\n\n`;
 
     if (usaAddress) {
       const usaCasillero = usaAddress.nombre || usaAddress.addressLine1;
@@ -183,14 +186,14 @@ export default function AddressesPage() {
     if (usaAddress || chinaAddress) {
       if (navigator.share) {
         try {
-          await navigator.share({ title: 'Mis Direcciones Kraken', text });
+          await navigator.share({ title: t('addresses.share_title'), text });
         } catch (error) {
           console.error('Error sharing:', error);
-          toast.error('Error al compartir.');
+          toast.error(t('addresses.share_error'));
         }
       } else {
         await copyToClipboard(text);
-        toast.info('Direcciones copiadas al portapapeles para compartir.');
+        toast.success(t('addresses.share_copied'));
       }
     }
   };
@@ -199,7 +202,7 @@ export default function AddressesPage() {
     return (
       <div className="addresses-page__loading">
         <Loader className="spinner" size={48} />
-        <p>Cargando direcciones...</p>
+        <p>{t('addresses.loading')}</p>
       </div>
     );
   }
@@ -208,7 +211,7 @@ export default function AddressesPage() {
   if (!usaAddress && !chinaAddress) {
     return (
       <div className="addresses-page__loading">
-        <p>No se encontraron direcciones.</p>
+        <p>{t('addresses.not_found')}</p>
       </div>
     );
   }
@@ -218,13 +221,13 @@ export default function AddressesPage() {
       <div className="addresses-page__container">
         <img src={veFlag} alt="Venezuela Flag" className="addresses-page__main-flag" />
         <h1 className="addresses-page__title">
-          Estas son las direcciones que debes usar para enviar tus compras online a Venezuela
+          {t('addresses.title')}
         </h1>
 
         {/* User Number */}
         <div className="addresses-page__section">
           <div className="addresses-page__row">
-            <p className="addresses-page__label">Nº de Casillero</p>
+            <p className="addresses-page__label">{t('addresses.locker_number')}</p>
             <div className="addresses-page__badge">
               <p className="addresses-page__badge-text">
                 {user.codCliente || "KVXXXXXXXX"}
@@ -238,7 +241,7 @@ export default function AddressesPage() {
             </button>
           </div>
           <p className="addresses-page__note">
-            Siempre debes poner tu número de usuario en la dirección de envío (shipping address).
+            {t('addresses.locker_note')}
           </p>
         </div>
 
@@ -256,7 +259,7 @@ export default function AddressesPage() {
               </div>
               <AddressBlock
                 casilleroName={usaAddress.nombre || usaAddress.addressLine1}
-                name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}            
+                name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}
                 line1={usaAddress.addressLine1}
                 line2={`(${user.codCliente || "KVXXXXXXXX"})`}
                 city={usaAddress.city}
@@ -265,6 +268,7 @@ export default function AddressesPage() {
                 country={usaAddress.country}
                 phone={usaAddress.phoneNumber}
                 isChina={false}
+                t={t}
               />
             </div>
           )}
@@ -289,6 +293,7 @@ export default function AddressesPage() {
                 name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}
                 phone={chinaAddress.phoneNumber}
                 isChina={true}
+                t={t}
               />
             </div>
           )}
@@ -298,14 +303,14 @@ export default function AddressesPage() {
         <button className="addresses-page__help-row">
           <HelpCircle size={18} />
           <p className="addresses-page__help-text">
-            ¿Tienes dudas? Así debes escribir la dirección
+            {t('addresses.help_text')}
           </p>
         </button>
 
         {/* Share - Solo mostrar si hay al menos una dirección */}
         {(usaAddress || chinaAddress) && (
           <div className="addresses-page__share-section">
-            <p className="addresses-page__share-title">COMPARTIR</p>
+            <p className="addresses-page__share-title">{t('addresses.share')}</p>
             <button onClick={shareAddresses} className="addresses-page__share-button">
               <Share2 size={20} />
             </button>

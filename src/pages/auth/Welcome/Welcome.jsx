@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { useAuth } from '../../../contexts/AuthContext'; // ✅ CAMBIO: Importar desde contexts
+import { useAuth } from '../../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import AnimatedPulpo from './AnimatedPulpo';
 import './Welcome.styles.scss';
 
@@ -45,7 +46,8 @@ const ThemeToggle = () => {
 const Welcome = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { user } = useAuth(); // ✅ Ahora importado correctamente
+  const { user } = useAuth();
+  const { t } = useTranslation();
   const actualTheme = theme === 'auto' ? 'light' : theme;
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -116,41 +118,32 @@ const Welcome = () => {
           <AnimatedPulpo />
         </div>
 
-        {/* Título */}
-        <h1 className="kraken-welcome__title">¡Bienvenido!</h1>
+        <h1 className="kraken-welcome__title">{t('auth.welcome_title')}</h1>
 
-        {/* Mensaje principal */}
-        <p className="kraken-welcome__message">
-          Ya tienes tu casillero gratuito.
-        </p>
+        <p className="kraken-welcome__message">{t('auth.welcome_locker_msg')}</p>
 
-        {/* Mensaje secundario */}
-        <p className="kraken-welcome__message">
-          Revisa tu e-mail, allí encontrarás toda la información para que empieces a recibir tus envíos.
-        </p>
+        <p className="kraken-welcome__message">{t('auth.welcome_email_msg')}</p>
 
-        {/* Botón principal */}
-        <button 
+        <button
           className="kraken-welcome__button"
-          onClick={handleGoToDashboard} 
+          onClick={handleGoToDashboard}
           disabled={isNavigating}
         >
           {isNavigating ? (
             <div className="kraken-welcome__loading">
               <div className="kraken-welcome__spinner"></div>
-              Accediendo...
+              {t('auth.welcome_navigating')}
             </div>
           ) : (
-            'Ir a mi cuenta'
+            t('auth.welcome_go_dashboard')
           )}
         </button>
 
-        {/* Link de ayuda */}
         <div className="kraken-welcome__help-link" onClick={handleHowItWorks}>
           <span className="kraken-welcome__help-icon">❓</span>
           <span className="kraken-welcome__help-text">
-            ¿Tienes dudas? Revisa{' '}
-            <span className="kraken-welcome__help-highlight">cómo funciona</span>
+            {t('auth.welcome_help_text')}{' '}
+            <span className="kraken-welcome__help-highlight">{t('auth.welcome_how_it_works')}</span>
           </span>
         </div>
 

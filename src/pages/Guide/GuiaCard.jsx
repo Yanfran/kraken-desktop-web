@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import styles from './Guides.module.scss';
 import clsx from 'clsx';
 
@@ -39,6 +40,7 @@ export default function GuiaCard({
   onToggleSelection
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleNavigate = () => {
     if (selectionMode) {
@@ -135,7 +137,7 @@ export default function GuiaCard({
         </td>
         
         <td className={styles.guiaCell}>
-          <div className={styles.guiaNumber}>{guia.nGuia || 'Sin Número'}</div>
+          <div className={styles.guiaNumber}>{guia.nGuia || t('guides.no_number')}</div>
           <div className={styles.guiaSubtext}>{guia.contenido || ''}</div>
         </td>
         
@@ -180,7 +182,7 @@ export default function GuiaCard({
                     disabled={isUploadingInvoice}
                   >
                     <IoDocumentTextOutline size={18} style={{ color: '#f59e0b' }}/>
-                    {isUploadingInvoice ? 'Cargando...' : 'Cargar Factura'}
+                    {isUploadingInvoice ? t('common.loading') : t('guides.upload_invoice')}
                   </button>
                 )}
 
@@ -194,7 +196,7 @@ export default function GuiaCard({
                     disabled={isUploadingMSDS}
                   >
                     <IoShieldCheckmarkOutline size={18} style={{ color: '#3b82f6' }}/>
-                    {isUploadingMSDS ? 'Cargando...' : 'Cargar MSDS'}
+                    {isUploadingMSDS ? t('common.loading') : t('guides.upload_msds')}
                   </button>
                 )}
 
@@ -208,7 +210,7 @@ export default function GuiaCard({
                     disabled={isUploadingNONDG}
                   >
                     <IoWarningOutline size={18} style={{ color: '#10b981' }}/>
-                    {isUploadingNONDG ? 'Cargando...' : 'Cargar NONDG'}
+                    {isUploadingNONDG ? t('common.loading') : t('guides.upload_nondg')}
                   </button>
                 )}
                 
@@ -222,15 +224,15 @@ export default function GuiaCard({
                   </button>
                 )}
                 
-                <button 
+                <button
                   className={styles.menuItem}
                   onClick={(e) => {
                     e.stopPropagation();
-                    alert(`Ayuda para guía ${guia.nGuia || guia.idGuia}`);
+                    window.open('https://krakencourier.com/', '_blank', 'noopener,noreferrer');
                   }}
                 >
                   <span className="menu-dropdown__icon"><IoHelpOutline size={18}/></span>
-                  Ayuda
+                  {t('guides.help')}
                 </button>
               </div>
             )}
@@ -293,7 +295,7 @@ export default function GuiaCard({
                 }}
               >
                 <span className="menu-dropdown__icon"><IoEyeOutline size={18}/></span>
-                Ver detalle
+                {t('common.view')}
               </button>
               
               {/* ============================================ */}
@@ -338,15 +340,15 @@ export default function GuiaCard({
                   onClick={handlePay}
                 >
                   <span className="menu-dropdown__icon"><IoCardOutline size={18}/></span>
-                  Pagar
+                  {t('guides.pay')}
                 </button>
               )}
               
-              <button 
+              <button
                 className={styles.menuItem}
                 onClick={(e) => {
                   e.stopPropagation();
-                  alert(`Ayuda para guía ${guia.nGuia || guia.idGuia}`);
+                  window.open('https://krakencourier.com/', '_blank', 'noopener,noreferrer');
                 }}
               >
                 <span className="menu-dropdown__icon"><IoHelpOutline size={18}/></span>
@@ -359,19 +361,19 @@ export default function GuiaCard({
       
       <div className={styles.cardBody}>
         <div className={styles.cardRow}>
-          <span className={styles.cardLabel}>Estatus:</span>
+          <span className={styles.cardLabel}>{t('guides.status')}:</span>
           <span className={styles.statusText}>{guia.estatus || 'Pendiente de Pago'}</span>
         </div>
         <div className={styles.cardRow}>
-          <span className={styles.cardLabel}>Fecha:</span>
+          <span className={styles.cardLabel}>{t('guides.date')}:</span>
           <span className={styles.dateText}>{ formatDateTime(guia.fechaEstatus || '') }</span>
         </div>
         <div className={styles.cardRow}>
-          <span className={styles.cardLabel}>Contenido:</span>
+          <span className={styles.cardLabel}>{t('guides.content')}:</span>
           <span className={styles.guiaSubtext}>{guia.contenido || 'TV'}</span>
         </div>
         <div className={styles.cardRow}>
-          <span className={styles.cardLabel}>Origen:</span>
+          <span className={styles.cardLabel}>{t('guides.origin')}:</span>
           <span>{guia.origen || 'USA'}</span>
         </div>
       </div>

@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTenant } from '../../core/context/TenantContext';
 import './TopNavigation.styles.scss';
@@ -16,6 +17,7 @@ const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
   const { actualTheme } = useTheme();
   const location = useLocation();
   const { tenant, isLoading } = useTenant();
+  const { t } = useTranslation();
 
   // ✅ MAPEO DE ÍCONOS LOCALES (mantener para compatibilidad con assets)
   const iconMap = {
@@ -107,7 +109,7 @@ const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
                   <span className="top-navigation__nav-icon-emoji">{item.iconAlt}</span>
                 )}
               </div>
-              <span className="top-navigation__nav-label">{item.label}</span>
+              <span className="top-navigation__nav-label">{t(`nav.${item.id}`, { defaultValue: item.label })}</span>
             </Link>
           ))}
         </nav>

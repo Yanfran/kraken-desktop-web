@@ -1,7 +1,8 @@
 // src/components/AvatarSelector/AvatarSelector.jsx
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import KrakenOriginal from '../../../src/assets/images/avatars/Kraken-Original.png'; 
+import KrakenOriginal from '../../../src/assets/images/avatars/Kraken-Original.png';
 import KrakenChino from '../../../src/assets/images/avatars/Kraken-Chino.png'; 
 import KrakenSam from '../../../src/assets/images/avatars/Kraken-Sam.png'; 
 import KrakenAcademico from '../../../src/assets/images/avatars/Kraken-Academico.png'; 
@@ -38,6 +39,7 @@ const AVAILABLE_AVATARS = [
 ];
 
 const AvatarSelector = ({ visible, currentAvatarId = '1', onSelect, onCancel }) => {
+  const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState(currentAvatarId);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -69,8 +71,8 @@ const AvatarSelector = ({ visible, currentAvatarId = '1', onSelect, onCancel }) 
     >
       <div className={`avatar-selector__content ${isAnimating ? 'avatar-selector__content--visible' : ''}`}>
         <div className="avatar-selector__header">
-          <h2 className="avatar-selector__title">Selecciona tu Avatar</h2>
-          <p className="avatar-selector__subtitle">Elige el que más te represente</p>
+          <h2 className="avatar-selector__title">{t('profile.avatar_modal_title')}</h2>
+          <p className="avatar-selector__subtitle">{t('profile.avatar_modal_subtitle')}</p>
         </div>
 
         <div className="avatar-selector__grid">
@@ -113,19 +115,19 @@ const AvatarSelector = ({ visible, currentAvatarId = '1', onSelect, onCancel }) 
         </div>
 
         <div className="avatar-selector__buttons">
-          <button 
-            className="avatar-selector__cancel-btn" 
+          <button
+            className="avatar-selector__cancel-btn"
             onClick={onCancel}
             type="button"
           >
-            Cancelar
+            {t('profile.avatar_modal_cancel')}
           </button>
-          <button 
-            className="avatar-selector__save-btn" 
+          <button
+            className="avatar-selector__save-btn"
             onClick={handleSelect}
             type="button"
           >
-            Seleccionar
+            {t('profile.avatar_modal_select')}
           </button>
         </div>
       </div>

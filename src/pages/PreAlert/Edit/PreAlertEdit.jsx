@@ -8,6 +8,7 @@ import React, {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 // Services
 import {
@@ -44,6 +45,7 @@ const PreAlertEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get ID from URL params
   const fileInputRef = useRef(null);
+  const { t } = useTranslation();
 
   const [formState, setFormState] = useState({
     trackings: [''],
@@ -68,9 +70,7 @@ const PreAlertEdit = () => {
     showChangeAddress: false, // Nuevo: controla si se muestra el cambio de dirección
   });
 
-  const [defaultAddressText, setDefaultAddressText] = useState(
-    'Cargando dirección...'
-  );
+  const [defaultAddressText, setDefaultAddressText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -432,7 +432,7 @@ const PreAlertEdit = () => {
 
       // ✅ Verificar límite ANTES de procesar
       if (formState.facturas.length >= maxFiles) {
-        toast.error(`Solo puedes seleccionar máximo ${maxFiles} archivos`);
+        toast.error(t('pre_alert.file_max_error', { max: maxFiles }));
         return;
       }
 
@@ -441,21 +441,17 @@ const PreAlertEdit = () => {
 
       if (totalFiles > maxFiles) {
         const allowedCount = maxFiles - currentFiles.length;
-        toast.error(
-          `Solo puedes agregar ${allowedCount} archivo(s) más. Máximo ${maxFiles} archivos en total.`
-        );
+        toast.error(t('pre_alert.file_add_more_error', { count: allowedCount, max: maxFiles }));
         return;
       }
 
       const validFiles = files.filter((file) => {
         if (!allowedTypes.includes(file.type)) {
-          toast.error(
-            `${file.name}: Tipo no permitido. Solo PDF e imágenes (JPG, PNG, GIF, WEBP)`
-          );
+          toast.error(`${file.name}: ${t('pre_alert.file_invalid_type')}`);
           return false;
         }
         if (file.size > maxSize) {
-          toast.error(`${file.name}: Máximo 5MB`);
+          toast.error(`${file.name}: ${t('pre_alert.file_max_size')}`);
           return false;
         }
         return true;
@@ -469,11 +465,9 @@ const PreAlertEdit = () => {
         updateFormState('facturas', updatedFiles);
 
         toast.success(
-          `Se ${
-            validFiles.length === 1
-              ? 'agregó 1 archivo'
-              : `agregaron ${validFiles.length} archivos`
-          } correctamente.`
+          validFiles.length === 1
+            ? t('pre_alert.file_added_one')
+            : t('pre_alert.file_added_many', { count: validFiles.length })
         );
       }
     },
@@ -532,17 +526,17 @@ const PreAlertEdit = () => {
       (t) => t.trim().length > 0 && t.trim().length <= 30
     );
     if (!hasValidTracking) {
-      newErrors.tracking = 'Debe ingresar al menos un tracking válido';
+      newErrors.tracking = t('pre_alert.error_invalid_tracking');
     }
 
     if (formState.contenidos.length === 0) {
-      newErrors.contenidos = 'Debe seleccionar al menos un contenido';
+      newErrors.contenidos = t('pre_alert.error_select_content');
     }
 
     // Validar dirección según el estado actual
     if (addressState.selectedOption === 'store') {
       if (!addressState.selectedCity || !addressState.selectedLocker) {
-        newErrors.address = 'Debe seleccionar ciudad y tienda';
+        newErrors.address = t('pre_alert.error_select_store');
       }
     } else if (addressState.selectedOption === 'new') {
       if (
@@ -550,7 +544,7 @@ const PreAlertEdit = () => {
         !addressState.selectedMunicipality ||
         !addressState.address
       ) {
-        newErrors.address = 'Complete todos los campos de dirección';
+        newErrors.address = t('pre_alert.error_complete_address');
       }
     }
 
@@ -561,22 +555,22 @@ const PreAlertEdit = () => {
   const createMutation = useMutation({
     mutationFn: createPreAlerta,
     onSuccess: () => {
-      toast.success('¡Pre-alerta creada exitosamente!');
+      toast.success(t('pre_alert.create_success'));
       navigate('/pre-alert/list');
     },
     onError: (error) => {
-      toast.error(error.message || 'Error al crear pre-alerta');
+      toast.error(error.message || t('pre_alert.create_error'));
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data) => updatePreAlerta(Number(id), data),
     onSuccess: () => {
-      toast.success('¡Pre-alerta actualizada exitosamente!');
+      toast.success(t('pre_alert.edit_success'));
       navigate('/pre-alert/list');
     },
     onError: (error) => {
-      toast.error(error.message || 'Error al actualizar pre-alerta');
+      toast.error(error.message || t('pre_alert.edit_error'));
     },
   });
 
@@ -584,7 +578,7 @@ const PreAlertEdit = () => {
   e.preventDefault();
 
   if (!validateForm()) {
-    toast.error('Complete todos los campos requeridos');
+    toast.error(t('pre_alert.error_required_fields'));
     return;
   }
 
@@ -731,7 +725,7 @@ const PreAlertEdit = () => {
       <div className="prealert-edit" translate="no">
         <div className="prealert-edit__loading">
           <LoadingSpinner />
-          <p>Cargando pre-alerta...</p>
+          <p>{t('pre_alert.loading_edit')}</p>
         </div>
       </div>
     );
@@ -754,9 +748,9 @@ const PreAlertEdit = () => {
               <line x1="12" y1="22.08" x2="12" y2="12" />
             </svg>
           </div>
-          <h1 className="prealert-edit__title">Editar Pre-Alerta</h1>
+          <h1 className="prealert-edit__title">{t('pre_alert.edit_title')}</h1>
           <p className="prealert-edit__subtitle">
-            Modifica los detalles de tu pre-alerta existente
+            {t('pre_alert.edit_subtitle')}
           </p>
         </div>
 
@@ -765,11 +759,11 @@ const PreAlertEdit = () => {
           <div className="prealert-edit__section">
             <div className="prealert-edit__label-row">
               <label className="prealert-edit__label">
-                Números de Tracking
+                {t('pre_alert.tracking_section')}
                 <span className="prealert-edit__required">*</span>
               </label>
-             <Tooltip 
-                content="El tracking es el número de seguimiento de tu paquete. La tienda online te lo enviará cuando procese y despache tu pedido. Si aún no lo tienes, espera la confirmación en tu email."
+             <Tooltip
+                content={t('pre_alert.tracking_tooltip')}
                 position="auto"
               />   
             </div>
@@ -779,7 +773,7 @@ const PreAlertEdit = () => {
                 <input
                   type="text"
                   className="prealert-edit__input"
-                  placeholder="Ejemplo: 1ZE9889W04276202"
+                  placeholder={t('pre_alert.tracking_placeholder')}
                   value={tracking}
                   onChange={(e) => handleUpdateTracking(e.target.value, index)}
                   maxLength={30}
@@ -813,12 +807,11 @@ const PreAlertEdit = () => {
           <div className="prealert-edit__section" style={{ zIndex: 100 }}>
             <div className="prealert-edit__label-row">
               <label className="prealert-edit__label">
-                Contenido ({formState.contenidos.length} seleccionado
-                {formState.contenidos.length !== 1 ? 's' : ''})
+                {t('pre_alert.content_section')} ({formState.contenidos.length} {t('pre_alert.content_selected')})
                 <span className="prealert-edit__required">*</span>
               </label>
-              <Tooltip 
-                content="Selecciona uno o más productos o categorías del contenido de tu paquete. Puedes elegir múltiples opciones."
+              <Tooltip
+                content={t('pre_alert.content_tooltip')}
                 position="auto"
               />   
             </div>
@@ -829,10 +822,10 @@ const PreAlertEdit = () => {
               onChange={(values) => updateFormState('contenidos', values)}
               placeholder={
                 formState.contenidos.length > 0
-                  ? `${formState.contenidos.length} contenido(s) seleccionado(s)`
-                  : 'Seleccionar contenidos'
+                  ? `${formState.contenidos.length} ${t('pre_alert.content_selected')}`
+                  : t('pre_alert.content_placeholder')
               }
-              searchPlaceholder="Buscar contenido..."
+              searchPlaceholder={t('pre_alert.content_search_placeholder')}
               disabled={isLoadingContenidos}
               error={!!errors.contenidos}
             />
@@ -845,10 +838,10 @@ const PreAlertEdit = () => {
 <div className="prealert-edit__section">
   <div className="prealert-edit__label-row">
     <label className="prealert-edit__label">
-      Valor Declarado (Opcional)
+      {t('pre_alert.declared_value_section')}
     </label>
     <Tooltip
-      content="El FOB (Free On Board) es el costo de la mercancía en la factura de compra. Debes ingresar el monto total de los artículos contenidos en el paquete."
+      content={t('pre_alert.declared_value_tooltip')}
       position="auto"
     />
   </div>
@@ -858,7 +851,7 @@ const PreAlertEdit = () => {
     
     {/* COLUMNA 1: Moneda (Pequeña) */}
     <div className="prealert-edit__col">
-      <label className="prealert-edit__label">Moneda</label>
+      <label className="prealert-edit__label">{t('pre_alert.currency')}</label>
       <select
         className="prealert-edit__select"
         value={formState.currency}
@@ -871,7 +864,7 @@ const PreAlertEdit = () => {
 
     {/* COLUMNA 2: Monto (Grande) */}
     <div className="prealert-edit__col">
-      <label className="prealert-edit__label">Monto</label>
+      <label className="prealert-edit__label">{t('pre_alert.amount')}</label>
       <CurrencyInput
         className="prealert-edit__input prealert-edit__input--currency"
         placeholder="0,00"
@@ -886,7 +879,7 @@ const PreAlertEdit = () => {
     {/* COLUMNA 3: Tipo de Contenido */}
     <div className="prealert-edit__col">
       <label className="prealert-edit__label">
-        Tipo de Contenido (Opcional)
+        {t('pre_alert.content_type')}
       </label>
       <div className="prealert-edit__checkboxes">
         {['Frágil', 'Líquidos'].map((option) => (
@@ -912,10 +905,10 @@ const PreAlertEdit = () => {
           <div className="prealert-edit__section">
             <div className="prealert-edit__label-row">
               <label className="prealert-edit__label">
-                Dirección de Entrega Predeterminada
+                {t('pre_alert.address_section')}
               </label>
-              <Tooltip 
-                content="Esta es la dirección en la que recibirás todos tus paquetes. Si no la modificas ahora, tu paquete será enviado allí y no podrás cambiarla después de que llegue a nuestro almacén."
+              <Tooltip
+                content={t('pre_alert.address_tooltip')}
                 position="auto"
               /> 
             </div>
@@ -932,7 +925,7 @@ const PreAlertEdit = () => {
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span>{defaultAddressText}</span>
+                <span>{defaultAddressText || t('pre_alert.loading_address')}</span>
               </div>
             </div>
 
@@ -943,7 +936,7 @@ const PreAlertEdit = () => {
                 onChange={handleChangeAddressToggle}
               />
               <span>
-                ¿Deseas cambiar la dirección de entrega de este paquete?
+                {t('pre_alert.change_address')}
               </span>
             </label>
 
@@ -992,7 +985,7 @@ const PreAlertEdit = () => {
                         updateAddressState('selectedOption', 'store')
                       }
                     />
-                    <span>Retiro en Tienda</span>
+                    <span>{t('pre_alert.store_pickup')}</span>
                   </label>
 
                   {/* Opción de Nueva Dirección */}
@@ -1004,7 +997,7 @@ const PreAlertEdit = () => {
                         updateAddressState('selectedOption', 'new')
                       }
                     />
-                    <span>Enviar a otra dirección</span>
+                    <span>{t('pre_alert.other_address')}</span>
                   </label>
                 </div>
 
@@ -1012,27 +1005,27 @@ const PreAlertEdit = () => {
                 {addressState.selectedOption === 'store' && (
                   <div className="prealert-edit__address-form">
                     <h4 className="prealert-edit__form-title">
-                      Retiro en Tienda
+                      {t('pre_alert.store_form_title')}
                     </h4>
 
                     <div className="prealert-edit__row">
                       <div className="prealert-edit__col">
                         <label className="prealert-edit__label">
-                          Ciudad{' '}
+                          {t('pre_alert.city')}{' '}
                           <span className="prealert-edit__required">*</span>
                         </label>
                         <SearchableSelect
                           options={availableCities}
                           value={addressState.selectedCity}
                           onChange={handleCityChange}
-                          placeholder="Seleccione una ciudad"
+                          placeholder={t('pre_alert.city_placeholder')}
                           disabled={isLoadingDelivery}
                         />
                       </div>
 
                       <div className="prealert-edit__col">
                         <label className="prealert-edit__label">
-                          Tienda{' '}
+                          {t('pre_alert.store')}{' '}
                           <span className="prealert-edit__required">*</span>
                         </label>
                         <SearchableSelect
@@ -1041,7 +1034,7 @@ const PreAlertEdit = () => {
                           onChange={(value) =>
                             updateAddressState('selectedLocker', value)
                           }
-                          placeholder="Seleccione una tienda"
+                          placeholder={t('pre_alert.store_placeholder')}
                           disabled={
                             !addressState.selectedCity ||
                             filteredTiendas.length === 0
@@ -1056,13 +1049,13 @@ const PreAlertEdit = () => {
                 {addressState.selectedOption === 'new' && (
                   <div className="prealert-edit__address-form">
                     <h4 className="prealert-edit__form-title">
-                      Entrega a Domicilio
+                      {t('pre_alert.home_form_title')}
                     </h4>                    
 
                     <div className="prealert-edit__row prealert-edit__row--three">
                       <div className="prealert-edit__col">
                         <label className="prealert-edit__label">
-                          Estado{' '}
+                          {t('pre_alert.state')}{' '}
                           <span className="prealert-edit__required">*</span>
                         </label>
                         <SearchableSelect
@@ -1073,14 +1066,14 @@ const PreAlertEdit = () => {
                             updateAddressState('selectedMunicipality', '');
                             updateAddressState('selectedParish', '');
                           }}
-                          placeholder="Seleccionar estado"
+                          placeholder={t('pre_alert.state_placeholder')}
                           disabled={isLoadingStates}
                         />
                       </div>
 
                       <div className="prealert-edit__col">
                         <label className="prealert-edit__label">
-                          Municipio{' '}
+                          {t('pre_alert.municipality')}{' '}
                           <span className="prealert-edit__required">*</span>
                         </label>
                         <SearchableSelect
@@ -1090,7 +1083,7 @@ const PreAlertEdit = () => {
                             updateAddressState('selectedMunicipality', value);
                             updateAddressState('selectedParish', '');
                           }}
-                          placeholder="Seleccionar municipio"
+                          placeholder={t('pre_alert.municipality_placeholder')}
                           disabled={
                             !addressState.selectedState ||
                             isLoadingMunicipalities
@@ -1100,7 +1093,7 @@ const PreAlertEdit = () => {
 
                       <div className="prealert-edit__col">
                         <label className="prealert-edit__label">
-                          Parroquia{' '}
+                          {t('pre_alert.parish')}{' '}
                           <span className="prealert-edit__required">*</span>
                         </label>
                         <SearchableSelect
@@ -1109,7 +1102,7 @@ const PreAlertEdit = () => {
                           onChange={(value) =>
                             updateAddressState('selectedParish', value)
                           }
-                          placeholder="Seleccionar parroquia"
+                          placeholder={t('pre_alert.parish_placeholder')}
                           disabled={
                             !addressState.selectedMunicipality ||
                             isLoadingParishes
@@ -1120,12 +1113,12 @@ const PreAlertEdit = () => {
 
                     <div className="prealert-edit__col">
                       <label className="prealert-edit__label">
-                        Dirección Completa{' '}
+                        {t('pre_alert.full_address')}{' '}
                         <span className="prealert-edit__required">*</span>
                       </label>
                       <textarea
                         className="prealert-edit__textarea"
-                        placeholder="Ej: Calle 1, Edificio X, Apto Y"
+                        placeholder={t('pre_alert.full_address_placeholder')}
                         rows={3}
                         value={addressState.address}
                         onChange={(e) =>
@@ -1136,12 +1129,12 @@ const PreAlertEdit = () => {
 
                     <div className="prealert-edit__col">
                       <label className="prealert-edit__label">
-                        Punto de Referencia
+                        {t('pre_alert.reference')}
                       </label>
                       <input
                         type="text"
                         className="prealert-edit__input"
-                        placeholder="Ej: Casa con portón azul"
+                        placeholder={t('pre_alert.reference_placeholder')}
                         value={addressState.reference}
                         onChange={(e) =>
                           updateAddressState('reference', e.target.value)
@@ -1173,7 +1166,7 @@ const PreAlertEdit = () => {
           {/* SECCIÓN FACTURAS */}
           <div className="prealert-edit__section">
             <label className="prealert-edit__label">
-              Facturas ({formState.facturas.length}/3)
+              {t('pre_alert.invoices_section')} ({formState.facturas.length}/3)
             </label>
 
             <input
@@ -1198,13 +1191,13 @@ const PreAlertEdit = () => {
             >
               📎{' '}
               {formState.facturas.length === 0
-                ? 'Seleccionar Archivos (Max 3)'
-                : 'Agregar más archivos'}
+                ? t('pre_alert.select_files')
+                : t('pre_alert.add_more_files')}
             </button>
 
             {formState.facturas.length === 0 ? (
               <p className="prealert-edit__helper-text">
-                Máximo 3 archivos (PDF, imágenes - JPG, PNG, GIF, WEBP)
+                {t('pre_alert.files_helper')}
               </p>
             ) : (
               <div className="prealert-edit__files-list">
@@ -1241,10 +1234,10 @@ const PreAlertEdit = () => {
               {isSubmitting ? (
                 <>
                   <LoadingSpinner size="small" />
-                  <span>Actualizando...</span>
+                  <span>{t('pre_alert.updating')}</span>
                 </>
               ) : (
-                'Actualizar Pre-Alerta'
+                t('pre_alert.edit_submit')
               )}
             </button>
           </div>

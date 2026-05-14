@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import styles from './Tracking.module.scss';
 import { 
   searchTrackingNumber, 
@@ -19,6 +20,7 @@ export default function Tracking() {
   const [trackingResult, setTrackingResult] = useState(null);
   const navigate = useNavigate();
   const alert = useCustomAlert();
+  const { t } = useTranslation();
 
   // Función principal de búsqueda con validación
   const handleTrackPackage = async () => {
@@ -54,12 +56,12 @@ export default function Tracking() {
         };
         setTrackingResult(result);
       } else {
-        alert.showError("Paquete no encontrado", "No se encontró información para este número de rastreo. Verifica que sea correcto.");        
+        alert.showError(t('tracking.not_found_title'), t('tracking.not_found_message'));        
         // toast.error(`Paquete no encontrado: "${trackingNumber}" No se encontró información para este número de rastreo. Verifica que sea correcto.`);        
       }
     } catch (error) {
       console.error('Error buscando tracking:', error);
-      alert.showError("Error de conexión", "No se pudo conectar al servidor. Intenta nuevamente.");              
+      alert.showError(t('tracking.connection_error_title'), t('tracking.connection_error_message'));              
       // toast.error(`Error de conexión: No se pudo conectar al servidor. Intenta nuevamente.`);              
     } finally {
       setIsLoading(false);
@@ -168,9 +170,9 @@ export default function Tracking() {
                   className={styles.calculatorIcon}
                 />
               </div>
-              <p className={styles.title}>Rastrear Paquete</p>
+              <p className={styles.title}>{t('tracking.title')}</p>
               <p className={styles.subtitle}>
-                Consulta el estado de tu envío en tiempo real
+                {t('tracking.subtitle')}
               </p>
             </div>
 
@@ -182,7 +184,7 @@ export default function Tracking() {
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ingresa tu número de rastreo"
+                placeholder={t('tracking.placeholder')}
                 disabled={isLoading}
               />
               <button
@@ -228,16 +230,16 @@ export default function Tracking() {
                 <div className={styles.resultSection}>
                   <div className={styles.resultHeader}>
                     <p className={styles.resultSubtitle}>
-                      Haz seguimiento al estatus de tu paquete
+                      {t('tracking.follow_status')}
                     </p>
 
                     {/* Información del tracking */}
                     <div className={styles.trackingInfo}>
                       <div className={styles.labelContainer}>
                         <div className={styles.labelWithTooltip}>
-                          <p className={styles.trackingLabel}>Tracking</p>
-                          <Tooltip 
-                            content="Este es tu número de rastreo único para seguir el progreso de tu paquete." 
+                          <p className={styles.trackingLabel}>{t('tracking.tracking_label')}</p>
+                          <Tooltip
+                            content={t('tracking.tracking_tooltip')}
                             position="auto"
                           />
                         </div>
@@ -250,13 +252,13 @@ export default function Tracking() {
                       </div>
 
                       <p className={styles.trackingHelper}>
-                        Escribe el número de rastreo sin espacios, puntos, ni caracteres especiales
+                        {t('tracking.tracking_hint')}
                       </p>
                     </div>
 
                     {/* Origen del paquete */}
                     <div className={styles.originContainer}>
-                      <p className={styles.originLabel}>Origen</p>
+                      <p className={styles.originLabel}>{t('tracking.origin')}</p>
                       <p className={styles.originText}>{trackingResult.origin}</p>
                     </div>
                   </div>
@@ -280,7 +282,7 @@ export default function Tracking() {
                   type="button"
                 >
                   <p className={styles.packageDetailsText}>
-                    Ver detalles del paquete
+                    {t('tracking.view_details')}
                   </p>
                 </button>
 
@@ -291,7 +293,7 @@ export default function Tracking() {
                   type="button"
                 >
                   <p className={styles.newTrackingButtonText}>
-                    Rastrear otro paquete
+                    {t('tracking.track_another')}
                   </p>
                 </button>
               </div>

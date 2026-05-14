@@ -250,6 +250,51 @@
     font-style: italic;
   }
 
+  &__input-prefix-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border, #D0D0D0);
+    border-radius: 25px;
+    background-color: var(--color-background, #FFFFFF);
+    transition: all 0.2s ease;
+
+    &:focus-within {
+      border-color: var(--color-primary, #FF4500);
+      box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+    }
+
+    &.error {
+      border-color: var(--color-error, #F44336);
+    }
+  }
+
+  &__prefix-badge {
+    padding: 12px 2px 12px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-primary, #FF4500);
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  &__input--prefixed {
+    border: none !important;
+    border-radius: 0 25px 25px 0 !important;
+    padding-left: 4px !important;
+    flex: 1;
+    min-width: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+
+    &:focus {
+      outline: none;
+      border: none !important;
+      box-shadow: none !important;
+    }
+  }
+
   &__error {
     font-size: 12px;
     color: var(--color-error, #F44336);

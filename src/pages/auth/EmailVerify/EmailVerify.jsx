@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import './EmailVerify.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg';
 import axiosInstance from '../../../services/axiosInstance';
@@ -12,16 +13,17 @@ const EmailVerify = () => {
   const navigate = useNavigate();
   const { setUserState } = useAuth();
   const { actualTheme } = useTheme();
-  
-  const [status, setStatus] = useState('loading'); // loading, success, error
+  const { t } = useTranslation();
+
+  const [status, setStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   const token = searchParams.get('token');
 
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setErrorMessage('No se encontró el token de verificación');
+      setErrorMessage(t('auth.email_verify_no_token'));
       return;
     }
 
@@ -70,9 +72,9 @@ const EmailVerify = () => {
       setStatus('error');
       
       // ✅ Manejo de errores mejorado
-      const message = error.response?.data?.message 
-        || error.message 
-        || 'No se pudo verificar el correo electrónico';
+      const message = error.response?.data?.message
+        || error.message
+        || t('auth.email_verify_default_error');
       
       setErrorMessage(message);
     }
@@ -101,55 +103,30 @@ const EmailVerify = () => {
           </a>
         </div>
 
-        {/* Loading State */}
         {status === 'loading' && (
           <div className="kraken-email-verify__content">
             <div className="kraken-email-verify__spinner"></div>
-            <h1 className="kraken-email-verify__title">
-              Verificando tu cuenta...
-            </h1>
-            <p className="kraken-email-verify__message">
-              Por favor espera un momento
-            </p>
+            <h1 className="kraken-email-verify__title">{t('auth.email_verify_loading')}</h1>
+            <p className="kraken-email-verify__message">{t('auth.email_verify_wait')}</p>
           </div>
         )}
 
-        {/* Success State */}
         {status === 'success' && (
           <div className="kraken-email-verify__content kraken-email-verify__content--success">
-            <div className="kraken-email-verify__icon kraken-email-verify__icon--success">
-              ✓
-            </div>
-            <h1 className="kraken-email-verify__title">
-              ¡Cuenta verificada!
-            </h1>
-            <p className="kraken-email-verify__message">
-              Tu email ha sido verificado correctamente.
-              Redirigiendo...
-            </p>
+            <div className="kraken-email-verify__icon kraken-email-verify__icon--success">✓</div>
+            <h1 className="kraken-email-verify__title">{t('auth.email_verify_success_title')}</h1>
+            <p className="kraken-email-verify__message">{t('auth.email_verify_success_msg')}</p>
           </div>
         )}
 
-        {/* Error State */}
         {status === 'error' && (
           <div className="kraken-email-verify__content kraken-email-verify__content--error">
-            <div className="kraken-email-verify__icon kraken-email-verify__icon--error">
-              ✗
-            </div>
-            <h1 className="kraken-email-verify__title">
-              Error de verificación
-            </h1>
-            <p className="kraken-email-verify__message">
-              {errorMessage}
-            </p>
-            <p className="kraken-email-verify__message-suctitulo">
-              Inicia sesión para verificar tu cuenta o solicita un nuevo correo de confirmación.
-            </p>
-            <button
-              className="kraken-email-verify__back-button"
-              onClick={handleBackToLogin}
-            >
-              Volver a iniciar sesión
+            <div className="kraken-email-verify__icon kraken-email-verify__icon--error">✗</div>
+            <h1 className="kraken-email-verify__title">{t('auth.email_verify_error_title')}</h1>
+            <p className="kraken-email-verify__message">{errorMessage}</p>
+            <p className="kraken-email-verify__message-suctitulo">{t('auth.email_verify_error_msg')}</p>
+            <button className="kraken-email-verify__back-button" onClick={handleBackToLogin}>
+              {t('auth.email_verify_back')}
             </button>
           </div>
         )}

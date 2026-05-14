@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   fetchGuias, 
   uploadGuiaInvoice, 
@@ -20,6 +21,7 @@ import { IoCheckboxOutline, IoSquareOutline, IoCardOutline } from 'react-icons/i
 
 export default function Guides() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('list');
   const [activeTab, setActiveTab] = useState('activos');
@@ -210,7 +212,7 @@ export default function Guides() {
 
   const toggleGuiaSelection = (guiaId, guia) => {
     if (!sePuedePagar(guia)) {
-      toast.error('Esta guía no está disponible para pago');
+      toast.error(t('guides.not_available_for_payment'));
       return;
     }
 
@@ -237,7 +239,7 @@ export default function Guides() {
 
   const handleMultiplePayment = () => {
     if (selectedGuias.length === 0) {
-      toast.error('Selecciona al menos una guía para pagar');
+      toast.error(t('guides.select_at_least_one'));
       return;
     }
 
@@ -257,7 +259,7 @@ export default function Guides() {
     if (e) e.stopPropagation();
     
     if (!guia) {
-      toast.error('No se puede cargar factura sin seleccionar una guía');
+      toast.error(t('guides.no_guide_selected'));
       return;
     }
 
@@ -274,7 +276,7 @@ export default function Guides() {
     if (e) e.stopPropagation();
     
     if (!guia) {
-      toast.error('No se puede cargar MSDS sin seleccionar una guía');
+      toast.error(t('guides.no_guide_msds'));
       return;
     }
 
@@ -291,7 +293,7 @@ export default function Guides() {
     if (e) e.stopPropagation();
     
     if (!guia) {
-      toast.error('No se puede cargar NONDG sin seleccionar una guía');
+      toast.error(t('guides.no_guide_nondg'));
       return;
     }
 
@@ -313,19 +315,19 @@ export default function Guides() {
     if (!file) return;
 
     if (!selectedGuiaForUpload || !selectedGuiaForUpload.idGuia) {
-      toast.error('No se ha seleccionado una guía válida');
+      toast.error(t('guides.no_valid_guide'));
       return;
     }
 
     // Validar tipo
     if (file.type !== 'application/pdf') {
-      toast.error('Solo se permiten archivos PDF');
+      toast.error(t('guides.pdf_only'));
       return;
     }
 
     // Validar tamaño (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('El archivo no debe superar 5MB');
+      toast.error(t('guides.file_too_large'));
       return;
     }
 
@@ -346,15 +348,14 @@ export default function Guides() {
       }
 
       if (response.success) {
-        toast.success(response.message || 'Documento subido exitosamente');
-        // ✅ Recargar guías para actualizar el estado
+        toast.success(response.message || t('guides.doc_uploaded'));
         await refetch();
       } else {
-        toast.error(response.message || 'Error al subir documento');
+        toast.error(response.message || t('guides.doc_upload_error'));
       }
     } catch (error) {
       console.error('Error al subir documento:', error);
-      toast.error('Error al subir documento');
+      toast.error(t('guides.doc_upload_error'));
     } finally {
       if (uploadType === 'msds') {
         setUploadingMSDS(prev => ({ ...prev, [guiaId]: false }));
@@ -418,20 +419,20 @@ export default function Guides() {
 
       <header className={styles.header}>
         <div className={styles.headerTop}>
-          <h1>Listado de Envíos</h1>
+          <h1>{t('guides.list_title')}</h1>
           
           <div className={styles.tabsContainer}>
             <button
               className={clsx(styles.tabButton, activeTab === 'activos' && styles.tabButtonActive)}
               onClick={() => setActiveTab('activos')}
             >
-              Activos
+              {t('guides.tab_active')}
             </button>
             <button
               className={clsx(styles.tabButton, activeTab === 'historial' && styles.tabButtonActive)}
               onClick={() => setActiveTab('historial')}
             >
-              Historial
+              {t('guides.tab_history')}
             </button>
           </div>
         </div>
@@ -440,7 +441,7 @@ export default function Guides() {
           <div className={styles.searchContainer}>
             <input
               type="text"
-              placeholder="Buscar por N° de Guía, Tracking o Contenido..."
+              placeholder={t('guides.search_placeholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className={styles.searchInput}
@@ -450,10 +451,10 @@ export default function Guides() {
           <button
             className={clsx(styles.selectionModeBtn, selectionMode && styles.active)}
             onClick={toggleSelectionMode}
-            title={selectionMode ? 'Cancelar selección' : 'Seleccionar múltiples'}
+            title={selectionMode ? t('guides.cancel_selection') : t('guides.select_multiple')}
           >
             {selectionMode ? <IoCheckboxOutline size={20} /> : <IoSquareOutline size={20} />}
-            {selectionMode ? 'Cancelar' : 'Seleccionar'}
+            {selectionMode ? t('common.cancel') : t('guides.select')}
           </button>
 
           <div className={styles.viewToggle}>
@@ -476,7 +477,7 @@ export default function Guides() {
       <div className={styles.content}>
         {isLoading && (
           <div className={styles.loadingSection}>
-            <Loading inline message="Cargando envíos..." />
+            <Loading inline message={t('guides.loading')} />
           </div>
         )}
         {isError && <p className={styles.error}>{error.message}</p>}
@@ -484,7 +485,7 @@ export default function Guides() {
           <div style={{ position: 'relative' }}>
             {isFetching && (
               <div className={styles.fetchingOverlay}>
-                <Loading inline message="Actualizando..." />
+                <Loading inline message={t('common.refreshing')} />
               </div>
             )}
             {viewMode === 'list' ? (
@@ -508,9 +509,9 @@ export default function Guides() {
                         </th>
                       )}
                       <th></th>
-                      <th>N° Guía</th>
-                      <th>Estatus</th>
-                      <th>Origen</th>
+                      <th>{t('guides.guide_number')}</th>
+                      <th>{t('guides.status')}</th>
+                      <th>{t('guides.origin')}</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -545,16 +546,10 @@ export default function Guides() {
                         <td colSpan={selectionMode ? "7" : "6"} className={styles.emptyCell}>
                           <div className={styles.emptyState}>
                             <p className={styles.emptyTitle}>
-                              {activeTab === 'activos' 
-                                ? 'No tienes guías activas' 
-                                : 'No hay historial de pagos'
-                              }
+                              {activeTab === 'activos' ? t('guides.no_active') : t('guides.no_history')}
                             </p>
                             <p className={styles.emptyDescription}>
-                              {activeTab === 'activos'
-                                ? 'Las guías pendientes de pago aparecerán aquí'
-                                : 'Tus guías pagadas aparecerán en esta sección'
-                              }
+                              {activeTab === 'activos' ? t('guides.no_active_desc') : t('guides.no_history_desc')}
                             </p>
                           </div>
                         </td>
@@ -619,7 +614,7 @@ export default function Guides() {
             onClick={() => setCurrentPage(p => p - 1)}
             disabled={!pagination.hasPreviousPage}
           >
-            ← Anterior
+            {t('guides.prev')}
           </button>
 
           <div className={styles.pageNumbers}>
@@ -654,11 +649,11 @@ export default function Guides() {
             onClick={() => setCurrentPage(p => p + 1)}
             disabled={!pagination.hasNextPage}
           >
-            Siguiente →
+            {t('guides.next')}
           </button>
 
           <span className={styles.pageInfo}>
-            {pagination.totalRecords} envío{pagination.totalRecords !== 1 ? 's' : ''} en total
+            {pagination.totalRecords} {pagination.totalRecords !== 1 ? t('guides.total_records_plural') : t('guides.total_records')}
           </span>
         </div>
       )}
@@ -667,7 +662,7 @@ export default function Guides() {
         <div className={styles.floatingPayButton}>
           <button onClick={handleMultiplePayment} className={styles.payBtn}>
             <IoCardOutline size={20} />
-            Pagar {selectedGuias.length} guía{selectedGuias.length > 1 ? 's' : ''}
+            {selectedGuias.length > 1 ? t('guides.pay_selected_plural').replace('{{count}}', selectedGuias.length) : t('guides.pay_selected').replace('{{count}}', selectedGuias.length)}
           </button>
         </div>
       )}

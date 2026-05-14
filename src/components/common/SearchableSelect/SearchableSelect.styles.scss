@@ -1,7 +1,6 @@
 // src/components/common/SearchableSelect/SearchableSelect.styles.scss
 .searchable-select {
   position: relative;
-  z-index: 1000; // ✅ Base z-index
   // width: 100%;
 
   // Campo principal
@@ -219,6 +218,8 @@
 
   // Estado open
   &--open {
+    z-index: 1000;
+
     .searchable-select__field {
       border-color: #FF4500;
       box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import './ForgotPassword.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg';
 import axiosInstance from '../../../services/axiosInstance';
@@ -9,6 +10,7 @@ import axiosInstance from '../../../services/axiosInstance';
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const { colors, actualTheme } = useTheme();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -22,12 +24,12 @@ const ForgotPassword = () => {
 
     // Validar email
     if (!email.trim()) {
-      setError('Por favor ingresa tu correo electrónico');
+      setError(t('auth.email_empty'));
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Por favor ingresa un correo electrónico válido');
+      setError(t('auth.email_invalid'));
       return;
     }
 
@@ -39,20 +41,20 @@ const ForgotPassword = () => {
       });
 
       if (response.data.success) {
-        setSuccessMessage('Se ha enviado un enlace a tu correo electrónico.');
+        setSuccessMessage(t('auth.forgot_success'));
         setEmail('');
       } else {
-        setError(response.data.message || 'Error al enviar el enlace de recuperación');
+        setError(response.data.message || t('auth.forgot_error'));
       }
     } catch (error) {
       console.error('❌ Error en forgot password:', error);
-      
+
       if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else if (error.response?.status === 404) {
-        setError('El correo electrónico no está registrado');
+        setError(t('auth.forgot_not_registered'));
       } else {
-        setError('Error al enviar el enlace. Por favor intenta nuevamente.');
+        setError(t('auth.forgot_error'));
       }
     } finally {
       setIsLoading(false);
@@ -82,17 +84,17 @@ const ForgotPassword = () => {
         </a>
       </div>
 
-      <h1 className="kraken-forgot-password__title">Recuperar contraseña</h1>
+      <h1 className="kraken-forgot-password__title">{t('auth.forgot_title')}</h1>
       <p className="kraken-forgot-password__subtitle">
-        Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+        {t('auth.forgot_subtitle')}
       </p>
 
       <form onSubmit={handleSubmit} className="kraken-forgot-password__form">
         <div className="kraken-input-field">
-          <label className="kraken-input-field__label">Correo electrónico</label>
+          <label className="kraken-input-field__label">{t('auth.email')}</label>
           <input
             type="email"
-            placeholder="Correo electrónico"
+            placeholder={t('auth.email_placeholder')}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -130,10 +132,10 @@ const ForgotPassword = () => {
           {isLoading ? (
             <div className="kraken-forgot-password__loading">
               <div className="kraken-forgot-password__spinner"></div>
-              Enviando enlace...
+              {t('auth.sending_link')}
             </div>
           ) : (
-            'Enviar enlace'
+            t('auth.send_link')
           )}
         </button>
       </form>
@@ -144,7 +146,7 @@ const ForgotPassword = () => {
           className="kraken-forgot-password__back-link"
           onClick={() => navigate('/login')}
         >
-          Volver al inicio
+          {t('auth.back_to_login')}
         </button>
       </div>
     </div>

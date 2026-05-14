@@ -4,12 +4,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../../services/axiosInstance';
 import SearchableSelect from '../../../components/common/SearchableSelect/SearchableSelect'
 import toast from 'react-hot-toast'; // ✅ IMPORTAR TOAST
 import './DeliveryOption.styles.scss';
 import { useAuth } from '../../../contexts/AuthContext';
-import logoImage from '../../../assets/images/logo.jpg'; 
+import logoImage from '../../../assets/images/logo.jpg';
 
 
 const normalizeUserData = (serverUser) => {
@@ -100,6 +101,7 @@ const DeliveryOption = () => {
   const location = useLocation();
   const { theme } = useTheme();
   const { setUserState } = useAuth();
+  const { t } = useTranslation();
   const actualTheme = theme === 'auto' ? 'light' : theme;
   
   // ✅ DATOS DE PERSONAL DATA
@@ -215,7 +217,7 @@ const filteredStores = useMemo(() => {
         }
         
       } catch (error) {
-        toast.error('Error al cargar los datos iniciales. Por favor, recarga la página.');
+        toast.error(t('auth.delivery_load_error'));
       } finally {
         setIsLoadingData(false);
       }
@@ -252,7 +254,7 @@ const filteredStores = useMemo(() => {
         setParishesList([]);
       } catch (error) {
         console.error("❌ Error cargando municipios:", error);
-        toast.error('Error al cargar los municipios. Intenta nuevamente.');
+        toast.error(t('auth.delivery_municipalities_error'));
       } finally {
         setLoadingMunicipalities(false);
       }
@@ -286,7 +288,7 @@ const filteredStores = useMemo(() => {
         setFormData(prev => ({ ...prev, parish: '' }));
       } catch (error) {
         console.error("❌ Error cargando parroquias:", error);
-        toast.error('Error al cargar las parroquias. Intenta nuevamente.');
+        toast.error(t('auth.delivery_parishes_error'));
       } finally {
         setLoadingParishes(false);
       }
@@ -369,7 +371,7 @@ const filteredStores = useMemo(() => {
     setIsLoading(true);
 
     if (!userEmail) {
-      alert('No se pudo identificar al usuario. Inicia sesión nuevamente.');
+      toast.error(t('auth.delivery_user_error'));
       navigate('/login');
       return;
     }
@@ -408,7 +410,7 @@ const filteredStores = useMemo(() => {
       
       if (response.data.success) {
 
-        toast.success('¡Dirección guardada exitosamente!');
+        toast.success(t('auth.delivery_success'));
 
         // Guardar token
         if (response.data.token) {
@@ -448,29 +450,26 @@ const filteredStores = useMemo(() => {
     } catch (error) {
       console.error('❌ Error:', error);
        // ✅ MANEJO DETALLADO DE ERRORES
-      let errorMessage = 'Error al guardar la dirección';
-      
+      let errorMessage = t('auth.delivery_save_error');
+
       if (error.response) {
-        // Error de respuesta del servidor
         const { status, data } = error.response;
-        
+
         if (status === 400) {
-          errorMessage = data.message || data.title || 'Datos inválidos';
+          errorMessage = data.message || data.title || t('auth.delivery_save_error');
         } else if (status === 401) {
-          errorMessage = 'Sesión expirada. Inicia sesión nuevamente';
+          errorMessage = t('auth.session_expired') || 'Session expired';
           setTimeout(() => navigate('/login'), 2000);
         } else if (status === 404) {
-          errorMessage = 'Servicio no disponible';
+          errorMessage = data.message || data.title || t('auth.delivery_save_error');
         } else if (status === 500) {
-          errorMessage = 'Error en el servidor. Intenta más tarde';
+          errorMessage = data.message || data.title || t('auth.delivery_save_error');
         } else {
           errorMessage = data.message || data.title || errorMessage;
         }
       } else if (error.request) {
-        // Error de red
-        errorMessage = 'Error de conexión. Verifica tu internet';
+        errorMessage = t('auth.connection_error') || 'Connection error';
       } else {
-        // Otro tipo de error
         errorMessage = error.message || errorMessage;
       }
       
@@ -493,7 +492,7 @@ const filteredStores = useMemo(() => {
           gap: '16px'
         }}>
           <div className="kraken-delivery-option__spinner"></div>
-          <p style={{ color: 'var(--color-text-secondary)' }}>Cargando datos...</p>
+          <p style={{ color: 'var(--color-text-secondary)' }}>{t('auth.delivery_loading')}</p>
         </div>
       </div>
     );
@@ -523,12 +522,11 @@ const filteredStores = useMemo(() => {
 
       <div className="kraken-delivery-option__content">
         <h1 className="kraken-delivery-option__title">
-          ¿En dónde deseas recibir tus paquetes?
+          {t('auth.delivery_title')}
         </h1>
-        
+
         <p className="kraken-delivery-option__subtitle">
-          Esta es la dirección predeterminada en la que recibirás tu paquete. 
-          Siempre que pre-alertes podrás elegir otro método de entrega.
+          {t('auth.delivery_subtitle')}
         </p>
 
         <form onSubmit={handleSubmit} className="kraken-delivery-option__form">
@@ -545,7 +543,7 @@ const filteredStores = useMemo(() => {
                 onChange={(e) => handleOptionChange(e.target.value)}
               />
               <span className="kraken-radio-checkmark"></span>
-              <span className="kraken-radio-text">Retiro en tienda</span>
+              <span className="kraken-radio-text">{t('auth.delivery_store_option')}</span>
             </label>
 
             <label className="kraken-radio-container">
@@ -557,7 +555,7 @@ const filteredStores = useMemo(() => {
                 onChange={(e) => handleOptionChange(e.target.value)}
               />
               <span className="kraken-radio-checkmark"></span>
-              <span className="kraken-radio-text">Entrega a domicilio</span>
+              <span className="kraken-radio-text">{t('auth.delivery_home_option')}</span>
             </label>
           </div>
 
@@ -566,14 +564,14 @@ const filteredStores = useMemo(() => {
             <div className="kraken-form-section">
               
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Ciudad</label>
+                <label className="kraken-form-field__label">{t('auth.delivery_city')}</label>
                 <select
                   className="kraken-form-field__select"
                   value={storeData.city}
                   onChange={(e) => handleStoreInputChange('city', e.target.value)}
                   required
                 >
-                  <option value="">Seleccione</option>
+                  <option value="">{t('auth.delivery_select')}</option>
                   {availableCities.map((city) => (
                     <option key={city.value} value={city.value}>
                       {city.label}
@@ -583,7 +581,7 @@ const filteredStores = useMemo(() => {
               </div>
 
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Retiro en Tienda</label>
+                <label className="kraken-form-field__label">{t('auth.delivery_store_label')}</label>
                 <select
                   className="kraken-form-field__select"
                   value={storeData.store}
@@ -591,7 +589,7 @@ const filteredStores = useMemo(() => {
                   required
                   disabled={!storeData.city}
                 >
-                  <option value="">Seleccione</option>
+                  <option value="">{t('auth.delivery_select')}</option>
                   {filteredStores.map((store) => (
                     <option key={store.value} value={store.value}>
                       {store.label}
@@ -607,43 +605,43 @@ const filteredStores = useMemo(() => {
             <div className="kraken-form-section">
               
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Estado</label>                
+                <label className="kraken-form-field__label">{t('auth.delivery_state')}</label>
                 <SearchableSelect
                   options={statesList}
                   value={formData.state}
                   onChange={(value) => handleInputChange('state', value)}
-                  placeholder="Buscar estado..."
+                  placeholder={t('auth.delivery_search_state')}
                 />              
               </div>
 
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Municipio</label>
+                <label className="kraken-form-field__label">{t('auth.delivery_municipality')}</label>
                 <SearchableSelect
                   options={municipalitiesList}
                   value={formData.municipality}
                   onChange={(value) => handleInputChange('municipality', value)}
-                  placeholder={loadingMunicipalities ? "Cargando..." : "Buscar municipio..."}
+                  placeholder={loadingMunicipalities ? t('common.loading') : t('auth.delivery_search_municipality')}
                   disabled={!formData.state || loadingMunicipalities}
                 />
               </div>
 
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Parroquia (opcional)</label>                
+                <label className="kraken-form-field__label">{t('auth.delivery_parish')}</label>
                 <SearchableSelect
                   options={parishesList}
                   value={formData.parish}
                   onChange={(value) => handleInputChange('parish', value)}
-                  placeholder={loadingParishes ? "Cargando..." : "Buscar parroquia..."}
+                  placeholder={loadingParishes ? t('common.loading') : t('auth.delivery_search_parish')}
                   disabled={!formData.municipality || loadingParishes}
                 />
               </div>
 
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Dirección</label>
+                <label className="kraken-form-field__label">{t('auth.delivery_address')}</label>
                 <input
                   type="text"
                   className="kraken-form-field__input"
-                  placeholder="Dirección"
+                  placeholder={t('auth.delivery_address')}
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   required
@@ -651,22 +649,22 @@ const filteredStores = useMemo(() => {
               </div>
 
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Punto de referencia (opcional)</label>
+                <label className="kraken-form-field__label">{t('auth.delivery_reference')}</label>
                 <input
                   type="text"
                   className="kraken-form-field__input"
-                  placeholder="Punto de referencia"
+                  placeholder={t('auth.delivery_reference')}
                   value={formData.reference}
                   onChange={(e) => handleInputChange('reference', e.target.value)}
                 />
               </div>
 
               <div className="kraken-form-field">
-                <label className="kraken-form-field__label">Nombre para esta dirección (ej. Casa)</label>
+                <label className="kraken-form-field__label">{t('auth.delivery_address_name')}</label>
                 <input
                   type="text"
                   className="kraken-form-field__input"
-                  placeholder="Nombre para esta dirección"
+                  placeholder={t('auth.delivery_address_name')}
                   value={formData.addressName}
                   onChange={(e) => handleInputChange('addressName', e.target.value)}
                   required
@@ -685,10 +683,10 @@ const filteredStores = useMemo(() => {
               {isLoading ? (
                 <div className="kraken-delivery-option__loading">
                   <div className="kraken-delivery-option__spinner"></div>
-                  Guardando...
+                  {t('auth.delivery_saving')}
                 </div>
               ) : (
-                'Finalizar Registro'
+                t('auth.delivery_finish')
               )}
             </button>
             
@@ -697,7 +695,7 @@ const filteredStores = useMemo(() => {
               onClick={() => navigate('/personal-data')}
               className="kraken-delivery-option__button-secondary"
             >
-              Anterior
+              {t('auth.delivery_back')}
             </button>
           </div>
         </form>

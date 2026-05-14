@@ -8,6 +8,7 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import Tooltip from '../../../components/common/Tooltip/Tooltip';
 import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png';
 import { IoAlertCircleOutline } from 'react-icons/io5';
@@ -42,6 +43,7 @@ import './PreAlertCreate.styles.scss';
 const PreAlertCreate = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { t } = useTranslation();
 
   const [formState, setFormState] = useState({
     trackings: [''],
@@ -68,9 +70,7 @@ const PreAlertCreate = () => {
     setAsDefaultAddress: false, // Establecer como predeterminada
   });
 
-  const [defaultAddressText, setDefaultAddressText] = useState(
-    'Cargando dirección...'
-  );
+  const [defaultAddressText, setDefaultAddressText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -319,7 +319,7 @@ const PreAlertCreate = () => {
 
       // ✅ Verificar límite ANTES de procesar
       if (formState.facturas.length >= maxFiles) {
-        toast.error(`Solo puedes seleccionar máximo ${maxFiles} archivos`);
+        toast.error(t('pre_alert.file_max_error', { max: maxFiles }));
         return;
       }
 
@@ -328,21 +328,17 @@ const PreAlertCreate = () => {
 
       if (totalFiles > maxFiles) {
         const allowedCount = maxFiles - currentFiles.length;
-        toast.error(
-          `Solo puedes agregar ${allowedCount} archivo(s) más. Máximo ${maxFiles} archivos en total.`
-        );
+        toast.error(t('pre_alert.file_add_more_error', { count: allowedCount, max: maxFiles }));
         return;
       }
 
       const validFiles = files.filter((file) => {
         if (!allowedTypes.includes(file.type)) {
-          toast.error(
-            `${file.name}: Tipo no permitido. Solo PDF e imágenes (JPG, PNG, GIF, WEBP)`
-          );
+          toast.error(`${file.name}: ${t('pre_alert.file_invalid_type')}`);
           return false;
         }
         if (file.size > maxSize) {
-          toast.error(`${file.name}: Máximo 5MB`);
+          toast.error(`${file.name}: ${t('pre_alert.file_max_size')}`);
           return false;
         }
         return true;
@@ -356,11 +352,9 @@ const PreAlertCreate = () => {
         updateFormState('facturas', updatedFiles);
 
         toast.success(
-          `Se ${
-            validFiles.length === 1
-              ? 'agregó 1 archivo'
-              : `agregaron ${validFiles.length} archivos`
-          } correctamente.`
+          validFiles.length === 1
+            ? t('pre_alert.file_added_one')
+            : t('pre_alert.file_added_many', { count: validFiles.length })
         );
       }
     },
@@ -419,17 +413,17 @@ const PreAlertCreate = () => {
       (t) => t.trim().length > 0 && t.trim().length <= 30
     );
     if (!hasValidTracking) {
-      newErrors.tracking = 'Debe ingresar al menos un tracking válido';
+      newErrors.tracking = t('pre_alert.error_invalid_tracking');
     }
 
     if (formState.contenidos.length === 0) {
-      newErrors.contenidos = 'Debe seleccionar al menos un contenido';
+      newErrors.contenidos = t('pre_alert.error_select_content');
     }
 
     // Validar dirección según el estado actual
     if (addressState.selectedOption === 'store') {
       if (!addressState.selectedCity || !addressState.selectedLocker) {
-        newErrors.address = 'Debe seleccionar ciudad y tienda';
+        newErrors.address = t('pre_alert.error_select_store');
       }
     } else if (addressState.selectedOption === 'new') {
       if (
@@ -438,7 +432,7 @@ const PreAlertCreate = () => {
         !addressState.selectedParish ||
         !addressState.address
       ) {
-        newErrors.address = 'Complete todos los campos de dirección';
+        newErrors.address = t('pre_alert.error_complete_address');
       }
     }
 
@@ -449,11 +443,11 @@ const PreAlertCreate = () => {
   const createMutation = useMutation({
     mutationFn: createPreAlerta,
     onSuccess: () => {
-      toast.success('¡Pre-alerta creada exitosamente!');
+      toast.success(t('pre_alert.create_success'));
       navigate('/pre-alert/list');
     },
     onError: (error) => {
-      toast.error(error.message || 'Error al crear pre-alerta');
+      toast.error(error.message || t('pre_alert.create_error'));
     },
   });
 
@@ -461,7 +455,7 @@ const PreAlertCreate = () => {
   e.preventDefault();
 
   if (!validateForm()) {
-    toast.error('Complete todos los campos requeridos');
+    toast.error(t('pre_alert.error_required_fields'));
     return;
   }
 
@@ -635,10 +629,9 @@ const PreAlertCreate = () => {
               alt=""
             />
           </div>
-          <h1 className="prealert-create__title">Pre-Alerta tu compra</h1>
+          <h1 className="prealert-create__title">{t('pre_alert.create_title')}</h1>
           <p className="prealert-create__subtitle">
-            Ayúdanos a gestionar tu envío más rápido, avísanos tan pronto
-            recibas el tracking de tu compra
+            {t('pre_alert.create_subtitle')}
           </p>
         </div>
 
@@ -647,11 +640,11 @@ const PreAlertCreate = () => {
           <div className="prealert-create__section">
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
-                Números de Tracking
+                {t('pre_alert.tracking_section')}
                 <span className="prealert-create__required">*</span>
               </label>
               <Tooltip
-                content="El tracking es el número de seguimiento de tu paquete. La tienda online te lo enviará cuando procese y despache tu pedido. Si aún no lo tienes, espera la confirmación en tu email."
+                content={t('pre_alert.tracking_tooltip')}
                 position="auto"
               />
             </div>
@@ -661,7 +654,7 @@ const PreAlertCreate = () => {
                 <input
                   type="text"
                   className="prealert-create__input"
-                  placeholder="Ejemplo: 1ZE9889W04276202"
+                  placeholder={t('pre_alert.tracking_placeholder')}
                   value={tracking}
                   onChange={(e) => handleUpdateTracking(e.target.value, index)}
                   maxLength={30}
@@ -695,12 +688,11 @@ const PreAlertCreate = () => {
           <div className="prealert-create__section" style={{ zIndex: 100 }}>
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
-                Contenido ({formState.contenidos.length} seleccionado
-                {formState.contenidos.length !== 1 ? 's' : ''})
+                {t('pre_alert.content_section')} ({formState.contenidos.length} {t('pre_alert.content_selected')})
                 <span className="prealert-create__required">*</span>
               </label>
               <Tooltip
-                content="Selecciona uno o más productos o categorías del contenido de tu paquete. Puedes elegir múltiples opciones."
+                content={t('pre_alert.content_tooltip')}
                 position="auto"
               />
             </div>
@@ -711,10 +703,10 @@ const PreAlertCreate = () => {
               onChange={(values) => updateFormState('contenidos', values)}
               placeholder={
                 formState.contenidos.length > 0
-                  ? `${formState.contenidos.length} contenido(s) seleccionado(s)`
-                  : 'Seleccionar contenidos'
+                  ? `${formState.contenidos.length} ${t('pre_alert.content_selected')}`
+                  : t('pre_alert.content_placeholder')
               }
-              searchPlaceholder="Buscar contenido..."
+              searchPlaceholder={t('pre_alert.content_search_placeholder')}
               disabled={isLoadingContenidos}
               error={!!errors.contenidos}
             />
@@ -727,10 +719,10 @@ const PreAlertCreate = () => {
           <div className="prealert-create__section">
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
-                Valor Declarado (Opcional)
+                {t('pre_alert.declared_value_section')}
               </label>
               <Tooltip
-                content="El FOB (Free On Board) es el costo de la mercancía en la factura de compra. Debes ingresar el monto total de los artículos contenidos en el paquete."
+                content={t('pre_alert.declared_value_tooltip')}
                 position="auto"
               />
             </div>
@@ -740,7 +732,7 @@ const PreAlertCreate = () => {
               
               {/* COLUMNA 1: Moneda (Pequeña) */}
               <div className="prealert-create__col">
-                <label className="prealert-create__label">Moneda</label>
+                <label className="prealert-create__label">{t('pre_alert.currency')}</label>
                 <select
                   className="prealert-create__select"
                   value={formState.currency}
@@ -754,7 +746,7 @@ const PreAlertCreate = () => {
 
               {/* COLUMNA 2: Monto (Grande) */}
               <div className="prealert-create__col">
-                <label className="prealert-create__label">Monto</label>
+                <label className="prealert-create__label">{t('pre_alert.amount')}</label>
                 <CurrencyInput
                   className="prealert-create__input prealert-create__input--currency"
                   placeholder="0,00"
@@ -769,7 +761,7 @@ const PreAlertCreate = () => {
               {/* COLUMNA 3: Tipo de Contenido */}
               <div className="prealert-create__col">
                 <label className="prealert-create__label">
-                  Tipo de Contenido (Opcional)
+                  {t('pre_alert.content_type')}
                 </label>
                 <div className="prealert-create__checkboxes">
                   {['Frágil', 'Líquidos'].map((option) => (
@@ -795,10 +787,10 @@ const PreAlertCreate = () => {
           <div className="prealert-create__section">
             <div className="prealert-create__label-row">
               <label className="prealert-create__label">
-                Dirección de Entrega Predeterminada
+                {t('pre_alert.address_section')}
               </label>
               <Tooltip
-                content="Esta es la dirección en la que recibirás todos tus paquetes. Si no la modificas ahora, tu paquete será enviado allí y no podrás cambiarla después de que llegue a nuestro almacén."
+                content={t('pre_alert.address_tooltip')}
                 position="auto"
               />
             </div>
@@ -815,7 +807,7 @@ const PreAlertCreate = () => {
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span>{defaultAddressText}</span>
+                <span>{defaultAddressText || t('pre_alert.loading_address')}</span>
               </div>
             </div>
 
@@ -826,7 +818,7 @@ const PreAlertCreate = () => {
                 onChange={handleChangeAddressToggle}
               />
               <span>
-                ¿Deseas cambiar la dirección de entrega de este paquete?
+                {t('pre_alert.change_address')}
               </span>
             </label>
 
@@ -875,7 +867,7 @@ const PreAlertCreate = () => {
                         updateAddressState('selectedOption', 'store')
                       }
                     />
-                    <span>Retiro en Tienda</span>
+                    <span>{t('pre_alert.store_pickup')}</span>
                   </label>
 
                   {/* Opción de Nueva Dirección */}
@@ -887,7 +879,7 @@ const PreAlertCreate = () => {
                         updateAddressState('selectedOption', 'new')
                       }
                     />
-                    <span>Enviar a otra dirección</span>
+                    <span>{t('pre_alert.other_address')}</span>
                   </label>
                 </div>
 
@@ -895,27 +887,27 @@ const PreAlertCreate = () => {
                 {addressState.selectedOption === 'store' && (
                   <div className="prealert-create__address-form">
                     <h4 className="prealert-create__form-title">
-                      Retiro en Tienda
+                      {t('pre_alert.store_form_title')}
                     </h4>
 
                     <div className="prealert-create__row">
                       <div className="prealert-create__col">
                         <label className="prealert-create__label">
-                          Ciudad{' '}
+                          {t('pre_alert.city')}{' '}
                           <span className="prealert-create__required">*</span>
                         </label>
                         <SearchableSelect
                           options={availableCities}
                           value={addressState.selectedCity}
-                          onChange={handleCityChange} // ⬅️ Cambio aquí
-                          placeholder="Seleccione una ciudad"
+                          onChange={handleCityChange}
+                          placeholder={t('pre_alert.city_placeholder')}
                           disabled={isLoadingDelivery}
                         />
                       </div>
 
                       <div className="prealert-create__col">
                         <label className="prealert-create__label">
-                          Tienda{' '}
+                          {t('pre_alert.store')}{' '}
                           <span className="prealert-create__required">*</span>
                         </label>
                         <SearchableSelect
@@ -924,7 +916,7 @@ const PreAlertCreate = () => {
                           onChange={(value) =>
                             updateAddressState('selectedLocker', value)
                           }
-                          placeholder="Seleccione una tienda"
+                          placeholder={t('pre_alert.store_placeholder')}
                           disabled={
                             !addressState.selectedCity ||
                             filteredTiendas.length === 0
@@ -939,7 +931,7 @@ const PreAlertCreate = () => {
                 {addressState.selectedOption === 'new' && (
                   <div className="prealert-create__address-form">
                     <h4 className="prealert-create__form-title">
-                      Entrega a Domicilio
+                      {t('pre_alert.home_form_title')}
                     </h4>
 
                     {/* <div className="prealert-create__col">
@@ -960,7 +952,7 @@ const PreAlertCreate = () => {
                     <div className="prealert-create__row prealert-create__row--three">
                       <div className="prealert-create__col">
                         <label className="prealert-create__label">
-                          Estado{' '}
+                          {t('pre_alert.state')}{' '}
                           <span className="prealert-create__required">*</span>
                         </label>
                         <SearchableSelect
@@ -971,14 +963,14 @@ const PreAlertCreate = () => {
                             updateAddressState('selectedMunicipality', '');
                             updateAddressState('selectedParish', '');
                           }}
-                          placeholder="Seleccionar estado"
+                          placeholder={t('pre_alert.state_placeholder')}
                           disabled={isLoadingStates}
                         />
                       </div>
 
                       <div className="prealert-create__col">
                         <label className="prealert-create__label">
-                          Municipio{' '}
+                          {t('pre_alert.municipality')}{' '}
                           <span className="prealert-create__required">*</span>
                         </label>
                         <SearchableSelect
@@ -988,7 +980,7 @@ const PreAlertCreate = () => {
                             updateAddressState('selectedMunicipality', value);
                             updateAddressState('selectedParish', '');
                           }}
-                          placeholder="Seleccionar municipio"
+                          placeholder={t('pre_alert.municipality_placeholder')}
                           disabled={
                             !addressState.selectedState ||
                             isLoadingMunicipalities
@@ -998,7 +990,7 @@ const PreAlertCreate = () => {
 
                       <div className="prealert-create__col">
                         <label className="prealert-create__label">
-                          Parroquia{' '}
+                          {t('pre_alert.parish')}{' '}
                           <span className="prealert-create__required">*</span>
                         </label>
                         <SearchableSelect
@@ -1007,7 +999,7 @@ const PreAlertCreate = () => {
                           onChange={(value) =>
                             updateAddressState('selectedParish', value)
                           }
-                          placeholder="Seleccionar parroquia"
+                          placeholder={t('pre_alert.parish_placeholder')}
                           disabled={
                             !addressState.selectedMunicipality ||
                             isLoadingParishes
@@ -1018,12 +1010,12 @@ const PreAlertCreate = () => {
 
                     <div className="prealert-create__col">
                       <label className="prealert-create__label">
-                        Dirección Completa{' '}
+                        {t('pre_alert.full_address')}{' '}
                         <span className="prealert-create__required">*</span>
                       </label>
                       <textarea
                         className="prealert-create__textarea"
-                        placeholder="Ej: Calle 1, Edificio X, Apto Y"
+                        placeholder={t('pre_alert.full_address_placeholder')}
                         rows={3}
                         value={addressState.address}
                         onChange={(e) =>
@@ -1034,12 +1026,12 @@ const PreAlertCreate = () => {
 
                     <div className="prealert-create__col">
                       <label className="prealert-create__label">
-                        Punto de Referencia
+                        {t('pre_alert.reference')}
                       </label>
                       <input
                         type="text"
                         className="prealert-create__input"
-                        placeholder="Ej: Casa con portón azul"
+                        placeholder={t('pre_alert.reference_placeholder')}
                         value={addressState.reference}
                         onChange={(e) =>
                           updateAddressState('reference', e.target.value)
@@ -1063,7 +1055,7 @@ const PreAlertCreate = () => {
                           }
                           disabled={hasReachedMaxAddresses} // ⬅️ Deshabilitar si alcanzó límite
                         />
-                        <span>Guardar esta dirección para futuros envíos</span>
+                        <span>{t('pre_alert.save_address')}</span>
                       </label>
 
                       {/* ✅ Mensaje de límite alcanzado */}
@@ -1071,8 +1063,7 @@ const PreAlertCreate = () => {
                         <div className="prealert-create__limit-warning">
                           <IoAlertCircleOutline size={18} />
                           <span>
-                            Has alcanzado el límite de 4 direcciones guardadas. 
-                            Elimina una dirección desde tu perfil para poder guardar nuevas.
+                            {t('pre_alert.address_limit_warning')}
                           </span>
                         </div>
                       )}
@@ -1082,12 +1073,12 @@ const PreAlertCreate = () => {
                         <>
                           <div className="prealert-create__col" style={{ marginTop: '12px' }}>
                             <label className="prealert-create__label">
-                              Nombre para guardar
+                              {t('pre_alert.save_address_name')}
                             </label>
                             <input
                               type="text"
                               className="prealert-create__input"
-                              placeholder="Ej: Casa, Oficina, etc."
+                              placeholder={t('pre_alert.save_address_name_placeholder')}
                               value={addressState.addressName}
                               onChange={(e) =>
                                 updateAddressState('addressName', e.target.value)
@@ -1103,7 +1094,7 @@ const PreAlertCreate = () => {
                                 updateAddressState('setAsDefaultAddress', e.target.checked)
                               }
                             />
-                            <span>Establecer como dirección predeterminada</span>
+                            <span>{t('pre_alert.set_default')}</span>
                           </label>
                         </>
                       )}
@@ -1118,7 +1109,7 @@ const PreAlertCreate = () => {
           {/* SECCIÓN FACTURAS */}
           <div className="prealert-create__section">
             <label className="prealert-create__label">
-              Facturas ({formState.facturas.length}/3)
+              {t('pre_alert.invoices_section')} ({formState.facturas.length}/3)
             </label>
 
             <input
@@ -1143,13 +1134,13 @@ const PreAlertCreate = () => {
             >
               📎{' '}
               {formState.facturas.length === 0
-                ? 'Seleccionar Archivos (Max 3)'
-                : 'Agregar más archivos'}
+                ? t('pre_alert.select_files')
+                : t('pre_alert.add_more_files')}
             </button>
 
             {formState.facturas.length === 0 ? (
               <p className="prealert-create__helper-text">
-                Máximo 3 archivos (PDF, imágenes - JPG, PNG, GIF, WEBP)
+                {t('pre_alert.files_helper')}
               </p>
             ) : (
               <div className="prealert-create__files-list">
@@ -1189,10 +1180,10 @@ const PreAlertCreate = () => {
               {isSubmitting ? (
                 <>
                   <LoadingSpinner size="small" />
-                  <span>Creando...</span>
+                  <span>{t('pre_alert.creating')}</span>
                 </>
               ) : (
-                'Crear Pre-Alerta'
+                t('pre_alert.create_submit')
               )}
             </button>
           </div>
