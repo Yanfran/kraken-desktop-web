@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../../../services/axiosInstance';
 import './HomePage.scss';
 
@@ -17,6 +18,7 @@ const getStatusColor = (estatus = '') => {
 const HomePage = () => {
   const navigate     = useNavigate();
   const { user }     = useAuth();
+  const { t }        = useTranslation();
   const [shipments,  setShipments]  = useState([]);
   const [loading,    setLoading]    = useState(true);
 
@@ -41,20 +43,20 @@ const HomePage = () => {
   }).length;
 
   const stats = [
-    { label: 'Envíos Activos',    value: activos },
-    { label: 'Total Entregados',  value: entregados },
-    { label: 'Envíos Este Mes',   value: esteMes },
-    { label: 'Total Registrados', value: shipments.length },
+    { label: t('us_home.stat_active'),     value: activos },
+    { label: t('us_home.stat_delivered'),  value: entregados },
+    { label: t('us_home.stat_this_month'), value: esteMes },
+    { label: t('us_home.stat_total'),      value: shipments.length },
   ];
 
   return (
     <div className="container">
       <div className="us-home__header" style={{ marginLeft: '20px' }}>
         <h1 className="us-home__title">
-          ¡Hola, {user?.nombre ?? user?.name ?? 'Bienvenido'}!
+          {t('us_home.greeting', { name: user?.nombre ?? user?.name ?? 'Bienvenido' })}
         </h1>
         <p className="us-home__subtitle">
-          Gestiona tus envíos USA → Venezuela
+          {t('us_home.subtitle')}
         </p>
       </div>
 
@@ -63,7 +65,7 @@ const HomePage = () => {
         {/* Botón Nueva Recogida */}
         <button className="us-home__pickup-btn" onClick={() => navigate('/pickup')}>
           <span className="us-home__pickup-icon">📦</span>
-          <span className="us-home__pickup-text">Nueva Recogida</span>
+          <span className="us-home__pickup-text">{t('us_home.new_pickup')}</span>
         </button>
 
         {/* Grid Principal */}
@@ -72,15 +74,15 @@ const HomePage = () => {
           {/* Columna Izquierda — Envíos Recientes */}
           <div className="us-home__left">
             <section className="us-home__section">
-              <h2 className="us-home__section-title">Envíos Recientes</h2>
+              <h2 className="us-home__section-title">{t('us_home.recent_shipments')}</h2>
 
               {loading && (
-                <p style={{ color: '#999', fontSize: '0.9rem' }}>Cargando envíos...</p>
+                <p style={{ color: '#999', fontSize: '0.9rem' }}>{t('us_home.loading')}</p>
               )}
 
               {!loading && shipments.length === 0 && (
                 <p style={{ color: '#999', fontSize: '0.9rem' }}>
-                  Aún no tienes envíos registrados.
+                  {t('us_home.no_shipments')}
                 </p>
               )}
 
@@ -109,9 +111,8 @@ const HomePage = () => {
                 <button
                   className="us-home__view-all"
                   onClick={() => navigate('/guide/guides')}
-                  aria-label={`Ver todos los ${shipments.length} envíos`}
                 >
-                  <span>Ver todos ({shipments.length})</span>
+                  <span>{t('us_home.view_all', { count: shipments.length })}</span>
                   <span className="us-home__view-all-arrow">→</span>
                 </button>
               )}
@@ -123,17 +124,17 @@ const HomePage = () => {
 
             {/* Ruta Frecuente */}
             <section className="us-home__section">
-              <h2 className="us-home__section-title">Ruta Frecuente</h2>
+              <h2 className="us-home__section-title">{t('us_home.frequent_route')}</h2>
               <div className="us-home__route">
                 <span className="us-home__route-flag">🇺🇸</span>
-                <span className="us-home__route-text">USA → Venezuela</span>
+                <span className="us-home__route-text">{t('us_home.route_text')}</span>
                 <span className="us-home__route-flag">🇻🇪</span>
               </div>
             </section>
 
             {/* Acciones rápidas */}
             <section className="us-home__section">
-              <h2 className="us-home__section-title">Acciones Rápidas</h2>
+              <h2 className="us-home__section-title">{t('us_home.quick_actions')}</h2>
               <div className="us-home__addresses">
                 <div
                   className="us-home__address-card"
@@ -141,7 +142,7 @@ const HomePage = () => {
                   style={{ cursor: 'pointer' }}
                 >
                   <span className="us-home__address-icon">🔍</span>
-                  <span className="us-home__address-name">Rastrear paquete</span>
+                  <span className="us-home__address-name">{t('us_home.track_package')}</span>
                 </div>
                 <div
                   className="us-home__address-card"
@@ -149,7 +150,7 @@ const HomePage = () => {
                   style={{ cursor: 'pointer' }}
                 >
                   <span className="us-home__address-icon">🧮</span>
-                  <span className="us-home__address-name">Calculadora</span>
+                  <span className="us-home__address-name">{t('us_home.calculator')}</span>
                 </div>
                 {/* <div
                   className="us-home__address-card"
@@ -165,7 +166,7 @@ const HomePage = () => {
                   style={{ cursor: 'pointer' }}
                 >
                   <span className="us-home__address-icon">📦</span>
-                  <span className="us-home__address-name">Nueva recogida</span>
+                  <span className="us-home__address-name">{t('us_home.new_pickup_action')}</span>
                 </div>
               </div>
             </section>

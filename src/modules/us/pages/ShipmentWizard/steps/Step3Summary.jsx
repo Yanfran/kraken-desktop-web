@@ -1,5 +1,6 @@
 // src/modules/es/pages/ShipmentWizard/steps/Step3Summary.jsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './Step3Summary.scss';
 
 const fmt    = (n) => Number(n || 0).toFixed(2);
@@ -15,13 +16,15 @@ const CostRow = ({ label, valueUSD, isDiscount }) => (
 
 // ── Bloque de dirección legible ───────────────────────────────────────────────
 const AddressBlock = ({ address, flag, onEdit }) => {
+  const { t } = useTranslation();
+
   if (!address) {
     return (
       <div className="summary-addr">
         <p className="summary-addr__line" style={{ color: '#ef4444' }}>
-          ⚠️ No se encontró la dirección seleccionada.
+          ⚠️ {t('us_wizard.error_addr_not_found')}
         </p>
-        <button className="summary-section__edit" onClick={onEdit}>✏️ Cambiar</button>
+        <button className="summary-section__edit" onClick={onEdit}>✏️ {t('us_wizard.edit_label')}</button>
       </div>
     );
   }
@@ -31,7 +34,7 @@ const AddressBlock = ({ address, flag, onEdit }) => {
   return (
     <div className="summary-addr">
       <p className="summary-addr__name">
-        {flag} {address.alias || address.nombreLocker || 'Sin nombre'}
+        {flag} {address.alias || address.nombreLocker || t('us_wizard.no_name')}
       </p>
 
       {esStore ? (
@@ -63,6 +66,7 @@ const AddressBlock = ({ address, flag, onEdit }) => {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) => {
+  const { t } = useTranslation();
 
   const pkg  = data.packages[0];
   const dims = pkg
@@ -90,13 +94,13 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
       {/* ══ COLUMNA IZQUIERDA ════════════════════════════════════════════════ */}
       <div className="step3-layout__left">
         <div className="wizard-card">
-          <h2 className="wizard-card__title">📋 Resumen del Envío</h2>
+          <h2 className="wizard-card__title">📋 {t('us_wizard.step4_title')}</h2>
 
           {/* ── Detalles del paquete ─────────────────────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">📦</span>
-              <h3 className="summary-section__title">Detalles del Paquete</h3>
+              <h3 className="summary-section__title">{t('us_wizard.summary_package_title')}</h3>
               <button className="summary-section__edit" onClick={editPkg} title="Editar paquete">✏️</button>
             </div>
 
@@ -104,28 +108,28 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
               <div className="summary-pkg-item">
                 <span className="summary-pkg-item__icon">📐</span>
                 <div>
-                  <p className="summary-pkg-item__label">Dimensiones:</p>
+                  <p className="summary-pkg-item__label">{t('us_wizard.dimensions')}</p>
                   <p className="summary-pkg-item__value">{dims}</p>
                 </div>
               </div>
               <div className="summary-pkg-item">
                 <span className="summary-pkg-item__icon">⚖️</span>
                 <div>
-                  <p className="summary-pkg-item__label">Peso Físico:</p>
+                  <p className="summary-pkg-item__label">{t('us_wizard.physical_weight')}</p>
                   <p className="summary-pkg-item__value">{pkg?.peso || '–'} {pkg?.unidadPeso || 'lb'}</p>
                 </div>
               </div>
               <div className="summary-pkg-item">
                 <span className="summary-pkg-item__icon">📄</span>
                 <div>
-                  <p className="summary-pkg-item__label">Contenido:</p>
+                  <p className="summary-pkg-item__label">{t('us_wizard.content_label')}</p>
                   <p className="summary-pkg-item__value">{pkg?.descripcion || '–'}</p>
                 </div>
               </div>
               <div className="summary-pkg-item">
                 <span className="summary-pkg-item__icon">💲</span>
                 <div>
-                  <p className="summary-pkg-item__label">Valor FOB:</p>
+                  <p className="summary-pkg-item__label">{t('us_wizard.fob_value')}</p>
                   <p className="summary-pkg-item__value">${pkg?.valorFOB || '–'} USD</p>
                 </div>
               </div>
@@ -135,9 +139,9 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                 <div className="summary-pkg-item">
                   <span className="summary-pkg-item__icon">📊</span>
                   <div>
-                    <p className="summary-pkg-item__label">Peso facturado:</p>
+                    <p className="summary-pkg-item__label">{t('us_wizard.billed_weight')}</p>
                     <p className="summary-pkg-item__value">
-                      {fmt(calc.billedWeight * 2.20462)} lb {calc.isVolumetric ? '(Volumétrico)' : ''}
+                      {fmt(calc.billedWeight * 2.20462)} lb {calc.isVolumetric ? `(${t('us_wizard.volumetric')})` : ''}
                     </p>
                   </div>
                 </div>
@@ -151,7 +155,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">🇺🇸</span>
-              <h3 className="summary-section__title">Dirección de Recogida</h3>
+              <h3 className="summary-section__title">{t('us_wizard.pickup_address')}</h3>
               <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
             </div>
             <AddressBlock address={data.selectedOriginAddress} flag="🇺🇸" onEdit={editAddr} />
@@ -163,7 +167,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
           <section className="summary-section">
             <div className="summary-section__header">
               <span className="summary-section__icon">🇻🇪</span>
-              <h3 className="summary-section__title">Dirección de Entrega</h3>
+              <h3 className="summary-section__title">{t('us_wizard.delivery_address')}</h3>
               <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
             </div>
             <AddressBlock address={data.selectedDestinationAddress} flag="🇻🇪" onEdit={editAddr} />
@@ -171,7 +175,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
         </div>
 
         <div className="wizard-actions">
-          <button className="btn-wizard-back" onClick={onBack}>← Volver</button>
+          <button className="btn-wizard-back" onClick={onBack}>{t('us_wizard.back')}</button>
         </div>
       </div>
 
@@ -179,12 +183,12 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
       <div className="step3-layout__right">
         <div className="cost-card" style={{ borderTop: '4px solid #022364' }}>
           <h3 className="cost-card__title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🇺🇸 Detalle de Tarifa
+            🇺🇸 {t('us_wizard.rate_detail')}
           </h3>
 
           {!calc ? (
             <p className="cost-card__error">
-              ⚠️ No se pudo calcular la tarifa. Vuelve al paso anterior.
+              ⚠️ {t('us_wizard.error_no_calc')}
             </p>
           ) : (
             <>
@@ -202,7 +206,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                 {/* ✅ Línea UPS si hay courierQuote */}
                 {data.courierQuote && (
                   <CostRow
-                    label={`🚚 ${data.courierQuote.courier ?? 'UPS'} ${data.courierQuote.service ?? 'Ground'} (Recogida)`}
+                    label={`🚚 ${data.courierQuote.courier ?? 'UPS'} ${data.courierQuote.service ?? 'Ground'} (${t('us_wizard.pickup_label')})`}
                     valueUSD={fmtUSD(data.courierQuote.total ?? 0)}
                     isDiscount={false}
                   />
@@ -227,11 +231,11 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
             disabled={!calc}
             style={{ marginTop: '20px' }}
           >
-            Proceder al Pago →
+            {t('us_wizard.proceed_payment')}
           </button>
           
           <p style={{ fontSize: '12px', color: '#6c757d', textAlign: 'center', marginTop: '12px' }}>
-            <i className="fas fa-info-circle"></i> Los montos en USD  son referenciales.
+            <i className="fas fa-info-circle"></i> {t('us_wizard.usd_disclaimer')}
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@
 // Paso 5 del wizard USA — Método de pago + creación de guía post-pago
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { axiosPaymentInstance } from '../../../../../services/axiosInstance';
 import { createUpsPickup, createUpsShipment } from '../../../../../services/us/upsService';
@@ -25,22 +26,24 @@ const getNextBusinessDay = () => {
 const HALARAPAY_TOKENIZATION_KEY = 'XEaBVN-yX978V-PJJ64R-Z6KdqZ';
 const HALARAPAY_SCRIPT_SRC = 'https://halarapay.transactiongateway.com/token/Collect.js';
 
-// ── Métodos de pago USA ───────────────────────────────────────────────────────
-const PAYMENT_METHODS = [
-  { id: 'card',  label: 'Credit / Debit Card', render: () => '💳' },
-  // { id: 'zelle', label: 'Zelle (Manual Pay)',  render: () => '💜' },
+// ── Métodos de pago USA — labels resolved at render time via t() ──────────────
+const PAYMENT_METHOD_IDS = [
+  { id: 'card', render: () => '💳' },
+  // { id: 'zelle', render: () => '💜' },
 ];
 
 // ── Bloque informativo Zelle ──────────────────────────────────────────────────
-const ZelleInfo = () => (
+const ZelleInfo = () => {
+  const { t } = useTranslation();
+  return (
   <div
     className="redsys-info-block"
     style={{ borderLeft: '4px solid #6d28d9', backgroundColor: '#f5f3ff' }}
   >
     <div className="redsys-info-block__icon" style={{ color: '#6d28d9' }}>💜</div>
-    <p className="redsys-info-block__title" style={{ color: '#3b0764' }}>Manual Payment via Zelle</p>
+    <p className="redsys-info-block__title" style={{ color: '#3b0764' }}>{t('us_wizard.zelle_title')}</p>
     <p className="redsys-info-block__desc" style={{ color: '#5b21b6' }}>
-      Send payment manually using Zelle through your bank app.
+      {t('us_wizard.zelle_desc')}
     </p>
     <div style={{
       background: '#ffffff', padding: '15px', borderRadius: '8px',
@@ -54,29 +57,32 @@ const ZelleInfo = () => (
       </p>
     </div>
     <p className="redsys-info-block__hint" style={{ color: '#5b21b6' }}>
-      ⚠️ <strong>Important:</strong> Your shipment will only be processed after
-      payment is confirmed by our team.
+      ⚠️ {t('us_wizard.zelle_hint')}
     </p>
   </div>
-);
+  );
+};
 
 // ── Info de tarjeta (lightbox — HalaraPay muestra su propio modal) ────────────
-const CardInfo = () => (
+const CardInfo = () => {
+  const { t } = useTranslation();
+  return (
   <div className="redsys-info-block" style={{ borderLeft: '4px solid #022364', backgroundColor: '#eff6ff' }}>
     <div className="redsys-info-block__icon" style={{ color: '#022364' }}>💳</div>
-    <p className="redsys-info-block__title" style={{ color: '#022364' }}>Secure Card Payment</p>
+    <p className="redsys-info-block__title" style={{ color: '#022364' }}>{t('us_wizard.card_sec_title')}</p>
     <p className="redsys-info-block__desc" style={{ color: '#1e40af' }}>
-      Click <strong>"Confirm Payment"</strong> to open the secure card form.
-      Your card data is tokenized by HalaraPay and never stored on our servers.
+      {t('us_wizard.card_sec_desc')}
     </p>
     <p className="redsys-info-block__hint" style={{ color: '#1e40af' }}>
-      🔒 Accepted: VISA, MasterCard, AMEX
+      {t('us_wizard.card_sec_hint')}
     </p>
   </div>
-);
+  );
+};
 
 // ── Pantalla de Éxito ─────────────────────────────────────────────────────────
 const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumber }) => {
+  const { t } = useTranslation();
   const hasLabel = !!labelBase64 || !!labelUrl;
 
   const downloadLabel = () => {
@@ -106,10 +112,10 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
         <IoCheckmarkCircle size={72} />
       </div>
       <h2 style={{ color: '#022364', fontWeight: 'bold', fontSize: '24px' }}>
-        ¡Envío Registrado!
+        {t('us_wizard.success_title')}
       </h2>
       <p style={{ color: '#4b5563', marginBottom: '20px' }}>
-        Hemos recibido tu solicitud de recogida correctamente.
+        {t('us_wizard.success_subtitle')}
       </p>
 
       {/* Número de guía */}
@@ -121,7 +127,7 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
           display: 'block', fontSize: '12px', color: '#6b7280',
           textTransform: 'uppercase', letterSpacing: '1px'
         }}>
-          Número de Guía
+          {t('us_wizard.guide_number')}
         </span>
         <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
           {nGuia}
@@ -146,12 +152,10 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
           maxWidth: '420px', margin: '0 auto 20px'
         }}>
           <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: '700', color: '#92400E', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <IoWarningOutline size={20} /> Acción requerida — Etiqueta de envío
+            <IoWarningOutline size={20} /> {t('us_wizard.label_notice_title')}
           </p>
           <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#78350F', lineHeight: '1.55' }}>
-            Descarga tu etiqueta, imprímela y <strong>pégala en tu caja</strong> antes
-            de que llegue el courier a recoger el paquete. Sin la etiqueta visible el
-            conductor no podrá retirar el envío.
+            {t('us_wizard.label_notice_text')}
           </p>
           <button
             onClick={downloadLabel}
@@ -161,7 +165,7 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
               cursor: 'pointer', width: '100%'
             }}
           >
-            <IoCloudDownloadOutline size={20} /> Descargar Etiqueta de Envío (PDF)
+            <IoCloudDownloadOutline size={20} /> {t('us_wizard.download_label')}
           </button>
         </div>
       )}
@@ -171,8 +175,8 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
         maxWidth: '400px', margin: '0 auto 30px'
       }}>
         {metodoPago === 'zelle'
-          ? 'Una vez que nuestro equipo verifique tu pago por Zelle, generaremos tu etiqueta y te notificaremos por correo.'
-          : 'Tu envío ha sido registrado. Recibirás un correo de confirmación en breve.'}
+          ? t('us_wizard.success_zelle')
+          : t('us_wizard.success_card')}
       </p>
 
       <button
@@ -180,7 +184,7 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
         onClick={() => window.location.href = '/home'}
         style={{ width: '100%', maxWidth: '300px', textAlign: 'center' }}
       >
-        Ir al Inicio
+        {t('us_wizard.go_home')}
       </button>
     </div>
   );
@@ -188,6 +192,7 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step4Payment = ({ data, updateData, onBack }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [submitting,     setSubmitting]     = useState(false);
   const [submitPhase,    setSubmitPhase]     = useState('');
@@ -435,13 +440,13 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       {/* ── Columna izquierda: métodos de pago ── */}
       <div className="step4-layout__left">
         <div className="wizard-card">
-          <h2 className="wizard-card__title">💳 Payment Method</h2>
+          <h2 className="wizard-card__title">💳 {t('us_wizard.payment_title')}</h2>
           <p className="wizard-card__subtitle">
-            Select your payment method to complete the shipment.
+            {t('us_wizard.payment_subtitle')}
           </p>
 
           <div className="payment-methods">
-            {PAYMENT_METHODS.map((m) => (
+            {PAYMENT_METHOD_IDS.map((m) => (
               <button
                 key={m.id}
                 type="button"
@@ -452,7 +457,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
                   {metodoPago === m.id && <span className="payment-method__dot" />}
                 </span>
                 <span className="payment-method__icon">{m.render()}</span>
-                <span className="payment-method__label">{m.label}</span>
+                <span className="payment-method__label">{t(`us_wizard.${m.id === 'card' ? 'card_method_label' : 'zelle_title'}`)}</span>
                 {m.id === 'card' && (
                   <span className="payment-method__brands">
                     <span>VISA</span><span>MC</span><span>AMEX</span>
@@ -474,7 +479,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
         <div className="wizard-actions">
           <button className="btn-wizard-back" onClick={onBack} disabled={submitting}>
-            ← Back
+            {t('us_wizard.back')}
           </button>
         </div>
       </div>
@@ -482,17 +487,17 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       {/* ── Columna derecha: resumen + botón confirmar ── */}
       <div className="step4-layout__right">
         <div className="cost-card" style={{ borderTop: '4px solid #022364' }}>
-          <h3 className="cost-card__title">Order Summary</h3>
+          <h3 className="cost-card__title">{t('us_wizard.order_summary')}</h3>
 
           <div className="order-row">
-            <span>International shipping</span>
+            <span>{t('us_wizard.intl_shipping')}</span>
             <span style={{ fontWeight: '600' }}>{usd(shipping)}</span>
           </div>
 
           {courierQuote && (
             <div className="order-row">
               <span>
-                Local pickup ({courierQuote.name || courierQuote.service || 'UPS'})
+                {t('us_wizard.local_pickup_row', { service: courierQuote.name || courierQuote.service || 'UPS' })}
               </span>
               <span style={{ fontWeight: '600' }}>{usd(courier)}</span>
             </div>
@@ -504,7 +509,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             background: 'linear-gradient(135deg, #022364 0%, #1a3a8a 100%)',
             padding: '15px', borderRadius: '8px', color: '#fff'
           }}>
-            <span style={{ color: '#fff' }}>Total to Pay:</span>
+            <span style={{ color: '#fff' }}>{t('us_wizard.total_to_pay')}</span>
             <span className="order-total__value" style={{ color: '#fff' }}>
               {usd(total)}
             </span>
@@ -516,7 +521,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             <span className="security-badge">🔐 Encrypted</span>
           </div>
           <p className="security-text">
-            Your data is protected with bank-grade encryption.
+            {t('us_wizard.security_text')}
           </p>
 
           <button
@@ -526,12 +531,12 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             style={{ marginTop: '15px' }}
           >
             {submitting
-              ? `⏳ ${submitPhase || 'Processing...'}`
+              ? `⏳ ${submitPhase || t('us_wizard.processing')}`
               : (metodoPago === 'card' && !collectJsReady)
-                ? '⏳ Loading payment form…'
+                ? `⏳ ${t('us_wizard.loading_payment')}`
                 : metodoPago === 'zelle'
-                  ? 'Confirm Request'
-                  : `Confirm Payment ${usd(total)}`}
+                  ? t('us_wizard.confirm_request')
+                  : t('us_wizard.confirm_payment', { amount: usd(total) })}
           </button>
         </div>
       </div>

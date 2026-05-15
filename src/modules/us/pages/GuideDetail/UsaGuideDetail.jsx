@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 import { getUsaGuiaDetail } from '../../../../services/us/usGuiasService';
 import styles from './UsaGuideDetail.module.scss';
 import clsx from 'clsx';
@@ -21,6 +22,7 @@ export default function UsaGuideDetail() {
   const { idGuia } = useParams();
   const navigate   = useNavigate();
   const { isSignedIn } = useAuth();
+  const { t } = useTranslation();
 
   const [detail,   setDetail]   = useState(null);
   const [loading,  setLoading]  = useState(true);
@@ -62,7 +64,7 @@ export default function UsaGuideDetail() {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner} />
-        <p>Loading shipment details…</p>
+        <p>{t('us_guide.loading_detail')}</p>
       </div>
     );
   }
@@ -71,12 +73,12 @@ export default function UsaGuideDetail() {
     return (
       <div className={styles.errorContainer}>
         <IoAlertCircleOutline size={64} color="#ff6b6b" />
-        <h2 className={styles.errorTitle}>Shipment not found</h2>
+        <h2 className={styles.errorTitle}>{t('us_guide.not_found_title')}</h2>
         <p className={styles.errorDescription}>
-          Could not load shipment details. Please try again later.
+          {t('us_guide.not_found_desc')}
         </p>
         <button onClick={() => navigate(-1)} className={styles.backButton}>
-          Go Back
+          {t('us_guide.go_back')}
         </button>
       </div>
     );
@@ -111,28 +113,28 @@ export default function UsaGuideDetail() {
             : <IoCheckmarkCircleOutline size={24} style={{ color: '#3b82f6' }} />}
           <p className={styles.alertText}>
             {pickupScheduled
-              ? `UPS Pickup scheduled — Code: ${envioExterno.pickupCode}`
+              ? t('us_guide.pickup_scheduled', { code: envioExterno.pickupCode })
               : tienePago
-                ? 'Shipment registered and paid'
-                : 'Shipment registered'}
+                ? t('us_guide.registered_paid')
+                : t('us_guide.registered')}
           </p>
         </div>
 
         {/* ── N° Guía ───────────────────────────────────────────────────────── */}
         <div className={styles.section}>
-          <label className={styles.sectionLabel}>Shipment Number</label>
+          <label className={styles.sectionLabel}>{t('us_guide.shipment_number')}</label>
           <p className={styles.sectionValue}>{nGuia}</p>
         </div>
 
         {/* ── Estatus + Courier ─────────────────────────────────────────────── */}
         <div className={styles.row}>
           <div className={styles.rowItem}>
-            <label className={styles.sectionLabel}>Status</label>
+            <label className={styles.sectionLabel}>{t('us_guide.status')}</label>
             <p className={styles.sectionValue}>{estatus}</p>
             <span className={styles.sectionSubtext}>{fechaRegistro}</span>
           </div>
           <div className={styles.rowItem}>
-            <label className={styles.sectionLabel}>Courier</label>
+            <label className={styles.sectionLabel}>{t('us_guide.courier')}</label>
             <p className={styles.sectionValue}>
               {envioExterno?.courierNombre ?? 'UPS'}
               {envioExterno?.courierServicio ? ` — ${envioExterno.courierServicio}` : ''}
@@ -143,7 +145,7 @@ export default function UsaGuideDetail() {
         {/* ── Dirección de entrega ─────────────────────────────────────────── */}
         {direccionEntrega && (
           <div className={styles.section}>
-            <label className={styles.sectionLabel}>Delivery Address</label>
+            <label className={styles.sectionLabel}>{t('us_guide.delivery_address')}</label>
             <p className={styles.sectionValue}>{direccionEntrega}</p>
           </div>
         )}
@@ -151,7 +153,7 @@ export default function UsaGuideDetail() {
         {/* ── Tracking number ───────────────────────────────────────────────── */}
         {envioExterno?.trackingNumber && (
           <div className={styles.section}>
-            <label className={styles.sectionLabel}>UPS Tracking Number</label>
+            <label className={styles.sectionLabel}>{t('us_guide.tracking_number')}</label>
             <p className={clsx(styles.sectionValue, styles.trackingValue)}>
               {envioExterno.trackingNumber}
             </p>
@@ -161,7 +163,7 @@ export default function UsaGuideDetail() {
         {/* ── Pickup code ───────────────────────────────────────────────────── */}
         {envioExterno?.pickupCode && (
           <div className={styles.section}>
-            <label className={styles.sectionLabel}>Pickup Confirmation Code</label>
+            <label className={styles.sectionLabel}>{t('us_guide.pickup_code')}</label>
             <p className={styles.pickupCodeValue}>{envioExterno.pickupCode}</p>
             {envioExterno.pickupFecha && (
               <span className={styles.sectionSubtext}>
@@ -179,7 +181,7 @@ export default function UsaGuideDetail() {
           className={styles.expandableHeader}
           onClick={() => toggle('otrosDetalles')}
         >
-          <h2 className={styles.expandableTitle}>Package Details</h2>
+          <h2 className={styles.expandableTitle}>{t('us_guide.package_details')}</h2>
           {expanded.otrosDetalles
             ? <IoChevronUpOutline size={24} />
             : <IoChevronDownOutline size={24} />}
@@ -189,20 +191,20 @@ export default function UsaGuideDetail() {
           <div className={styles.expandableContent}>
             <div className={styles.row}>
               <div className={styles.rowItem}>
-                <label className={styles.sectionLabel}>Weight</label>
+                <label className={styles.sectionLabel}>{t('us_guide.weight')}</label>
                 <p className={styles.sectionValue}>
                   {Number(peso ?? 0).toFixed(2)} lb
                 </p>
               </div>
               <div className={styles.rowItem}>
-                <label className={styles.sectionLabel}>Declared Value (FOB)</label>
+                <label className={styles.sectionLabel}>{t('us_guide.declared_value')}</label>
                 <p className={styles.sectionValue}>{formatUSD(valorFOB)}</p>
               </div>
             </div>
             {(largo || ancho || alto) && (
               <div className={styles.row}>
                 <div className={styles.rowItem}>
-                  <label className={styles.sectionLabel}>Dimensions (in)</label>
+                  <label className={styles.sectionLabel}>{t('us_guide.dimensions')}</label>
                   <p className={styles.sectionValue}>
                     L {Number(largo ?? 0).toFixed(1)} ×{' '}
                     W {Number(ancho ?? 0).toFixed(1)} ×{' '}
@@ -219,7 +221,7 @@ export default function UsaGuideDetail() {
           className={styles.expandableHeader}
           onClick={() => toggle('historialEstatus')}
         >
-          <h2 className={styles.expandableTitle}>Status History</h2>
+          <h2 className={styles.expandableTitle}>{t('us_guide.status_history')}</h2>
           {expanded.historialEstatus
             ? <IoChevronUpOutline size={24} />
             : <IoChevronDownOutline size={24} />}
@@ -244,7 +246,7 @@ export default function UsaGuideDetail() {
           <div className={styles.facturaSection}>
             <h2 className={styles.facturaTitle}>
               <IoReceiptOutline size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />
-              Payment Breakdown
+              {t('us_guide.payment_breakdown')}
             </h2>
 
             <div className={styles.facturaTable}>
@@ -265,7 +267,7 @@ export default function UsaGuideDetail() {
 
               {/* Total row */}
               <div className={styles.facturaRowTotal}>
-                <p className={styles.facturaTotalLabel}>Total Paid</p>
+                <p className={styles.facturaTotalLabel}>{t('us_guide.total_paid')}</p>
                 <span className={styles.facturaTotalValue}>{formatUSD(totalPaid)}</span>
               </div>
             </div>
@@ -278,16 +280,15 @@ export default function UsaGuideDetail() {
             <div className={styles.labelNotice}>
               <span className={styles.labelNoticeIcon}>⚠️</span>
               <div>
-                <p className={styles.labelNoticeTitle}>Acción requerida — Etiqueta de envío</p>
+                <p className={styles.labelNoticeTitle}>{t('us_guide.label_notice_title')}</p>
                 <p className={styles.labelNoticeText}>
-                  Descarga tu etiqueta, imprímela y pégala en la caja <strong>antes</strong> de que llegue el courier a recoger tu paquete.
-                  Sin la etiqueta visible el conductor no podrá retirar el envío.
+                  {t('us_guide.label_notice_text')}
                 </p>
               </div>
             </div>
             <button onClick={handleDownloadLabel} className={styles.labelButton}>
               <IoCloudDownloadOutline size={20} />
-              Descargar Etiqueta de Envío (PDF)
+              {t('us_guide.download_label')}
             </button>
           </div>
         )}
@@ -300,31 +301,31 @@ export default function UsaGuideDetail() {
                 size={22}
                 style={{ marginRight: 8, verticalAlign: 'middle', color: '#28a745' }}
               />
-              Payment Details
+              {t('us_guide.payment_details')}
             </h2>
             <div className={styles.pagoTable}>
               <div className={styles.pagoRow}>
-                <p className={styles.pagoLabel}>Payment Method</p>
+                <p className={styles.pagoLabel}>{t('us_guide.payment_method')}</p>
                 <span className={styles.pagoValue}>{detallePago.metodoPago}</span>
               </div>
               {detallePago.referencia && (
                 <div className={styles.pagoRow}>
-                  <p className={styles.pagoLabel}>Reference</p>
+                  <p className={styles.pagoLabel}>{t('us_guide.reference')}</p>
                   <span className={styles.pagoValue}>{detallePago.referencia}</span>
                 </div>
               )}
               {detallePago.autorizacion && (
                 <div className={styles.pagoRow}>
-                  <p className={styles.pagoLabel}>Auth Code</p>
+                  <p className={styles.pagoLabel}>{t('us_guide.auth_code')}</p>
                   <span className={styles.pagoValue}>{detallePago.autorizacion}</span>
                 </div>
               )}
               <div className={styles.pagoRow}>
-                <p className={styles.pagoLabel}>Amount</p>
+                <p className={styles.pagoLabel}>{t('us_guide.amount')}</p>
                 <span className={styles.pagoValue}>{formatUSD(detallePago.monto)}</span>
               </div>
               <div className={styles.pagoRow}>
-                <p className={styles.pagoLabel}>Date</p>
+                <p className={styles.pagoLabel}>{t('us_guide.date')}</p>
                 <span className={styles.pagoValue}>{detallePago.fecha}</span>
               </div>
             </div>

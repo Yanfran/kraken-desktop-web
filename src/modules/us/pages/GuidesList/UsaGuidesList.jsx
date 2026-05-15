@@ -1,5 +1,6 @@
 // src/modules/us/pages/GuidesList/UsaGuidesList.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { getUsaMyShipments } from '../../../../services/us/usGuiasService';
 import styles from './UsaGuidesList.module.scss';
@@ -11,6 +12,7 @@ const PAGE_SIZE = 10;
 const DELIVERED_STATUSES = [5, 6, 7];
 
 export default function UsaGuidesList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [shipments,   setShipments]   = useState([]);
@@ -69,20 +71,20 @@ export default function UsaGuidesList() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerTop}>
-          <h1>My Shipments</h1>
+          <h1>{t('us_guide.title')}</h1>
 
           <div className={styles.tabsContainer}>
             <button
               className={clsx(styles.tabButton, activeTab === 'activos' && styles.tabButtonActive)}
               onClick={() => setActiveTab('activos')}
             >
-              Active
+              {t('us_guide.tab_active')}
             </button>
             <button
               className={clsx(styles.tabButton, activeTab === 'historial' && styles.tabButtonActive)}
               onClick={() => setActiveTab('historial')}
             >
-              History
+              {t('us_guide.tab_history')}
             </button>
           </div>
         </div>
@@ -91,7 +93,7 @@ export default function UsaGuidesList() {
           <div className={styles.searchContainer}>
             <input
               type="text"
-              placeholder="Search by Shipment # or Tracking..."
+              placeholder={t('us_guide.search_placeholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className={styles.searchInput}
@@ -103,13 +105,13 @@ export default function UsaGuidesList() {
               onClick={() => setViewMode('list')}
               className={clsx(styles.toggleButton, viewMode === 'list' && styles.active)}
             >
-              List
+              {t('us_guide.view_list')}
             </button>
             <button
               onClick={() => setViewMode('grid')}
               className={clsx(styles.toggleButton, viewMode === 'grid' && styles.active)}
             >
-              Grid
+              {t('us_guide.view_grid')}
             </button>
           </div>
         </div>
@@ -118,7 +120,7 @@ export default function UsaGuidesList() {
       <div className={styles.content}>
         {loading && (
           <div className={styles.loadingSection}>
-            <Loading inline message="Loading shipments..." />
+            <Loading inline message={t('us_guide.loading')} />
           </div>
         )}
 
@@ -133,10 +135,10 @@ export default function UsaGuidesList() {
                 <thead>
                   <tr>
                     <th></th>
-                    <th>Shipment #</th>
-                    <th>Status</th>
-                    <th>Weight</th>
-                    <th>FOB Value</th>
+                    <th>{t('us_guide.col_guide')}</th>
+                    <th>{t('us_guide.col_status')}</th>
+                    <th>{t('us_guide.col_weight')}</th>
+                    <th>{t('us_guide.col_fob')}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -175,7 +177,7 @@ export default function UsaGuidesList() {
                       <td colSpan={6} className={styles.emptyCell}>
                         <div className={styles.emptyState}>
                           <p className={styles.emptyTitle}>
-                            {activeTab === 'activos' ? 'No active shipments' : 'No shipment history'}
+                            {activeTab === 'activos' ? t('us_guide.no_active') : t('us_guide.no_history')}
                           </p>
                           <p className={styles.emptyDescription}>
                             {activeTab === 'activos'
@@ -203,30 +205,30 @@ export default function UsaGuidesList() {
                       <p className={styles.guiaNumber}>{s.nGuia}</p>
                     </div>
                     <span className={clsx(styles.badge, s.tienePago ? styles.badgePaid : styles.badgePending)}>
-                      {s.tienePago ? 'Paid' : 'Pending'}
+                      {s.tienePago ? t('us_guide.badge_paid') : t('us_guide.badge_pending')}
                     </span>
                   </div>
 
                   <div className={styles.cardBody}>
                     <div className={styles.cardRow}>
-                      <span className={styles.cardLabel}>Status</span>
+                      <span className={styles.cardLabel}>{t('us_guide.card_status')}</span>
                       <span className={styles.statusText}>{s.estatus}</span>
                     </div>
                     <div className={styles.cardRow}>
-                      <span className={styles.cardLabel}>Date</span>
+                      <span className={styles.cardLabel}>{t('us_guide.card_date')}</span>
                       <span className={styles.dateText}>{s.fechaFormato}</span>
                     </div>
                     <div className={styles.cardRow}>
-                      <span className={styles.cardLabel}>Weight</span>
+                      <span className={styles.cardLabel}>{t('us_guide.card_weight')}</span>
                       <span className={styles.guiaSubtext}>{Number(s.peso ?? 0).toFixed(2)} {s.unidadPeso}</span>
                     </div>
                     <div className={styles.cardRow}>
-                      <span className={styles.cardLabel}>FOB Value</span>
+                      <span className={styles.cardLabel}>{t('us_guide.card_fob')}</span>
                       <span className={styles.costText}>{formatUSD(s.valorFOB)} USD</span>
                     </div>
                     {s.trackingNumber && (
                       <div className={styles.cardRow}>
-                        <span className={styles.cardLabel}>Tracking</span>
+                        <span className={styles.cardLabel}>{t('us_guide.card_tracking')}</span>
                         <span className={styles.trackingText}>{s.trackingNumber}</span>
                       </div>
                     )}
@@ -235,12 +237,12 @@ export default function UsaGuidesList() {
               )) : (
                 <div className={styles.emptyState}>
                   <p className={styles.emptyTitle}>
-                    {activeTab === 'activos' ? 'No active shipments' : 'No shipment history'}
+                    {activeTab === 'activos' ? t('us_guide.no_active') : t('us_guide.no_history')}
                   </p>
                   <p className={styles.emptyDescription}>
                     {activeTab === 'activos'
-                      ? 'Your in-transit shipments will appear here'
-                      : 'Delivered shipments will appear here'}
+                      ? t('us_guide.no_active_desc')
+                      : t('us_guide.no_history_desc')}
                   </p>
                 </div>
               )}
@@ -256,7 +258,7 @@ export default function UsaGuidesList() {
             onClick={() => setCurrentPage(p => p - 1)}
             disabled={currentPage === 1}
           >
-            ← Previous
+            {t('us_guide.prev')}
           </button>
 
           <div className={styles.pageNumbers}>
@@ -287,11 +289,11 @@ export default function UsaGuidesList() {
             onClick={() => setCurrentPage(p => p + 1)}
             disabled={currentPage === totalPages}
           >
-            Next →
+            {t('us_guide.next')}
           </button>
 
           <span className={styles.pageInfo}>
-            {filtered.length} shipment{filtered.length !== 1 ? 's' : ''} total
+            {t('us_guide.total_shipments', { count: filtered.length })}
           </span>
         </div>
       )}

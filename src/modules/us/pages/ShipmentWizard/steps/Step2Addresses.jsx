@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   fetchOriginAddresses,
   addOriginAddress,
@@ -37,14 +38,16 @@ const sanitizePhone = (v) => v.replace(/[^\d\s+\-()]/g, '');
 // ════════════════════════════════════════════════════════════════════════════
 // ██  TARJETA DE DIRECCIÓN
 // ════════════════════════════════════════════════════════════════════════════
-const AddressCard = ({ address, selected, onSelect, onDelete, onSetDefault, flag }) => (
+const AddressCard = ({ address, selected, onSelect, onDelete, onSetDefault, flag }) => {
+  const { t } = useTranslation();
+  return (
   <button
     type="button"
     className={`addr-card ${selected ? 'addr-card--selected' : ''}`}
     onClick={() => onSelect(address.id)}
   >
     {address.esPredeterminada && (
-      <span className="addr-card__badge">⭐ Predeterminada</span>
+      <span className="addr-card__badge">⭐ {t('us_wizard.default_badge')}</span>
     )}
     {selected && <span className="addr-card__check">✓</span>}
 
@@ -77,7 +80,8 @@ const AddressCard = ({ address, selected, onSelect, onDelete, onSetDefault, flag
       >🗑️</button>
     </div>
   </button>
-);
+  );
+};
 
 // ════════════════════════════════════════════════════════════════════════════
 // ██  COLUMNA DE DIRECCIONES
@@ -85,7 +89,9 @@ const AddressCard = ({ address, selected, onSelect, onDelete, onSetDefault, flag
 const AddressColumn = ({
   title, flag, country, addresses, selectedId,
   onSelect, onAdd, onDelete, onSetDefault, loading,
-}) => (
+}) => {
+  const { t } = useTranslation();
+  return (
   <div className="addr-col">
     <h3 className="addr-col__title">
       <span className="addr-col__flag">{flag}</span>
@@ -95,12 +101,12 @@ const AddressColumn = ({
     {loading ? (
       <div className="addr-col__loading">
         <div className="spinner-small" />
-        <span>Cargando direcciones...</span>
+        <span>{t('us_wizard.loading_addresses')}</span>
       </div>
     ) : (
       <div className="addr-col__grid">
         {addresses.length === 0 && (
-          <p className="addr-col__empty">No tienes direcciones guardadas.</p>
+          <p className="addr-col__empty">{t('us_wizard.no_addresses')}</p>
         )}
         {addresses.map((addr) => (
           <AddressCard
@@ -115,17 +121,19 @@ const AddressColumn = ({
         ))}
         <button className="addr-add-btn" onClick={onAdd}>
           <span className="addr-add-btn__icon">+</span>
-          <span>Añadir Nueva Dirección</span>
+          <span>{t('us_wizard.add_address')}</span>
         </button>
       </div>
     )}
   </div>
-);
+  );
+};
 
 // ════════════════════════════════════════════════════════════════════════════
 // ██  MODAL — ORIGEN (USA) 🇪🇸
 // ════════════════════════════════════════════════════════════════════════════
 const OriginModal = ({ onSave, onClose, saving }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     alias: '', line1: '', city: '', province: '',
     zip: '', phone: '', referencia: '', setAsDefault: false,
@@ -135,9 +143,9 @@ const OriginModal = ({ onSave, onClose, saving }) => {
 
   const validate = () => {
     const e = {};
-    if (!form.alias.trim()) e.alias = 'El nombre/alias es obligatorio';
-    if (!form.line1.trim()) e.line1 = 'La dirección es obligatoria';
-    if (!form.city.trim())  e.city  = 'La ciudad es obligatoria';
+    if (!form.alias.trim()) e.alias = t('us_wizard.error_alias');
+    if (!form.line1.trim()) e.line1 = t('us_wizard.error_address');
+    if (!form.city.trim())  e.city  = t('us_wizard.error_city_req');
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -151,13 +159,13 @@ const OriginModal = ({ onSave, onClose, saving }) => {
     <div className="addr-modal-backdrop" onClick={onClose}>
       <div className="addr-modal" onClick={(e) => e.stopPropagation()}>
         <div className="addr-modal__header">
-          <h3>🇺🇸 Nueva Dirección de Origen — USA</h3>
+          <h3>🇺🇸 {t('us_wizard.origin_modal_title')}</h3>
           <button className="addr-modal__close" onClick={onClose} disabled={saving}>✕</button>
         </div>
 
         <div className="addr-modal__body">
           <div className="wizard-field">
-            <label>Nombre / Alias *</label>
+            <label>{t('us_wizard.field_alias')} *</label>
             <input
               placeholder="Ej. Casa, Oficina..."
               value={form.alias}
@@ -168,7 +176,7 @@ const OriginModal = ({ onSave, onClose, saving }) => {
           </div>
 
           <div className="wizard-field">
-            <label>Dirección *</label>
+            <label>{t('us_wizard.field_address')} *</label>
             <input
               placeholder="Calle de Alcalá 123, 2º A"
               value={form.line1}
@@ -180,7 +188,7 @@ const OriginModal = ({ onSave, onClose, saving }) => {
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
-              <label>Ciudad *</label>
+              <label>{t('us_wizard.field_city')} *</label>
               <input
                 placeholder="Miami"
                 value={form.city}
@@ -190,18 +198,18 @@ const OriginModal = ({ onSave, onClose, saving }) => {
               {errors.city && <span className="field-error">{errors.city}</span>}
             </div>
             <div className="wizard-field">
-              <label>Provincia</label>
+              <label>{t('us_wizard.field_province')}</label>
               <input placeholder="Florida" value={form.province} onChange={(e) => set('province', e.target.value)} />
             </div>
           </div>
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
-              <label>Código Postal</label>
+              <label>{t('us_wizard.field_zip')}</label>
               <input placeholder="28001" maxLength={10} value={form.zip} onChange={(e) => set('zip', e.target.value)} />
             </div>
             <div className="wizard-field">
-              <label>Teléfono</label>
+              <label>{t('us_wizard.field_phone')}</label>
               <input
                 placeholder="+1 305 555 0123"
                 value={form.phone}
@@ -213,20 +221,20 @@ const OriginModal = ({ onSave, onClose, saving }) => {
           </div>
 
           <div className="wizard-field">
-            <label>Referencia adicional</label>
+            <label>{t('us_wizard.field_ref')}</label>
             <input placeholder="Portero automático #3, timbre azul..." value={form.referencia} onChange={(e) => set('referencia', e.target.value)} />
           </div>
 
           <label className="addr-modal__checkbox">
             <input type="checkbox" checked={form.setAsDefault} onChange={(e) => set('setAsDefault', e.target.checked)} />
-            <span>Marcar como dirección predeterminada</span>
+            <span>{t('us_wizard.set_default_check')}</span>
           </label>
         </div>
 
         <div className="addr-modal__footer">
-          <button className="btn-wizard-back" onClick={onClose} disabled={saving}>Cancelar</button>
+          <button className="btn-wizard-back" onClick={onClose} disabled={saving}>{t('common.cancel')}</button>
           <button className="btn-wizard-next" onClick={handleSave} disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar Dirección'}
+            {saving ? t('us_wizard.saving') : t('us_wizard.save_address')}
           </button>
         </div>
       </div>
@@ -239,6 +247,7 @@ const OriginModal = ({ onSave, onClose, saving }) => {
 //     Lógica idéntica a /profile/addresses de la app
 // ════════════════════════════════════════════════════════════════════════════
 const DestinationModal = ({ onSave, onClose, saving }) => {
+  const { t } = useTranslation();
   // ── Tipo de entrega ────────────────────────────────────────────────────────
   const [tipo, setTipo] = useState('home'); // 'store' | 'home'
 
@@ -315,7 +324,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
     setLoadingGeo(true);
     fetchMunicipios(homeForm.idEstado)
       .then(setMunicipios)
-      .catch(() => toast.error('Error al cargar municipios'))
+      .catch(() => toast.error(t('us_wizard.error_load_municipios')))
       .finally(() => setLoadingGeo(false));
     setHome('idMunicipio', '');
     setHome('idParroquia', '');
@@ -330,7 +339,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
     }
     fetchParroquias(homeForm.idMunicipio)
       .then(setParroquias)
-      .catch(() => toast.error('Error al cargar parroquias'));
+      .catch(() => toast.error(t('us_wizard.error_load_parroquias')));
     setHome('idParroquia', '');
   }, [homeForm.idMunicipio]);
 
@@ -338,16 +347,16 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
   const validate = () => {
     const e = {};
     if (tipo === 'store') {
-      if (!storeForm.city)  e.city  = 'Selecciona una ciudad';
-      if (!storeForm.store) e.store = 'Selecciona una tienda';
+      if (!storeForm.city)  e.city  = t('us_wizard.error_city_sel');
+      if (!storeForm.store) e.store = t('us_wizard.error_store');
     } else {
-      if (!homeForm.alias.trim())    e.alias    = 'El nombre de la dirección es obligatorio';
-      if (!homeForm.idEstado)        e.idEstado = 'Selecciona un estado';
-      if (!homeForm.idMunicipio)     e.idMunicipio = 'Selecciona un municipio';
-      if (!homeForm.direccion.trim()) e.direccion = 'La dirección es obligatoria';
+      if (!homeForm.alias.trim())     e.alias       = t('us_wizard.error_address_name');
+      if (!homeForm.idEstado)         e.idEstado    = t('us_wizard.error_state_sel');
+      if (!homeForm.idMunicipio)      e.idMunicipio = t('us_wizard.error_municipio');
+      if (!homeForm.direccion.trim()) e.direccion   = t('us_wizard.error_address');
     }
-    if (!contactoForm.nombres.trim())  e.nombres  = 'El nombre del contacto es obligatorio';
-    if (!contactoForm.telefono.trim()) e.telefono = 'El teléfono del contacto es obligatorio';
+    if (!contactoForm.nombres.trim())  e.nombres  = t('us_wizard.error_first_name');
+    if (!contactoForm.telefono.trim()) e.telefono = t('us_wizard.error_phone');
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -402,7 +411,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
     <div className="addr-modal-backdrop" onClick={onClose}>
       <div className="addr-modal addr-modal--wide" onClick={(e) => e.stopPropagation()}>
         <div className="addr-modal__header">
-          <h3>🇻🇪 Nueva Dirección de Destino — Venezuela</h3>
+          <h3>🇻🇪 {t('us_wizard.dest_modal_title')}</h3>
           <button className="addr-modal__close" onClick={onClose} disabled={saving}>✕</button>
         </div>
 
@@ -416,14 +425,14 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               className={`addr-modal__type-btn ${tipo === 'store' ? 'addr-modal__type-btn--active' : ''}`}
               onClick={() => setTipo('store')}
             >
-              <span>🏪</span> Retiro en Tienda
+              <span>🏪</span> {t('us_wizard.pickup_store')}
             </button>
             <button
               type="button"
               className={`addr-modal__type-btn ${tipo === 'home' ? 'addr-modal__type-btn--active' : ''}`}
               onClick={() => setTipo('home')}
             >
-              <span>🏠</span> Enviar a otra dirección
+              <span>🏠</span> {t('us_wizard.send_home')}
             </button>
           </div>
            
@@ -438,13 +447,13 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <div className="wizard-grid-2">
                 
                 <div className="wizard-field">
-                  <label>Ciudad *</label>
+                  <label>{t('us_wizard.field_city')} *</label>
                   <select
                     value={storeForm.city}
                     onChange={(e) => { setStore('city', e.target.value); setErrors(p => ({ ...p, city: '' })); }}
                     className={errors.city ? 'input--error' : ''}
                   >
-                    <option value="">Seleccione una ciudad</option>
+                    <option value="">{t('us_wizard.select_city')}</option>
                     {ciudades.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -453,14 +462,14 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 </div>
 
                 <div className="wizard-field">
-                  <label>Tienda *</label>
+                  <label>{t('us_wizard.field_store')} *</label>
                   <select
                     value={storeForm.store}
                     onChange={(e) => { setStore('store', e.target.value); setErrors(p => ({ ...p, store: '' })); }}
                     disabled={!storeForm.city}
                     className={errors.store ? 'input--error' : ''}
                   >
-                    <option value="">Seleccione una tienda</option>
+                    <option value="">{t('us_wizard.select_store')}</option>
                     {filteredTiendas.map((t) => (
                       <option key={t.id} value={t.id}>{t.nombre}</option>
                     ))}
@@ -478,7 +487,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
             <>
               {/* Nombre de la dirección */}
               <div className="wizard-field">
-                <label>Nombre de la Dirección *</label>
+                <label>{t('us_wizard.field_address_name')} *</label>
                 <input
                   placeholder="Ej. Casa, Oficina, etc."
                   value={homeForm.alias}
@@ -491,13 +500,13 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               {/* Estado + Municipio + Parroquia en grid 3 columnas */}
               <div className="wizard-grid-3">
                 <div className="wizard-field">
-                  <label>Estado *</label>
+                  <label>{t('us_wizard.field_state')} *</label>
                   <select
                     value={homeForm.idEstado}
                     onChange={(e) => { setHome('idEstado', e.target.value); setErrors(p => ({ ...p, idEstado: '' })); }}
                     className={errors.idEstado ? 'input--error' : ''}
                   >
-                    <option value="">Seleccione un estado</option>
+                    <option value="">{t('us_wizard.select_state')}</option>
                     {estados.map((e) => (
                       <option key={e.id} value={e.id}>{e.name}</option>
                     ))}
@@ -506,7 +515,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 </div>
 
                 <div className="wizard-field">
-                  <label>Municipio *</label>
+                  <label>{t('us_wizard.field_municipio')} *</label>
                   <select
                     value={homeForm.idMunicipio}
                     onChange={(e) => { setHome('idMunicipio', e.target.value); setErrors(p => ({ ...p, idMunicipio: '' })); }}
@@ -514,7 +523,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                     className={errors.idMunicipio ? 'input--error' : ''}
                   >
                     <option value="">
-                      {loadingGeo ? 'Cargando...' : 'Seleccione un municipio'}
+                      {loadingGeo ? t('common.loading') : t('us_wizard.select_municipio')}
                     </option>
                     {municipios.map((m) => (
                       <option key={m.id} value={m.id}>{m.name}</option>
@@ -524,13 +533,13 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 </div>
 
                 <div className="wizard-field">
-                  <label>Parroquia <span className="label-optional">(opcional)</span></label>
+                  <label>{t('us_wizard.field_parroquia')} <span className="label-optional">({t('common.optional')})</span></label>
                   <select
                     value={homeForm.idParroquia}
                     onChange={(e) => setHome('idParroquia', e.target.value)}
                     disabled={!homeForm.idMunicipio}
                   >
-                    <option value="">Seleccione una parroquia</option>
+                    <option value="">{t('us_wizard.select_parroquia')}</option>
                     {parroquias.map((p) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
@@ -540,7 +549,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 
               {/* Dirección completa */}
               <div className="wizard-field">
-                <label>Dirección Completa *</label>
+                <label>{t('us_wizard.field_full_address')} *</label>
                 <textarea
                   className={`addr-modal__textarea${errors.direccion ? ' input--error' : ''}`}
                   placeholder="Ej: Barrio, Vicario 3, Carrera 9 entre Calles 5 y 7"
@@ -553,7 +562,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 
               {/* Punto de referencia */}
               <div className="wizard-field">
-                <label>Punto de Referencia <span className="label-optional">(opcional)</span></label>
+                <label>{t('us_wizard.field_ref_point')} <span className="label-optional">({t('common.optional')})</span></label>
                 <textarea
                   className="addr-modal__textarea"
                   placeholder="Punto de referencia adicional (opcional)"
@@ -570,7 +579,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                   checked={homeForm.setAsDefault}
                   onChange={(e) => setHome('setAsDefault', e.target.checked)}
                 />
-                <span>Establecer como dirección predeterminada</span>
+                <span>{t('us_wizard.set_as_default')}</span>
               </label>
             </>
           )}
@@ -579,12 +588,12 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               SECCIÓN CONTACTO — Datos de quien recibe (home y store)
           ══════════════════════════════════════════════════════════════ */}
           <div className="addr-modal__section-divider">
-            <span>👤 Datos del Contacto de Entrega</span>
+            <span>👤 {t('us_wizard.contact_section')}</span>
           </div>
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
-              <label>Nombres *</label>
+              <label>{t('us_wizard.field_first_name')} *</label>
               <input
                 placeholder="Ej. Juan"
                 value={contactoForm.nombres}
@@ -594,7 +603,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               {errors.nombres && <span className="field-error">{errors.nombres}</span>}
             </div>
             <div className="wizard-field">
-              <label>Apellidos</label>
+              <label>{t('us_wizard.field_last_name')}</label>
               <input
                 placeholder="Ej. Pérez"
                 value={contactoForm.apellidos}
@@ -605,7 +614,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
-              <label>Teléfono *</label>
+              <label>{t('us_wizard.field_contact_phone')} *</label>
               <input
                 placeholder="Ej. 0412-1234567"
                 value={contactoForm.telefono}
@@ -617,7 +626,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               {errors.telefono && <span className="field-error">{errors.telefono}</span>}
             </div>
             <div className="wizard-field">
-              <label>Teléfono Adicional <span className="label-optional">(opcional)</span></label>
+              <label>{t('us_wizard.field_phone2')} <span className="label-optional">({t('common.optional')})</span></label>
               <input
                 placeholder="Opcional"
                 value={contactoForm.telefonoAdicional}
@@ -630,7 +639,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
-              <label>Email <span className="label-optional">(opcional)</span></label>
+              <label>{t('us_wizard.field_email')} <span className="label-optional">({t('common.optional')})</span></label>
               <input
                 type="email"
                 placeholder="correo@ejemplo.com"
@@ -639,7 +648,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               />
             </div>
             <div className="wizard-field">
-              <label>N° Identificación <span className="label-optional">(opcional)</span></label>
+              <label>{t('us_wizard.field_id')} <span className="label-optional">({t('common.optional')})</span></label>
               <input
                 placeholder="Ej. V-12345678"
                 value={contactoForm.numeroIdentificacion}
@@ -650,7 +659,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
-              <label>Información Adicional <span className="label-optional">(opcional)</span></label>
+              <label>{t('us_wizard.field_extra_info')} <span className="label-optional">({t('common.optional')})</span></label>
               <input
                 placeholder="Notas sobre el contacto"
                 value={contactoForm.informacionAdicional}
@@ -658,7 +667,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               />
             </div>
             <div className="wizard-field">
-              <label>Referencia del Contacto <span className="label-optional">(opcional)</span></label>
+              <label>{t('us_wizard.field_contact_ref')} <span className="label-optional">({t('common.optional')})</span></label>
               <input
                 placeholder="Referencia o nota adicional"
                 value={contactoForm.referenciaContacto}
@@ -669,9 +678,9 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
         </div>
 
         <div className="addr-modal__footer">
-          <button className="btn-wizard-back" onClick={onClose} disabled={saving}>Cancelar</button>
+          <button className="btn-wizard-back" onClick={onClose} disabled={saving}>{t('common.cancel')}</button>
           <button className="btn-wizard-next" onClick={handleSave} disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar Dirección'}
+            {saving ? t('us_wizard.saving') : t('us_wizard.save_address')}
           </button>
         </div>
       </div>
@@ -683,6 +692,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 // ██  COMPONENTE PRINCIPAL — Step2Addresses
 // ════════════════════════════════════════════════════════════════════════════
 const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
+  const { t } = useTranslation();
   const clientId = getClientId();
 
   const [originList, setOriginList] = useState([]);
@@ -730,20 +740,20 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
 
   // ── Eliminar ───────────────────────────────────────────────────────────────
   const handleDelete = useCallback(async (type, id) => {
-    if (!window.confirm('¿Eliminar esta dirección?')) return;
+    if (!window.confirm(t('us_wizard.delete_confirm'))) return;
     if (type === 'origin') {
       const res = await deleteOriginAddress(clientId, id);
       if (res.success) {
         setOriginList((p) => p.filter((a) => a.id !== id));
         if (data.originAddressId === id) updateData({ originAddressId: null });
-        toast.success('Dirección de origen eliminada');
+        toast.success(t('us_wizard.origin_deleted'));
       } else { toast.error(res.message); }
     } else {
       const res = await deleteDestinationAddress(clientId, id);
       if (res.success) {
         setDestList((p) => p.filter((a) => a.id !== id));
         if (data.destinationAddressId === id) updateData({ destinationAddressId: null });
-        toast.success('Dirección de destino eliminada');
+        toast.success(t('us_wizard.dest_deleted'));
       } else { toast.error(res.message); }
     }
   }, [clientId, data, updateData]);
@@ -754,13 +764,13 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       const res = await setOriginDefault(clientId, id);
       if (res.success) {
         setOriginList((p) => p.map((a) => ({ ...a, esPredeterminada: a.id === id })));
-        toast.success('Predeterminada de origen actualizada');
+        toast.success(t('us_wizard.origin_default_updated'));
       } else { toast.error(res.message); }
     } else {
       const res = await setDestinationDefault(clientId, id);
       if (res.success) {
         setDestList((p) => p.map((a) => ({ ...a, esPredeterminada: a.id === id })));
-        toast.success('Predeterminada de destino actualizada');
+        toast.success(t('us_wizard.dest_default_updated'));
       } else { toast.error(res.message); }
     }
   }, [clientId]);
@@ -788,7 +798,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
     });
     updateData({ originAddressId: res.data.id });
     setModal(null);
-    toast.success('Dirección de origen guardada ✅');
+    toast.success(t('us_wizard.origin_saved'));
   };
 
   // ── Guardar dirección DESTINO ──────────────────────────────────────────────
@@ -815,14 +825,14 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
     });
     updateData({ destinationAddressId: res.data.id });
     setModal(null);
-    toast.success('Dirección de destino guardada ✅');
+    toast.success(t('us_wizard.dest_saved'));
   };
 
   // ── Continuar ──────────────────────────────────────────────────────────────
   const handleNext = () => {
     const e = {};
-    if (!data.originAddressId)      e.origin = 'Selecciona o añade una dirección de origen';
-    if (!data.destinationAddressId) e.dest   = 'Selecciona o añade una dirección de destino';
+    if (!data.originAddressId)      e.origin = t('us_wizard.error_origin_required');
+    if (!data.destinationAddressId) e.dest   = t('us_wizard.error_dest_required');
     if (Object.keys(e).length) { setErrors(e); return; }
 
     const enrichedDestList = destList.map((addr) => {
@@ -842,9 +852,9 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   return (
     <div>
       <div className="wizard-card">
-        <h2 className="wizard-card__title">📍 Recogida y Entrega</h2>
+        <h2 className="wizard-card__title">📍 {t('us_wizard.step2_title')}</h2>
         <p className="wizard-card__subtitle">
-          Selecciona las direcciones de origen y destino de tu envío
+          {t('us_wizard.step2_subtitle')}
         </p>
 
         {(errors.origin || errors.dest) && (
@@ -857,7 +867,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         <div className="addr-columns">
           <div className={errors.origin ? 'addr-col--error' : ''}>
             <AddressColumn
-              title="Origen" flag="🇺🇸" country="USA"
+              title={t('us_wizard.origin_label')} flag="🇺🇸" country="USA"
               addresses={originList} selectedId={data.originAddressId}
               loading={loading.origin}
               onSelect={(id) => { updateData({ originAddressId: id }); setErrors((p) => ({ ...p, origin: null })); }}
@@ -868,7 +878,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
           </div>
           <div className={errors.dest ? 'addr-col--error' : ''}>
             <AddressColumn
-              title="Destino" flag="🇻🇪" country="Venezuela"
+              title={t('us_wizard.dest_label')} flag="🇻🇪" country="Venezuela"
               addresses={destList} selectedId={data.destinationAddressId}
               loading={loading.dest}
               onSelect={(id) => { updateData({ destinationAddressId: id }); setErrors((p) => ({ ...p, dest: null })); }}
@@ -881,13 +891,13 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       </div>
 
       <div className="wizard-actions">
-        <button className="btn-wizard-back" onClick={onBack}>← Volver</button>
+        <button className="btn-wizard-back" onClick={onBack}>{t('us_wizard.back')}</button>
         <button
           className="btn-wizard-next"
           onClick={handleNext}
           disabled={calculating}
         >
-          {calculating ? '⏳ Calculando tarifa...' : 'Continuar →'}
+          {calculating ? `⏳ ${t('us_wizard.calculating')}` : t('us_wizard.continue')}
         </button>        
       </div>
 

@@ -3,6 +3,7 @@
 // Soporta múltiples cajas (paquetes)
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './Step1PackageDetails.scss';
 import axiosInstance from '../../../../../services/axiosInstance';
 
@@ -27,23 +28,24 @@ const newPackage = () => ({
 });
 
 // ── Validación de un paquete ─────────────────────────────────────────────────
-const validatePackage = (pkg) => {
+const buildValidationErrors = (pkg, t) => {
   const errors = {};
-  if (!pkg.largo  || isNaN(pkg.largo)  || Number(pkg.largo)  <= 0) errors.largo  = 'Requerido';
-  if (!pkg.ancho  || isNaN(pkg.ancho)  || Number(pkg.ancho)  <= 0) errors.ancho  = 'Requerido';
-  if (!pkg.alto   || isNaN(pkg.alto)   || Number(pkg.alto)   <= 0) errors.alto   = 'Requerido';
-  if (!pkg.peso   || isNaN(pkg.peso)   || Number(pkg.peso)   <= 0) errors.peso   = 'Requerido';
-  if (!pkg.valorFOB || isNaN(pkg.valorFOB) || Number(pkg.valorFOB) < 0) errors.valorFOB = 'Requerido';
-  if (!pkg.contenidos?.length) errors.contenidos = 'Selecciona al menos un contenido';
+  if (!pkg.largo  || isNaN(pkg.largo)  || Number(pkg.largo)  <= 0) errors.largo  = t('us_wizard.required');
+  if (!pkg.ancho  || isNaN(pkg.ancho)  || Number(pkg.ancho)  <= 0) errors.ancho  = t('us_wizard.required');
+  if (!pkg.alto   || isNaN(pkg.alto)   || Number(pkg.alto)   <= 0) errors.alto   = t('us_wizard.required');
+  if (!pkg.peso   || isNaN(pkg.peso)   || Number(pkg.peso)   <= 0) errors.peso   = t('us_wizard.required');
+  if (!pkg.valorFOB || isNaN(pkg.valorFOB) || Number(pkg.valorFOB) < 0) errors.valorFOB = t('us_wizard.required');
+  if (!pkg.contenidos?.length) errors.contenidos = t('us_wizard.required');
   return errors;
 };
 
 // ── Selector de contenidos ────────────────────────────────────────────────────
 const ContenidoSelector = ({ selected, onChange }) => {
+  const { t } = useTranslation();
   const [opciones, setOpciones] = useState([]);
   const [abierto, setAbierto]   = useState(false);
   const [loading, setLoading]   = useState(true);
-  const ref = useRef(null); // ✅
+  const ref = useRef(null);
 
   useEffect(() => {
     axiosInstance.get('/PaqueteContenidos/getContent')
@@ -73,8 +75,8 @@ const ContenidoSelector = ({ selected, onChange }) => {
   };
 
   const label = selected.length === 0
-    ? 'Seleccionar contenidos'
-    : `${selected.length} seleccionado${selected.length > 1 ? 's' : ''}`;
+    ? t('us_wizard.select_contents')
+    : t('us_wizard.content_selected_n', { count: selected.length });
 
   return (
     <div className="contenido-selector" ref={ref}> {/* ✅ ref conectado */}
@@ -90,7 +92,7 @@ const ContenidoSelector = ({ selected, onChange }) => {
       {abierto && (
         <div className="contenido-selector__dropdown">
           {loading
-            ? <p className="contenido-selector__loading">Cargando...</p>
+            ? <p className="contenido-selector__loading">{t('common.loading')}</p>
             : opciones.map(op => {
                 const activo = !!selected.find(s => s.id === op.id);
                 return (
@@ -127,6 +129,7 @@ const ContenidoSelector = ({ selected, onChange }) => {
 
 // ── Componente de una caja individual ───────────────────────────────────────
 const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
+  const { t } = useTranslation();
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showFOBTooltip, setShowFOBTooltip]     = useState(false);
 
@@ -137,7 +140,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
       {/* Cabecera de la caja */}
       <div className="pkg-form__header">
         <span className="pkg-form__title">
-          📦 {total > 1 ? `Caja ${index + 1} de ${total}` : 'Detalles del Paquete'}
+          📦 {total > 1 ? t('us_wizard.box_n', { index: index + 1, total }) : t('us_wizard.package_details')}
         </span>
         {total > 1 && (
           <button className="pkg-form__remove" onClick={() => onRemove(pkg.id)} title="Eliminar caja">
@@ -233,19 +236,19 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
             <line x1="294" y1="65" x2="294" y2="125" stroke="#555" strokeWidth="1.5" markerEnd="url(#arr)"/>
             <line x1="280" y1="65"  x2="297" y2="65"  stroke="#555" strokeWidth="1"/>
             <line x1="280" y1="125" x2="297" y2="125" stroke="#555" strokeWidth="1"/>
-            <text x="300" y="100" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">Alto</text>
+            <text x="300" y="100" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">{t('us_wizard.svg_alto')}</text>
 
             {/* Largo — flecha inferior izquierda */}
             <line x1="35" y1="70" x2="35" y2="130" stroke="#555" strokeWidth="1.5"/>
             <line x1="35" y1="70"  x2="62" y2="70"  stroke="#555" strokeWidth="1"/>
             <line x1="35" y1="130" x2="62" y2="130" stroke="#555" strokeWidth="1"/>
-            <text x="3" y="103" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">Largo</text>
+            <text x="3" y="103" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">{t('us_wizard.svg_largo')}</text>
 
             {/* Ancho — flecha inferior */}
             <line x1="140" y1="177" x2="280" y2="137" stroke="#555" strokeWidth="1.5"/>
             <line x1="140" y1="165" x2="140" y2="180" stroke="#555" strokeWidth="1"/>
             <line x1="280" y1="125" x2="280" y2="140" stroke="#555" strokeWidth="1"/>
-            <text x="185" y="190" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">Ancho</text>
+            <text x="185" y="190" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">{t('us_wizard.svg_ancho')}</text>
           </svg>
         </div>
       )}
@@ -253,7 +256,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
       {/* ── Fila 1: Largo | Ancho | Alto ── */}
       <div className="pkg-form__dims-row">
         <div className="wizard-field">
-          <label>Largo (cm)</label>
+          <label>{t('us_wizard.field_largo')}</label>
           <input
             type="number"
             placeholder="e.g., 30"
@@ -266,7 +269,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
         </div>
 
         <div className="wizard-field">
-          <label>Ancho (cm)</label>
+          <label>{t('us_wizard.field_ancho')}</label>
           <input
             type="number"
             placeholder="e.g., 30"
@@ -279,7 +282,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
         </div>
 
         <div className="wizard-field">
-          <label>Alto (cm)</label>
+          <label>{t('us_wizard.field_alto')}</label>
           <input
             type="number"
             placeholder="e.g., 30"
@@ -296,7 +299,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
       <div className="pkg-form__meta-row">
         {/* Peso */}
         <div className="wizard-field">
-          <label>Peso</label>
+          <label>{t('us_wizard.field_peso')}</label>
           <div className="pkg-form__peso-wrap">
             <input
               type="number"
@@ -320,7 +323,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
 
         {/* Tipo de Paquete */}
         <div className="wizard-field pkg-form__tipo-field">
-          <label>Tipo de Paquete</label>
+          <label>{t('us_wizard.field_package_type')}</label>
           <div className="pkg-form__type-wrapper">
             <button
               type="button"
@@ -351,7 +354,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
       <div className="wizard-grid-2" style={{ marginBottom: '1rem' }}>
         <div className="wizard-field">
           <label>
-            Valor FOB (USD)
+            {t('us_wizard.field_fob')}
             <button
               type="button"
               className="pkg-form__tooltip-trigger"
@@ -362,7 +365,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
             </button>
             {showFOBTooltip && (
               <span className="pkg-form__tooltip">
-                Valor FOB es el valor de la mercancía en puerto de origen, sin incluir flete ni seguro.
+                {t('us_wizard.fob_tooltip')}
               </span>
             )}
           </label>
@@ -384,7 +387,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
 
       {/* Descripción del contenido */}
       <div className="wizard-field">
-        <label>Descripción del Contenido</label>
+        <label>{t('us_wizard.field_content_desc')}</label>
         <ContenidoSelector
           selected={pkg.contenidos ?? []}
           onChange={(items) => {
@@ -399,6 +402,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
 
 // ── Componente principal del paso 1 ─────────────────────────────────────────
 const Step1PackageDetails = ({ data, updateData, onNext }) => {
+  const { t } = useTranslation();
   const [fieldErrors, setFieldErrors] = useState({});
 
   // Mutaciones en el array de paquetes
@@ -443,7 +447,7 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
     let hasError = false;
 
     data.packages.forEach((pkg) => {
-      const errs = validatePackage(pkg);
+      const errs = buildValidationErrors(pkg, t);
       if (Object.keys(errs).length > 0) {
         Object.entries(errs).forEach(([k, v]) => {
           allErrors[`${pkg.id}.${k}`] = v;
@@ -462,7 +466,7 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
   return (
     <div>
       <div className="wizard-card">
-        <h2 className="wizard-card__title">📦 Detalles del Envío</h2>
+        <h2 className="wizard-card__title">📦 {t('us_wizard.step1_title')}</h2>
 
         {data.packages.map((pkg, idx) => (
           <React.Fragment key={pkg.id}>
@@ -493,7 +497,7 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
 
         <div className="wizard-actions">
           <button className="btn-wizard-next" onClick={handleNext}>
-            Continuar →
+            {t('us_wizard.continue')}
           </button>
         </div>
       </div>

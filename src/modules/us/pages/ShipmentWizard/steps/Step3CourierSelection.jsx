@@ -6,6 +6,7 @@
 // Guarda { courierId, courierServiceId, courierQuote } en wizardData.
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { fetchUpsQuotes } from '../../../../../services/us/upsService';
 import './Step3CourierSelection.scss';
 
@@ -20,17 +21,18 @@ const COURIER_LOGOS = {
 };
 
 // Badges automáticos
-function getBadge(quote, allQuotes) {
+function getBadge(quote, allQuotes, t) {
   const minPrice = Math.min(...allQuotes.map((q) => parseFloat(q.total)));
   const maxPrice = Math.max(...allQuotes.map((q) => parseFloat(q.total)));
 
-  if (parseFloat(quote.total) === minPrice) return { label: '💰 Más económico', cls: 'badge--cheap' };
+  if (parseFloat(quote.total) === minPrice) return { label: `💰 ${t('us_wizard.cheapest')}`, cls: 'badge--cheap' };
   if (parseFloat(quote.total) === maxPrice) return null;
   return null;
 }
 
 // ── Componente de card individual ─────────────────────────────────────────────
 const CourierCard = ({ quote, isSelected, onSelect, badge }) => {
+  const { t } = useTranslation();
   const total  = parseFloat(quote.total).toFixed(2);
   const base   = parseFloat(quote.price).toFixed(2);
   const fuel   = parseFloat(quote.fuel_surcharge).toFixed(2);
@@ -63,13 +65,13 @@ const CourierCard = ({ quote, isSelected, onSelect, badge }) => {
       </div>
 
       <div className="courier-card__breakdown">
-        <span>Base: {base} $</span>
-        {parseFloat(fuel)   > 0 && <span>+ Combustible: {fuel} $</span>}
-        {parseFloat(pickup) > 0 && <span>+ Recogida: {pickup} $</span>}
+        <span>{t('us_wizard.breakdown_base')}: {base} $</span>
+        {parseFloat(fuel)   > 0 && <span>+ {t('us_wizard.breakdown_fuel')}: {fuel} $</span>}
+        {parseFloat(pickup) > 0 && <span>+ {t('us_wizard.breakdown_pickup')}: {pickup} $</span>}
       </div>
 
       <div className="courier-card__meta">
-        ⚖️ {quote.weight_max} kg · 📦 {quote.total_packages} bulto(s)
+        ⚖️ {quote.weight_max} kg · 📦 {quote.total_packages} {t('us_wizard.bultos')}
       </div>
     </div>
   );
@@ -86,6 +88,7 @@ const SkeletonCard = () => (
 
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
+  const { t } = useTranslation();
 
   const [quotes,   setQuotes]   = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -102,7 +105,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   // ── Llamada a la API de quotes ────────────────────────────────────────────
   const loadQuotes = useCallback(async () => {
     if (!originPostalCode) {
-      setError('No se encontró el código postal de la dirección de origen.');
+      setError(t('us_wizard.error_no_zip'));
       setLoading(false);
       return;
     }
@@ -123,7 +126,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
     setLoading(false);
 
     if (!result.success || !Array.isArray(result.data)) {
-      setError('No se pudieron obtener las tarifas UPS. Intenta de nuevo.');
+      setError(t('us_wizard.error_ups_rates'));
       return;
     }
 
@@ -161,17 +164,18 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   return (
     <div className="courier-step">
       <div className="wizard-card">
-        <h2 className="wizard-card__title">🚚 Servicio de Recogida</h2>
+        <h2 className="wizard-card__title">🚚 {t('us_wizard.step3_title')}</h2>
         <p className="courier-step__subtitle">
-          Elige el courier que recogerá tu paquete en{' '}
-          <strong>{data.selectedOriginAddress?.city ?? 'tu domicilio'}</strong>{' '}
-          ({originPostalCode}) y lo llevará a nuestro almacén.
+          {t('us_wizard.step3_subtitle', {
+            city: data.selectedOriginAddress?.city ?? '',
+            zip:  originPostalCode,
+          })}
         </p>
 
         <div className="courier-step__meta">
-          <span>📦 Peso: <strong>{parseFloat(pkg.peso || 0).toFixed(2)} {pkg.unidadPeso || 'lb'}</strong></span>
-          <span>📍 Origen: <strong>{originPostalCode}</strong></span>
-          <span>🏭 Destino: <strong>{KRAKEN_US_WAREHOUSE_ZIP} (Almacén Kraken)</strong></span>
+          <span>📦 {t('us_wizard.field_peso')}: <strong>{parseFloat(pkg.peso || 0).toFixed(2)} {pkg.unidadPeso || 'lb'}</strong></span>
+          <span>📍 {t('us_wizard.origin_label')}: <strong>{originPostalCode}</strong></span>
+          <span>🏭 {t('us_wizard.dest_label')}: <strong>{KRAKEN_US_WAREHOUSE_ZIP} ({t('us_wizard.courier_warehouse')})</strong></span>
         </div>
 
         <div className="wizard-divider" />
@@ -187,14 +191,14 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
           <div className="courier-step__error">
             <p>⚠️ {error}</p>
             <button className="btn-wizard-back" onClick={loadQuotes}>
-              🔄 Reintentar
+              🔄 {t('us_wizard.retry')}
             </button>
           </div>
         )}
 
         {!loading && !error && quotes.length === 0 && (
           <p className="courier-step__empty">
-            No hay servicios disponibles para este código postal. Revisa la dirección de recogida.
+            {t('us_wizard.no_courier_services')}
           </p>
         )}
 
@@ -209,7 +213,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
                   selected?.service_id    === q.service_id
                 }
                 onSelect={handleSelect}
-                badge={getBadge(q, quotes)}
+                badge={getBadge(q, quotes, t)}
               />
             ))}
           </div>
@@ -219,14 +223,14 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
       {/* ── Acciones del wizard ──────────────────────────────────────────── */}
       <div className="wizard-actions">
         <button className="btn-wizard-back" onClick={onBack}>
-          ← Volver
+          {t('us_wizard.back')}
         </button>
         <button
           className="btn-wizard-next"
           onClick={handleNext}
           disabled={!selected || loading}
         >
-          Continuar →
+          {t('us_wizard.continue')}
         </button>
       </div>
     </div>

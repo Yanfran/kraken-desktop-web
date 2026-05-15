@@ -2,6 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { calculateUSShipping } from '../../../../services/us/usCalculatorService';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { fetchMunicipios } from '../../../../services/es/spainAddressService';
 import Step1PackageDetails from './steps/Step1PackageDetails';
 import Step2Addresses from './steps/Step2Addresses';
@@ -18,12 +19,12 @@ import {
 } from 'react-icons/io5';
 import './USShipmentWizard.scss';
 
-const STEPS = [
-  { id: 1, label: 'Detalles del Envío',   icon: <IoCubeOutline size={18} /> },
-  { id: 2, label: 'Recogida y Entrega',   icon: <IoLocationOutline size={18} /> },
-  { id: 3, label: 'Servicio de Recogida', icon: <IoCarOutline size={18} /> },
-  { id: 4, label: 'Resumen',              icon: <IoDocumentTextOutline size={18} /> },
-  { id: 5, label: 'Pago',                 icon: <IoCardOutline size={18} /> },
+const STEP_ICONS = [
+  <IoCubeOutline size={18} />,
+  <IoLocationOutline size={18} />,
+  <IoCarOutline size={18} />,
+  <IoDocumentTextOutline size={18} />,
+  <IoCardOutline size={18} />,
 ];
 
 const INITIAL_STATE = {
@@ -64,8 +65,17 @@ const INITIAL_STATE = {
 };
 
 const ESShipmentWizard = () => {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const [wizardData,  setWizardData]  = useState(INITIAL_STATE);
+
+  const STEPS = [
+    { id: 1, label: t('us_wizard.step1'), icon: STEP_ICONS[0] },
+    { id: 2, label: t('us_wizard.step2'), icon: STEP_ICONS[1] },
+    { id: 3, label: t('us_wizard.step3'), icon: STEP_ICONS[2] },
+    { id: 4, label: t('us_wizard.step4'), icon: STEP_ICONS[3] },
+    { id: 5, label: t('us_wizard.step5'), icon: STEP_ICONS[4] },
+  ];
 
   // ── CAMBIO 3: añadir estado "calculating" ─────────────────────────────────
   const [calculating, setCalculating] = useState(false);
@@ -86,7 +96,7 @@ const ESShipmentWizard = () => {
 
       // ✅ Guard: igual que Venezuela valida estado antes de calcular
       if (!destino) {
-          toast.error('Por favor selecciona una dirección de destino.');
+          toast.error(t('us_wizard.error_dest'));
           return;
       }
 
@@ -95,7 +105,7 @@ const ESShipmentWizard = () => {
       const stateId = destino.idEstado ?? null;
 
       if (!stateId) {
-          toast.error('No se pudo determinar el estado de la dirección. Intenta crear la dirección de nuevo.');
+          toast.error(t('us_wizard.error_state'));
           console.error('❌ [ESWizard] destino sin idEstado:', destino);
           return;
       }
@@ -138,7 +148,7 @@ const ESShipmentWizard = () => {
       setCalculating(false)
 
       if (!result.success) {
-        toast.error(result.message || 'No se pudo calcular la tarifa.');
+        toast.error(result.message || t('us_wizard.error_calc'));
         return;
       }
 

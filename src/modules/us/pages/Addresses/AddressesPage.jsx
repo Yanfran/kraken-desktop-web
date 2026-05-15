@@ -3,10 +3,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import AddressModal from './components/AddressModal';
 import './AddressesPage.scss';
 
 const AddressesPage = () => {
+  const { t } = useTranslation();
   const [addresses, setAddresses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -122,9 +124,9 @@ const AddressesPage = () => {
 
   // Eliminar dirección
   const handleDelete = (id) => {
-    if (window.confirm('¿Estás seguro de eliminar esta dirección?')) {
+    if (window.confirm(t('us_addr.delete_confirm'))) {
       setAddresses(addresses.filter(addr => addr.id !== id));
-      toast.success('Dirección eliminada');
+      toast.success(t('us_addr.deleted'));
     }
   };
 
@@ -135,7 +137,7 @@ const AddressesPage = () => {
       isDefault: addr.id === id
     }));
     setAddresses(updatedAddresses);
-    toast.success('Dirección marcada como predeterminada');
+    toast.success(t('us_addr.set_default_success'));
   };
 
   // Guardar dirección (crear o actualizar)
@@ -146,16 +148,15 @@ const AddressesPage = () => {
         addr.id === editingAddress.id ? { ...addressData, id: addr.id } : addr
       );
       setAddresses(updated);
-      toast.success('Dirección actualizada');
+      toast.success(t('us_addr.updated'));
     } else {
-      // Crear nueva
       const newAddress = {
         ...addressData,
         id: Date.now(),
-        isDefault: addresses.length === 0 // Primera dirección es predeterminada
+        isDefault: addresses.length === 0
       };
       setAddresses([...addresses, newAddress]);
-      toast.success('Dirección creada');
+      toast.success(t('us_addr.created'));
     }
     setModalOpen(false);
   };
@@ -164,15 +165,15 @@ const AddressesPage = () => {
     <div className="addresses-page">
       {/* Header */}
       <div className="addresses-page__header">
-        <h1 className="addresses-page__title">Mis Direcciones</h1>
+        <h1 className="addresses-page__title">{t('us_addr.title')}</h1>
         <div className="addresses-page__countries">
           <div className="addresses-page__country">
             <span className="addresses-page__flag">us</span>
-            <span>USA (Origen)</span>
+            <span>{t('us_addr.origin_label')}</span>
           </div>
           <div className="addresses-page__country">
             <span className="addresses-page__flag">🇻🇪</span>
-            <span>Venezuela (Destino)</span>
+            <span>{t('us_addr.dest_label')}</span>
           </div>
         </div>
       </div>
@@ -183,7 +184,7 @@ const AddressesPage = () => {
           <span className="addresses-page__search-icon">🔍</span>
           <input
             type="text"
-            placeholder="Buscar por nombre o dirección..."
+            placeholder={t('us_addr.search_placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="addresses-page__search-input"
@@ -195,11 +196,11 @@ const AddressesPage = () => {
           onClick={() => setFilterOpen(!filterOpen)}
         >
           <span>🔽</span>
-          <span>Filtrar por</span>
+          <span>{t('us_addr.filter_by')}</span>
         </button>
 
         <button className="addresses-page__batch-btn">
-          <span>Acciones en lote</span>
+          <span>{t('us_addr.batch_actions')}</span>
           <span>🔽</span>
         </button>
       </div>
@@ -212,7 +213,7 @@ const AddressesPage = () => {
             className={`addresses-page__card ${address.isDefault ? 'addresses-page__card--default' : ''}`}
           >
             {address.isDefault && (
-              <span className="addresses-page__badge">Predeterminada</span>
+              <span className="addresses-page__badge">{t('us_addr.default_badge')}</span>
             )}
 
             <div className="addresses-page__card-content">
@@ -255,14 +256,14 @@ const AddressesPage = () => {
         {/* Botón Nueva Dirección */}
         <button className="addresses-page__add-card" onClick={handleCreate}>
           <span className="addresses-page__add-icon">+</span>
-          <span className="addresses-page__add-text">Nueva Dirección</span>
+          <span className="addresses-page__add-text">{t('us_addr.new_address')}</span>
         </button>
       </div>
 
       {/* Footer con contador y paginación */}
       <div className="addresses-page__footer">
         <p className="addresses-page__counter">
-          Mostrando {startIndex + 1}-{Math.min(endIndex, filteredAddresses.length)} de {filteredAddresses.length} direcciones
+          {t('us_addr.showing', { from: startIndex + 1, to: Math.min(endIndex, filteredAddresses.length), total: filteredAddresses.length })}
         </p>
 
         <div className="addresses-page__pagination">
