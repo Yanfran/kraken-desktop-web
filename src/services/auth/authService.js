@@ -22,17 +22,11 @@ authAPI.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor para manejar errores de autenticación
+// authAPI is only used for auth endpoints (login, register, validateToken, etc.)
+// Each caller handles errors themselves — no automatic redirect or storage clear here.
 authAPI.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // ===== 🔥 FUNCIONES HELPER FUERA DEL OBJETO =====
@@ -248,10 +242,10 @@ export const authService = {
   // ===== VALIDAR TOKEN =====
   async validateToken(token) {
     try {
-      const response = await authAPI.get('/Users/profile', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      // Use [AllowAnonymous] endpoint — inactive users return 404 (not 401),
+      // so the interceptor never fires and initAuth falls back to cached userData.
+      const response = await authAPI.post('/Users/validate-token', { token });
+
       if (response.data.success && response.data.user) {
         return {
           id: response.data.user.id,
@@ -261,16 +255,12 @@ export const authService = {
           nombres: response.data.user.nombres,
           apellidos: response.data.user.apellidos,
           phone: response.data.user.telefonoCelular,
-          phoneSecondary: response.data.user.telefonoCelularSecundario,
           telefonoCelular: response.data.user.telefonoCelular,
-          telefonoCelularSecundario: response.data.user.telefonoCelularSecundario,
           idNumber: response.data.user.nroIdentificacionCliente,
           nroIdentificacionCliente: response.data.user.nroIdentificacionCliente,
           idClienteTipoIdentificacion: response.data.user.idClienteTipoIdentificacion,
-          birthday: response.data.user.fechaNacimiento,
-          fechaNacimiento: response.data.user.fechaNacimiento,
           avatarId: response.data.user.avatarId || '1',
-          emailVerified: response.data.user.emailVerified ?? true,
+          emailVerified: response.data.user.emailVerified ?? response.data.user.fromEmail ?? true,
           profileComplete: response.data.user.profileComplete ?? false,
           clienteActivo: response.data.user.clienteActivo ?? true,
           fromGoogle: response.data.user.fromGoogle ?? false,
@@ -278,7 +268,7 @@ export const authService = {
           idClienteTipo: response.data.user.idClienteTipo
         };
       }
-      
+
       throw new Error('Token inválido');
     } catch (error) {
       console.error('❌ [AuthService] Token validation error:', error);
