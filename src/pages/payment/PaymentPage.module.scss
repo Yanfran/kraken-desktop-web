@@ -1504,6 +1504,131 @@ $transition-base: 0.3s ease;
   }
 }
 
+// ===== TARJETA DATOS BANCARIOS P2C =====
+.p2cBankCard {
+  background: white;
+  border: 1.5px solid $kraken-border-light;
+  border-left: 5px solid $kraken-secondary;
+  border-radius: $radius-md;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba($kraken-secondary, 0.08);
+
+  [data-theme="dark"] & {
+    background: #2B2930;
+    border-color: #49454F;
+    border-left-color: lighten($kraken-secondary, 15%);
+  }
+}
+
+.p2cBankCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $kraken-secondary;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid $kraken-border-light;
+
+  [data-theme="dark"] & {
+    color: #7BB8E8;
+    border-bottom-color: #49454F;
+  }
+}
+
+.p2cBankRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid $kraken-separator;
+
+  [data-theme="dark"] & {
+    border-bottom-color: #37343B;
+  }
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.p2cBankLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $kraken-text-secondary;
+  flex-shrink: 0;
+  min-width: 64px;
+
+  [data-theme="dark"] & {
+    color: #938F99;
+  }
+}
+
+.p2cBankValueGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.p2cBankValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $kraken-text-primary;
+  text-align: right;
+
+  [data-theme="dark"] & {
+    color: #E6E0E9;
+  }
+}
+
+.p2cCopyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba($kraken-secondary, 0.08);
+  border: 1px solid rgba($kraken-secondary, 0.3);
+  border-radius: 20px;
+  color: $kraken-secondary;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all $transition-fast;
+  flex-shrink: 0;
+
+  [data-theme="dark"] & {
+    background: rgba($kraken-secondary, 0.15);
+    border-color: rgba(#7BB8E8, 0.4);
+    color: #7BB8E8;
+  }
+
+  &:hover {
+    background: rgba($kraken-secondary, 0.15);
+    transform: scale(1.04);
+  }
+}
+
+.p2cCopyBtnDone {
+  background: rgba($kraken-success, 0.12);
+  border-color: rgba($kraken-success, 0.4);
+  color: $kraken-success;
+
+  [data-theme="dark"] & {
+    background: rgba($kraken-success, 0.2);
+    border-color: rgba($kraken-success, 0.5);
+    color: #81C784;
+  }
+}
+
 // ===== INSTRUCCIONES P2C =====
 .p2cInstructions {
   display: flex;

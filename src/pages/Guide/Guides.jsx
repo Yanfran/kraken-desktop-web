@@ -58,10 +58,16 @@ export default function Guides() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   const { data: queryResult, isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['guias', currentPage, pageSize, activeTab],
-    queryFn: () => fetchGuias({ page: currentPage, pageSize, tab: activeTab }),
+    queryKey: ['guias', currentPage, pageSize, activeTab, debouncedSearch],
+    queryFn: () => fetchGuias({ page: currentPage, pageSize, tab: activeTab, search: debouncedSearch }),
     keepPreviousData: true,
   });
 
@@ -374,19 +380,11 @@ export default function Guides() {
     }
   };
 
-  // Resetear página al filtrar
-  React.useEffect(() => { setCurrentPage(1); }, [searchQuery, activeTab]);
+  // Resetear página al cambiar tab o búsqueda
+  React.useEffect(() => { setCurrentPage(1); }, [debouncedSearch, activeTab]);
 
-  // El filtro de tabs lo hace el backend; aquí solo filtramos por búsqueda local
-  const filteredGuias = useMemo(() => {
-    if (!searchQuery) return guias;
-    const q = searchQuery.toLowerCase();
-    return guias.filter(guia =>
-      guia.nGuia?.toLowerCase().includes(q) ||
-      guia.tracking?.toLowerCase().includes(q) ||
-      guia.contenido?.toLowerCase().includes(q)
-    );
-  }, [guias, searchQuery]);
+  // El filtro lo hace el backend
+  const filteredGuias = guias;
 
   const payableGuiasCount = useMemo(() => {
     return filteredGuias.filter(guia => sePuedePagar(guia)).length;

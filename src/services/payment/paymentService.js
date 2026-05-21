@@ -288,6 +288,18 @@ export const processMegasoftCreditoInmediato = async (paymentData) => {
 };
 
 // ============================================================
+// MÉTODOS DE PAGO DISPONIBLES
+// ============================================================
+export const getMetodosDisponibles = async () => {
+  try {
+    const response = await axiosInstance.get('/Payment/metodos-disponibles');
+    return response.data?.metodos ?? [];
+  } catch {
+    return [];
+  }
+};
+
+// ============================================================
 // 🐙 MEGASOFT TARJETA DE CRÉDITO — CREAR TOKEN (Paso 2)
 // ============================================================
 export const megasoftTCCrearToken = async (data) => {

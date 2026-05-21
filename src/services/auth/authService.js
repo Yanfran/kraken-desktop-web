@@ -131,6 +131,16 @@ export const authService = {
         };
       }
       
+      // Usuario nuevo con correo sin verificar: tokenVerify presente → redirigir a confirmación
+      if (response.data.tokenVerify) {
+        return {
+          success: false,
+          tokenVerify: response.data.tokenVerify,
+          message: response.data.message || 'Verifica tu correo electrónico',
+        };
+      }
+
+      // Cuenta deshabilitada por el administrador: sin tokenVerify + clienteActivo false
       if (response.data.user?.clienteActivo === false) {
         return {
           success: false,
@@ -142,7 +152,6 @@ export const authService = {
       return {
         success: false,
         message: response.data.message || 'Error en el login',
-        ...(response.data.tokenVerify && { tokenVerify: response.data.tokenVerify }),
       };
     } catch (error) {
       // console.error('❌ [AuthService] Login error:', error);

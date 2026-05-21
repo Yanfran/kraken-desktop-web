@@ -22,6 +22,7 @@ import {
   IoLockClosedOutline,
   IoInformationCircleOutline,
   IoWarningOutline,
+  IoCopyOutline,
 } from 'react-icons/io5';
 
 import {
@@ -38,6 +39,7 @@ import {
   megasoftTCVerificarToken,
   megasoftTCPreregistro,
   megasoftTCCobrar,
+  getMetodosDisponibles,
 } from '@/services/payment/paymentService';
 
 // ============================================================
@@ -245,6 +247,7 @@ export default function PaymentPage() {
   // Estados principales
   const [step, setStep] = useState('loading'); // loading | method | form | otp | success | error
   const [paymentMethod, setPaymentMethod] = useState('p2c');
+  const [metodosDisponibles, setMetodosDisponibles] = useState([]);
   const [paymentData, setPaymentData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
@@ -296,6 +299,9 @@ export default function PaymentPage() {
 
   // Detalles guía múltiple
   const [showGuiasDetails, setShowGuiasDetails] = useState(false);
+
+  // P2C — copiar datos bancarios
+  const [copiedField, setCopiedField] = useState(null);
 
   // TC — Tarjeta de Crédito Tradicional
   const [tcSubStep, setTcSubStep] = useState('tc_datos'); // tc_datos | tc_verificar | tc_confirmar
@@ -390,6 +396,10 @@ export default function PaymentPage() {
           setStep('loading');
         }
       }
+      const metodos = await getMetodosDisponibles();
+      setMetodosDisponibles(metodos);
+      if (metodos.length > 0) setPaymentMethod(metodos[0].key);
+
     } catch (error) {
       console.error('Error loading payment data:', error);
       setDataError('Error de conexión al cargar los datos');
@@ -1110,60 +1120,26 @@ export default function PaymentPage() {
       </p>
 
       <div className={styles.methodOptions}>
-        <div
-          className={`${styles.methodOption} ${
-            paymentMethod === 'p2c' ? styles.methodOptionActive : ''
-          }`}
-          onClick={() => setPaymentMethod('p2c')}
-        >
-          <div className={styles.methodIcon}><IoPhonePortraitOutline size={32} /></div>
-          <h4>Pago Móvil P2C</h4>
-          <p>Ya pagaste desde tu banco, solo envía la referencia</p>
-        </div>
-
-        <div
-          className={`${styles.methodOption} ${
-            paymentMethod === 'c2p' ? styles.methodOptionActive : ''
-          }`}
-          onClick={() => setPaymentMethod('c2p')}
-        >
-          <div className={styles.methodIcon}><IoPhonePortraitOutline size={32} /></div>
-          <h4>Pago Móvil C2P</h4>
-          <p>Autoriza con una clave de 8 dígitos de tu banco</p>
-        </div>
-
-        <div
-          className={`${styles.methodOption} ${
-            paymentMethod === 'debitoInmediato' ? styles.methodOptionActive : ''
-          }`}
-          onClick={() => setPaymentMethod('debitoInmediato')}
-        >
-          <div className={styles.methodIcon}><IoCardOutline size={32} /></div>
-          <h4>Débito Inmediato</h4>
-          <p>Paga con tu cuenta de débito, te enviaremos un OTP</p>
-        </div>
-
-        <div
-          className={`${styles.methodOption} ${
-            paymentMethod === 'creditoInmediato' ? styles.methodOptionActive : ''
-          }`}
-          onClick={() => setPaymentMethod('creditoInmediato')}
-        >
-          <div className={styles.methodIcon}><IoBusinessOutline size={32} /></div>
-          <h4>Crédito Inmediato</h4>
-          <p>Paga con tu cuenta de crédito directamente</p>
-        </div>
-
-        <div
-          className={`${styles.methodOption} ${
-            paymentMethod === 'tarjetaCredito' ? styles.methodOptionActive : ''
-          }`}
-          onClick={() => setPaymentMethod('tarjetaCredito')}
-        >
-          <div className={styles.methodIcon}><IoCardOutline size={32} /></div>
-          <h4>Tarjeta de Crédito</h4>
-          <p>Paga con tu tarjeta de crédito de forma segura</p>
-        </div>
+        {metodosDisponibles.map((metodo) => {
+          const iconMap = {
+            p2c: <IoPhonePortraitOutline size={32} />,
+            c2p: <IoPhonePortraitOutline size={32} />,
+            debitoInmediato: <IoCardOutline size={32} />,
+            creditoInmediato: <IoBusinessOutline size={32} />,
+            tarjetaCredito: <IoCardOutline size={32} />,
+          };
+          return (
+            <div
+              key={metodo.key}
+              className={`${styles.methodOption} ${paymentMethod === metodo.key ? styles.methodOptionActive : ''}`}
+              onClick={() => setPaymentMethod(metodo.key)}
+            >
+              <div className={styles.methodIcon}>{iconMap[metodo.key] ?? <IoCardOutline size={32} />}</div>
+              <h4>{metodo.label}</h4>
+              <p>{metodo.descripcion}</p>
+            </div>
+          );
+        })}
       </div>
 
       <button
@@ -1690,6 +1666,42 @@ export default function PaymentPage() {
         {/* Referencia P2C */}
         {isP2C && (
           <>
+            {/* Datos bancarios para el pago móvil */}
+            <div className={styles.p2cBankCard}>
+              <div className={styles.p2cBankCardHeader}>
+                <IoPhonePortraitOutline size={20} />
+                <span>Datos para el Pago Móvil</span>
+              </div>
+              {[
+                { label: 'Banco', value: 'Banco Nacional de Crédito (0191)', field: 'banco' },
+                { label: 'Cédula', value: 'J-504893072', field: 'cedula' },
+                { label: 'Teléfono', value: '04242574822', field: 'telefono', display: '0424 257 4822' },
+              ].map(({ label, value, field, display }) => (
+                <div key={field} className={styles.p2cBankRow}>
+                  <span className={styles.p2cBankLabel}>{label}</span>
+                  <div className={styles.p2cBankValueGroup}>
+                    <span className={styles.p2cBankValue}>{display || value}</span>
+                    <button
+                      type="button"
+                      className={`${styles.p2cCopyBtn} ${copiedField === field ? styles.p2cCopyBtnDone : ''}`}
+                      onClick={() => {
+                        navigator.clipboard.writeText(value);
+                        setCopiedField(field);
+                        setTimeout(() => setCopiedField(null), 2000);
+                      }}
+                      title={`Copiar ${label}`}
+                    >
+                      {copiedField === field ? (
+                        <><IoCheckmark size={14} /> Copiado</>
+                      ) : (
+                        <><IoCopyOutline size={14} /> Copiar</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <div className={styles.p2cInstructions}>
               <IoReceiptOutline size={20} />
               <div>

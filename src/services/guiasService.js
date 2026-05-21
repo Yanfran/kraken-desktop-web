@@ -29,10 +29,10 @@ export const getGuias = async () => {
  * @param {{ page?: number, pageSize?: number, tab?: string }} params
  * @returns {Promise<{ data: Array, pagination: object }>}
  */
-export const fetchGuias = async ({ page = 1, pageSize = 10, tab = 'activos' } = {}) => {
-  const response = await axiosInstance.get('/PostPreAlert/getGuias', {
-    params: { page, pageSize, tab },
-  });
+export const fetchGuias = async ({ page = 1, pageSize = 10, tab = 'activos', search = '' } = {}) => {
+  const params = { page, pageSize, tab };
+  if (search) params.search = search;
+  const response = await axiosInstance.get('/PostPreAlert/getGuias', { params });
   const apiResponse = response.data;
 
   if (!apiResponse.success) {
