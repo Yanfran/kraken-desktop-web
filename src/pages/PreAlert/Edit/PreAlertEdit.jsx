@@ -542,6 +542,7 @@ const PreAlertEdit = () => {
       if (
         !addressState.selectedState ||
         !addressState.selectedMunicipality ||
+        !addressState.selectedParish ||
         !addressState.address
       ) {
         newErrors.address = t('pre_alert.error_complete_address');

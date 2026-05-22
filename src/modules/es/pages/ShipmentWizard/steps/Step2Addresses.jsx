@@ -309,10 +309,11 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
       if (!storeForm.city)  e.city  = 'Selecciona una ciudad';
       if (!storeForm.store) e.store = 'Selecciona una tienda';
     } else {
-      if (!homeForm.alias.trim())    e.alias    = 'El nombre de la dirección es obligatorio';
-      if (!homeForm.idEstado)        e.idEstado = 'Selecciona un estado';
+      if (!homeForm.alias.trim())    e.alias       = 'El nombre de la dirección es obligatorio';
+      if (!homeForm.idEstado)        e.idEstado    = 'Selecciona un estado';
       if (!homeForm.idMunicipio)     e.idMunicipio = 'Selecciona un municipio';
-      if (!homeForm.direccion.trim()) e.direccion = 'La dirección es obligatoria';
+      if (!homeForm.idParroquia)     e.idParroquia = 'Selecciona una parroquia';
+      if (!homeForm.direccion.trim()) e.direccion  = 'La dirección es obligatoria';
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -472,17 +473,19 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 </div>
 
                 <div className="wizard-field">
-                  <label>Parroquia <span className="label-optional">(opcional)</span></label>
+                  <label>Parroquia *</label>
                   <select
                     value={homeForm.idParroquia}
-                    onChange={(e) => setHome('idParroquia', e.target.value)}
+                    onChange={(e) => { setHome('idParroquia', e.target.value); setErrors(p => ({ ...p, idParroquia: '' })); }}
                     disabled={!homeForm.idMunicipio}
+                    className={errors.idParroquia ? 'input--error' : ''}
                   >
                     <option value="">Seleccione una parroquia</option>
                     {parroquias.map((p) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
+                  {errors.idParroquia && <span className="field-error">{errors.idParroquia}</span>}
                 </div>
               </div>
 

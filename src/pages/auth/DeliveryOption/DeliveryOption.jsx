@@ -353,9 +353,9 @@ const filteredStores = useMemo(() => {
     }
     
     if (selectedOption === 'home') {
-      return formData.state && 
-             formData.municipality && 
-             formData.parish && 
+      return formData.state &&
+             formData.municipality &&
+             formData.parish &&
              formData.address.trim() &&
              formData.addressName.trim();
     }

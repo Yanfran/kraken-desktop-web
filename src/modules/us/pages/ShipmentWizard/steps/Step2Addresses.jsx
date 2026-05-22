@@ -353,6 +353,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
       if (!homeForm.alias.trim())     e.alias       = t('us_wizard.error_address_name');
       if (!homeForm.idEstado)         e.idEstado    = t('us_wizard.error_state_sel');
       if (!homeForm.idMunicipio)      e.idMunicipio = t('us_wizard.error_municipio');
+      if (!homeForm.idParroquia)      e.idParroquia = t('us_wizard.error_parroquia');
       if (!homeForm.direccion.trim()) e.direccion   = t('us_wizard.error_address');
     }
     if (!contactoForm.nombres.trim())  e.nombres  = t('us_wizard.error_first_name');
@@ -533,17 +534,19 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 </div>
 
                 <div className="wizard-field">
-                  <label>{t('us_wizard.field_parroquia')} <span className="label-optional">({t('common.optional')})</span></label>
+                  <label>{t('us_wizard.field_parroquia')} *</label>
                   <select
                     value={homeForm.idParroquia}
-                    onChange={(e) => setHome('idParroquia', e.target.value)}
+                    onChange={(e) => { setHome('idParroquia', e.target.value); setErrors(p => ({ ...p, idParroquia: '' })); }}
                     disabled={!homeForm.idMunicipio}
+                    className={errors.idParroquia ? 'input--error' : ''}
                   >
                     <option value="">{t('us_wizard.select_parroquia')}</option>
                     {parroquias.map((p) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
+                  {errors.idParroquia && <span className="field-error">{errors.idParroquia}</span>}
                 </div>
               </div>
 
