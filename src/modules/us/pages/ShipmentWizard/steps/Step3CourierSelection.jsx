@@ -7,7 +7,18 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchUpsQuotes } from '../../../../../services/us/upsService';
+import {
+  IoCarOutline,
+  IoCubeOutline,
+  IoLocationOutline,
+  IoBusinessOutline,
+  IoStorefrontOutline,
+  IoPricetagOutline,
+  IoScaleOutline,
+  IoWarningOutline,
+  IoRefreshOutline,
+} from 'react-icons/io5';
+import { fetchUpsQuotes, fetchPickupRate } from '../../../../../services/us/upsService';
 import './Step3CourierSelection.scss';
 
 
@@ -25,22 +36,21 @@ function getBadge(quote, allQuotes, t) {
   const minPrice = Math.min(...allQuotes.map((q) => parseFloat(q.total)));
   const maxPrice = Math.max(...allQuotes.map((q) => parseFloat(q.total)));
 
-  if (parseFloat(quote.total) === minPrice) return { label: `💰 ${t('us_wizard.cheapest')}`, cls: 'badge--cheap' };
+  if (parseFloat(quote.total) === minPrice) return { label: <><IoPricetagOutline size={12} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.cheapest')}</>, cls: 'badge--cheap' };
   if (parseFloat(quote.total) === maxPrice) return null;
   return null;
 }
 
 // ── Componente de card individual ─────────────────────────────────────────────
-const CourierCard = ({ quote, isSelected, onSelect, badge }) => {
+const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate }) => {
   const { t } = useTranslation();
-  const total  = parseFloat(quote.total).toFixed(2);
-  const base   = parseFloat(quote.price).toFixed(2);
-  const fuel   = parseFloat(quote.fuel_surcharge).toFixed(2);
-  const pickup = parseFloat(quote.pickup_cost).toFixed(2);
-  const logo   = '🚚'; // UPS siempre usa este
+  const base        = parseFloat(quote.price).toFixed(2);
+  const fuel        = parseFloat(quote.fuel_surcharge).toFixed(2);
+  const pickupExtra = parseFloat(pickupRate ?? 0);
+  const total       = (parseFloat(quote.total) + pickupExtra).toFixed(2);
+  const logo        = <IoCarOutline size={22} />;
 
   return (
-    // ✅ div en lugar de button
     <div
       className={`courier-card ${isSelected ? 'courier-card--selected' : ''}`}
       onClick={() => onSelect(quote)}
@@ -67,11 +77,13 @@ const CourierCard = ({ quote, isSelected, onSelect, badge }) => {
       <div className="courier-card__breakdown">
         <span>{t('us_wizard.breakdown_base')}: {base} $</span>
         {parseFloat(fuel)   > 0 && <span>+ {t('us_wizard.breakdown_fuel')}: {fuel} $</span>}
-        {parseFloat(pickup) > 0 && <span>+ {t('us_wizard.breakdown_pickup')}: {pickup} $</span>}
+        {pickupExtra        > 0 && <span>+ {t('us_wizard.breakdown_pickup')}: {pickupExtra.toFixed(2)} $</span>}
       </div>
 
       <div className="courier-card__meta">
-        ⚖️ {quote.weight_max} kg · 📦 {quote.total_packages} {t('us_wizard.bultos')}
+        <IoScaleOutline size={14} style={{ verticalAlign: 'middle' }} /> {quote.weight_max} kg
+        &nbsp;·&nbsp;
+        <IoCubeOutline size={14} style={{ verticalAlign: 'middle' }} /> {quote.total_packages} {t('us_wizard.bultos')}
       </div>
     </div>
   );
@@ -90,10 +102,14 @@ const SkeletonCard = () => (
 const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   const { t } = useTranslation();
 
-  const [quotes,   setQuotes]   = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState(null);
-  const [selected, setSelected] = useState(data.courierQuote ?? null);
+  const [quotes,      setQuotes]      = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState(null);
+  const [selected,    setSelected]    = useState(data.courierQuote ?? null);
+  const [pickupRate,  setPickupRate]  = useState(data.pickupRate   ?? 0);
+  const [loadingRate, setLoadingRate] = useState(false);
+
+  const isPickup = data.deliveryMethod === 'pickup';
 
   // Extraer CP y peso del wizard
   const originPostalCode = data.selectedOriginAddress?.zip ?? '';
@@ -144,6 +160,30 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
 
   useEffect(() => { loadQuotes(); }, [loadQuotes]);
 
+  // Fetch pickup rate si el usuario eligió pickup
+  useEffect(() => {
+    const originAddr = data.selectedOriginAddress;
+    if (!isPickup || !originAddr || !data.pickupDate || !data.pickupReadyTime) return;
+
+    const pickupDateFormatted = data.pickupDate.replace(/-/g, ''); // YYYY-MM-DD → YYYYMMDD
+
+    setLoadingRate(true);
+    fetchPickupRate({
+      addressLine:          originAddr.line1    ?? '',
+      city:                 originAddr.city     ?? '',
+      stateProvince:        originAddr.province ?? '',
+      postalCode:           originAddr.zip      ?? '',
+      residentialIndicator: 'N',
+      pickupDate:           pickupDateFormatted,
+      readyTime:            data.pickupReadyTime,
+      closeTime:            data.pickupCloseTime,
+    }).then((res) => {
+      const rate = res.success ? res.rate : 0;
+      setPickupRate(rate);
+      updateData({ pickupRate: rate });
+    }).finally(() => setLoadingRate(false));
+  }, [isPickup, data.selectedOriginAddress, data.pickupDate, data.pickupReadyTime]); // eslint-disable-line
+
   // ── Selección del usuario ─────────────────────────────────────────────────
   const handleSelect = (quote) => {
     setSelected(quote);
@@ -151,6 +191,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
       courierId:        quote.courier_id,
       courierServiceId: quote.service_id,
       courierQuote:     quote,
+      pickupRate,
     });
   };
 
@@ -164,7 +205,9 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   return (
     <div className="courier-step">
       <div className="wizard-card">
-        <h2 className="wizard-card__title">🚚 {t('us_wizard.step3_title')}</h2>
+        <h2 className="wizard-card__title">
+          <IoCarOutline size={22} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.step3_title')}
+        </h2>
         <p className="courier-step__subtitle">
           {t('us_wizard.step3_subtitle', {
             city: data.selectedOriginAddress?.city ?? '',
@@ -173,9 +216,31 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
         </p>
 
         <div className="courier-step__meta">
-          <span>📦 {t('us_wizard.field_peso')}: <strong>{parseFloat(pkg.peso || 0).toFixed(2)} {pkg.unidadPeso || 'lb'}</strong></span>
-          <span>📍 {t('us_wizard.origin_label')}: <strong>{originPostalCode}</strong></span>
-          <span>🏭 {t('us_wizard.dest_label')}: <strong>{KRAKEN_US_WAREHOUSE_ZIP} ({t('us_wizard.courier_warehouse')})</strong></span>
+          <span><IoCubeOutline size={14} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.field_peso')}: <strong>{parseFloat(pkg.peso || 0).toFixed(2)} {pkg.unidadPeso || 'lb'}</strong></span>
+          <span><IoLocationOutline size={14} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.origin_label')}: <strong>{originPostalCode}</strong></span>
+          <span><IoBusinessOutline size={14} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.dest_label')}: <strong>{KRAKEN_US_WAREHOUSE_ZIP} ({t('us_wizard.courier_warehouse')})</strong></span>
+          {isPickup ? (
+            <span>
+              <IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> <strong>Pickup</strong>
+              {loadingRate
+                ? ' · Calculando tarifa...'
+                : pickupRate > 0
+                  ? ` · +${pickupRate.toFixed(2)} $ (recogida UPS)`
+                  : ' · Tarifa pendiente'}
+            </span>
+          ) : (
+            <span>
+              <IoStorefrontOutline size={14} style={{ verticalAlign: 'middle' }} /> <strong>Drop-off</strong> ·{' '}
+              <a
+                href={`https://www.ups.com/us/en/find-a-location.page?requestType=dropOff&search=${originPostalCode}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#1a73e8', textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                Ver tiendas UPS cerca de {originPostalCode}
+              </a>
+            </span>
+          )}
         </div>
 
         <div className="wizard-divider" />
@@ -189,9 +254,9 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
 
         {!loading && error && (
           <div className="courier-step__error">
-            <p>⚠️ {error}</p>
+            <p><IoWarningOutline size={18} style={{ verticalAlign: 'middle' }} /> {error}</p>
             <button className="btn-wizard-back" onClick={loadQuotes}>
-              🔄 {t('us_wizard.retry')}
+              <IoRefreshOutline size={14} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.retry')}
             </button>
           </div>
         )}
@@ -209,11 +274,12 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
                 key={`${q.courier_id}-${q.service_id}`}
                 quote={q}
                 isSelected={
-                  selected?.courier_id    === q.courier_id &&
-                  selected?.service_id    === q.service_id
+                  selected?.courier_id === q.courier_id &&
+                  selected?.service_id === q.service_id
                 }
                 onSelect={handleSelect}
                 badge={getBadge(q, quotes, t)}
+                pickupRate={isPickup ? pickupRate : 0}
               />
             ))}
           </div>

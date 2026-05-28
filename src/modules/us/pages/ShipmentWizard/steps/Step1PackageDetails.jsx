@@ -4,6 +4,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IoCubeOutline } from 'react-icons/io5';
 import './Step1PackageDetails.scss';
 import axiosInstance from '../../../../../services/axiosInstance';
 
@@ -137,17 +138,17 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
 
   return (
     <div className="pkg-form">
-      {/* Cabecera de la caja */}
-      <div className="pkg-form__header">
-        <span className="pkg-form__title">
-          📦 {total > 1 ? t('us_wizard.box_n', { index: index + 1, total }) : t('us_wizard.package_details')}
-        </span>
-        {total > 1 && (
+      {/* Cabecera de la caja — solo visible cuando hay múltiples cajas */}
+      {total > 1 && (
+        <div className="pkg-form__header">
+          <span className="pkg-form__title">
+            <IoCubeOutline size={16} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.box_n', { index: index + 1, total })}
+          </span>
           <button className="pkg-form__remove" onClick={() => onRemove(pkg.id)} title="Eliminar caja">
             ✕
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Ilustración de la caja (solo en la primera) ── */}
       {index === 0 && (
@@ -466,7 +467,7 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
   return (
     <div>
       <div className="wizard-card">
-        <h2 className="wizard-card__title">📦 {t('us_wizard.step1_title')}</h2>
+        <h2 className="wizard-card__title"><IoCubeOutline size={22} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.step1_title')}</h2>
 
         {data.packages.map((pkg, idx) => (
           <React.Fragment key={pkg.id}>

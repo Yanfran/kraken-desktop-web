@@ -1,10 +1,29 @@
 // src/modules/es/pages/ShipmentWizard/steps/Step3Summary.jsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  IoCreateOutline,
+  IoWarningOutline,
+  IoCubeOutline,
+  IoResizeOutline,
+  IoScaleOutline,
+  IoDocumentOutline,
+  IoCashOutline,
+  IoBarChartOutline,
+  IoCalendarOutline,
+  IoTimeOutline,
+  IoCarOutline,
+  IoStorefrontOutline,
+  IoDocumentTextOutline,
+} from 'react-icons/io5';
 import './Step3Summary.scss';
 
 const fmt    = (n) => Number(n || 0).toFixed(2);
 const fmtUSD = (n) => `$${fmt(n)} USD`;
+const fmtTime = (hhmm) => {
+  if (!hhmm || hhmm.length < 4) return hhmm;
+  return `${hhmm.slice(0, 2)}:${hhmm.slice(2, 4)}`;
+};
 
 // ── Fila de costo (Euros) ─────────────────────────────────────────────────────
 const CostRow = ({ label, valueUSD, isDiscount }) => (
@@ -22,9 +41,9 @@ const AddressBlock = ({ address, flag, onEdit }) => {
     return (
       <div className="summary-addr">
         <p className="summary-addr__line" style={{ color: '#ef4444' }}>
-          ⚠️ {t('us_wizard.error_addr_not_found')}
+          <IoWarningOutline size={15} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.error_addr_not_found')}
         </p>
-        <button className="summary-section__edit" onClick={onEdit}>✏️ {t('us_wizard.edit_label')}</button>
+        <button className="summary-section__edit" onClick={onEdit}><IoCreateOutline size={14} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.edit_label')}</button>
       </div>
     );
   }
@@ -73,15 +92,18 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
     ? `${pkg.largo || '–'}×${pkg.ancho || '–'}×${pkg.alto || '–'} cm`
     : '–';
 
+  const isPickup   = data.deliveryMethod === 'pickup';
+  const pickupRate = isPickup ? Number(data.pickupRate ?? 0) : 0;
+
   // 1. Obtenemos el cálculo de la API
   const calc = data.calculationResult;
-  
+
   // 2. Extraemos los detalles del nuevo formato JSON
   const detalles = calc?.data?.detalles || [];
-  
+
   // 3. Filtramos la línea TOTAL para que no se repita arriba
   const lineas = detalles.filter((d) => d.categoria !== 'TOTAL');
-  
+
   // 4. Obtenemos el total final
   const totalEUR = calc?.data?.total || 0;
 
@@ -94,50 +116,52 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
       {/* ══ COLUMNA IZQUIERDA ════════════════════════════════════════════════ */}
       <div className="step3-layout__left">
         <div className="wizard-card">
-          <h2 className="wizard-card__title">📋 {t('us_wizard.step4_title')}</h2>
+          <h2 className="wizard-card__title">
+            <IoDocumentTextOutline size={22} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.step4_title')}
+          </h2>
 
           {/* ── Detalles del paquete ─────────────────────────────────────── */}
           <section className="summary-section">
             <div className="summary-section__header">
-              <span className="summary-section__icon">📦</span>
+              <span className="summary-section__icon"><IoCubeOutline size={18} /></span>
               <h3 className="summary-section__title">{t('us_wizard.summary_package_title')}</h3>
-              <button className="summary-section__edit" onClick={editPkg} title="Editar paquete">✏️</button>
+              <button className="summary-section__edit" onClick={editPkg} title="Editar paquete"><IoCreateOutline size={16} /></button>
             </div>
 
             <div className="summary-pkg-grid">
               <div className="summary-pkg-item">
-                <span className="summary-pkg-item__icon">📐</span>
+                <span className="summary-pkg-item__icon"><IoResizeOutline size={20} /></span>
                 <div>
                   <p className="summary-pkg-item__label">{t('us_wizard.dimensions')}</p>
                   <p className="summary-pkg-item__value">{dims}</p>
                 </div>
               </div>
               <div className="summary-pkg-item">
-                <span className="summary-pkg-item__icon">⚖️</span>
+                <span className="summary-pkg-item__icon"><IoScaleOutline size={20} /></span>
                 <div>
                   <p className="summary-pkg-item__label">{t('us_wizard.physical_weight')}</p>
                   <p className="summary-pkg-item__value">{pkg?.peso || '–'} {pkg?.unidadPeso || 'lb'}</p>
                 </div>
               </div>
               <div className="summary-pkg-item">
-                <span className="summary-pkg-item__icon">📄</span>
+                <span className="summary-pkg-item__icon"><IoDocumentOutline size={20} /></span>
                 <div>
                   <p className="summary-pkg-item__label">{t('us_wizard.content_label')}</p>
                   <p className="summary-pkg-item__value">{pkg?.descripcion || '–'}</p>
                 </div>
               </div>
               <div className="summary-pkg-item">
-                <span className="summary-pkg-item__icon">💲</span>
+                <span className="summary-pkg-item__icon"><IoCashOutline size={20} /></span>
                 <div>
                   <p className="summary-pkg-item__label">{t('us_wizard.fob_value')}</p>
                   <p className="summary-pkg-item__value">${pkg?.valorFOB || '–'} USD</p>
                 </div>
               </div>
-              
+
               {/* Peso volumétrico facturado si aplica */}
               {calc?.billedWeight && (
                 <div className="summary-pkg-item">
-                  <span className="summary-pkg-item__icon">📊</span>
+                  <span className="summary-pkg-item__icon"><IoBarChartOutline size={20} /></span>
                   <div>
                     <p className="summary-pkg-item__label">{t('us_wizard.billed_weight')}</p>
                     <p className="summary-pkg-item__value">
@@ -156,7 +180,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
             <div className="summary-section__header">
               <span className="summary-section__icon">🇺🇸</span>
               <h3 className="summary-section__title">{t('us_wizard.pickup_address')}</h3>
-              <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
+              <button className="summary-section__edit" onClick={editAddr} title="Editar dirección"><IoCreateOutline size={16} /></button>
             </div>
             <AddressBlock address={data.selectedOriginAddress} flag="🇺🇸" onEdit={editAddr} />
           </section>
@@ -168,9 +192,48 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
             <div className="summary-section__header">
               <span className="summary-section__icon">🇻🇪</span>
               <h3 className="summary-section__title">{t('us_wizard.delivery_address')}</h3>
-              <button className="summary-section__edit" onClick={editAddr} title="Editar dirección">✏️</button>
+              <button className="summary-section__edit" onClick={editAddr} title="Editar dirección"><IoCreateOutline size={16} /></button>
             </div>
             <AddressBlock address={data.selectedDestinationAddress} flag="🇻🇪" onEdit={editAddr} />
+          </section>
+
+          <div className="wizard-divider" />
+
+          {/* ── Método de entrega UPS ─────────────────────────────────── */}
+          <section className="summary-section">
+            <div className="summary-section__header">
+              <span className="summary-section__icon">
+                {isPickup ? <IoCarOutline size={18} /> : <IoStorefrontOutline size={18} />}
+              </span>
+              <h3 className="summary-section__title">Método de Entrega UPS</h3>
+            </div>
+            {isPickup ? (
+              <div className="summary-addr">
+                <p className="summary-addr__name">
+                  <IoCarOutline size={15} style={{ verticalAlign: 'middle' }} /> Pickup — UPS recoge en tu domicilio
+                </p>
+                <p className="summary-addr__line">
+                  <IoCalendarOutline size={14} style={{ verticalAlign: 'middle' }} /> {data.pickupDate ?? '–'}
+                </p>
+                <p className="summary-addr__line">
+                  <IoTimeOutline size={14} style={{ verticalAlign: 'middle' }} /> {fmtTime(data.pickupReadyTime)} – {fmtTime(data.pickupCloseTime)}
+                </p>
+                {pickupRate > 0 && (
+                  <p className="summary-addr__line" style={{ color: '#1e40af', fontWeight: '600' }}>
+                    <IoCashOutline size={14} style={{ verticalAlign: 'middle' }} /> +${pickupRate.toFixed(2)} USD (tarifa recogida)
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="summary-addr">
+                <p className="summary-addr__name">
+                  <IoStorefrontOutline size={15} style={{ verticalAlign: 'middle' }} /> Drop-off en tienda UPS
+                </p>
+                <p className="summary-addr__line" style={{ color: '#6b7280' }}>
+                  Llevar el paquete a la tienda UPS más cercana al origen
+                </p>
+              </div>
+            )}
           </section>
         </div>
 
@@ -188,7 +251,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
 
           {!calc ? (
             <p className="cost-card__error">
-              ⚠️ {t('us_wizard.error_no_calc')}
+              <IoWarningOutline size={16} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.error_no_calc')}
             </p>
           ) : (
             <>
@@ -206,8 +269,17 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                 {/* ✅ Línea UPS si hay courierQuote */}
                 {data.courierQuote && (
                   <CostRow
-                    label={`🚚 ${data.courierQuote.courier ?? 'UPS'} ${data.courierQuote.service ?? 'Ground'} (${t('us_wizard.pickup_label')})`}
+                    label={<><IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> {data.courierQuote.courier ?? 'UPS'} {data.courierQuote.service ?? 'Ground'} (Flete USA)</>}
                     valueUSD={fmtUSD(data.courierQuote.total ?? 0)}
+                    isDiscount={false}
+                  />
+                )}
+
+                {/* Costo de recogida UPS (solo pickup) */}
+                {isPickup && pickupRate > 0 && (
+                  <CostRow
+                    label={<><IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> Recogida UPS · {data.pickupDate ?? ''} {fmtTime(data.pickupReadyTime)}–{fmtTime(data.pickupCloseTime)}</>}
+                    valueUSD={fmtUSD(pickupRate)}
                     isDiscount={false}
                   />
                 )}
@@ -218,7 +290,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                 <span className="cost-total__label">Total PREPAID</span>
                 <span className="cost-total__usd" style={{ color: '#fff', fontSize: '18px', fontFamily: 'Courier New, monospace' }}>
                   {fmtUSD(
-                    Number(totalEUR) + Number(data.courierQuote?.total ?? 0)
+                    Number(totalEUR) + Number(data.courierQuote?.total ?? 0) + pickupRate
                   )}
                 </span>
               </div>
@@ -235,7 +307,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
           </button>
           
           <p style={{ fontSize: '12px', color: '#6c757d', textAlign: 'center', marginTop: '12px' }}>
-            <i className="fas fa-info-circle"></i> {t('us_wizard.usd_disclaimer')}
+            <IoWarningOutline size={13} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.usd_disclaimer')}
           </p>
         </div>
       </div>

@@ -11,6 +11,12 @@ import {
   IoCheckmarkCircle,
   IoWarningOutline,
   IoCloudDownloadOutline,
+  IoLockClosedOutline,
+  IoShieldCheckmarkOutline,
+  IoKeyOutline,
+  IoCarOutline,
+  IoCardOutline,
+  IoRefreshOutline,
 } from 'react-icons/io5';
 import './Step4Payment.scss';
 
@@ -28,7 +34,7 @@ const HALARAPAY_SCRIPT_SRC = 'https://halarapay.transactiongateway.com/token/Col
 
 // ── Métodos de pago USA — labels resolved at render time via t() ──────────────
 const PAYMENT_METHOD_IDS = [
-  { id: 'card', render: () => '💳' },
+  { id: 'card', render: () => <IoCardOutline size={22} /> },
   // { id: 'zelle', render: () => '💜' },
 ];
 
@@ -68,7 +74,7 @@ const CardInfo = () => {
   const { t } = useTranslation();
   return (
   <div className="redsys-info-block" style={{ borderLeft: '4px solid #022364', backgroundColor: '#eff6ff' }}>
-    <div className="redsys-info-block__icon" style={{ color: '#022364' }}>💳</div>
+    <div className="redsys-info-block__icon" style={{ color: '#022364' }}><IoCardOutline size={32} /></div>
     <p className="redsys-info-block__title" style={{ color: '#022364' }}>{t('us_wizard.card_sec_title')}</p>
     <p className="redsys-info-block__desc" style={{ color: '#1e40af' }}>
       {t('us_wizard.card_sec_desc')}
@@ -86,6 +92,11 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
   const hasLabel = !!labelBase64 || !!labelUrl;
 
   const downloadLabel = () => {
+    const now = new Date();
+    const p   = (n) => String(n).padStart(2, '0');
+    const stamp = `${now.getFullYear()}${p(now.getMonth()+1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
+    const filename = `KU-${stamp}.pdf`;
+
     if (labelBase64) {
       // Descargar directamente desde base64 (sin red)
       const bytes = Uint8Array.from(atob(labelBase64), c => c.charCodeAt(0));
@@ -93,7 +104,7 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = `label-${nGuia}.pdf`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -196,6 +207,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const navigate = useNavigate();
   const [submitting,     setSubmitting]     = useState(false);
   const [submitPhase,    setSubmitPhase]     = useState('');
+  const [pendingRetry,   setPendingRetry]   = useState(null); // { transactionId, orderPayload }
   const [submitError,    setSubmitError]     = useState(null);
   const [guiaResult,     setGuiaResult]      = useState(null);
   const [collectJsReady, setCollectJsReady]  = useState(false);
@@ -206,15 +218,145 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const usd      = (n) => `$${Number(n || 0).toFixed(2)} USD`;
   const shipping = Number(calculationResult?.data?.total || 0);
   const courier  = courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0;
-  const total    = Number((shipping + courier).toFixed(2));
+  const pickup   = Number(data.pickupRate ?? 0);
+  const total    = Number((shipping + courier + pickup).toFixed(2));
+  const isPickup = data.deliveryMethod === 'pickup';
 
   const totalRef      = useRef(total);
-  const lightboxOpen  = useRef(false);  // true mientras el lightbox está abierto
+  const lightboxOpen  = useRef(false);
   useEffect(() => { totalRef.current = total; }, [total]);
+
+  // Clave sessionStorage para recuperación si el navegador se cierra/falla tras el cobro
+  const RECOVERY_KEY = 'krakenu_pending_tx';
+
+  // Al montar: si hay un pago pendiente sin guía, ofrecer reintento
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(RECOVERY_KEY);
+      if (stored) {
+        const { transactionId } = JSON.parse(stored);
+        if (transactionId) setPendingRetry(transactionId);
+      }
+    } catch { sessionStorage.removeItem(RECOVERY_KEY); }
+  }, []); // eslint-disable-line
+
+  // ── Pasos post-pago: pickup + label + guía ────────────────────────────────
+  // Separado del cobro para poder reintentar sin volver a cobrar.
+  const runPostPaymentFlow = async (transactionId) => {
+    const pkg  = data.packages?.[0] ?? {};
+    const addr = data.selectedOriginAddress ?? {};
+
+    const weightKg = pkg.unidadPeso?.toLowerCase() === 'lb'
+      ? parseFloat(pkg.peso || 0) / 2.20462
+      : parseFloat(pkg.peso || 0);
+
+    let prn = '', pickupTransId = '', pickupResultDate = null;
+    let pickupReady = data.pickupReadyTime || '0900';
+    let pickupClose = data.pickupCloseTime || '1700';
+
+    if (isPickup) {
+      setSubmitPhase('Scheduling UPS pickup…');
+      const pickupResult = await createUpsPickup({
+        pickupDate:           data.pickupDate || getNextBusinessDay(),
+        readyTime:            data.pickupReadyTime || '0900',
+        closeTime:            data.pickupCloseTime || '1700',
+        contactName:          addr.alias || 'Client',
+        companyName:          addr.alias || '',
+        addressLine:          addr.line1 || '',
+        city:                 addr.city  || '',
+        stateProvince:        addr.province || addr.state || addr.stateProvince || '',
+        postalCode:           addr.zip   || '',
+        residentialIndicator: 'Y',
+        phone:                (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
+        weight:               parseFloat(weightKg.toFixed(2)),
+        unitSystem:           'METRIC',
+        quantity:             1,
+        serviceCode:          '003',
+        referenceNumber:      '',
+      });
+
+      prn             = pickupResult.success ? (pickupResult.data?.prn                   ?? '') : '';
+      pickupTransId   = pickupResult.success ? (pickupResult.data?.transactionIdentifier ?? '') : '';
+      pickupResultDate= pickupResult.success ? (pickupResult.data?.pickupDate             ?? null) : null;
+      pickupReady     = pickupResult.success ? (pickupResult.data?.readyTime  ?? data.pickupReadyTime ?? '0900') : (data.pickupReadyTime ?? '0900');
+      pickupClose     = pickupResult.success ? (pickupResult.data?.closeTime  ?? data.pickupCloseTime ?? '1700') : (data.pickupCloseTime ?? '1700');
+
+      if (!pickupResult.success) {
+        console.warn('[UPS Pickup] No se pudo crear el pickup:', pickupResult.message);
+      }
+    }
+
+    setSubmitPhase('Generating shipping label…');
+    const shipmentResult = await createUpsShipment({
+      contactName:   addr.alias || 'Client',
+      companyName:   addr.alias || '',
+      addressLine:   addr.line1 || '',
+      city:          addr.city  || '',
+      stateProvince: addr.province || addr.state || addr.stateProvince || '',
+      postalCode:    addr.zip   || '',
+      phone:         (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
+      weight:        parseFloat(weightKg.toFixed(2)),
+      length:        parseFloat(pkg.largo || 0),
+      width:         parseFloat(pkg.ancho || 0),
+      height:        parseFloat(pkg.alto  || 0),
+      unitSystem:    'METRIC',
+      serviceCode:   data.courierQuote?.service_code ?? '03',
+    });
+
+    const trackingNumber = shipmentResult.success ? (shipmentResult.data?.trackingNumber ?? '') : '';
+    const labelBase64    = shipmentResult.success ? (shipmentResult.data?.labelBase64    ?? '') : '';
+    const labelUrl       = shipmentResult.success ? (shipmentResult.data?.labelUrl       ?? '') : '';
+
+    if (!shipmentResult.success) {
+      console.warn('[UPS Shipment] No se pudo generar el label:', shipmentResult.message);
+    }
+
+    setSubmitPhase('Creating your shipment…');
+
+    const pickupFechaIso = pickupResultDate
+      ? `${pickupResultDate.slice(0,4)}-${pickupResultDate.slice(4,6)}-${pickupResultDate.slice(6,8)}`
+      : (isPickup ? (data.pickupDate ?? null) : null);
+
+    const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
+      halaraPayTransactionId: transactionId,
+      peso:             Number(pkg.peso  || 0),
+      largo:            Number(pkg.largo || 0),
+      ancho:            Number(pkg.ancho || 0),
+      alto:             Number(pkg.alto  || 0),
+      unidadPeso:       pkg.unidadPeso   || 'lb',
+      declaredValueUSD: Number(pkg.valorFOB || 0),
+      fragil:           pkg.fragil ?? false,
+      courierId:        data.courierId        ?? null,
+      courierServiceId: data.courierServiceId ?? null,
+      courierTotal:     Number(data.courierQuote?.total || data.courierQuote?.cost || 0),
+      courierName:      data.courierQuote?.name    || data.courierQuote?.courier || '',
+      courierService:   data.courierQuote?.service || '',
+      pickupCost:       isPickup ? Number(data.pickupRate ?? 0) : 0,
+      idDireccionOrigen:  data.originAddressId      ?? data.selectedOriginAddress?.id      ?? null,
+      idDireccionDestino: data.destinationAddressId ?? data.selectedDestinationAddress?.id ?? null,
+      contenidosIds:    pkg.contenidos?.map(c => c.id) ?? [],
+      costoBase:        Number(data.calculationResult?.data?.total || 0),
+      tienePago:        true,
+      pickupCode:           prn,
+      sendSeiPickupUuid:    prn,
+      sendSeiShipmentUuid:  pickupTransId,
+      pickupFecha:          pickupFechaIso,
+      pickupHoraDesde:      isPickup ? pickupReady : null,
+      pickupHoraHasta:      isPickup ? pickupClose : null,
+      sendSeiTrackingNumber: trackingNumber,
+      labelUrl:              labelUrl,
+    });
+
+    // Éxito: limpiar recuperación y mostrar pantalla de éxito
+    sessionStorage.removeItem(RECOVERY_KEY);
+    setPendingRetry(null);
+    const nGuia = guiaResult?.nGuia || `KU-${Date.now().toString().slice(-6)}`;
+    setGuiaResult({ nGuia, metodoPago: 'card', labelBase64, labelUrl, trackingNumber });
+  };
 
   // ── Callback que recibe el token de HalaraPay (lightbox) ──────────────────
   const handleTokenReceived = async (token) => {
-    lightboxOpen.current = false;       // token recibido → pago en curso
+    lightboxOpen.current = false;
     setSubmitPhase('Processing payment…');
     try {
       // ── 1. Cobrar la tarjeta ─────────────────────────────────────────────
@@ -232,113 +374,43 @@ const Step4Payment = ({ data, updateData, onBack }) => {
         return;
       }
 
-      // ── 2. Pago aprobado → crear pickup UPS ─────────────────────────────────
-      setSubmitPhase('Scheduling UPS pickup…');
-      const pkg  = data.packages?.[0] ?? {};
-      const addr = data.selectedOriginAddress ?? {};
+      // ── 2. Pago aprobado: guardar en sessionStorage ANTES de continuar ───
+      // Si el navegador falla aquí, el usuario puede reintentar al volver.
+      const transactionId = chargeResult.transactionId ?? '';
+      sessionStorage.setItem(RECOVERY_KEY, JSON.stringify({ transactionId }));
 
-      const weightKg = pkg.unidadPeso?.toLowerCase() === 'lb'
-        ? parseFloat(pkg.peso || 0) / 2.20462
-        : parseFloat(pkg.peso || 0);
-
-      const pickupResult = await createUpsPickup({
-        pickupDate:           getNextBusinessDay(),
-        readyTime:            '0900',
-        closeTime:            '1700',
-        contactName:          addr.alias || 'Client',
-        companyName:          addr.alias || '',
-        addressLine:          addr.line1 || '',
-        city:                 addr.city  || '',
-        stateProvince:        addr.province || addr.state || addr.stateProvince || '',
-        postalCode:           addr.zip   || '',
-        residentialIndicator: 'Y',
-        phone:                (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
-        weight:               parseFloat(weightKg.toFixed(2)),
-        unitSystem:           'METRIC',
-        quantity:             1,
-        serviceCode:          '003',
-        referenceNumber:      '',
-      });
-
-      const prn           = pickupResult.success ? (pickupResult.data?.prn                   ?? '') : '';
-      const transactionId = pickupResult.success ? (pickupResult.data?.transactionIdentifier ?? '') : '';
-      const pickupDate    = pickupResult.success ? (pickupResult.data?.pickupDate             ?? null) : null;
-      const pickupReady   = pickupResult.success ? (pickupResult.data?.readyTime              ?? '0900') : '0900';
-      const pickupClose   = pickupResult.success ? (pickupResult.data?.closeTime              ?? '1700') : '1700';
-
-      if (!pickupResult.success) {
-        console.warn('[UPS Pickup] No se pudo crear el pickup:', pickupResult.message);
-      }
-
-      // ── 3. Crear envío UPS (label PDF + tracking number) ─────────────────────
-      setSubmitPhase('Generating shipping label…');
-      const shipmentResult = await createUpsShipment({
-        contactName:   addr.alias || 'Client',
-        companyName:   addr.alias || '',
-        addressLine:   addr.line1 || '',
-        city:          addr.city  || '',
-        stateProvince: addr.province || addr.state || addr.stateProvince || '',
-        postalCode:    addr.zip   || '',
-        phone:         (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
-        weight:        parseFloat(weightKg.toFixed(2)),
-        length:        parseFloat(pkg.largo || 0),
-        width:         parseFloat(pkg.ancho || 0),
-        height:        parseFloat(pkg.alto  || 0),
-        unitSystem:    'METRIC',
-        serviceCode:   data.courierQuote?.service_code ?? '03',
-      });
-
-      const trackingNumber = shipmentResult.success ? (shipmentResult.data?.trackingNumber ?? '') : '';
-      const labelBase64    = shipmentResult.success ? (shipmentResult.data?.labelBase64    ?? '') : '';
-      const labelUrl       = shipmentResult.success ? (shipmentResult.data?.labelUrl       ?? '') : '';
-
-      if (!shipmentResult.success) {
-        console.warn('[UPS Shipment] No se pudo generar el label:', shipmentResult.message);
-      }
-
-      // ── 4. Crear la guía ─────────────────────────────────────────────────────
-      setSubmitPhase('Creating your shipment…');
-
-      // Convertir "yyyyMMdd" → ISO para que el backend lo parsee como DateTime
-      const pickupFechaIso = pickupDate
-        ? `${pickupDate.slice(0,4)}-${pickupDate.slice(4,6)}-${pickupDate.slice(6,8)}`
-        : null;
-
-      const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
-        halaraPayTransactionId: chargeResult.transactionId ?? '',
-        peso:             Number(pkg.peso  || 0),
-        largo:            Number(pkg.largo || 0),
-        ancho:            Number(pkg.ancho || 0),
-        alto:             Number(pkg.alto  || 0),
-        unidadPeso:       pkg.unidadPeso   || 'lb',
-        declaredValueUSD: Number(pkg.valorFOB || 0),
-        fragil:           pkg.fragil ?? false,
-        courierId:        data.courierId        ?? null,
-        courierServiceId: data.courierServiceId ?? null,
-        courierTotal:     Number(data.courierQuote?.total || data.courierQuote?.cost || 0),
-        courierName:      data.courierQuote?.name    || data.courierQuote?.courier || '',
-        courierService:   data.courierQuote?.service || '',
-        idDireccionOrigen:  data.originAddressId      ?? data.selectedOriginAddress?.id      ?? null,
-        idDireccionDestino: data.destinationAddressId ?? data.selectedDestinationAddress?.id ?? null,
-        contenidosIds:    pkg.contenidos?.map(c => c.id) ?? [],
-        costoBase:        Number(data.calculationResult?.data?.total || 0),
-        tienePago:        true,
-        pickupCode:           prn,
-        sendSeiPickupUuid:    prn,
-        sendSeiShipmentUuid:  transactionId,
-        pickupFecha:          pickupFechaIso,
-        pickupHoraDesde:      pickupReady,
-        pickupHoraHasta:      pickupClose,
-        sendSeiTrackingNumber: trackingNumber,
-        labelUrl:              labelUrl,
-      });
-
-      const nGuia = guiaResult?.nGuia || `KU-${Date.now().toString().slice(-6)}`;
-      setGuiaResult({ nGuia, metodoPago: 'card', labelBase64, labelUrl, trackingNumber });
+      // ── 3. Crear pickup + label + guía ───────────────────────────────────
+      await runPostPaymentFlow(transactionId);
 
     } catch (err) {
       console.error('[Step4Payment US] error', err);
-      setSubmitError(err.message ?? 'Payment failed. Please try again.');
+      // Si ya hay un pago guardado → el error es post-pago: ofrecer reintento
+      const stored = sessionStorage.getItem(RECOVERY_KEY);
+      if (stored) {
+        try {
+          const { transactionId } = JSON.parse(stored);
+          setPendingRetry(transactionId);
+          setSubmitError('Tu pago fue procesado correctamente, pero ocurrió un error al crear tu guía. Usa el botón "Reintentar" para completar el proceso sin volver a cobrar.');
+        } catch { setSubmitError(err.message ?? 'Error inesperado.'); }
+      } else {
+        setSubmitError(err.message ?? 'Payment failed. Please try again.');
+      }
+      setSubmitting(false);
+      setSubmitPhase('');
+    }
+  };
+
+  // ── Reintento post-pago (sin cobrar de nuevo) ─────────────────────────────
+  const handleRetry = async () => {
+    if (!pendingRetry) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await runPostPaymentFlow(pendingRetry);
+    } catch (err) {
+      console.error('[Step4Payment US] retry error', err);
+      setSubmitError('Error al reintentar. Si el problema persiste, contáctanos con tu ID de transacción: ' + pendingRetry);
+    } finally {
       setSubmitting(false);
       setSubmitPhase('');
     }
@@ -440,7 +512,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       {/* ── Columna izquierda: métodos de pago ── */}
       <div className="step4-layout__left">
         <div className="wizard-card">
-          <h2 className="wizard-card__title">💳 {t('us_wizard.payment_title')}</h2>
+          <h2 className="wizard-card__title"><IoCardOutline size={22} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.payment_title')}</h2>
           <p className="wizard-card__subtitle">
             {t('us_wizard.payment_subtitle')}
           </p>
@@ -497,9 +569,16 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           {courierQuote && (
             <div className="order-row">
               <span>
-                {t('us_wizard.local_pickup_row', { service: courierQuote.name || courierQuote.service || 'UPS' })}
+                <IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> {courierQuote.courier || 'UPS'} {courierQuote.service || ''}
               </span>
               <span style={{ fontWeight: '600' }}>{usd(courier)}</span>
+            </div>
+          )}
+
+          {pickup > 0 && (
+            <div className="order-row">
+              <span><IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> Recogida UPS</span>
+              <span style={{ fontWeight: '600' }}>{usd(pickup)}</span>
             </div>
           )}
 
@@ -516,28 +595,55 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           </div>
 
           <div className="security-badges" style={{ marginTop: '20px' }}>
-            <span className="security-badge">🔒 SSL</span>
-            <span className="security-badge">🛡️ PCI DSS</span>
-            <span className="security-badge">🔐 Encrypted</span>
+            <span className="security-badge"><IoLockClosedOutline size={13} style={{ verticalAlign: 'middle' }} /> SSL</span>
+            <span className="security-badge"><IoShieldCheckmarkOutline size={13} style={{ verticalAlign: 'middle' }} /> PCI DSS</span>
+            <span className="security-badge"><IoKeyOutline size={13} style={{ verticalAlign: 'middle' }} /> Encrypted</span>
           </div>
           <p className="security-text">
             {t('us_wizard.security_text')}
           </p>
 
-          <button
-            className="btn-wizard-next cost-card__proceed-btn"
-            onClick={handleConfirm}
-            disabled={submitting || (metodoPago === 'card' && !collectJsReady)}
-            style={{ marginTop: '15px' }}
-          >
-            {submitting
-              ? `⏳ ${submitPhase || t('us_wizard.processing')}`
-              : (metodoPago === 'card' && !collectJsReady)
-                ? `⏳ ${t('us_wizard.loading_payment')}`
-                : metodoPago === 'zelle'
-                  ? t('us_wizard.confirm_request')
-                  : t('us_wizard.confirm_payment', { amount: usd(total) })}
-          </button>
+          {pendingRetry ? (
+            <div style={{
+              background: '#fef3c7', border: '1px solid #f59e0b',
+              borderRadius: '8px', padding: '16px', marginTop: '15px',
+            }}>
+              <p style={{ color: '#92400e', fontWeight: '600', marginBottom: '6px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <IoWarningOutline size={16} /> Tu pago fue procesado exitosamente
+              </p>
+              <p style={{ color: '#78350f', fontSize: '12px', marginBottom: '12px', lineHeight: '1.4' }}>
+                Ocurrió un error al crear tu guía. Pulsa "Reintentar" para completar el proceso sin volver a cobrar tu tarjeta.
+              </p>
+              <p style={{ color: '#92400e', fontSize: '11px', marginBottom: '12px' }}>
+                ID de transacción: <span style={{ fontFamily: 'monospace', background: '#fde68a', padding: '1px 4px', borderRadius: '3px' }}>{pendingRetry}</span>
+              </p>
+              <button
+                className="btn-wizard-next cost-card__proceed-btn"
+                onClick={handleRetry}
+                disabled={submitting}
+                style={{ marginTop: '0', width: '100%' }}
+              >
+                {submitting
+                  ? `⏳ ${submitPhase || 'Procesando...'}`
+                  : <><IoRefreshOutline size={16} style={{ verticalAlign: 'middle' }} /> Reintentar creación de guía</>}
+              </button>
+            </div>
+          ) : (
+            <button
+              className="btn-wizard-next cost-card__proceed-btn"
+              onClick={handleConfirm}
+              disabled={submitting || (metodoPago === 'card' && !collectJsReady)}
+              style={{ marginTop: '15px' }}
+            >
+              {submitting
+                ? `⏳ ${submitPhase || t('us_wizard.processing')}`
+                : (metodoPago === 'card' && !collectJsReady)
+                  ? `⏳ ${t('us_wizard.loading_payment')}`
+                  : metodoPago === 'zelle'
+                    ? t('us_wizard.confirm_request')
+                    : t('us_wizard.confirm_payment', { amount: usd(total) })}
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -19,6 +19,19 @@ export const fetchUpsQuotes = async (originZip, weight, length, width, height, u
   }
 };
 
+export const fetchPickupRate = async ({ addressLine, city, stateProvince, postalCode, residentialIndicator, pickupDate, readyTime, closeTime }) => {
+  try {
+    const res = await axiosInstance.post(`${BASE}/pickup/rate`, {
+      addressLine, city, stateProvince, postalCode,
+      residentialIndicator: residentialIndicator ?? 'N',
+      pickupDate, readyTime, closeTime,
+    });
+    return { success: true, rate: parseFloat(res.data.rate) || 0, currency: res.data.currency ?? 'USD' };
+  } catch (err) {
+    return { success: false, rate: 0, message: err.response?.data?.message ?? 'Error consultando tarifa de pickup.' };
+  }
+};
+
 export const createUpsPickup = async (pickupData) => {
   try {
     const res = await axiosInstance.post(`${BASE}/pickup/create`, pickupData);
