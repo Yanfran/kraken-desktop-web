@@ -208,7 +208,7 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
     select: (response) => {
       // console.log("PreAlertForm: Delivery data (lockers) response:", response);
       return response.data?.tiendas
-        .filter(t => t.idTiendaTipo === 2)
+        .filter(t => t.idTiendaTipo === 2 || t.idTiendaTipo === 3 || t.idTiendaTipo === 8)
         .map(t => ({ label: t.nombre, value: t.id.toString() }));
     }, // Format for SearchableSelect
   });

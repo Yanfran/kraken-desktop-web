@@ -66,7 +66,7 @@ export const searchTrackingInGuias = async (trackingNumber) => {
             estatus: foundGuia.estatus,
             contenido: foundGuia.contenido,
             fecha: foundGuia.fecha,
-            origen: 'USA', // Valor por defecto
+            origen: foundGuia.origen ?? 'USA',
             trackings: foundGuia.trackings,
             // Mapear campos adicionales si existen
             idGuia: foundGuia.idGuia,

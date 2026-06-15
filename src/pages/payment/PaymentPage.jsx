@@ -267,6 +267,7 @@ export default function PaymentPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedBank, setSelectedBank] = useState('0105');
+  const [nombreCompleto, setNombreCompleto] = useState('');
 
   const submittingRef = useRef(false);
 
@@ -426,16 +427,43 @@ export default function PaymentPage() {
 
   const buildTelefonoLocal = () => `${phoneCode}${phoneNumber}`;
 
+  // Megasoft solo acepta alfanuméricos, comas, puntos y espacios (sin acentos ni ñ)
+  const sanitizeNombreCompleto = (str) =>
+    str
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')   // quita tildes
+      .replace(/ñ/gi, 'n')               // ñ → n
+      .replace(/[^a-zA-Z0-9 ,.]/g, '')  // elimina caracteres no permitidos
+      .replace(/\s+/g, ' ')              // colapsa espacios múltiples
+      .trim()
+      .slice(0, 250);
+
   const getNombreCompleto = () => {
     const nombres = user?.name || user?.nombres || '';
     const apellidos = user?.lastName || user?.apellidos || '';
-    return `${nombres} ${apellidos}`.trim() || 'Cliente Kraken';
+    return sanitizeNombreCompleto(`${nombres} ${apellidos}`.trim()) || '';
   };
+
+  // Pre-poblar nombre al montar
+  useEffect(() => {
+    if (!nombreCompleto) {
+      setNombreCompleto(getNombreCompleto());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // ============================================================
   // VALIDACIÓN
   // ============================================================
   const validateForm = () => {
+    if (!nombreCompleto || nombreCompleto.trim().length < 3) {
+      toast.error('Ingresa tu nombre y apellido');
+      return false;
+    }
+    if (!/^[a-zA-Z0-9 ,.]+$/.test(nombreCompleto)) {
+      toast.error('El nombre solo puede contener letras, números, comas y puntos (sin acentos ni caracteres especiales)');
+      return false;
+    }
     if (!idNumber || idNumber.length < 6) {
       toast.error('El número de identificación debe tener al menos 6 dígitos');
       return false;
@@ -490,7 +518,7 @@ export default function PaymentPage() {
 
       const request = {
         customerId,
-        nombreCompleto: getNombreCompleto(),
+        nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         originMobileNumber: formatPhoneForMercantil(phoneCode, phoneNumber),
         destinationBankId: selectedBank,
         amount: amount.toString(),
@@ -548,7 +576,7 @@ export default function PaymentPage() {
 
       const request = {
         customerId,
-        nombreCompleto: getNombreCompleto(),
+        nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         originMobileNumber: buildTelefonoLocal(),
         destinationBankId: selectedBank,
         amount: amount.toString(),
@@ -607,7 +635,7 @@ export default function PaymentPage() {
 
       const request = {
         customerId,
-        nombreCompleto: getNombreCompleto(),
+        nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         cuentaCliente: diIdMethod === 'cuenta' ? cuentaCliente : null,
         telefonoCliente: diIdMethod === 'telefono' ? buildTelefonoLocal() : null,
         codigoBanco: selectedBank,
@@ -723,7 +751,7 @@ export default function PaymentPage() {
 
       const request = {
         customerId,
-        nombreCompleto: getNombreCompleto(),
+        nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         cuentaCliente: diIdMethod === 'cuenta' ? cuentaCliente : null,
         telefonoCliente: diIdMethod === 'telefono' ? buildTelefonoLocal() : null,
         codigoBanco: selectedBank,
@@ -900,7 +928,7 @@ export default function PaymentPage() {
       setIsLoading(true);
       const response = await megasoftTCCrearToken({
         customerId: `${idType}${idNumber}`,
-        nombreCompleto: getNombreCompleto(),
+        nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         pan: tcPan,
         cvv: tcCvv,
         exp: tcExp.replace('/', ''),
@@ -1188,6 +1216,19 @@ export default function PaymentPage() {
 
           {renderTCStep(0)}
 
+          {/* Nombre y Apellido */}
+          <div className={styles.inputGroup}>
+            <label>Nombre y Apellido</label>
+            <input
+              type="text"
+              placeholder="Ej. Juan Perez"
+              value={nombreCompleto}
+              onChange={(e) => setNombreCompleto(sanitizeNombreCompleto(e.target.value))}
+              maxLength={250}
+            />
+            <small>Solo letras, números, comas y puntos. Sin acentos ni caracteres especiales.</small>
+          </div>
+
           {/* Cédula */}
           <div className={styles.inputGroup}>
             <label>Cédula de Identidad</label>
@@ -1473,6 +1514,19 @@ export default function PaymentPage() {
             : isDI ? 'Recibirás un OTP por SMS para confirmar el pago'
             : 'Ingresa los datos de tu cuenta para el cobro directo'}
         </p>
+
+        {/* Nombre y Apellido */}
+        <div className={styles.inputGroup}>
+          <label>Nombre y Apellido</label>
+          <input
+            type="text"
+            placeholder="Ej. Juan Perez"
+            value={nombreCompleto}
+            onChange={(e) => setNombreCompleto(sanitizeNombreCompleto(e.target.value))}
+            maxLength={250}
+          />
+          <small>Solo letras, números, comas y puntos. Sin acentos ni caracteres especiales.</small>
+        </div>
 
         {/* Cédula */}
         <div className={styles.inputGroup}>

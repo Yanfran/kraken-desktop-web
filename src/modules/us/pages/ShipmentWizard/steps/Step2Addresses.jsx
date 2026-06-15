@@ -319,7 +319,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
   const filteredTiendas = useMemo(() => {
     if (!allTiendas.length) return [];
     return allTiendas.filter((t) => {
-      const tipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3;
+      const tipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3 || t.idTiendaTipo === 8;
       const matchCiudad = storeForm.city
         ? t.idZonaCiudad === parseInt(storeForm.city)
         : true;

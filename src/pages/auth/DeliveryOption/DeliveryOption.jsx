@@ -146,8 +146,8 @@ const filteredStores = useMemo(() => {
 
     return allStores
         .filter((t) => {
-            // 1. Lógica de tipo: Aceptar tipo 2 (Lockers) o 3 (Aliados)
-            const isTipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3;
+            // 1. Lógica de tipo: Aceptar tipo 2 (Lockers), 3 (Aliados) u 8 (Punto de Retiro)
+            const isTipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3 || t.idTiendaTipo === 8;
 
             // 2. Lógica de ciudad: Filtrar si hay ciudad seleccionada
             //    Si no hay ciudad (storeData.city es ''), 'matchesCity' es true
