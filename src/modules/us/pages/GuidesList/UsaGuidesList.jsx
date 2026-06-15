@@ -130,7 +130,9 @@ export default function UsaGuidesList() {
                     <span className={styles.tracking}>{s.trackingNumber}</span>
                   )}
                   <div className={styles.rowBottom}>
-                    <span className={styles.status}>{s.estatus}</span>
+                    <span className={styles.status}>
+                      {s.idFormaCreacion === 7 ? 'Drop-off registrado' : s.estatus}
+                    </span>
                     <span className={styles.date}>{s.fechaFormato}</span>
                   </div>
                   <div className={styles.rowBottom}>

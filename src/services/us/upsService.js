@@ -1,9 +1,13 @@
 // src/services/us/upsService.js
-import axiosInstance from '../axiosInstance';
+import axiosInstance, { createCustomAxios, TIMEOUTS } from '../axiosInstance';
+
+// Timeout extendido para llamadas UPS que pueden tardar (sandbox puede ser lento)
+const axiosUPS = createCustomAxios(TIMEOUTS.LONG); // 300 segundos
 
 const BASE = '/us/ups';
 
-export const fetchUpsQuotes = async (originZip, weight, length, width, height, unitSystem = 'IMPERIAL') => {
+// pickupType: '03' = Customer Counter (drop-off) | '06' = One Time Pickup
+export const fetchUpsQuotes = async (originZip, weight, length, width, height, unitSystem = 'IMPERIAL', pickupType = '03') => {
   try {
     const res = await axiosInstance.post(`${BASE}/quotes`, {
       originZip,
@@ -12,6 +16,7 @@ export const fetchUpsQuotes = async (originZip, weight, length, width, height, u
       width:      parseFloat(width)   || 0,
       height:     parseFloat(height)  || 0,
       unitSystem,
+      PickupType: pickupType,
     });
     return { success: true, data: res.data.data ?? [] };
   } catch (err) {
@@ -34,24 +39,35 @@ export const fetchPickupRate = async ({ addressLine, city, stateProvince, postal
 
 export const createUpsPickup = async (pickupData) => {
   try {
-    const res = await axiosInstance.post(`${BASE}/pickup/create`, pickupData);
+    const res = await axiosUPS.post(`${BASE}/pickup/create`, pickupData);
     return { success: true, data: res.data };
   } catch (err) {
     return {
       success: false,
-      message: err.response?.data?.message ?? 'Error creando pickup UPS.',
+      message: err.response?.data?.message ?? err?.message ?? 'Error creando pickup UPS.',
     };
   }
 };
 
 export const createUpsShipment = async (shipmentData) => {
   try {
-    const res = await axiosInstance.post(`${BASE}/shipment/create`, shipmentData);
-    return { success: true, data: res.data };
+    const res = await axiosUPS.post(`${BASE}/shipment/create`, shipmentData);
+    const json = res.data;
+    if (!json.success) return { success: false, data: null, message: json.message };
+    return {
+      success: true,
+      data: {
+        trackingNumber: json.trackingNumber ?? json.data?.trackingNumber ?? '',
+        labelBase64:    json.labelBase64    ?? json.data?.labelBase64    ?? null,
+        labelUrl:       json.labelUrl       ?? json.data?.labelUrl       ?? null,
+        shipmentId:     json.shipmentId     ?? json.data?.shipmentId     ?? null,
+      },
+    };
   } catch (err) {
     return {
       success: false,
-      message: err.response?.data?.message ?? 'Error creando envío UPS.',
+      data: null,
+      message: err.response?.data?.message ?? err?.message ?? 'Error creando envío UPS.',
     };
   }
 };

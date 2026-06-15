@@ -6,10 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { axiosPaymentInstance } from '../../../../../services/axiosInstance';
 import { createUpsPickup, createUpsShipment } from '../../../../../services/us/upsService';
+import { getNextNGuia } from '../../../../../services/us/usGuiasService';
+import { useAuth } from '../../../../../contexts/AuthContext';
 import { API_URL } from '../../../../../utils/config';
 import {
   IoCheckmarkCircle,
+  IoCheckmarkDoneOutline,
   IoWarningOutline,
+  IoAlertCircleOutline,
   IoCloudDownloadOutline,
   IoLockClosedOutline,
   IoShieldCheckmarkOutline,
@@ -17,6 +21,10 @@ import {
   IoCarOutline,
   IoCardOutline,
   IoRefreshOutline,
+  IoCopyOutline,
+  IoHomeOutline,
+  IoCubeOutline,
+  IoMailOutline,
 } from 'react-icons/io5';
 import './Step4Payment.scss';
 
@@ -87,115 +95,215 @@ const CardInfo = () => {
 };
 
 // ── Pantalla de Éxito ─────────────────────────────────────────────────────────
-const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumber }) => {
-  const { t } = useTranslation();
-  const hasLabel = !!labelBase64 || !!labelUrl;
+const NAVY   = '#022364';
+const ORANGE = '#F05A22';
+const GREEN  = '#22C55E';
+const AMBER  = '#F59E0B';
 
-  const downloadLabel = () => {
-    const now = new Date();
-    const p   = (n) => String(n).padStart(2, '0');
-    const stamp = `${now.getFullYear()}${p(now.getMonth()+1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
-    const filename = `KU-${stamp}.pdf`;
+const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumber, pickupWarning }) => {
+  const navigate   = useNavigate();
+  const hasLabel   = !!labelBase64 || !!labelUrl;
+  const [copied,       setCopied]       = useState(false);
+  const [downloading,  setDownloading]  = useState(false);
 
-    if (labelBase64) {
-      // Descargar directamente desde base64 (sin red)
-      const bytes = Uint8Array.from(atob(labelBase64), c => c.charCodeAt(0));
-      const blob  = new Blob([bytes], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } else if (labelUrl) {
-      // Fallback: abrir desde el backend
-      const backendBase = API_URL.replace(/\/api$/, '');
-      const fullUrl = labelUrl.startsWith('http') ? labelUrl : `${backendBase}${labelUrl}`;
-      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+  const handleCopy = () => {
+    navigator.clipboard.writeText(nGuia).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      if (labelBase64) {
+        const now   = new Date();
+        const p     = (n) => String(n).padStart(2, '0');
+        const stamp = `${now.getFullYear()}${p(now.getMonth()+1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}`;
+        const bytes = Uint8Array.from(atob(labelBase64), c => c.charCodeAt(0));
+        const blob  = new Blob([bytes], { type: 'application/pdf' });
+        const url   = URL.createObjectURL(blob);
+        const a     = document.createElement('a');
+        a.href = url; a.download = `${nGuia || `KU-${stamp}`}.pdf`;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
+      } else if (labelUrl) {
+        const base    = API_URL.replace(/\/api$/, '');
+        const fullUrl = labelUrl.startsWith('http') ? labelUrl : `${base}${labelUrl}`;
+        window.open(fullUrl, '_blank', 'noopener,noreferrer');
+      }
+    } finally {
+      setDownloading(false);
     }
   };
 
   return (
-    <div className="payment-success" style={{ textAlign: 'center', padding: '40px 20px' }}>
-      <div style={{ marginBottom: '20px', color: '#22c55e' }}>
-        <IoCheckmarkCircle size={72} />
+    <div style={{
+      background: '#F9FAFB', minHeight: '60vh',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '40px 20px 60px',
+    }}>
+      {/* Check circle */}
+      <div style={{ position: 'relative', marginBottom: '16px' }}>
+        <div style={{
+          width: 80, height: 80, borderRadius: '50%',
+          background: GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: `0 4px 20px ${GREEN}66`,
+        }}>
+          <IoCheckmarkCircle size={44} color="#fff" />
+        </div>
+        <div style={{
+          position: 'absolute', inset: -10, borderRadius: '50%',
+          background: `${GREEN}18`, pointerEvents: 'none',
+        }} />
       </div>
-      <h2 style={{ color: '#022364', fontWeight: 'bold', fontSize: '24px' }}>
-        {t('us_wizard.success_title')}
+
+      {/* Títulos */}
+      <h2 style={{ fontSize: 26, fontWeight: 800, color: '#1A1A1A', margin: '0 0 8px', textAlign: 'center' }}>
+        ¡Envío Registrado!
       </h2>
-      <p style={{ color: '#4b5563', marginBottom: '20px' }}>
-        {t('us_wizard.success_subtitle')}
+      <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 24px', textAlign: 'center' }}>
+        Hemos recibido tu solicitud de recogida correctamente.
       </p>
 
-      {/* Número de guía */}
+      {/* Card número de guía */}
       <div style={{
-        background: '#f3f4f6', padding: '20px', borderRadius: '12px',
-        display: 'inline-block', marginBottom: '20px'
+        width: '100%', maxWidth: 440,
+        background: '#fff', borderRadius: 16, padding: '16px 20px',
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        marginBottom: 12,
       }}>
-        <span style={{
-          display: 'block', fontSize: '12px', color: '#6b7280',
-          textTransform: 'uppercase', letterSpacing: '1px'
-        }}>
-          {t('us_wizard.guide_number')}
-        </span>
-        <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
-          {nGuia}
-        </span>
-      </div>
-
-      {/* Tracking UPS */}
-      {trackingNumber && (
-        <div style={{
-          background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px',
-          padding: '12px 20px', marginBottom: '20px', fontSize: '14px', color: '#1e40af'
-        }}>
-          <strong>UPS Tracking:</strong> {trackingNumber}
-        </div>
-      )}
-
-      {/* Aviso de etiqueta */}
-      {hasLabel && (
-        <div style={{
-          background: '#FFFBEB', border: '2px solid #F59E0B', borderRadius: '10px',
-          padding: '16px 20px', marginBottom: '20px', textAlign: 'left',
-          maxWidth: '420px', margin: '0 auto 20px'
-        }}>
-          <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: '700', color: '#92400E', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <IoWarningOutline size={20} /> {t('us_wizard.label_notice_title')}
-          </p>
-          <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#78350F', lineHeight: '1.55' }}>
-            {t('us_wizard.label_notice_text')}
-          </p>
+        <p style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', margin: '0 0 8px' }}>
+          Número de guía
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <span style={{ fontSize: 22, fontWeight: 800, color: NAVY, letterSpacing: 0.5 }}>{nGuia}</span>
           <button
-            onClick={downloadLabel}
+            onClick={handleCopy}
             style={{
-              background: '#022364', color: '#fff', border: 'none', borderRadius: '8px',
-              padding: '12px 28px', fontSize: '15px', fontWeight: '600',
-              cursor: 'pointer', width: '100%'
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: '#F3F4F6', border: 'none', borderRadius: 8,
+              padding: '6px 12px', cursor: 'pointer',
+              color: copied ? GREEN : NAVY, fontWeight: 600, fontSize: 12,
             }}
           >
-            <IoCloudDownloadOutline size={20} /> {t('us_wizard.download_label')}
+            {copied
+              ? <><IoCheckmarkDoneOutline size={16} /> ¡Copiado!</>
+              : <><IoCopyOutline size={16} /> Copiar</>}
           </button>
+        </div>
+      </div>
+
+      {/* Banner pickup warning */}
+      {pickupWarning && (
+        <div style={{
+          width: '100%', maxWidth: 440, marginBottom: 12,
+          display: 'flex', gap: 10, alignItems: 'flex-start',
+          background: '#FEF2F2', borderLeft: '4px solid #DC2626',
+          borderRadius: 10, padding: '14px 16px',
+        }}>
+          <IoAlertCircleOutline size={20} color="#DC2626" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#991B1B' }}>
+              Recogida pendiente de confirmación
+            </p>
+            <p style={{ margin: 0, fontSize: 12, color: '#7F1D1D', lineHeight: 1.6 }}>
+              Tu envío quedó registrado, pero no pudimos confirmar la recogida automáticamente con UPS.
+              Nuestro equipo se pondrá en contacto contigo para coordinarla.
+              Guía: <strong>{nGuia}</strong>
+            </p>
+          </div>
         </div>
       )}
 
-      <p style={{
-        fontSize: '14px', color: '#6b7280',
-        maxWidth: '400px', margin: '0 auto 30px'
-      }}>
-        {metodoPago === 'zelle'
-          ? t('us_wizard.success_zelle')
-          : t('us_wizard.success_card')}
-      </p>
+      {/* Tracking UPS */}
+      {!!trackingNumber && (
+        <div style={{
+          width: '100%', maxWidth: 440, marginBottom: 12,
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: '#EFF6FF', border: '1px solid #DBEAFE',
+          borderRadius: 10, padding: '12px 14px',
+        }}>
+          <IoCubeOutline size={16} color={NAVY} style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: '#374151' }}>
+            UPS Tracking: <strong style={{ color: NAVY }}>{trackingNumber}</strong>
+          </span>
+        </div>
+      )}
 
+      {/* Banner + botón etiqueta */}
+      <div style={{ width: '100%', maxWidth: 440, marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{
+          display: 'flex', gap: 10, alignItems: 'flex-start',
+          background: '#FFFBEB', borderLeft: '4px solid #F59E0B',
+          borderRadius: 10, padding: '14px 16px',
+        }}>
+          <IoWarningOutline size={20} color={AMBER} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#92400E' }}>
+              Acción requerida — Etiqueta de envío
+            </p>
+            <p style={{ margin: 0, fontSize: 12, color: '#78350F', lineHeight: 1.6 }}>
+              {hasLabel
+                ? <>Descarga tu etiqueta, imprímela y <strong>pégala en tu caja</strong> antes de que llegue el courier. Sin la etiqueta visible el conductor no podrá retirar el envío.</>
+                : <>Tu etiqueta ha sido solicitada. La recibirás en tu correo en breve. Puedes también descargarla desde <strong>Ver Mis Envíos</strong> una vez disponible.</>}
+            </p>
+          </div>
+        </div>
+        {hasLabel && (
+          <button
+            onClick={!downloading ? handleDownload : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              background: downloading ? '#D1D5DB' : NAVY, color: '#fff',
+              border: 'none', borderRadius: 12, padding: '14px 20px',
+              fontSize: 15, fontWeight: 700, cursor: downloading ? 'default' : 'pointer',
+              width: '100%',
+            }}
+          >
+            <IoCloudDownloadOutline size={20} />
+            {downloading ? 'Descargando…' : 'Descargar Etiqueta de Envío (PDF)'}
+          </button>
+        )}
+      </div>
+
+      {/* Email */}
+      <div style={{
+        width: '100%', maxWidth: 440, marginBottom: 20,
+        display: 'flex', alignItems: 'flex-start', gap: 8,
+      }}>
+        <IoMailOutline size={15} color="#6B7280" style={{ flexShrink: 0, marginTop: 2 }} />
+        <span style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.55 }}>
+          Tu envío ha sido registrado. Recibirás un correo de confirmación en breve.
+        </span>
+      </div>
+
+      {/* Botón Ir al Inicio */}
       <button
-        className="btn-wizard-next"
         onClick={() => window.location.href = '/home'}
-        style={{ width: '100%', maxWidth: '300px', textAlign: 'center' }}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          width: '100%', maxWidth: 440, background: ORANGE, color: '#fff',
+          border: 'none', borderRadius: 14, padding: '15px 20px',
+          fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10,
+          boxShadow: `0 4px 12px ${ORANGE}44`,
+        }}
       >
-        {t('us_wizard.go_home')}
+        <IoHomeOutline size={20} /> Ir al Inicio
+      </button>
+
+      {/* Botón Ver Mis Envíos */}
+      <button
+        onClick={() => navigate('/guide/guides')}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          width: '100%', maxWidth: 440, background: '#fff', color: NAVY,
+          border: `1.5px solid #E5E7EB`, borderRadius: 14, padding: '14px 20px',
+          fontSize: 14, fontWeight: 600, cursor: 'pointer',
+        }}
+      >
+        <IoCubeOutline size={18} /> Ver Mis Envíos
       </button>
     </div>
   );
@@ -205,6 +313,7 @@ const SuccessScreen = ({ nGuia, metodoPago, labelBase64, labelUrl, trackingNumbe
 const Step4Payment = ({ data, updateData, onBack }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [submitting,     setSubmitting]     = useState(false);
   const [submitPhase,    setSubmitPhase]     = useState('');
   const [pendingRetry,   setPendingRetry]   = useState(null); // { transactionId, orderPayload }
@@ -253,38 +362,48 @@ const Step4Payment = ({ data, updateData, onBack }) => {
     let prn = '', pickupTransId = '', pickupResultDate = null;
     let pickupReady = data.pickupReadyTime || '0900';
     let pickupClose = data.pickupCloseTime || '1700';
+    let pickupFailed = false;
 
     if (isPickup) {
       setSubmitPhase('Scheduling UPS pickup…');
-      const pickupResult = await createUpsPickup({
-        pickupDate:           data.pickupDate || getNextBusinessDay(),
-        readyTime:            data.pickupReadyTime || '0900',
-        closeTime:            data.pickupCloseTime || '1700',
-        contactName:          addr.alias || 'Client',
-        companyName:          addr.alias || '',
-        addressLine:          addr.line1 || '',
-        city:                 addr.city  || '',
-        stateProvince:        addr.province || addr.state || addr.stateProvince || '',
-        postalCode:           addr.zip   || '',
-        residentialIndicator: 'Y',
-        phone:                (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
-        weight:               parseFloat(weightKg.toFixed(2)),
-        unitSystem:           'METRIC',
-        quantity:             1,
-        serviceCode:          '003',
-        referenceNumber:      '',
-      });
+      try {
+        const pickupResult = await createUpsPickup({
+          pickupDate:           data.pickupDate || getNextBusinessDay(),
+          readyTime:            data.pickupReadyTime || '0900',
+          closeTime:            data.pickupCloseTime || '1700',
+          contactName:          addr.alias || 'Client',
+          companyName:          addr.alias || '',
+          addressLine:          addr.line1 || '',
+          city:                 addr.city  || '',
+          stateProvince:        addr.province || addr.state || addr.stateProvince || 'FL',
+          postalCode:           addr.zip   || '',
+          residentialIndicator: 'Y',
+          phone:                (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
+          weight:               parseFloat(weightKg.toFixed(2)) || 1,
+          unitSystem:           'METRIC',
+          quantity:             1,
+          serviceCode:          '003',
+          referenceNumber:      '',
+        });
 
-      prn             = pickupResult.success ? (pickupResult.data?.prn                   ?? '') : '';
-      pickupTransId   = pickupResult.success ? (pickupResult.data?.transactionIdentifier ?? '') : '';
-      pickupResultDate= pickupResult.success ? (pickupResult.data?.pickupDate             ?? null) : null;
-      pickupReady     = pickupResult.success ? (pickupResult.data?.readyTime  ?? data.pickupReadyTime ?? '0900') : (data.pickupReadyTime ?? '0900');
-      pickupClose     = pickupResult.success ? (pickupResult.data?.closeTime  ?? data.pickupCloseTime ?? '1700') : (data.pickupCloseTime ?? '1700');
+        prn             = pickupResult.success ? (pickupResult.data?.prn                   ?? '') : '';
+        pickupTransId   = pickupResult.success ? (pickupResult.data?.transactionIdentifier ?? '') : '';
+        pickupResultDate= pickupResult.success ? (pickupResult.data?.pickupDate             ?? null) : null;
+        pickupReady     = pickupResult.success ? (pickupResult.data?.readyTime  ?? data.pickupReadyTime ?? '0900') : (data.pickupReadyTime ?? '0900');
+        pickupClose     = pickupResult.success ? (pickupResult.data?.closeTime  ?? data.pickupCloseTime ?? '1700') : (data.pickupCloseTime ?? '1700');
 
-      if (!pickupResult.success) {
-        console.warn('[UPS Pickup] No se pudo crear el pickup:', pickupResult.message);
+        if (!pickupResult.success || !prn) {
+          pickupFailed = true;
+          console.warn('[UPS Pickup] No se pudo crear el pickup:', pickupResult.message);
+        }
+      } catch (pickupErr) {
+        pickupFailed = true;
+        console.warn('[UPS Pickup] Excepción al crear pickup:', pickupErr);
       }
     }
+
+    setSubmitPhase('Reservando número de guía…');
+    const reservedNGuia = await getNextNGuia();
 
     setSubmitPhase('Generating shipping label…');
     const shipmentResult = await createUpsShipment({
@@ -292,20 +411,22 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       companyName:   addr.alias || '',
       addressLine:   addr.line1 || '',
       city:          addr.city  || '',
-      stateProvince: addr.province || addr.state || addr.stateProvince || '',
+      stateProvince: addr.province || addr.state || addr.stateProvince || 'FL',
       postalCode:    addr.zip   || '',
       phone:         (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
-      weight:        parseFloat(weightKg.toFixed(2)),
-      length:        parseFloat(pkg.largo || 0),
-      width:         parseFloat(pkg.ancho || 0),
-      height:        parseFloat(pkg.alto  || 0),
+      weight:        parseFloat(weightKg.toFixed(2)) || 1,
+      length:        parseFloat(pkg.largo || 0) || 1,
+      width:         parseFloat(pkg.ancho || 0) || 1,
+      height:        parseFloat(pkg.alto  || 0) || 1,
       unitSystem:    'METRIC',
       serviceCode:   data.courierQuote?.service_code ?? '03',
+      nGuia:         reservedNGuia ?? undefined,
+      codCliente:    user?.codCliente ?? '',
     });
 
-    const trackingNumber = shipmentResult.success ? (shipmentResult.data?.trackingNumber ?? '') : '';
-    const labelBase64    = shipmentResult.success ? (shipmentResult.data?.labelBase64    ?? '') : '';
-    const labelUrl       = shipmentResult.success ? (shipmentResult.data?.labelUrl       ?? '') : '';
+    const trackingNumber = shipmentResult.data?.trackingNumber ?? '';
+    const labelBase64    = shipmentResult.data?.labelBase64    ?? null;
+    const labelUrl       = shipmentResult.data?.labelUrl       ?? null;
 
     if (!shipmentResult.success) {
       console.warn('[UPS Shipment] No se pudo generar el label:', shipmentResult.message);
@@ -318,6 +439,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       : (isPickup ? (data.pickupDate ?? null) : null);
 
     const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
+      nGuia:            reservedNGuia ?? undefined,
       halaraPayTransactionId: transactionId,
       peso:             Number(pkg.peso  || 0),
       largo:            Number(pkg.largo || 0),
@@ -345,13 +467,18 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       pickupHoraHasta:      isPickup ? pickupClose : null,
       sendSeiTrackingNumber: trackingNumber,
       labelUrl:              labelUrl,
+      idFormaCreacion:       isPickup ? 5 : 7,
     });
 
     // Éxito: limpiar recuperación y mostrar pantalla de éxito
     sessionStorage.removeItem(RECOVERY_KEY);
     setPendingRetry(null);
-    const nGuia = guiaResult?.nGuia || `KU-${Date.now().toString().slice(-6)}`;
-    setGuiaResult({ nGuia, metodoPago: 'card', labelBase64, labelUrl, trackingNumber });
+    const nGuia = guiaResult?.nGuia || reservedNGuia || `KU-${Date.now().toString().slice(-6)}`;
+    // Fallback al labelUrl/trackingNumber del guia (igual que la app móvil)
+    const finalLabelUrl       = labelUrl       ?? guiaResult?.labelUrl       ?? guiaResult?.data?.labelUrl       ?? null;
+    const finalLabelBase64    = labelBase64    ?? guiaResult?.labelBase64    ?? guiaResult?.data?.labelBase64    ?? null;
+    const finalTrackingNumber = trackingNumber || guiaResult?.trackingNumber  || guiaResult?.data?.trackingNumber  || '';
+    setGuiaResult({ nGuia, metodoPago: 'card', labelBase64: finalLabelBase64, labelUrl: finalLabelUrl, trackingNumber: finalTrackingNumber, pickupWarning: pickupFailed });
   };
 
   // ── Callback que recibe el token de HalaraPay (lightbox) ──────────────────

@@ -227,3 +227,187 @@ $bg-light:   #f9fafb;
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+// ── Colores del sistema (mismo que la app móvil) ──────────────────────────────
+$ku-navy:   #022364;
+$ku-orange: #F05A22;
+$ku-green:  #16A34A;
+
+// ── Toggle Drop-off / Pickup ──────────────────────────────────────────────────
+.method-toggle {
+  display: flex;
+  gap: 4px;
+  background: #F3F4F6;
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 1rem;
+
+  @media (max-width: 480px) { flex-direction: column; }
+
+  &__btn {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+    color: #6B7280;
+    font-size: 0.9rem;
+    font-weight: 700;
+
+    small {
+      display: none; // en desktop ocultamos el subtítulo del toggle (solo íconos + label)
+    }
+
+    &:hover:not(.method-toggle__btn--active) {
+      background: rgba(0,0,0,0.05);
+      color: #374151;
+    }
+
+    &--active {
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    &--dropoff.method-toggle__btn--active {
+      background: $ku-green;
+      box-shadow: 0 2px 8px rgba(22,163,74,0.35);
+    }
+    &--pickup.method-toggle__btn--active {
+      background: $ku-orange;
+      box-shadow: 0 2px 8px rgba(240,90,34,0.35);
+    }
+  }
+}
+
+// ── Panel fecha + horario (pickup) ────────────────────────────────────────────
+.pickup-panel {
+  background: #fff;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__section { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $ku-navy;
+    margin: 0;
+  }
+
+  // ── Chips de fecha ─────────────────────────────────────────────────────
+  &__dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__date-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.85rem;
+    border-radius: 12px;
+    border: 1.5px solid #E5E7EB;
+    background: #fff;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    line-height: 1.3;
+
+    &:hover { border-color: $ku-orange; color: $ku-navy; }
+
+    &--active {
+      background: $ku-orange;
+      border-color: $ku-orange;
+      color: #fff;
+      font-weight: 700;
+    }
+  }
+
+  // ── Slots horarios ─────────────────────────────────────────────────────
+  &__slots {
+    display: flex;
+    gap: 0.65rem;
+
+    @media (max-width: 520px) { flex-direction: column; }
+  }
+
+  &__slot-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    border: 1.5px solid #E5E7EB;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-align: left;
+
+    // radio interno
+    &::before {
+      content: '';
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #D1D5DB;
+      flex-shrink: 0;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+
+    .slot-texts {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    strong { font-size: 0.88rem; color: #374151; font-weight: 600; }
+    small  { font-size: 0.72rem; color: #9CA3AF; }
+
+    &:hover { border-color: $ku-orange; }
+
+    &--active {
+      border-color: $ku-orange;
+      background: #FFF8F6;
+
+      &::before {
+        border-color: $ku-orange;
+        background: $ku-orange;
+        box-shadow: inset 0 0 0 3px #fff;
+      }
+
+      strong { color: $ku-navy; font-weight: 700; }
+      small  { color: #6B7280; }
+    }
+  }
+
+  &__error {
+    font-size: 0.82rem;
+    color: #EF4444;
+    margin: 0;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
