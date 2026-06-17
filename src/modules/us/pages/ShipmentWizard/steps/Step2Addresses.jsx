@@ -3,6 +3,7 @@
 //    DestinationModal sigue la misma lógica que /profile/addresses de la app
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '../../../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,7 +24,6 @@ import {
 } from 'react-icons/io5';
 import {
   fetchOriginAddresses,
-  addOriginAddress,
   deleteOriginAddress,
   setOriginDefault,
   fetchDestinationAddresses,
@@ -35,6 +35,7 @@ import {
   fetchMunicipios,
   fetchParroquias,
 } from '../../../../../services/es/spainAddressService';
+import { addUsaOriginAddress } from '../../../../../services/us/usAddressService';
 import './Step2Addresses.scss';
 
 // ── Franjas horarias de pickup ──────────────────────────────────────────────
@@ -63,6 +64,171 @@ const getClientId = () => {
 
 // ── Helper: solo permite caracteres válidos de teléfono ─────────────────────
 const sanitizePhone = (v) => v.replace(/[^\d\s+\-()]/g, '');
+
+// ── Formatos de teléfono ─────────────────────────────────────────────────────
+const formatUSAPhone = (v) => {
+  const d = v.replace(/\D/g, '').slice(0, 10);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`;
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+};
+const formatVenezPhone = (v) => {
+  const d = v.replace(/\D/g, '').slice(0, 7);
+  if (d.length <= 3) return d;
+  if (d.length <= 5) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
+};
+
+// ── Operadoras Venezuela ──────────────────────────────────────────────────────
+const VENEZ_OPERATORS = ['0412', '0414', '0416', '0422', '0424', '0426'];
+
+// ── Tipos de documento por país (valores idénticos a la app móvil) ────────────
+const DOC_TYPES = {
+  VE: [
+    { value: 'cedulavenezolana', label: 'Cédula Venezolana (V-)' },
+    { value: 'cedulaextranjera', label: 'Cédula Extranjera (E-)' },
+    { value: 'pasaporte',        label: 'Pasaporte' },
+    { value: 'rifjuridico',      label: 'RIF Jurídico (J-)' },
+    { value: 'rifgubernamental', label: 'RIF Gubernamental (G-)' },
+    { value: 'rifcomuna',        label: 'RIF Comuna (C-)' },
+    { value: 'riffirmapersonal', label: 'RIF Firma Personal (R-)' },
+  ],
+  US: [
+    { value: 'pasaporte',      label: 'Passport' },
+    { value: 'driverslicense', label: "Driver's License" },
+  ],
+};
+
+// ── Reglas de validación por tipo (igual que countryConfig.ts de la app) ──────
+const DOC_CONFIG = {
+  cedulavenezolana: { pattern: /^[0-9]+$/,           min: 4,  max: 9,  hint: '4–9 dígitos numéricos' },
+  cedulaextranjera: { pattern: /^[A-Za-z0-9]+$/,     min: 4,  max: 12, hint: '4–12 caracteres alfanuméricos' },
+  pasaporte:        { pattern: /^[A-Za-z0-9]+$/,     min: 6,  max: 15, hint: '6–15 caracteres alfanuméricos' },
+  rifjuridico:      { pattern: /^[A-Za-z0-9\-]+$/,   min: 6,  max: 12, hint: '6–12 caracteres (ej: 12345678-9)' },
+  rifgubernamental: { pattern: /^[A-Za-z0-9\-]+$/,   min: 6,  max: 12, hint: '6–12 caracteres' },
+  rifcomuna:        { pattern: /^[A-Za-z0-9\-]+$/,   min: 6,  max: 12, hint: '6–12 caracteres' },
+  riffirmapersonal: { pattern: /^[A-Za-z0-9\-]+$/,   min: 6,  max: 12, hint: '6–12 caracteres' },
+  driverslicense:   { pattern: /^[A-Za-z0-9]+$/,     min: 5,  max: 20, hint: '5–20 caracteres alfanuméricos' },
+};
+
+// ── Prefijo que precede al número en el string final (V-12345678) ─────────────
+const DOC_PREFIX_MAP = {
+  cedulavenezolana: 'V',
+  cedulaextranjera: 'E',
+  rifjuridico:      'J',
+  rifgubernamental: 'G',
+  rifcomuna:        'C',
+  riffirmapersonal: 'R',
+};
+
+// ── ID de tipo de documento para la BD (igual que DOC_TYPE_DB_ID de la app) ──
+const DOC_TYPE_DB_ID = {
+  pasaporte:        1,
+  rifjuridico:      2,
+  cedulavenezolana: 3,
+  driverslicense:   4,
+  cedulaextranjera: 7,
+  rifgubernamental: 8,
+  rifcomuna:        9,
+  riffirmapersonal: 10,
+};
+
+// ── Limpieza automática del input según tipo (misma lógica que la app) ────────
+const cleanDocInput = (docType, text) => {
+  const cfg = DOC_CONFIG[docType];
+  if (!cfg) return text;
+  if (/cedula/.test(docType)) return text.replace(/\D/g, '').slice(0, cfg.max);
+  if (/rif/.test(docType))    return text.replace(/[^A-Za-z0-9\-]/g, '').slice(0, cfg.max);
+  return text.replace(/[^A-Za-z0-9]/g, '').slice(0, cfg.max);
+};
+
+// ── Validar número de documento contra las reglas del tipo ────────────────────
+const validateDocNum = (docType, docNum) => {
+  const cfg = DOC_CONFIG[docType];
+  if (!cfg) return null;
+  const v = docNum.trim();
+  if (v.length < cfg.min) return `Mínimo ${cfg.min} caracteres para este tipo.`;
+  if (!cfg.pattern.test(v)) return 'Formato inválido para el tipo seleccionado.';
+  return null;
+};
+
+// ── Sub-componente: selector de teléfono Venezuela (operadora + número) ───────
+const VenezPhoneInput = ({ operator, number, onOperatorChange, onNumberChange, required, label, error }) => (
+  <div className="wizard-field">
+    <label>{label}{required ? ' *' : ''}</label>
+    <div className="phone-ve-row">
+      <select
+        className={`phone-ve-operator${error ? ' input--error' : ''}`}
+        value={operator}
+        onChange={(e) => onOperatorChange(e.target.value)}
+      >
+        <option value="">Operadora</option>
+        {VENEZ_OPERATORS.map((op) => (
+          <option key={op} value={op}>{op}</option>
+        ))}
+      </select>
+      <input
+        className={`phone-ve-number${error ? ' input--error' : ''}`}
+        placeholder="000-00-00"
+        value={number}
+        onChange={(e) => onNumberChange(formatVenezPhone(e.target.value))}
+        inputMode="numeric"
+        disabled={!operator}
+      />
+    </div>
+    {error && <span className="field-error">{error}</span>}
+  </div>
+);
+
+// ── Sub-componente: selector de identificación (país + tipo + número) ─────────
+const DocIdentInput = ({ country, docType, docNum, onCountryChange, onTypeChange, onNumChange, errors = {} }) => {
+  const cfg    = DOC_CONFIG[docType] ?? null;
+  const prefix = DOC_PREFIX_MAP[docType] ?? null;
+  return (
+    <div className="wizard-field wizard-field--full">
+      <label>Identificación *</label>
+      <div className="doc-ident-row">
+        <select
+          className={`doc-country${errors.docCountry ? ' input--error' : ''}`}
+          value={country}
+          onChange={(e) => { onCountryChange(e.target.value); onTypeChange(''); }}
+        >
+          <option value="">País</option>
+          <option value="VE">🇻🇪 Venezuela</option>
+          <option value="US">🇺🇸 USA</option>
+        </select>
+        <select
+          className={`doc-type${errors.docType ? ' input--error' : ''}`}
+          value={docType}
+          onChange={(e) => { onTypeChange(e.target.value); onNumChange(''); }}
+          disabled={!country}
+        >
+          <option value="">Tipo</option>
+          {(DOC_TYPES[country] ?? []).map((d) => (
+            <option key={d.value} value={d.value}>{d.label}</option>
+          ))}
+        </select>
+        <div className={`doc-num-wrapper${errors.docNum ? ' doc-num-wrapper--error' : ''}`}>
+          {prefix && <span className="doc-prefix">{prefix}-</span>}
+          <input
+            className="doc-num-input"
+            placeholder={cfg ? cfg.hint : 'Número'}
+            value={docNum}
+            onChange={(e) => onNumChange(cleanDocInput(docType, e.target.value))}
+            disabled={!docType}
+            inputMode={/cedula/.test(docType) ? 'numeric' : 'text'}
+          />
+        </div>
+      </div>
+      {cfg && !errors.docNum && docType && (
+        <span className="field-hint">{prefix ? `${prefix}-` : ''}{cfg.hint}</span>
+      )}
+      {(errors.docCountry || errors.docType || errors.docNum) && (
+        <span className="field-error">{errors.docCountry || errors.docType || errors.docNum}</span>
+      )}
+    </div>
+  );
+};
 
 // ════════════════════════════════════════════════════════════════════════════
 // ██  TARJETA DE DIRECCIÓN
@@ -167,6 +333,14 @@ const OriginModal = ({ onSave, onClose, saving }) => {
     alias: '', line1: '', city: '', province: '',
     zip: '', phone: '', referencia: '', setAsDefault: false,
   });
+  // Teléfono Venezuela (opcional)
+  const [phoneVeOp, setPhoneVeOp] = useState('');
+  const [phoneVeNum, setPhoneVeNum] = useState('');
+  // Identificación
+  const [docCountry, setDocCountry] = useState('');
+  const [docType,    setDocType]    = useState('');
+  const [docNum,     setDocNum]     = useState('');
+
   const [errors, setErrors] = useState({});
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -175,13 +349,46 @@ const OriginModal = ({ onSave, onClose, saving }) => {
     if (!form.alias.trim()) e.alias = t('us_wizard.error_alias');
     if (!form.line1.trim()) e.line1 = t('us_wizard.error_address');
     if (!form.city.trim())  e.city  = t('us_wizard.error_city_req');
+    // Teléfono USA — obligatorio para UPS (10 dígitos exactos)
+    const phoneDigits = form.phone.replace(/\D/g, '');
+    if (!phoneDigits) e.phone = 'El teléfono es obligatorio (requerido por UPS).';
+    else if (phoneDigits.length !== 10) e.phone = 'Ingresa un teléfono USA de 10 dígitos. Ej: (305) 000-0000';
+    // Teléfono Venezuela: si se escribió número, operadora es obligatoria
+    if (phoneVeNum && !phoneVeOp) e.phoneVe = 'Selecciona la operadora del teléfono venezolano.';
+    if (phoneVeOp && phoneVeNum.replace(/\D/g, '').length !== 7) e.phoneVe = 'El número venezolano debe tener 7 dígitos.';
+    // Identificación: todos obligatorios si alguno se completa
+    if (docCountry || docType || docNum) {
+      if (!docCountry) e.docCountry = 'Selecciona el país.';
+      if (!docType)    e.docType    = 'Selecciona el tipo de documento.';
+      if (!docNum.trim()) {
+        e.docNum = 'Ingresa el número de documento.';
+      } else {
+        const docErr = validateDocNum(docType, docNum);
+        if (docErr) e.docNum = docErr;
+      }
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSave = () => {
     if (!validate()) return;
-    onSave({ ...form, alias: form.alias.trim(), line1: form.line1.trim(), city: form.city.trim() });
+    const phoneVenez = phoneVeOp && phoneVeNum
+      ? `+58 (${phoneVeOp}) ${phoneVeNum}`
+      : null;
+    const prefix = DOC_PREFIX_MAP[docType];
+    const identificacion = docType && docNum.trim()
+      ? (prefix ? `${prefix}-${docNum.trim()}` : docNum.trim())
+      : null;
+    onSave({
+      ...form,
+      alias: form.alias.trim(),
+      line1: form.line1.trim(),
+      city:  form.city.trim(),
+      phoneVenez,
+      identificacion,
+      idClienteTipoIdentificacion: docType ? (DOC_TYPE_DB_ID[docType] ?? null) : null,
+    });
   };
 
   return (
@@ -235,24 +442,49 @@ const OriginModal = ({ onSave, onClose, saving }) => {
           <div className="wizard-grid-2">
             <div className="wizard-field">
               <label>{t('us_wizard.field_zip')}</label>
-              <input placeholder="28001" maxLength={10} value={form.zip} onChange={(e) => set('zip', e.target.value)} />
+              <input placeholder="33122" maxLength={5} value={form.zip}
+                onChange={(e) => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))} />
             </div>
             <div className="wizard-field">
-              <label>{t('us_wizard.field_phone')}</label>
+              <label>Teléfono USA *</label>
               <input
-                placeholder="+1 305 555 0123"
+                placeholder="(305) 000-0000"
                 value={form.phone}
-                onChange={(e) => set('phone', sanitizePhone(e.target.value))}
-                maxLength={20}
+                onChange={(e) => { set('phone', formatUSAPhone(e.target.value)); setErrors(p => ({ ...p, phone: '' })); }}
+                maxLength={14}
                 inputMode="tel"
+                className={errors.phone ? 'input--error' : ''}
               />
+              {errors.phone && <span className="field-error">{errors.phone}</span>}
             </div>
           </div>
 
           <div className="wizard-field">
-            <label>{t('us_wizard.field_ref')}</label>
+            <label>{t('us_wizard.field_ref')} <span className="label-optional">({t('common.optional')})</span></label>
             <input placeholder="Portero automático #3, timbre azul..." value={form.referencia} onChange={(e) => set('referencia', e.target.value)} />
           </div>
+
+          {/* Teléfono Venezuela (opcional) */}
+          <VenezPhoneInput
+            label="Teléfono Venezuela"
+            operator={phoneVeOp}
+            number={phoneVeNum}
+            onOperatorChange={setPhoneVeOp}
+            onNumberChange={setPhoneVeNum}
+            required={false}
+            error={errors.phoneVe}
+          />
+
+          {/* Identificación */}
+          <DocIdentInput
+            country={docCountry}
+            docType={docType}
+            docNum={docNum}
+            onCountryChange={setDocCountry}
+            onTypeChange={setDocType}
+            onNumChange={setDocNum}
+            errors={errors}
+          />
 
           <label className="addr-modal__checkbox">
             <input type="checkbox" checked={form.setAsDefault} onChange={(e) => set('setAsDefault', e.target.checked)} />
@@ -296,10 +528,19 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 
   // ── Datos del contacto de entrega (compartido para home y store) ───────────
   const [contactoForm, setContactoForm] = useState({
-    nombres: '', apellidos: '', email: '', telefono: '',
-    telefonoAdicional: '', numeroIdentificacion: '',
+    nombres: '', apellidos: '', email: '',
     informacionAdicional: '', referenciaContacto: '',
   });
+  // Teléfonos Venezuela con operadora
+  const [telOp,    setTelOp]    = useState('');
+  const [telNum,   setTelNum]   = useState('');
+  const [telAdOp,  setTelAdOp]  = useState('');
+  const [telAdNum, setTelAdNum] = useState('');
+  // Identificación del contacto
+  const [cDocCountry, setCDocCountry] = useState('VE');
+  const [cDocType,    setCDocType]    = useState('');
+  const [cDocNum,     setCDocNum]     = useState('');
+
   const setContacto = (k, v) => setContactoForm((p) => ({ ...p, [k]: v }));
 
   // ── Datos GEO ──────────────────────────────────────────────────────────────
@@ -386,7 +627,21 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
       if (!homeForm.direccion.trim()) e.direccion   = t('us_wizard.error_address');
     }
     if (!contactoForm.nombres.trim())  e.nombres  = t('us_wizard.error_first_name');
-    if (!contactoForm.telefono.trim()) e.telefono = t('us_wizard.error_phone');
+    // Teléfono principal Venezuela (obligatorio)
+    if (!telOp) e.telefono = 'Selecciona la operadora del teléfono principal.';
+    else if (telNum.replace(/\D/g, '').length !== 7) e.telefono = 'El número debe tener 7 dígitos.';
+    // Teléfono adicional (opcional pero si se empieza a llenar, valida)
+    if (telAdNum && !telAdOp) e.telefonoAdicional = 'Selecciona la operadora del teléfono adicional.';
+    if (telAdOp && telAdNum.replace(/\D/g, '').length !== 7) e.telefonoAdicional = 'El teléfono adicional debe tener 7 dígitos.';
+    // Identificación (todos obligatorios)
+    if (!cDocCountry) e.docCountry = 'Selecciona el país de identificación.';
+    if (!cDocType)    e.docType    = 'Selecciona el tipo de documento.';
+    if (!cDocNum.trim()) {
+      e.docNum = 'Ingresa el número de documento.';
+    } else {
+      const docErr = validateDocNum(cDocType, cDocNum);
+      if (docErr) e.docNum = docErr;
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -395,13 +650,20 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
   const handleSave = () => {
     if (!validate()) return;
 
+    const contactoTelefono = `+58 (${telOp}) ${telNum}`;
+    const contactoTelefonoAdicional = telAdOp && telAdNum ? `+58 (${telAdOp}) ${telAdNum}` : '';
+    const cPrefix = DOC_PREFIX_MAP[cDocType];
+    const contactoNumeroIdentificacion = cDocType && cDocNum.trim()
+      ? (cPrefix ? `${cPrefix}-${cDocNum.trim()}` : cDocNum.trim())
+      : '';
+
     const contactoPayload = {
       contactoNombres:              contactoForm.nombres,
       contactoApellidos:            contactoForm.apellidos,
       contactoEmail:                contactoForm.email,
-      contactoTelefono:             contactoForm.telefono,
-      contactoTelefonoAdicional:    contactoForm.telefonoAdicional,
-      contactoNumeroIdentificacion: contactoForm.numeroIdentificacion,
+      contactoTelefono,
+      contactoTelefonoAdicional,
+      contactoNumeroIdentificacion,
       contactoInformacionAdicional: contactoForm.informacionAdicional,
       contactoReferencia:           contactoForm.referenciaContacto,
     };
@@ -644,49 +906,48 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
             </div>
           </div>
 
-          <div className="wizard-grid-2">
-            <div className="wizard-field">
-              <label>{t('us_wizard.field_contact_phone')} *</label>
-              <input
-                placeholder="Ej. 0412-1234567"
-                value={contactoForm.telefono}
-                onChange={(e) => { setContacto('telefono', sanitizePhone(e.target.value)); setErrors(p => ({ ...p, telefono: '' })); }}
-                className={errors.telefono ? 'input--error' : ''}
-                maxLength={20}
-                inputMode="tel"
-              />
-              {errors.telefono && <span className="field-error">{errors.telefono}</span>}
-            </div>
-            <div className="wizard-field">
-              <label>{t('us_wizard.field_phone2')} <span className="label-optional">({t('common.optional')})</span></label>
-              <input
-                placeholder="Opcional"
-                value={contactoForm.telefonoAdicional}
-                onChange={(e) => setContacto('telefonoAdicional', sanitizePhone(e.target.value))}
-                maxLength={20}
-                inputMode="tel"
-              />
-            </div>
-          </div>
+          {/* Teléfono principal Venezuela (obligatorio) */}
+          <VenezPhoneInput
+            label={t('us_wizard.field_contact_phone')}
+            required
+            operator={telOp}
+            number={telNum}
+            onOperatorChange={(v) => { setTelOp(v); setErrors(p => ({ ...p, telefono: '' })); }}
+            onNumberChange={(v) => { setTelNum(v); setErrors(p => ({ ...p, telefono: '' })); }}
+            error={errors.telefono}
+          />
 
-          <div className="wizard-grid-2">
-            <div className="wizard-field">
-              <label>{t('us_wizard.field_email')} <span className="label-optional">({t('common.optional')})</span></label>
-              <input
-                type="email"
-                placeholder="correo@ejemplo.com"
-                value={contactoForm.email}
-                onChange={(e) => setContacto('email', e.target.value)}
-              />
-            </div>
-            <div className="wizard-field">
-              <label>{t('us_wizard.field_id')} <span className="label-optional">({t('common.optional')})</span></label>
-              <input
-                placeholder="Ej. V-12345678"
-                value={contactoForm.numeroIdentificacion}
-                onChange={(e) => setContacto('numeroIdentificacion', e.target.value)}
-              />
-            </div>
+          {/* Teléfono adicional Venezuela (opcional) */}
+          <VenezPhoneInput
+            label={`${t('us_wizard.field_phone2')} (${t('common.optional')})`}
+            required={false}
+            operator={telAdOp}
+            number={telAdNum}
+            onOperatorChange={(v) => { setTelAdOp(v); setErrors(p => ({ ...p, telefonoAdicional: '' })); }}
+            onNumberChange={(v) => { setTelAdNum(v); setErrors(p => ({ ...p, telefonoAdicional: '' })); }}
+            error={errors.telefonoAdicional}
+          />
+
+          {/* Identificación */}
+          <DocIdentInput
+            country={cDocCountry}
+            docType={cDocType}
+            docNum={cDocNum}
+            onCountryChange={(v) => { setCDocCountry(v); setErrors(p => ({ ...p, docCountry: '' })); }}
+            onTypeChange={(v)    => { setCDocType(v);    setErrors(p => ({ ...p, docType: '' })); }}
+            onNumChange={(v)     => { setCDocNum(v);     setErrors(p => ({ ...p, docNum: '' })); }}
+            errors={errors}
+          />
+
+          {/* Email */}
+          <div className="wizard-field">
+            <label>{t('us_wizard.field_email')} <span className="label-optional">({t('common.optional')})</span></label>
+            <input
+              type="email"
+              placeholder="correo@ejemplo.com"
+              value={contactoForm.email}
+              onChange={(e) => setContacto('email', e.target.value)}
+            />
           </div>
 
           <div className="wizard-grid-2">
@@ -725,7 +986,13 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 // ════════════════════════════════════════════════════════════════════════════
 const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const clientId = getClientId();
+
+  // Datos de contacto para usuarios guest (no logueados)
+  const [senderName,     setSenderName]     = useState(data.senderName     ?? '');
+  const [senderLastName, setSenderLastName] = useState(data.senderLastName ?? '');
+  const [senderEmail,    setSenderEmail]    = useState(data.senderEmail    ?? '');
 
   const [originList,      setOriginList]      = useState([]);
   const [destList,        setDestList]        = useState([]);
@@ -813,8 +1080,24 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
 
   // ── Guardar dirección ORIGEN ───────────────────────────────────────────────
   const handleSaveOrigin = async (formData) => {
+    // Guest: guardar local, sincronizar al backend tras autenticación
+    if (!user) {
+      const localId = `local_${Date.now()}`;
+      const card = {
+        id: localId, alias: formData.alias, line1: formData.line1,
+        city: formData.city, province: formData.province ?? '',
+        zip: formData.zip ?? '', phone: formData.phone ?? '',
+        esPredeterminada: true,
+      };
+      setOriginList([card]);
+      updateData({ originAddressId: localId, localOriginFormData: { ...formData, setAsDefault: true } });
+      setModal(null);
+      toast.success(t('us_wizard.origin_saved'));
+      return;
+    }
+
     setSaving(true);
-    const res = await addOriginAddress({ clientId, ...formData });
+    const res = await addUsaOriginAddress({ clientId, ...formData });
     setSaving(false);
     if (!res.success) { toast.error(res.message); return; }
 
@@ -839,6 +1122,26 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
 
   // ── Guardar dirección DESTINO ──────────────────────────────────────────────
   const handleSaveDestination = async (formData) => {
+    // Guest: guardar local, sincronizar al backend tras autenticación
+    if (!user) {
+      const localId = `local_${Date.now()}`;
+      const card = {
+        id: localId,
+        alias: formData.alias ?? formData.direccion ?? '',
+        line1: formData.direccion ?? '',
+        tipoDireccion: formData.tipoDireccion,
+        esPredeterminada: true,
+        idEstado: formData.idEstado ?? null,
+        idMunicipio: formData.idMunicipio ?? null,
+        idLocker: formData.idLocker ?? null,
+      };
+      setDestList([card]);
+      updateData({ destinationAddressId: localId, localDestFormData: { ...formData, setAsDefault: true } });
+      setModal(null);
+      toast.success(t('us_wizard.dest_saved'));
+      return;
+    }
+
     setSaving(true);
     const res = await addDestinationAddress({ clientId, ...formData });
     setSaving(false);
@@ -852,7 +1155,6 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       esPredeterminada: res.data.esPredeterminada ?? formData.setAsDefault,
       idEstado:         res.data.idEstado   ?? formData.idEstado   ?? null,
       idMunicipio:      res.data.idMunicipio ?? formData.idMunicipio ?? null,
-      // ✅ FIX: Guardar idLocker para poder enriquecer si idEstado es null
       idLocker:         formData.idLocker ?? null,
     };
     setDestList((p) => {
@@ -867,6 +1169,15 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   // ── Continuar ──────────────────────────────────────────────────────────────
   const handleNext = () => {
     const e = {};
+
+    // Validar datos de contacto si es usuario guest
+    if (!user) {
+      if (!senderName.trim())     e.senderName     = 'Ingresa tu nombre.';
+      if (!senderLastName.trim()) e.senderLastName = 'Ingresa tu apellido.';
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail.trim());
+      if (!senderEmail.trim() || !emailOk) e.senderEmail = 'Ingresa un correo electrónico válido.';
+    }
+
     if (!data.originAddressId)      e.origin = t('us_wizard.error_origin_required');
     if (!data.destinationAddressId) e.dest   = t('us_wizard.error_dest_required');
     if (deliveryMethod === 'pickup') {
@@ -892,6 +1203,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       pickupTimeSlot,
       pickupReadyTime: slot?.readyTime ?? '',
       pickupCloseTime: slot?.closeTime ?? '',
+      ...(!user && { senderName: senderName.trim(), senderLastName: senderLastName.trim(), senderEmail: senderEmail.trim() }),
     });
 
     onNext({ destList: enrichedDestList, originList });
@@ -904,6 +1216,44 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         <p className="wizard-card__subtitle">
           {t('us_wizard.step2_subtitle')}
         </p>
+
+        {/* ── Datos de contacto (solo usuarios no logueados) ───────────── */}
+        {!user && (
+          <div className="guest-contact-card">
+            <p className="guest-contact-card__title"><IoPersonOutline size={16} style={{ verticalAlign: 'middle' }} /> Tus datos de contacto</p>
+            <p className="guest-contact-card__subtitle">Se usarán para crear o acceder a tu cuenta al finalizar</p>
+            <div className="wizard-grid-2" style={{ marginTop: '0.75rem' }}>
+              <div className="wizard-field">
+                <input
+                  placeholder="Nombre"
+                  value={senderName}
+                  onChange={(e) => { setSenderName(e.target.value); setErrors(p => ({ ...p, senderName: '' })); }}
+                  className={errors.senderName ? 'input--error' : ''}
+                />
+                {errors.senderName && <span className="field-error">{errors.senderName}</span>}
+              </div>
+              <div className="wizard-field">
+                <input
+                  placeholder="Apellido"
+                  value={senderLastName}
+                  onChange={(e) => { setSenderLastName(e.target.value); setErrors(p => ({ ...p, senderLastName: '' })); }}
+                  className={errors.senderLastName ? 'input--error' : ''}
+                />
+                {errors.senderLastName && <span className="field-error">{errors.senderLastName}</span>}
+              </div>
+            </div>
+            <div className="wizard-field" style={{ marginTop: '0.5rem' }}>
+              <input
+                type="email"
+                placeholder="correo@ejemplo.com"
+                value={senderEmail}
+                onChange={(e) => { setSenderEmail(e.target.value); setErrors(p => ({ ...p, senderEmail: '' })); }}
+                className={errors.senderEmail ? 'input--error' : ''}
+              />
+              {errors.senderEmail && <span className="field-error">{errors.senderEmail}</span>}
+            </div>
+          </div>
+        )}
 
         {(errors.origin || errors.dest) && (
           <div className="addr-error-banner">

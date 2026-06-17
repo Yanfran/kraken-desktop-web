@@ -1,5 +1,5 @@
 // src/pages/auth/Login/Login.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -7,15 +7,22 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import './Login.styles.scss';
-import logoImage from '../../../assets/images/logo.jpg'; 
+import logoImage from '../../../assets/images/logo.jpg';
 import PromoBanner from '../../../components/auth/PromoBanner/PromoBanner';
 import InfoBanner from '../../../components/auth/InfoBanner/InfoBanner';
 
-// Icons actualizados
-import { 
+// Icons
+import {
   IoEyeOutline,
   IoEyeOffOutline,
+  IoCarOutline,
 } from 'react-icons/io5';
+
+const COUNTRY_OPTIONS = [
+  { prefix: 'KV', flag: '🇻🇪', name: 'Venezuela', desc: 'Encomiendas y envíos internacionales', disabled: false },
+  { prefix: 'KU', flag: '🇺🇸', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA', disabled: false },
+  { prefix: 'KE', flag: '🇪🇺', name: 'Europa', desc: 'Próximamente', disabled: true },
+];
 
 const Login = () => {
   const navigate = useNavigate();
@@ -23,38 +30,50 @@ const Login = () => {
   const { colors, actualTheme } = useTheme();
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showCountryModal, setShowCountryModal] = useState(false);
+
+  // Ref síncrona para que el callback de Google pueda leer el prefix seleccionado
+  const selectedPrefixRef = useRef('KV');
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const redirectAfterAuth = (user, isNewUser = false) => {
+    if (user?.codCliente?.startsWith('KU') && isNewUser) {
+      navigate('/pickup');
+    } else {
+      navigate('/home');
     }
   };
 
-  // 🔥 CONFIGURAR GOOGLE LOGIN CON HOOK
+  // Google: abre modal de país primero
+  const handleGoogleButtonClick = () => {
+    setShowCountryModal(true);
+  };
+
+  const handleCountrySelected = (prefix) => {
+    selectedPrefixRef.current = prefix;
+    setShowCountryModal(false);
+    googleLogin();
+  };
+
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
       try {
-        // console.log('🔵 Token recibido de Google');
-        
-        // Crear credential response
-        const credentialResponse = {
-          credential: tokenResponse.access_token
-        };
-        
-        const result = await signInWithGoogle(credentialResponse);
-        
+        const result = await signInWithGoogle(
+          { credential: tokenResponse.access_token },
+          selectedPrefixRef.current
+        );
         if (result.success) {
           toast.success('¡Bienvenido!');
-          navigate('/home');
+          redirectAfterAuth(result.user, result.isNewUser);
         } else {
           toast.error(result.message || 'Error con Google');
         }
@@ -65,8 +84,7 @@ const Login = () => {
         setGoogleLoading(false);
       }
     },
-    onError: (error) => {
-      console.error('❌ Error de Google:', error);
+    onError: () => {
       toast.error('Error con Google');
       setGoogleLoading(false);
     },
@@ -99,7 +117,7 @@ const Login = () => {
       
       if (result.success  == true) {
         toast.success(t('auth.welcome_back'));
-        navigate('/home');
+        redirectAfterAuth(result.user);
       } else {
 
         if (result.tokenVerify) {
@@ -127,6 +145,7 @@ const Login = () => {
   };
 
   return (
+    <>
     <div className="kraken-login-wrapper">
       {/* ✨ BANNER PROMOCIONAL - LADO IZQUIERDO */}
       <PromoBanner />
@@ -154,11 +173,11 @@ const Login = () => {
         {/* Título */}
         <h1 className="kraken-login__title">{t('auth.login_title')}</h1>
 
-        {/* 🔥 BOTÓN GOOGLE PERSONALIZADO */}
+        {/* Botón Google */}
         <button
           type="button"
           className="kraken-login__google-button"
-          onClick={() => googleLogin()}
+          onClick={handleGoogleButtonClick}
           disabled={isLoading || googleLoading}
         >
           <img
@@ -166,7 +185,18 @@ const Login = () => {
             alt="Google"
             className="kraken-login__google-icon"
           />
-          <span>{t('auth.google')}</span>
+          <span>{googleLoading ? 'Conectando...' : t('auth.google')}</span>
+        </button>
+
+        {/* Botón Realizar Recogida (KU) */}
+        <button
+          type="button"
+          className="kraken-login__pickup-button"
+          onClick={() => navigate('/pickup')}
+          disabled={isLoading}
+        >
+          <IoCarOutline size={20} />
+          Realizar una Recogida
         </button>
 
         {/* Separador */}
@@ -305,6 +335,36 @@ const Login = () => {
         </div>
       </div>
     </div>
+
+    {/* Modal selección de país */}
+    {showCountryModal && (
+      <div className="country-modal-overlay" onClick={() => setShowCountryModal(false)}>
+        <div className="country-modal" onClick={(e) => e.stopPropagation()}>
+          <h3 className="country-modal__title">¿Dónde estás ubicado?</h3>
+          <p className="country-modal__subtitle">Selecciona tu país para continuar con Google</p>
+          <div className="country-modal__options">
+            {COUNTRY_OPTIONS.map((opt) => (
+              <button
+                key={opt.prefix}
+                className={`country-modal__option${opt.disabled ? ' country-modal__option--disabled' : ''}`}
+                onClick={() => !opt.disabled && handleCountrySelected(opt.prefix)}
+                disabled={opt.disabled}
+              >
+                <span className="country-modal__flag">{opt.flag}</span>
+                <div className="country-modal__info">
+                  <span className="country-modal__name">{opt.name}</span>
+                  <span className="country-modal__desc">{opt.desc}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+          <button className="country-modal__cancel" onClick={() => setShowCountryModal(false)}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

@@ -235,6 +235,7 @@ $radius: 10px;
   &__body {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 1.25rem 1.5rem;
     display: flex;
     flex-direction: column;
@@ -458,4 +459,122 @@ $radius: 10px;
 .addr-col--error {
   .addr-col__title { color: #dc2626; }
   .addr-col__grid  { border: 1.5px solid #fca5a5; border-radius: 10px; padding: 0.5rem; }
+}
+
+// ── Teléfono Venezuela: operadora + número ────────────────────────────────────
+.phone-ve-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.phone-ve-operator {
+  flex: 0 0 110px;
+  padding: 0.6rem 0.5rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+
+  &:focus { outline: none; border-color: #FF4500; }
+  &.input--error { border-color: #dc2626; }
+}
+
+.phone-ve-number {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: #fff;
+  transition: border-color 0.2s;
+
+  &:focus { outline: none; border-color: #FF4500; }
+  &:disabled { background: #f9fafb; cursor: not-allowed; color: #9ca3af; }
+  &.input--error { border-color: #dc2626; }
+  &::placeholder { color: #9ca3af; }
+}
+
+// ── Identificación: país + tipo + número ──────────────────────────────────────
+.doc-ident-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1.6fr);
+  gap: 0.5rem;
+  width: 100%;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr 1fr;
+
+    .doc-num { grid-column: 1 / -1; }
+  }
+}
+
+.doc-country,
+.doc-type {
+  width: 100%;
+  min-width: 0;
+  padding: 0.6rem 0.4rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:focus { outline: none; border-color: #FF4500; }
+  &:disabled { background: #f9fafb; cursor: not-allowed; color: #9ca3af; }
+  &.input--error { border-color: #dc2626; }
+}
+
+// ── Wrapper del número de documento (muestra prefijo V- J- etc.) ──────────────
+.doc-num-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  min-width: 0;
+  transition: border-color 0.2s;
+
+  &:focus-within { border-color: #FF4500; }
+  &--error { border-color: #dc2626 !important; }
+}
+
+.doc-prefix {
+  flex-shrink: 0;
+  padding: 0.6rem 0 0.6rem 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.doc-num-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.65rem;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: transparent;
+
+  &:disabled { background: #f9fafb; cursor: not-allowed; color: #9ca3af; }
+  &::placeholder { color: #9ca3af; }
+}
+
+// ── Texto de ayuda debajo del campo ──────────────────────────────────────────
+.field-hint {
+  display: block;
+  font-size: 0.74rem;
+  color: #9ca3af;
+  margin-top: 3px;
 }

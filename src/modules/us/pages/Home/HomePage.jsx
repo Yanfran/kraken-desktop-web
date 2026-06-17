@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
-import axiosInstance from '../../../../services/axiosInstance';
+import { getUsaMyShipments } from '../../../../services/us/usGuiasService';
 import './HomePage.scss';
 
 // ── Helper de color por estatus ───────────────────────────────────────────────
@@ -24,11 +24,18 @@ const HomePage = () => {
 
   // ── Cargar envíos reales del cliente ─────────────────────────────────────
   useEffect(() => {
-    axiosInstance.get('/spain/guia/my-shipments') // mismo endpoint por ahora
+    getUsaMyShipments()
       .then(res => {
-        if (res.data?.success) setShipments(res.data.data ?? []);
+        if (res.success) {
+          // Más reciente primero
+          const sorted = [...(res.data ?? [])].sort((a, b) => {
+            const da = new Date(a.fecha ?? 0);
+            const db = new Date(b.fecha ?? 0);
+            return db - da;
+          });
+          setShipments(sorted);
+        }
       })
-      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -87,7 +94,7 @@ const HomePage = () => {
               )}
 
               <div className="us-home__shipments">
-                {shipments.slice(0, 5).map((s) => (
+                {shipments.map((s) => (
                   <div
                     key={s.guiaId}
                     className="us-home__shipment-item"
@@ -106,16 +113,6 @@ const HomePage = () => {
                   </div>
                 ))}
               </div>
-
-              {shipments.length > 5 && (
-                <button
-                  className="us-home__view-all"
-                  onClick={() => navigate('/guide/guides')}
-                >
-                  <span>{t('us_home.view_all', { count: shipments.length })}</span>
-                  <span className="us-home__view-all-arrow">→</span>
-                </button>
-              )}
             </section>
           </div>
 

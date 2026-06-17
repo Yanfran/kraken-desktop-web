@@ -17,6 +17,10 @@ import { TenantProvider } from './core/context/TenantContext';
 import TenantRouter from './router/TenantRouter';
 import DynamicLayout from './layout/DynamicLayout';
 
+const USShipmentWizardPublic = React.lazy(() =>
+  import('./modules/us/pages/ShipmentWizard/USShipmentWizard')
+);
+
 // ===== LAZY LOADING DE COMPONENTES =====
 // Auth pages
 const Login = React.lazy(() => import('./pages/auth/Login/Login'));
@@ -176,6 +180,13 @@ function App() {
                 <Route path="/welcome" element={
                   <SemiProtectedRoute requireAuth={true}>
                     <Welcome />
+                  </SemiProtectedRoute>
+                } />
+
+                {/* Wizard de Recogida KU — accesible sin login (el wizard maneja su propio auth) */}
+                <Route path="/pickup" element={
+                  <SemiProtectedRoute>
+                    <USShipmentWizardPublic />
                   </SemiProtectedRoute>
                 } />
 

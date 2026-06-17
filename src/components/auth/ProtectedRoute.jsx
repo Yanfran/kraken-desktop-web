@@ -81,7 +81,10 @@ export const PublicRoute = ({ children }) => {
 export const SemiProtectedRoute = ({ children, requireAuth = false }) => {
   const { isSignedIn, isLoading } = useAuth();
 
-  if (isLoading) {
+  // Solo bloquear en loading cuando la ruta requiere auth.
+  // Para rutas públicas (requireAuth=false) el loading de auth no debe
+  // desmontar el componente — el wizard maneja su propio estado de sesión.
+  if (isLoading && requireAuth) {
     return <Loading />;
   }
 

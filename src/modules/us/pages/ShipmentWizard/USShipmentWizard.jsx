@@ -1,6 +1,10 @@
 // src/modules/es/pages/ShipmentWizard/ESShipmentWizard.jsx
 import React, { useState, useCallback } from 'react';
+import { useAuth } from '../../../../contexts/AuthContext';
+import WizardAuthModal from './WizardAuthModal';
 import { calculateUSShipping } from '../../../../services/us/usCalculatorService';
+import { addDestinationAddress } from '../../../../services/es/spainAddressService';
+import { addUsaOriginAddress } from '../../../../services/us/usAddressService';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { fetchMunicipios } from '../../../../services/es/spainAddressService';
@@ -41,6 +45,9 @@ const INITIAL_STATE = {
       descripcion: '',
     },
   ],
+  senderName:           '',
+  senderLastName:       '',
+  senderEmail:          '',
   originAddressId:      null,
   destinationAddressId: null,
 
@@ -66,8 +73,11 @@ const INITIAL_STATE = {
 
 const ESShipmentWizard = () => {
   const { t } = useTranslation();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [wizardData,  setWizardData]  = useState(INITIAL_STATE);
+  const { user } = useAuth();
+  const [currentStep,    setCurrentStep]    = useState(1);
+  const [wizardData,     setWizardData]     = useState(INITIAL_STATE);
+  const [showAuthModal,  setShowAuthModal]  = useState(false);
+  const [pendingStep4,   setPendingStep4]   = useState(false);
 
   const STEPS = [
     { id: 1, label: t('us_wizard.step1'), icon: STEP_ICONS[0] },
@@ -197,7 +207,14 @@ const ESShipmentWizard = () => {
         return (
           <Step3CourierSelection
             {...commonProps}
-            onNext={() => setCurrentStep(4)}
+            onNext={() => {
+              if (!user) {
+                setPendingStep4(true);
+                setShowAuthModal(true);
+              } else {
+                setCurrentStep(4);
+              }
+            }}
             onBack={() => setCurrentStep(2)}
           />
         );
@@ -265,6 +282,46 @@ const ESShipmentWizard = () => {
       <div className="us-wizard__body">
         {renderStep()}
       </div>
+
+      {showAuthModal && (
+        <WizardAuthModal
+          email={wizardData.senderEmail}
+          name={wizardData.senderName}
+          lastName={wizardData.senderLastName}
+          onSuccess={async () => {
+            // Sync local (guest) addresses to backend with the newly obtained clientId
+            try {
+              const raw = JSON.parse(localStorage.getItem('userData') ?? '{}');
+              const newClientId = raw?.id ? Number(raw.id) : null;
+              const patches = {};
+
+              if (newClientId && wizardData.localOriginFormData) {
+                const res = await addUsaOriginAddress({ clientId: newClientId, ...wizardData.localOriginFormData });
+                if (res.success && res.data?.id) {
+                  patches.originAddressId = res.data.id;
+                  patches.localOriginFormData = null;
+                }
+              }
+
+              if (newClientId && wizardData.localDestFormData) {
+                const res = await addDestinationAddress({ clientId: newClientId, ...wizardData.localDestFormData });
+                if (res.success && res.data?.id) {
+                  patches.destinationAddressId = res.data.id;
+                  patches.localDestFormData = null;
+                }
+              }
+
+              if (Object.keys(patches).length) updateData(patches);
+            } catch (e) {
+              console.warn('[WizardSync] Error al sincronizar direcciones:', e);
+            }
+
+            setShowAuthModal(false);
+            if (pendingStep4) { setPendingStep4(false); setCurrentStep(4); }
+          }}
+          onCancel={() => { setShowAuthModal(false); setPendingStep4(false); }}
+        />
+      )}
     </div>
   );
 };

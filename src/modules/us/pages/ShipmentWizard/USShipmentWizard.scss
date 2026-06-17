@@ -313,3 +313,178 @@ $transition:    0.2s ease;
   background: $border;
   margin: 1.25rem 0;
 }
+
+// ─── Card de datos de contacto (guest Step 2) ─────────────────────────────────
+.guest-contact-card {
+  background: #f8faff;
+  border: 1.5px solid #dbeafe;
+  border-radius: $radius-sm;
+  padding: 1rem 1.25rem 1.25rem;
+  margin-bottom: 1.25rem;
+
+  &__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $navy;
+    margin: 0 0 4px;
+  }
+
+  &__subtitle {
+    font-size: 0.82rem;
+    color: $text-muted;
+    margin: 0;
+  }
+}
+
+// ─── WizardAuthModal ─────────────────────────────────────────────────────────
+.wam-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.wam {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  text-align: center;
+
+  &__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 69, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $primary;
+    margin-bottom: 0.25rem;
+  }
+
+  &__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $text-main;
+    margin: 0;
+  }
+
+  &__subtitle {
+    font-size: 0.88rem;
+    color: $text-muted;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  &__email {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: $navy;
+    background: #f1f5f9;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin: 0;
+  }
+
+  &__field {
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+
+  &__password-row {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid $border;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    transition: border-color 0.2s;
+
+    &:focus-within { border-color: $primary; }
+  }
+
+  &__input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.7rem 0.75rem;
+    font-size: 0.95rem;
+    color: $text-main;
+    background: transparent;
+
+    &.input--error { background: #fef2f2; }
+    &::placeholder { color: #9ca3af; }
+  }
+
+  &__eye {
+    background: none;
+    border: none;
+    padding: 0.7rem 0.6rem;
+    cursor: pointer;
+    color: $text-muted;
+    &:hover { color: $text-main; }
+  }
+
+  &__toggle {
+    background: none;
+    border: none;
+    font-size: 0.82rem;
+    color: $primary;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    &:hover { color: $primary-hover; }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  &__btn {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: $radius-sm;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+
+    &--cancel {
+      background: #f3f4f6;
+      color: $text-muted;
+      &:hover { background: #e5e7eb; }
+    }
+
+    &--submit {
+      background: $primary;
+      color: #fff;
+      &:hover { background: $primary-hover; }
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+    }
+  }
+
+  &__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid $border;
+    border-top-color: $primary;
+    border-radius: 50%;
+    animation: wam-spin 0.7s linear infinite;
+  }
+}
+
+@keyframes wam-spin { to { transform: rotate(360deg); } }

@@ -181,6 +181,16 @@ export const authService = {
     }
   },
   
+  // ===== CHECK EMAIL =====
+  async checkEmailExists(email) {
+    try {
+      const response = await authAPI.get(`/Users/check-email?email=${encodeURIComponent(email)}`);
+      return { exists: response.data?.exists ?? false };
+    } catch {
+      return { exists: false };
+    }
+  },
+
   // ===== REGISTER =====
   async register(userData) {
     try {
@@ -188,23 +198,28 @@ export const authService = {
         email: userData.email,
         password: userData.password,
         name: userData.name,
-        last: userData.lastName
+        last: userData.lastName,
+        clientPrefix: userData.clientPrefix ?? 'KV',
+        fromWizard: userData.fromWizard ?? false,
       });
 
       // console.log('✅ [AuthService] Register response:', response.data);
 
       if (response.data.success) {
+        const serverUser = response.data.user;
         const user = {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          name: response.data.user.nombres || userData.name,
-          lastName: response.data.user.apellidos || userData.lastName,
-          nombres: response.data.user.nombres,
-          apellidos: response.data.user.apellidos,
-          avatarId: response.data.user.avatarId || '1',
-          emailVerified: false,
-          profileComplete: false,
-          clienteActivo: false
+          id: serverUser.id,
+          email: serverUser.email,
+          name: serverUser.nombres || userData.name,
+          lastName: serverUser.apellidos || userData.lastName,
+          nombres: serverUser.nombres,
+          apellidos: serverUser.apellidos,
+          avatarId: serverUser.avatarId || '1',
+          emailVerified: userData.fromWizard ? true : (serverUser.emailVerified ?? false),
+          profileComplete: serverUser.profileComplete ?? false,
+          clienteActivo: serverUser.clienteActivo ?? (userData.fromWizard ? true : false),
+          codCliente: serverUser.codCliente ?? null,
+          idClienteTipo: serverUser.idClienteTipo ?? null,
         };
 
         localStorage.setItem('userId', user.id.toString());
@@ -286,7 +301,7 @@ export const authService = {
   },
 
   // ===== 🔥 GOOGLE AUTH - SIN THIS =====
-  async loginWithGoogle(tokenOrCredential) {
+  async loginWithGoogle(tokenOrCredential, clientPrefix = 'KV') {
   try {
     // console.log('🔵 [AuthService] Procesando Google auth...');
     
@@ -338,15 +353,16 @@ export const authService = {
         name: firstName,
         email: userEmail,
         password: fakePassword,
-        last: lastName
+        last: lastName,
+        clientPrefix
       });
 
       if (registerResponse.data.success && registerResponse.data.token && registerResponse.data.user) {
-        // console.log('✅ [AuthService] Usuario REGISTRADO con Google');
-        
+        // console.log('✅ [AuthService] Usuario Google auth OK');
+
         const userData = mapUserData(registerResponse.data.user);
         localStorage.setItem('userId', userData.id.toString());
-        
+
         return {
           success: true,
           token: registerResponse.data.token,
@@ -368,10 +384,10 @@ export const authService = {
 
     if (loginResponse.data.success && loginResponse.data.token && loginResponse.data.user) {
       // console.log('✅ [AuthService] Usuario LOGUEADO con Google');
-      
+
       const userData = mapUserData(loginResponse.data.user);
       localStorage.setItem('userId', userData.id.toString());
-      
+
       return {
         success: true,
         token: loginResponse.data.token,

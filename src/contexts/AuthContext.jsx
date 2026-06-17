@@ -190,7 +190,9 @@ export const AuthProvider = ({ children }) => {
         name: userData.name,
         lastName: userData.lastName,
         email: userData.email,
-        password: userData.password
+        password: userData.password,
+        clientPrefix: userData.clientPrefix ?? 'KV',
+        fromWizard: userData.fromWizard ?? false,
       });
 
       if (result.success) {
@@ -222,14 +224,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // ===== SIGN IN CON GOOGLE =====
-  const signInWithGoogle = useCallback(async (credentialResponse) => {
+  const signInWithGoogle = useCallback(async (credentialResponse, clientPrefix = 'KV') => {
   try {
     dispatch({ type: 'LOADING' });
     // console.log('🔵 [Auth] Iniciando Google Sign-In...');
-    
+
     // Si recibimos el objeto completo de Google
     let credential = credentialResponse;
-    
+
     // Si es un objeto con la propiedad credential
     if (credentialResponse?.credential) {
       credential = credentialResponse.credential;
@@ -242,7 +244,7 @@ export const AuthProvider = ({ children }) => {
     // console.log('✅ [Auth] Credencial de Google obtenida');
 
     // Enviar credencial al backend
-    const response = await authService.loginWithGoogle(credential);
+    const response = await authService.loginWithGoogle(credential, clientPrefix);
     
     if (response.success) {
       // ✅ NORMALIZAR DATOS DEL USUARIO ANTES DE GUARDAR
@@ -291,7 +293,9 @@ export const AuthProvider = ({ children }) => {
       // console.log('✅ [Auth] Google login exitoso:', normalizedUser.email);
       // console.log('✅ [Auth] Usuario normalizado:', { name: normalizedUser.name, lastName: normalizedUser.lastName });
       
-      return { success: true, user: normalizedUser };
+      // profileComplete=true → usuario ya existía; false → recién creado
+      const isNewUser = normalizedUser.profileComplete === false;
+      return { success: true, user: normalizedUser, isNewUser };
     } else {
       dispatch({ type: 'ERROR', payload: response.message });
       return { success: false, message: response.message };

@@ -1,5 +1,5 @@
 // src/pages/auth/Register/Register.jsx - CON BANNER LATERAL
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -8,33 +8,39 @@ import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 import './Register.styles.scss';
 import PasswordValidator, { validatePassword } from '../../../components/auth/PasswordValidator/PasswordValidator';
-import logoImage from '../../../assets/images/logo.jpg'; 
+import logoImage from '../../../assets/images/logo.jpg';
 import PromoBanner from '../../../components/auth/PromoBanner/PromoBanner';
 import InfoBanner from '../../../components/auth/InfoBanner/InfoBanner';
 
 // Icons actualizados
-import { 
+import {
   IoEyeOutline,
   IoEyeOffOutline,
 } from 'react-icons/io5';
+
+const COUNTRY_OPTIONS = [
+  { prefix: 'KV', flag: '🇻🇪', name: 'Venezuela', desc: 'Encomiendas y envíos internacionales', disabled: false },
+  { prefix: 'KU', flag: '🇺🇸', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA', disabled: false },
+  { prefix: 'KE', flag: '🇪🇺', name: 'Europa', desc: 'Próximamente', disabled: true },
+];
 
 const Register = () => {
   const navigate = useNavigate();
   const { signUp, signInWithGoogle, isLoading } = useAuth();
   const { colors, actualTheme } = useTheme();
   const { t } = useTranslation();
-  
+
   // Estados del formulario
-  const [formData, setFormData] = useState({
-    name: '',
-    lastName: '',
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ name: '', lastName: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordValidator, setShowPasswordValidator] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showCountryModal, setShowCountryModal] = useState(false);
+  // Selector de país inline para registro con email
+  const [clientPrefix, setClientPrefix] = useState('KV');
+  // Ref síncrona para el callback de Google
+  const selectedPrefixRef = useRef('KV');
 
   // Manejar cambios en inputs
   const handleInputChange = (field, value) => {
@@ -66,34 +72,47 @@ const Register = () => {
     }
   };
 
+  const redirectAfterAuth = (user, isNewUser = false) => {
+    if (user?.codCliente?.startsWith('KU') && isNewUser) {
+      navigate('/pickup');
+    } else {
+      navigate('/home');
+    }
+  };
+
+  const handleGoogleButtonClick = () => {
+    setShowCountryModal(true);
+  };
+
+  const handleCountrySelected = (prefix) => {
+    selectedPrefixRef.current = prefix;
+    setShowCountryModal(false);
+    googleLogin();
+  };
+
   // Configurar Google Login
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
       try {
-        // console.log('🔵 Token recibido de Google');
-        
-        const credentialResponse = {
-          credential: tokenResponse.access_token
-        };
-        
-        const result = await signInWithGoogle(credentialResponse);
-        
+        const result = await signInWithGoogle(
+          { credential: tokenResponse.access_token },
+          selectedPrefixRef.current
+        );
         if (result.success) {
           toast.success('¡Bienvenido!');
-          navigate('/home');
+          redirectAfterAuth(result.user, result.isNewUser);
         } else {
           toast.error(result.message || 'Error con Google');
         }
       } catch (error) {
-        console.error('❌ Error en Google login:', error);
+        console.error('❌ Error en Google registro:', error);
         toast.error('Error al conectar con Google');
       } finally {
         setGoogleLoading(false);
       }
     },
-    onError: (error) => {
-      console.error('❌ Error de Google:', error);
+    onError: () => {
       toast.error('Error con Google');
       setGoogleLoading(false);
     },
@@ -140,14 +159,18 @@ const Register = () => {
         name: formData.name.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim(),
-        password: formData.password
+        password: formData.password,
+        clientPrefix,
+        fromWizard: clientPrefix === 'KU',
       });
-      
+
       if (result.success) {
         toast.success(t('auth.register_success'));
-        navigate('/email-confirmation', {
-          state: { email: formData.email }
-        });
+        if (clientPrefix === 'KU') {
+          navigate('/pickup');
+        } else {
+          navigate('/email-confirmation', { state: { email: formData.email } });
+        }
       } else {
         if (result.field) {
           setErrors({ [result.field]: result.message });
@@ -164,6 +187,7 @@ const Register = () => {
   };
 
   return (
+    <>
     <div className="kraken-register-wrapper">
       {/* ✨ BANNER PROMOCIONAL - LADO IZQUIERDO */}
       <PromoBanner />
@@ -191,11 +215,26 @@ const Register = () => {
         {/* Título */}
         <h1 className="kraken-register__title">{t('auth.register_title')}</h1>
 
+        {/* Selector de país inline */}
+        <div className="country-selector">
+          {COUNTRY_OPTIONS.filter(o => !o.disabled).map((opt) => (
+            <button
+              key={opt.prefix}
+              type="button"
+              className={`country-selector__btn${clientPrefix === opt.prefix ? ' country-selector__btn--active' : ''}`}
+              onClick={() => setClientPrefix(opt.prefix)}
+            >
+              <span>{opt.flag}</span>
+              <span>{opt.name}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Botón Google */}
         <button
           type="button"
           className="kraken-register__google-button"
-          onClick={() => googleLogin()}
+          onClick={handleGoogleButtonClick}
           disabled={isLoading || googleLoading}
         >
           <img
@@ -203,7 +242,7 @@ const Register = () => {
             alt="Google"
             className="kraken-register__google-icon"
           />
-          <span>{t('auth.google')}</span>
+          <span>{googleLoading ? 'Conectando...' : t('auth.google')}</span>
         </button>
 
         {/* Separador */}
@@ -376,6 +415,36 @@ const Register = () => {
         </div>
       </div>
     </div>
+
+    {/* Modal selección de país (Google) */}
+    {showCountryModal && (
+      <div className="country-modal-overlay" onClick={() => setShowCountryModal(false)}>
+        <div className="country-modal" onClick={(e) => e.stopPropagation()}>
+          <h3 className="country-modal__title">¿Dónde estás ubicado?</h3>
+          <p className="country-modal__subtitle">Selecciona tu país para continuar con Google</p>
+          <div className="country-modal__options">
+            {COUNTRY_OPTIONS.map((opt) => (
+              <button
+                key={opt.prefix}
+                className={`country-modal__option${opt.disabled ? ' country-modal__option--disabled' : ''}`}
+                onClick={() => !opt.disabled && handleCountrySelected(opt.prefix)}
+                disabled={opt.disabled}
+              >
+                <span className="country-modal__flag">{opt.flag}</span>
+                <div className="country-modal__info">
+                  <span className="country-modal__name">{opt.name}</span>
+                  <span className="country-modal__desc">{opt.desc}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+          <button className="country-modal__cancel" onClick={() => setShowCountryModal(false)}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

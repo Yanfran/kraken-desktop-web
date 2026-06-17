@@ -491,3 +491,131 @@ body {
   transition-duration: 0.3s;
   transition-timing-function: ease;
 }
+
+/* ===== SELECTOR INLINE DE PAÍS ===== */
+.country-selector {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 14px;
+  z-index: 10;
+  position: relative;
+
+  &__btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+    &:hover {
+      border-color: #022364;
+      color: #022364;
+    }
+
+    &--active {
+      border-color: #022364;
+      background: #022364;
+      color: #fff;
+      font-weight: 700;
+    }
+  }
+}
+
+/* ===== MODAL SELECCIÓN DE PAÍS (Google) ===== */
+.country-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.country-modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 24px 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 6px;
+    text-align: center;
+  }
+
+  &__subtitle {
+    font-size: 0.88rem;
+    color: #6b7280;
+    text-align: center;
+    margin: 0 0 20px;
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+
+    &:hover:not(:disabled) {
+      border-color: #022364;
+      background: #f0f4ff;
+    }
+
+    &--disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  &__flag { font-size: 2rem; flex-shrink: 0; }
+
+  &__info { display: flex; flex-direction: column; gap: 2px; }
+
+  &__name { font-size: 1rem; font-weight: 600; color: #1a1a1a; }
+
+  &__desc { font-size: 0.8rem; color: #6b7280; }
+
+  &__cancel {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: none;
+    color: #6b7280;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 0.15s;
+
+    &:hover { background: #f3f4f6; }
+  }
+}
