@@ -19,9 +19,9 @@ import {
 } from 'react-icons/io5';
 
 const COUNTRY_OPTIONS = [
-  { prefix: 'KV', flag: '🇻🇪', name: 'Venezuela', desc: 'Encomiendas y envíos internacionales', disabled: false },
-  { prefix: 'KU', flag: '🇺🇸', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA', disabled: false },
-  { prefix: 'KE', flag: '🇪🇺', name: 'Europa', desc: 'Próximamente', disabled: true },
+  { prefix: 'KV', countryCode: 've', name: 'Venezuela',      desc: 'Encomiendas y envíos internacionales',  disabled: false },
+  { prefix: 'KU', countryCode: 'us', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA',  disabled: false },
+  { prefix: 'KE', countryCode: 'eu', name: 'Europa',         desc: 'Próximamente',                          disabled: true  },
 ];
 
 const Login = () => {
@@ -340,8 +340,8 @@ const Login = () => {
     {showCountryModal && (
       <div className="country-modal-overlay" onClick={() => setShowCountryModal(false)}>
         <div className="country-modal" onClick={(e) => e.stopPropagation()}>
-          <h3 className="country-modal__title">¿Dónde estás ubicado?</h3>
-          <p className="country-modal__subtitle">Selecciona tu país para continuar con Google</p>
+          <h3 className="country-modal__title">País de Residencia</h3>
+          <p className="country-modal__subtitle">Selecciona tu país de residencia para continuar con Google</p>
           <div className="country-modal__options">
             {COUNTRY_OPTIONS.map((opt) => (
               <button
@@ -350,7 +350,13 @@ const Login = () => {
                 onClick={() => !opt.disabled && handleCountrySelected(opt.prefix)}
                 disabled={opt.disabled}
               >
-                <span className="country-modal__flag">{opt.flag}</span>
+                <img
+                  src={`https://flagcdn.com/32x24/${opt.countryCode}.png`}
+                  alt={opt.name}
+                  className="country-modal__flag"
+                  width="32"
+                  height="24"
+                />
                 <div className="country-modal__info">
                   <span className="country-modal__name">{opt.name}</span>
                   <span className="country-modal__desc">{opt.desc}</span>

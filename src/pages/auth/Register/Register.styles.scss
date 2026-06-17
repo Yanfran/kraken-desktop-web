@@ -495,12 +495,11 @@ body {
 /* ===== SELECTOR INLINE DE PAÍS ===== */
 .country-selector {
   display: flex;
+  flex-direction: row;
   gap: 8px;
   width: 100%;
   max-width: 380px;
   margin-bottom: 14px;
-  z-index: 10;
-  position: relative;
 
   &__btn {
     flex: 1;
@@ -517,17 +516,27 @@ body {
     color: #374151;
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s, color 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
-    &:hover {
+    &:hover:not(:disabled) {
       border-color: #022364;
+      background: #eef2ff;
       color: #022364;
     }
 
     &--active {
       border-color: #022364;
-      background: #022364;
-      color: #fff;
+      border-width: 2px;
+      background: #eef2ff;
+      color: #022364;
       font-weight: 700;
+    }
+
+    &--disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
   }
 }

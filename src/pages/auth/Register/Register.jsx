@@ -19,9 +19,9 @@ import {
 } from 'react-icons/io5';
 
 const COUNTRY_OPTIONS = [
-  { prefix: 'KV', flag: '🇻🇪', name: 'Venezuela', desc: 'Encomiendas y envíos internacionales', disabled: false },
-  { prefix: 'KU', flag: '🇺🇸', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA', disabled: false },
-  { prefix: 'KE', flag: '🇪🇺', name: 'Europa', desc: 'Próximamente', disabled: true },
+  { prefix: 'KV', countryCode: 've', name: 'Venezuela',      desc: 'Encomiendas y envíos internacionales',  disabled: false },
+  { prefix: 'KU', countryCode: 'us', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA',  disabled: false },
+  { prefix: 'KE', countryCode: 'eu', name: 'Europa',         desc: 'Próximamente',                          disabled: true  },
 ];
 
 const Register = () => {
@@ -217,15 +217,22 @@ const Register = () => {
 
         {/* Selector de país inline */}
         <div className="country-selector">
-          {COUNTRY_OPTIONS.filter(o => !o.disabled).map((opt) => (
+          {COUNTRY_OPTIONS.map((opt) => (
             <button
               key={opt.prefix}
               type="button"
-              className={`country-selector__btn${clientPrefix === opt.prefix ? ' country-selector__btn--active' : ''}`}
-              onClick={() => setClientPrefix(opt.prefix)}
+              disabled={opt.disabled}
+              className={`country-selector__btn${clientPrefix === opt.prefix ? ' country-selector__btn--active' : ''}${opt.disabled ? ' country-selector__btn--disabled' : ''}`}
+              onClick={() => !opt.disabled && setClientPrefix(opt.prefix)}
             >
-              <span>{opt.flag}</span>
-              <span>{opt.name}</span>
+              <img
+                src={`https://flagcdn.com/20x15/${opt.countryCode}.png`}
+                alt={opt.name}
+                width="20"
+                height="15"
+                style={{ borderRadius: '2px', opacity: opt.disabled ? 0.4 : 1 }}
+              />
+              <span>{opt.disabled ? `${opt.name} (Próx.)` : opt.name}</span>
             </button>
           ))}
         </div>
@@ -420,8 +427,8 @@ const Register = () => {
     {showCountryModal && (
       <div className="country-modal-overlay" onClick={() => setShowCountryModal(false)}>
         <div className="country-modal" onClick={(e) => e.stopPropagation()}>
-          <h3 className="country-modal__title">¿Dónde estás ubicado?</h3>
-          <p className="country-modal__subtitle">Selecciona tu país para continuar con Google</p>
+          <h3 className="country-modal__title">País de Residencia</h3>
+          <p className="country-modal__subtitle">Selecciona tu país de residencia para continuar con Google</p>
           <div className="country-modal__options">
             {COUNTRY_OPTIONS.map((opt) => (
               <button
@@ -430,7 +437,13 @@ const Register = () => {
                 onClick={() => !opt.disabled && handleCountrySelected(opt.prefix)}
                 disabled={opt.disabled}
               >
-                <span className="country-modal__flag">{opt.flag}</span>
+                <img
+                  src={`https://flagcdn.com/32x24/${opt.countryCode}.png`}
+                  alt={opt.name}
+                  className="country-modal__flag"
+                  width="32"
+                  height="24"
+                />
                 <div className="country-modal__info">
                   <span className="country-modal__name">{opt.name}</span>
                   <span className="country-modal__desc">{opt.desc}</span>
