@@ -59,6 +59,7 @@ const INITIAL_STATE = {
   courierId:        null,   // ID del courier seleccionado (ej: 3)
   courierServiceId: null,   // ID del servicio seleccionado (ej: 4)
   courierQuote:     null,   // Objeto completo del quote seleccionado
+  discounts:        null,   // { pickup: { porcentaje, nombre }, dropoff: { porcentaje, nombre } }
 
   seguroActivo: false,
   metodoPago: 'card',
@@ -296,7 +297,7 @@ const ESShipmentWizard = () => {
               const patches = {};
 
               if (newClientId && wizardData.localOriginFormData) {
-                const res = await addUsaOriginAddress({ clientId: newClientId, ...wizardData.localOriginFormData });
+                const res = await addUsaOriginAddress({ clientId: newClientId, ...wizardData.localOriginFormData, idPais: 2 });
                 if (res.success && res.data?.id) {
                   patches.originAddressId = res.data.id;
                   patches.localOriginFormData = null;

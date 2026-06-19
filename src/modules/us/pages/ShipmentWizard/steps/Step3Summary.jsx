@@ -15,6 +15,7 @@ import {
   IoCarOutline,
   IoStorefrontOutline,
   IoDocumentTextOutline,
+  IoPricetagOutline,
 } from 'react-icons/io5';
 import './Step3Summary.scss';
 
@@ -106,6 +107,14 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
 
   // 4. Obtenemos el total final
   const totalEUR = calc?.data?.total || 0;
+
+  // 5. Descuento KU
+  const discounts   = data.discounts ?? {};
+  const discountPct = isPickup ? (discounts.pickup?.porcentaje ?? 0) : (discounts.dropoff?.porcentaje ?? 0);
+  const discountName = isPickup ? (discounts.pickup?.nombre ?? 'Descuento Pickup') : (discounts.dropoff?.nombre ?? 'Descuento Drop-Off');
+  const subtotalBeforeDiscount = Number(totalEUR) + Number(data.courierQuote?.total ?? 0) + pickupRate;
+  const discountAmount = discountPct > 0 ? subtotalBeforeDiscount * discountPct / 100 : 0;
+  const grandTotal = subtotalBeforeDiscount - discountAmount;
 
   const editPkg  = onEditPackage   ?? onBack;
   const editAddr = onEditAddresses ?? onBack;
@@ -283,15 +292,22 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                     isDiscount={false}
                   />
                 )}
+
+                {/* Descuento KU */}
+                {discountPct > 0 && (
+                  <CostRow
+                    label={<><IoPricetagOutline size={14} style={{ verticalAlign: 'middle' }} /> {discountName} (-{discountPct}%)</>}
+                    valueUSD={`-${fmtUSD(discountAmount)}`}
+                    isDiscount={true}
+                  />
+                )}
               </div>
 
               {/* ── Total incluyendo UPS ─────────────────────────────── */}
               <div className="cost-total cost-total--espana">
                 <span className="cost-total__label">Total PREPAID</span>
                 <span className="cost-total__usd" style={{ color: '#fff', fontSize: '18px', fontFamily: 'Courier New, monospace' }}>
-                  {fmtUSD(
-                    Number(totalEUR) + Number(data.courierQuote?.total ?? 0) + pickupRate
-                  )}
+                  {fmtUSD(grandTotal)}
                 </span>
               </div>
             </>

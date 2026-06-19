@@ -1097,7 +1097,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
     }
 
     setSaving(true);
-    const res = await addUsaOriginAddress({ clientId, ...formData });
+    const res = await addUsaOriginAddress({ clientId, ...formData, idPais: 2 });
     setSaving(false);
     if (!res.success) { toast.error(res.message); return; }
 

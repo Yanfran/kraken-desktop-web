@@ -25,6 +25,7 @@ import {
   IoHomeOutline,
   IoCubeOutline,
   IoMailOutline,
+  IoPricetagOutline,
 } from 'react-icons/io5';
 import './Step4Payment.scss';
 
@@ -328,8 +329,13 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const shipping = Number(calculationResult?.data?.total || 0);
   const courier  = courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0;
   const pickup   = Number(data.pickupRate ?? 0);
-  const total    = Number((shipping + courier + pickup).toFixed(2));
   const isPickup = data.deliveryMethod === 'pickup';
+  const discounts   = data.discounts ?? {};
+  const discountPct = isPickup ? (discounts.pickup?.porcentaje ?? 0) : (discounts.dropoff?.porcentaje ?? 0);
+  const discountName = isPickup ? (discounts.pickup?.nombre ?? 'Descuento Pickup') : (discounts.dropoff?.nombre ?? 'Descuento Drop-Off');
+  const subtotalBeforeDiscount = shipping + courier + pickup;
+  const discountAmount = discountPct > 0 ? subtotalBeforeDiscount * discountPct / 100 : 0;
+  const total    = Number((subtotalBeforeDiscount - discountAmount).toFixed(2));
 
   const totalRef      = useRef(total);
   const lightboxOpen  = useRef(false);
@@ -454,6 +460,8 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       courierName:      data.courierQuote?.name    || data.courierQuote?.courier || '',
       courierService:   data.courierQuote?.service || '',
       pickupCost:       isPickup ? Number(data.pickupRate ?? 0) : 0,
+      discountAmount:   discountAmount > 0 ? Number(discountAmount.toFixed(2)) : 0,
+      discountName:     discountPct > 0 ? discountName : null,
       idDireccionOrigen:  data.originAddressId      ?? data.selectedOriginAddress?.id      ?? null,
       idDireccionDestino: data.destinationAddressId ?? data.selectedDestinationAddress?.id ?? null,
       contenidosIds:    pkg.contenidos?.map(c => c.id) ?? [],
@@ -706,6 +714,13 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             <div className="order-row">
               <span><IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> Recogida UPS</span>
               <span style={{ fontWeight: '600' }}>{usd(pickup)}</span>
+            </div>
+          )}
+
+          {discountPct > 0 && (
+            <div className="order-row" style={{ color: '#16a34a' }}>
+              <span><IoPricetagOutline size={14} style={{ verticalAlign: 'middle' }} /> {discountName} (-{discountPct}%)</span>
+              <span style={{ fontWeight: '600' }}>-{usd(discountAmount)}</span>
             </div>
           )}
 

@@ -54,3 +54,13 @@ export const calculateUSShipping = async ({
     };
   }
 };
+
+export const fetchUsaDescuentos = async () => {
+  try {
+    const { data: api } = await axiosInstance.get('/usa/tarifa/descuentos');
+    if (!api.success) return { success: false, data: null };
+    return { success: true, data: api.data };
+  } catch {
+    return { success: false, data: null };
+  }
+};

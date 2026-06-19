@@ -18,6 +18,7 @@ import {
   IoTimeOutline,
 } from 'react-icons/io5';
 import { fetchUpsQuotes, fetchPickupRate } from '../../../../../services/us/upsService';
+import { fetchUsaDescuentos } from '../../../../../services/us/usCalculatorService';
 import './Step3CourierSelection.scss';
 
 const KRAKEN_US_WAREHOUSE_ZIP = '33122';
@@ -64,12 +65,14 @@ function getBadge(quote, allQuotes, t) {
 }
 
 // ── Card de courier ────────────────────────────────────────────────────────────
-const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate }) => {
+const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate, discountPct }) => {
   const { t } = useTranslation();
   const base        = parseFloat(quote.price).toFixed(2);
   const fuel        = parseFloat(quote.fuel_surcharge).toFixed(2);
   const pickupExtra = parseFloat(pickupRate ?? 0);
-  const total       = (parseFloat(quote.total) + pickupExtra).toFixed(2);
+  const subtotal    = parseFloat(quote.total) + pickupExtra;
+  const discountAmt = discountPct > 0 ? subtotal * discountPct / 100 : 0;
+  const total       = (subtotal - discountAmt).toFixed(2);
 
   return (
     <div
@@ -89,13 +92,23 @@ const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate }) => {
         {badge && <span className={`courier-card__badge ${badge.cls}`}>{badge.label}</span>}
       </div>
       <div className="courier-card__price">
-        <span className="courier-card__total">{total} $</span>
+        {discountPct > 0 && (
+          <span className="courier-card__original" style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '14px', marginRight: '6px' }}>
+            ${subtotal.toFixed(2)}
+          </span>
+        )}
+        <span className="courier-card__total">${total}</span>
         <span className="courier-card__currency">USD</span>
       </div>
+      {discountPct > 0 && (
+        <div style={{ color: '#16a34a', fontSize: '12px', fontWeight: '600', marginTop: '-4px' }}>
+          <IoPricetagOutline size={12} style={{ verticalAlign: 'middle' }} /> -{discountPct}% descuento
+        </div>
+      )}
       <div className="courier-card__breakdown">
-        <span>{t('us_wizard.breakdown_base')}: {base} $</span>
-        {parseFloat(fuel)   > 0 && <span>+ {t('us_wizard.breakdown_fuel')}: {fuel} $</span>}
-        {pickupExtra        > 0 && <span>+ {t('us_wizard.breakdown_pickup')}: {pickupExtra.toFixed(2)} $</span>}
+        <span>{t('us_wizard.breakdown_base')}: ${base}</span>
+        {parseFloat(fuel)   > 0 && <span>+ {t('us_wizard.breakdown_fuel')}: ${fuel}</span>}
+        {pickupExtra        > 0 && <span>+ {t('us_wizard.breakdown_pickup')}: ${pickupExtra.toFixed(2)}</span>}
       </div>
       <div className="courier-card__meta">
         <IoScaleOutline size={14} style={{ verticalAlign: 'middle' }} /> {quote.weight_max} kg
@@ -125,8 +138,10 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   const [pickupRate,  setPickupRate]  = useState(data.pickupRate   ?? 0);
   const [loadingRate, setLoadingRate] = useState(false);
   const [pickupError, setPickupError] = useState('');
+  const [discounts,   setDiscounts]   = useState(data.discounts ?? { pickup: { porcentaje: 0 }, dropoff: { porcentaje: 0 } });
 
   const isPickup          = data.deliveryMethod === 'pickup';
+  const discountPct       = isPickup ? discounts.pickup?.porcentaje ?? 0 : discounts.dropoff?.porcentaje ?? 0;
   const originPostalCode  = data.selectedOriginAddress?.zip ?? '';
   const pkg               = data.packages?.[0] ?? {};
   const weightKg          = pkg.unidadPeso?.toLowerCase() === 'lb'
@@ -171,6 +186,16 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   }, [originPostalCode, weightKg, isPickup]); // eslint-disable-line
 
   useEffect(() => { loadQuotes(); }, [loadQuotes]);
+
+  // ── Descuentos ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetchUsaDescuentos().then((res) => {
+      if (res.success && res.data) {
+        setDiscounts(res.data);
+        updateData({ discounts: res.data });
+      }
+    });
+  }, []); // eslint-disable-line
 
   // ── Pickup rate ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -387,6 +412,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
                 onSelect={handleSelect}
                 badge={getBadge(q, quotes, t)}
                 pickupRate={isPickup ? pickupRate : 0}
+                discountPct={discountPct}
               />
             ))}
           </div>
