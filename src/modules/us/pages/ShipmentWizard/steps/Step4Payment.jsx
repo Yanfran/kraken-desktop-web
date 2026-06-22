@@ -378,7 +378,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           readyTime:            data.pickupReadyTime || '0900',
           closeTime:            data.pickupCloseTime || '1700',
           contactName:          addr.alias || 'Client',
-          companyName:          addr.alias || '',
+          companyName:          'Kraken Courier & Cargo INC',
           addressLine:          addr.line1 || '',
           city:                 addr.city  || '',
           stateProvince:        addr.province || addr.state || addr.stateProvince || 'FL',

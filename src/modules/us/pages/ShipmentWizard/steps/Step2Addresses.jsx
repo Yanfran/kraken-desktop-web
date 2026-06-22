@@ -314,10 +314,16 @@ const AddressColumn = ({
             flag={flag}
           />
         ))}
-        <button className="addr-add-btn" onClick={onAdd}>
-          <span className="addr-add-btn__icon">+</span>
-          <span>{t('us_wizard.add_address')}</span>
-        </button>
+        {addresses.length < 4 ? (
+          <button className="addr-add-btn" onClick={onAdd}>
+            <span className="addr-add-btn__icon">+</span>
+            <span>{t('us_wizard.add_address')}</span>
+          </button>
+        ) : (
+          <p style={{ fontSize: '12px', color: '#9CA3AF', textAlign: 'center', margin: '8px 0' }}>
+            Máximo 4 direcciones alcanzado
+          </p>
+        )}
       </div>
     )}
   </div>
