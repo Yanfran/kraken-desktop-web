@@ -21,6 +21,8 @@ import {
   IoWarningOutline,
   IoHomeOutline,
   IoPersonOutline,
+  IoEyeOutline,
+  IoCloseOutline,
 } from 'react-icons/io5';
 import {
   fetchOriginAddresses,
@@ -35,7 +37,12 @@ import {
   fetchMunicipios,
   fetchParroquias,
 } from '../../../../../services/es/spainAddressService';
-import { addUsaOriginAddress } from '../../../../../services/us/usAddressService';
+import {
+  addUsaOriginAddress,
+  fetchUsaDestinationAddresses,
+  deleteUsaDestinationAddress,
+  setUsaDestinationDefault,
+} from '../../../../../services/us/usAddressService';
 import './Step2Addresses.scss';
 
 // ── Franjas horarias de pickup ──────────────────────────────────────────────
@@ -233,7 +240,7 @@ const DocIdentInput = ({ country, docType, docNum, onCountryChange, onTypeChange
 // ════════════════════════════════════════════════════════════════════════════
 // ██  TARJETA DE DIRECCIÓN
 // ════════════════════════════════════════════════════════════════════════════
-const AddressCard = ({ address, selected, onSelect, onDelete, onSetDefault, flag }) => {
+const AddressCard = ({ address, selected, onSelect, onView, onDelete, onSetDefault, flag }) => {
   const { t } = useTranslation();
   return (
   <button
@@ -261,18 +268,23 @@ const AddressCard = ({ address, selected, onSelect, onDelete, onSetDefault, flag
     </div>
 
     <div className="addr-card__actions" onClick={(e) => e.stopPropagation()}>
+      <button
+        className="addr-card__action-btn addr-card__action-btn--view"
+        title="Ver detalle"
+        onClick={() => onView(address.id)}
+      ><IoEyeOutline size={16} /> <span>Ver</span></button>
       {!address.esPredeterminada && (
         <button
           className="addr-card__action-btn addr-card__action-btn--star"
           title="Marcar como predeterminada"
           onClick={() => onSetDefault(address.id)}
-        ><IoStarOutline size={16} /></button>
+        ><IoStarOutline size={16} /> <span>Predeterminada</span></button>
       )}
       <button
         className="addr-card__action-btn addr-card__action-btn--danger"
         title="Eliminar"
         onClick={() => onDelete(address.id)}
-      ><IoTrashOutline size={16} /></button>
+      ><IoTrashOutline size={16} /> <span>Eliminar</span></button>
     </div>
   </button>
   );
@@ -283,7 +295,7 @@ const AddressCard = ({ address, selected, onSelect, onDelete, onSetDefault, flag
 // ════════════════════════════════════════════════════════════════════════════
 const AddressColumn = ({
   title, flag, country, addresses, selectedId,
-  onSelect, onAdd, onDelete, onSetDefault, loading,
+  onSelect, onView, onAdd, onDelete, onSetDefault, loading,
 }) => {
   const { t } = useTranslation();
   return (
@@ -309,6 +321,7 @@ const AddressColumn = ({
             address={addr}
             selected={addr.id === selectedId}
             onSelect={onSelect}
+            onView={onView}
             onDelete={onDelete}
             onSetDefault={onSetDefault}
             flag={flag}
@@ -1005,6 +1018,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const [loading,         setLoading]         = useState({ origin: true, dest: true });
   const [saving,          setSaving]          = useState(false);
   const [modal,           setModal]           = useState(null);
+  const [viewDetail,      setViewDetail]      = useState(null);
   const [errors,          setErrors]          = useState({});
   const [deliveryMethod,  setDeliveryMethod]  = useState(data.deliveryMethod  ?? 'dropoff');
   const [pickupDate,      setPickupDate]      = useState(data.pickupDate      ?? '');
@@ -1035,7 +1049,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       setLoading((p) => ({ ...p, origin: false }));
     });
 
-    fetchDestinationAddresses(clientId).then((res) => {
+    fetchUsaDestinationAddresses(clientId).then((res) => {
       if (res.success) {
         setDestList(res.data);
         const pred = res.data.find((a) => a.esPredeterminada);
@@ -1058,7 +1072,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         toast.success(t('us_wizard.origin_deleted'));
       } else { toast.error(res.message); }
     } else {
-      const res = await deleteDestinationAddress(clientId, id);
+      const res = await deleteUsaDestinationAddress(clientId, id);
       if (res.success) {
         setDestList((p) => p.filter((a) => a.id !== id));
         if (data.destinationAddressId === id) updateData({ destinationAddressId: null });
@@ -1076,7 +1090,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         toast.success(t('us_wizard.origin_default_updated'));
       } else { toast.error(res.message); }
     } else {
-      const res = await setDestinationDefault(clientId, id);
+      const res = await setUsaDestinationDefault(clientId, id);
       if (res.success) {
         setDestList((p) => p.map((a) => ({ ...a, esPredeterminada: a.id === id })));
         toast.success(t('us_wizard.dest_default_updated'));
@@ -1275,6 +1289,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
               addresses={originList} selectedId={data.originAddressId}
               loading={loading.origin}
               onSelect={(id) => { updateData({ originAddressId: id }); setErrors((p) => ({ ...p, origin: null })); }}
+              onView={(id) => { const a = originList.find((x) => x.id === id); if (a) setViewDetail({ type: 'origin', data: a }); }}
               onAdd={() => setModal('origin')}
               onDelete={(id) => handleDelete('origin', id)}
               onSetDefault={(id) => handleSetDefault('origin', id)}
@@ -1286,6 +1301,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
               addresses={destList} selectedId={data.destinationAddressId}
               loading={loading.dest}
               onSelect={(id) => { updateData({ destinationAddressId: id }); setErrors((p) => ({ ...p, dest: null })); }}
+              onView={(id) => { const a = destList.find((x) => x.id === id); if (a) setViewDetail({ type: 'dest', data: a }); }}
               onAdd={() => setModal('dest')}
               onDelete={(id) => handleDelete('dest', id)}
               onSetDefault={(id) => handleSetDefault('dest', id)}
@@ -1383,6 +1399,65 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       {modal === 'dest' && (
         <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas}  />
       )}
+
+      {viewDetail && (
+        <div className="addr-detail-overlay" onClick={() => setViewDetail(null)}>
+          <div className="addr-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="addr-detail-modal__header">
+              <h3>{viewDetail.type === 'origin' ? 'Dirección de Origen' : 'Dirección de Destino'}</h3>
+              <button onClick={() => setViewDetail(null)}><IoCloseOutline size={22} /></button>
+            </div>
+            <div className="addr-detail-modal__body">
+              {viewDetail.type === 'origin' ? (
+                <>
+                  <DetailRow label="Alias" value={viewDetail.data.alias} />
+                  <DetailRow label="Dirección" value={viewDetail.data.line1} />
+                  <DetailRow label="Ciudad" value={viewDetail.data.city} />
+                  <DetailRow label="Estado" value={viewDetail.data.province} />
+                  <DetailRow label="Código Postal" value={viewDetail.data.zip} />
+                  <DetailRow label="Teléfono" value={viewDetail.data.phone} />
+                  <DetailRow label="Referencia" value={viewDetail.data.referencia} />
+                  <DetailRow label="Predeterminada" value={viewDetail.data.esPredeterminada ? 'Sí' : 'No'} />
+                </>
+              ) : (
+                <>
+                  <DetailRow label="Alias" value={viewDetail.data.alias} />
+                  <DetailRow label="Tipo" value={viewDetail.data.tipoDireccion === 'store' ? 'Retiro en tienda' : 'Domicilio'} />
+                  {viewDetail.data.nombreLocker && <DetailRow label="Tienda" value={viewDetail.data.nombreLocker} />}
+                  <DetailRow label="Dirección" value={viewDetail.data.line1} />
+                  <DetailRow label="Estado" value={viewDetail.data.city} />
+                  <DetailRow label="Referencia" value={viewDetail.data.referencia} />
+                  <DetailRow label="Predeterminada" value={viewDetail.data.esPredeterminada ? 'Sí' : 'No'} />
+                  {(viewDetail.data.contactoNombres || viewDetail.data.contactoTelefono) && (
+                    <>
+                      <h4 style={{ margin: '20px 0 10px', color: '#022364', fontSize: '15px', fontWeight: '700' }}>
+                        <IoPersonOutline size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                        Contacto de entrega
+                      </h4>
+                      <DetailRow label="Nombres" value={viewDetail.data.contactoNombres} />
+                      <DetailRow label="Apellidos" value={viewDetail.data.contactoApellidos} />
+                      <DetailRow label="Email" value={viewDetail.data.contactoEmail} />
+                      <DetailRow label="Teléfono" value={viewDetail.data.contactoTelefono} />
+                      <DetailRow label="Identificación" value={viewDetail.data.contactoIdentificacion} />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+            <button className="addr-detail-modal__close-btn" onClick={() => setViewDetail(null)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DetailRow = ({ label, value }) => {
+  if (!value) return null;
+  return (
+    <div className="addr-detail-modal__row">
+      <span className="addr-detail-modal__label">{label}</span>
+      <span className="addr-detail-modal__value">{value}</span>
     </div>
   );
 };

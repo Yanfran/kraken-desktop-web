@@ -126,16 +126,23 @@ $radius: 10px;
   }
 
   &__action-btn {
-    background: none;
-    border: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 6px 12px;
     cursor: pointer;
-    font-size: 0.85rem;
-    padding: 2px 4px;
-    border-radius: 4px;
-    transition: background 0.15s;
-    &:hover { background: #f3f4f6; }
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
 
-    &--danger:hover { background: #fee2e2; }
+    span { white-space: nowrap; }
+
+    &--view { color: #022364; &:hover { background: #EFF6FF; border-color: #022364; } }
+    &--star { color: #F05A22; &:hover { background: #FFF7ED; border-color: #F05A22; } }
+    &--danger { color: #EF4444; &:hover { background: #FEF2F2; border-color: #EF4444; } }
   }
 }
 
@@ -577,4 +584,46 @@ $radius: 10px;
   font-size: 0.74rem;
   color: #9ca3af;
   margin-top: 3px;
+}
+
+// ── Detail Modal ──
+.addr-detail-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.addr-detail-modal {
+  background: #fff; border-radius: 16px;
+  width: 90%; max-width: 480px; max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+
+  &__header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px; border-bottom: 1px solid #E5E7EB;
+    h3 { font-size: 18px; font-weight: 700; color: #022364; margin: 0; }
+    button { background: none; border: none; cursor: pointer; color: #6B7280; padding: 4px;
+      &:hover { color: #1A1A1A; }
+    }
+  }
+
+  &__body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+
+  &__row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 12px 0; border-bottom: 1px solid #F3F4F6;
+  }
+
+  &__label { font-size: 14px; color: #6B7280; flex: 1; }
+  &__value { font-size: 14px; font-weight: 600; color: #1A1A1A; flex: 1.5; text-align: right; }
+
+  &__close-btn {
+    margin: 16px 20px 20px; padding: 14px;
+    background: #022364; color: #fff;
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer;
+    &:hover { background: #1a3a8a; }
+  }
 }

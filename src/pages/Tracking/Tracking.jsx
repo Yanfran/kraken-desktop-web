@@ -2,76 +2,120 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styles from './Tracking.module.scss';
-import { 
-  searchTrackingNumber, 
-  searchTrackingInGuias, 
+import {
+  searchTrackingNumber,
+  searchTrackingInGuias,
   validateTrackingNumber,
-  generateStepsFromStatus 
+  generateStepsFromStatus
 } from '../../services/trackingService';
-import iconImage from '../../../src/assets/images/icon-kraken-web-rastrear-_1.png'; 
+import { useAuth } from '../../contexts/AuthContext';
+import axiosInstance from '../../services/axiosInstance';
+import iconImage from '../../../src/assets/images/icon-kraken-web-rastrear-_1.png';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import CustomAlert from '../../components/common/CustomAlert/CustomAlert';
 import Tooltip from '../../components/common/Tooltip/Tooltip';
 import toast from 'react-hot-toast';
 
+const PICKUP_STEPS = [
+  { key: 'requested', label: 'Solicitado' },
+  { key: 'scheduled', label: 'Programado' },
+  { key: 'inroute',   label: 'En camino' },
+  { key: 'pickedup',  label: 'Recogido' },
+];
+
+function getPickupStepIndex(status) {
+  if (!status) return 0;
+  const msg = (status.statusMessage ?? '').toLowerCase();
+  const code = status.onCallStatusCode ?? '';
+  if (msg.includes('picked up') || msg.includes('completed') || code === '007') return 3;
+  if (msg.includes('in route') || msg.includes('dispatched') || code === '005') return 2;
+  if (msg.includes('scheduled') || code === '002') return 1;
+  return 0;
+}
+
 export default function Tracking() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [trackingResult, setTrackingResult] = useState(null);
+  const [pickupStatus, setPickupStatus] = useState(null);
+  const [pickupLoading, setPickupLoading] = useState(false);
   const navigate = useNavigate();
   const alert = useCustomAlert();
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const isKU = user?.codCliente?.startsWith('KU');
 
-  // Función principal de búsqueda con validación
   const handleTrackPackage = async () => {
-    const validation = validateTrackingNumber(trackingNumber);
-    if (!validation.isValid) {
-      window.alert(validation.message);
-      return;
-    }
+    const clean = trackingNumber.trim().toUpperCase();
+    if (!clean) { alert.showError('Error', 'Ingresa un número de guía o tracking.'); return; }
 
     setIsLoading(true);
+    setPickupStatus(null);
 
     try {
-      // Primero intentar con el endpoint específico de tracking
-      let response = await searchTrackingNumber(trackingNumber.trim());
-
-      // Si falla, intentar buscar en las guías existentes como fallback
-      if (!response.success) {
-        // console.log('Intentando búsqueda en guías existentes...');
-        response = await searchTrackingInGuias(trackingNumber.trim());
-      }
-
-      if (response.success && response.data) {
-        // Convertir datos del backend al formato de la interfaz
-        const result = {
-          trackingNumber: response.data.nGuia || trackingNumber.toUpperCase(),
-          origin: response.data.origen || 'USA',
-          status: response.data.estatus || 'En proceso',
-          currentLocation: response.data.ubicacionActual,
-          estimatedDelivery: response.data.fechaEstimadaEntrega,
-          steps: generateStepsFromStatus(response.data.estatus, response.data.historialEstatus),
-          guiaId: response.data.id,
-          idGuia: response.data.idGuia
-        };
-        setTrackingResult(result);
+      if (isKU) {
+        const { data: json } = await axiosInstance.get(`/usa/guia/tracking/${encodeURIComponent(clean)}`);
+        if (json.success && json.data) {
+          const d = json.data;
+          const prn = d.pickupCode ?? null;
+          const historial = d.statusHistory ?? [];
+          setTrackingResult({
+            trackingNumber: d.trackingNumber ?? clean,
+            origin: d.plataforma ?? 'USA',
+            status: d.currentStatus ?? 'En proceso',
+            steps: historial.length > 0
+              ? historial.map((h, i) => ({
+                  name: h.status ?? '—',
+                  date: h.timestamp ? new Date(h.timestamp).toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '',
+                  completed: true, current: i === historial.length - 1,
+                }))
+              : [{ name: d.currentStatus ?? 'En proceso', date: '', completed: true, current: true }],
+            guiaId: d.guiaId ?? null,
+            idGuia: d.guiaId ?? null,
+            pickupCode: prn,
+            pickupZip: d.pickupZip ?? null,
+          });
+          if (prn) {
+            setPickupLoading(true);
+            try {
+              const { data: pRes } = await axiosInstance.get(`/us/ups/pickup/${prn}`);
+              if (pRes.success && pRes.data) setPickupStatus(pRes.data);
+              else setPickupStatus({ statusMessage: 'Completed', onCallStatusCode: '007' });
+            } catch { setPickupStatus({ statusMessage: 'Completed', onCallStatusCode: '007' }); }
+            setPickupLoading(false);
+          }
+        } else {
+          alert.showError(t('tracking.not_found_title'), t('tracking.not_found_message'));
+        }
       } else {
-        alert.showError(t('tracking.not_found_title'), t('tracking.not_found_message'));        
-        // toast.error(`Paquete no encontrado: "${trackingNumber}" No se encontró información para este número de rastreo. Verifica que sea correcto.`);        
+        let response = await searchTrackingNumber(clean);
+        if (!response.success) response = await searchTrackingInGuias(clean);
+        if (response.success && response.data) {
+          setTrackingResult({
+            trackingNumber: response.data.nGuia || clean,
+            origin: response.data.origen || 'USA',
+            status: response.data.estatus || 'En proceso',
+            currentLocation: response.data.ubicacionActual,
+            estimatedDelivery: response.data.fechaEstimadaEntrega,
+            steps: generateStepsFromStatus(response.data.estatus, response.data.historialEstatus),
+            guiaId: response.data.id, idGuia: response.data.idGuia,
+          });
+        } else {
+          alert.showError(t('tracking.not_found_title'), t('tracking.not_found_message'));
+        }
       }
     } catch (error) {
       console.error('Error buscando tracking:', error);
-      alert.showError(t('tracking.connection_error_title'), t('tracking.connection_error_message'));              
-      // toast.error(`Error de conexión: No se pudo conectar al servidor. Intenta nuevamente.`);              
+      alert.showError(t('tracking.connection_error_title'), t('tracking.connection_error_message'));
     } finally {
       setIsLoading(false);
     }
-  }; 
+  };
 
-  // Resetear búsqueda
   const resetSearch = () => {
     setTrackingNumber('');
     setTrackingResult(null);
+    setPickupStatus(null);
   };
 
   // Ver detalles del paquete
@@ -263,7 +307,75 @@ export default function Tracking() {
                     </div>
                   </div>
 
-                  {/* Timeline de estados */}                  
+                  {/* Pickup Progress */}
+                  {trackingResult.pickupCode && (
+                    <div style={{
+                      background: '#FFF7ED', border: '1px solid #FDBA74', borderRadius: 12,
+                      padding: '14px 16px', marginBottom: 16,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                        <span style={{ fontSize: 16 }}>🚐</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#F05A22', flex: 1 }}>Recogida UPS</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 11, color: '#6B7280', fontFamily: 'monospace' }}>
+                            PRN: {trackingResult.pickupCode}
+                            {trackingResult.pickupZip && ` · ZIP: ${trackingResult.pickupZip}`}
+                          </span>
+                          <a
+                            href="https://www.ups.com/ipr/pickup-status-check?loc=en_US"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ fontSize: 11, color: '#1D4ED8', textDecoration: 'underline' }}
+                          >Ver en UPS</a>
+                        </span>
+                      </div>
+                      {pickupLoading ? (
+                        <p style={{ textAlign: 'center', color: '#F05A22', fontSize: 13 }}>Consultando estado...</p>
+                      ) : (
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
+                            {PICKUP_STEPS.map((step, idx) => {
+                              const activeIdx = getPickupStepIndex(pickupStatus);
+                              const done = idx <= activeIdx;
+                              const isCurrent = idx === activeIdx;
+                              const nextDone = idx + 1 <= activeIdx;
+                              return (
+                                <React.Fragment key={step.key}>
+                                  <div style={{
+                                    width: 24, height: 24, borderRadius: 12, flexShrink: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: done ? '#22C55E' : '#D1D5DB',
+                                    border: isCurrent ? '2px solid #fff' : 'none',
+                                    boxShadow: isCurrent ? '0 0 0 2px #22C55E' : 'none',
+                                  }}>
+                                    {done && <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</span>}
+                                  </div>
+                                  {idx < PICKUP_STEPS.length - 1 && (
+                                    <div style={{ flex: 1, height: 3, background: (done && nextDone) ? '#22C55E' : '#D1D5DB' }} />
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            {PICKUP_STEPS.map((step, idx) => {
+                              const activeIdx = getPickupStepIndex(pickupStatus);
+                              const done = idx <= activeIdx;
+                              const isCurrent = idx === activeIdx;
+                              return (
+                                <span key={step.key} style={{
+                                  fontSize: 10, fontWeight: isCurrent ? 700 : 500,
+                                  color: done ? '#065F46' : '#9CA3AF', width: 65, textAlign: 'center',
+                                }}>{step.label}</span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Timeline de estados */}
                   <div className={styles.timelineContainer}>
                         {/* ⭐ MODIFICACIÓN CLAVE AQUÍ: Invertir el array antes de mapear */}
                     {trackingResult.steps
