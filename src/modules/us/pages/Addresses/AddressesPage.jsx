@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../../contexts/AuthContext';
 import {
   IoEyeOutline,
@@ -11,6 +13,7 @@ import {
   IoLocationOutline,
   IoCallOutline,
   IoPersonOutline,
+  IoChevronBack,
 } from 'react-icons/io5';
 import {
   fetchUsaOriginAddresses,
@@ -26,6 +29,8 @@ const MAX_ADDRESSES = 4;
 
 const AddressesPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
   const clientId = user?.id ? Number(user.id) : 0;
 
   const [originList, setOriginList] = useState([]);
@@ -70,7 +75,13 @@ const AddressesPage = () => {
   if (loading) {
     return (
       <div className="ku-addr">
-        <div className="ku-addr__header"><h1>Mis Direcciones</h1></div>
+        <div className="ku-addr__header-section">
+        <button className="ku-addr__back-btn" onClick={() => navigate(-1)}>
+          <IoChevronBack size={20} /> <span>Volver</span>
+        </button>
+        <h1 className="ku-addr__main-title">Mis Direcciones</h1>
+        <p className="ku-addr__subtitle">Gestiona tus direcciones de origen y destino</p>
+      </div>
         <div className="ku-addr__loading">Cargando direcciones...</div>
       </div>
     );
@@ -78,7 +89,13 @@ const AddressesPage = () => {
 
   return (
     <div className="ku-addr">
-      <div className="ku-addr__header"><h1>Mis Direcciones</h1></div>
+      <div className="ku-addr__header-section">
+        <button className="ku-addr__back-btn" onClick={() => navigate(-1)}>
+          <IoChevronBack size={20} /> <span>Volver</span>
+        </button>
+        <h1 className="ku-addr__main-title">Mis Direcciones</h1>
+        <p className="ku-addr__subtitle">Gestiona tus direcciones de origen y destino</p>
+      </div>
 
       <div className="ku-addr__body">
         {/* ── Origen USA ── */}

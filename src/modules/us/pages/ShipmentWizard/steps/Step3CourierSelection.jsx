@@ -166,6 +166,8 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
       parseFloat(pkg.alto  || 0),
       'METRIC',
       isPickup ? '06' : '03',
+      data.selectedOriginAddress?.province ?? '',
+      data.selectedOriginAddress?.city ?? '',
     );
 
     setLoading(false);

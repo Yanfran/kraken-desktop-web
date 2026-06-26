@@ -7,10 +7,12 @@ const axiosUPS = createCustomAxios(TIMEOUTS.LONG); // 300 segundos
 const BASE = '/us/ups';
 
 // pickupType: '03' = Customer Counter (drop-off) | '06' = One Time Pickup
-export const fetchUpsQuotes = async (originZip, weight, length, width, height, unitSystem = 'IMPERIAL', pickupType = '03') => {
+export const fetchUpsQuotes = async (originZip, weight, length, width, height, unitSystem = 'IMPERIAL', pickupType = '03', originState = '', originCity = '') => {
   try {
     const res = await axiosInstance.post(`${BASE}/quotes`, {
       originZip,
+      originState,
+      originCity,
       weight:     parseFloat(weight)  || 0,
       length:     parseFloat(length)  || 0,
       width:      parseFloat(width)   || 0,

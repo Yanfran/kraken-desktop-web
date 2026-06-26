@@ -26,6 +26,8 @@ import {
   IoCubeOutline,
   IoMailOutline,
   IoPricetagOutline,
+  IoCheckbox,
+  IoSquareOutline,
 } from 'react-icons/io5';
 import './Step4Payment.scss';
 
@@ -323,6 +325,8 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const [collectJsReady, setCollectJsReady]  = useState(false);
 
   const { metodoPago, calculationResult, courierQuote } = data;
+  const [acceptContent, setAcceptContent] = useState(false);
+  const [acceptWeight, setAcceptWeight]   = useState(false);
 
   // ── Precios en USD ────────────────────────────────────────────────────────
   const usd      = (n) => `$${Number(n || 0).toFixed(2)} USD`;
@@ -745,6 +749,45 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             {t('us_wizard.security_text')}
           </p>
 
+          {/* Declaraciones obligatorias */}
+          <div style={{
+            marginTop: '16px', padding: '14px', border: '1.5px solid #E5E7EB',
+            borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '12px',
+          }}>
+            <p style={{ fontSize: '13px', fontWeight: '700', color: '#022364', margin: 0 }}>
+              Declaraciones obligatorias
+            </p>
+
+            <label style={{ display: 'flex', gap: '10px', cursor: 'pointer', alignItems: 'flex-start' }}
+              onClick={() => setAcceptContent(!acceptContent)}>
+              {acceptContent
+                ? <IoCheckbox size={20} color="#22C55E" style={{ flexShrink: 0, marginTop: 2 }} />
+                : <IoSquareOutline size={20} color="#9CA3AF" style={{ flexShrink: 0, marginTop: 2 }} />}
+              <span style={{ fontSize: '12px', color: '#374151', lineHeight: '1.5' }}>
+                Declaro que el paquete no contiene productos prohibidos o restringidos, y que el contenido
+                enviado corresponde a la descripción suministrada. Acepto que el envío podrá ser retenido,
+                rechazado o cancelado si se detecta mercancía no permitida.{' '}
+                <a href="https://krakencourier.com/productos-prohibidos" target="_blank" rel="noopener noreferrer"
+                  style={{ color: '#1D4ED8', textDecoration: 'underline', fontWeight: 600 }}
+                  onClick={(e) => e.stopPropagation()}>
+                  Ver lista de productos prohibidos
+                </a>
+              </span>
+            </label>
+
+            <label style={{ display: 'flex', gap: '10px', cursor: 'pointer', alignItems: 'flex-start' }}
+              onClick={() => setAcceptWeight(!acceptWeight)}>
+              {acceptWeight
+                ? <IoCheckbox size={20} color="#22C55E" style={{ flexShrink: 0, marginTop: 2 }} />
+                : <IoSquareOutline size={20} color="#9CA3AF" style={{ flexShrink: 0, marginTop: 2 }} />}
+              <span style={{ fontSize: '12px', color: '#374151', lineHeight: '1.5' }}>
+                Confirmo que el peso y las medidas suministradas son correctos. Entiendo que la tarifa ha
+                sido calculada con base en esta información y que, si al verificar el paquete existe una
+                diferencia que aumente el costo, debo pagar el monto restante para que el envío pueda ser procesado.
+              </span>
+            </label>
+          </div>
+
           {pendingRetry ? (
             <div style={{
               background: '#fef3c7', border: '1px solid #f59e0b',
@@ -774,7 +817,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
             <button
               className="btn-wizard-next cost-card__proceed-btn"
               onClick={handleConfirm}
-              disabled={submitting || (metodoPago === 'card' && !collectJsReady)}
+              disabled={submitting || (metodoPago === 'card' && !collectJsReady) || !acceptContent || !acceptWeight}
               style={{ marginTop: '15px' }}
             >
               {submitting
