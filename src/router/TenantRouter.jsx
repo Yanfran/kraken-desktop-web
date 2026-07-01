@@ -148,6 +148,7 @@ const TenantRouter = () => {
                         <Route path="/tracking" element={<Tracking />} />
                         <Route path="/profile/addresses" element={<USAddresses />} />
                         <Route path="/profile/personal-data" element={<PersonalDataPage />} />
+                        <Route path="/change-password" element={<ChangePassword />} />
                         <Route path="/guide/guides" element={<UsaGuidesList />} />
                         <Route path="/guide/detail/:idGuia" element={<UsaGuideDetail />} />
 

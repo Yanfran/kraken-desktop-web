@@ -767,7 +767,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
                 Declaro que el paquete no contiene productos prohibidos o restringidos, y que el contenido
                 enviado corresponde a la descripción suministrada. Acepto que el envío podrá ser retenido,
                 rechazado o cancelado si se detecta mercancía no permitida.{' '}
-                <a href="https://krakencourier.com/productos-prohibidos" target="_blank" rel="noopener noreferrer"
+                <a href="https://krakencourier.com/wiki/mercancias-productos-prohibidos/" target="_blank" rel="noopener noreferrer"
                   style={{ color: '#1D4ED8', textDecoration: 'underline', fontWeight: 600 }}
                   onClick={(e) => e.stopPropagation()}>
                   Ver lista de productos prohibidos

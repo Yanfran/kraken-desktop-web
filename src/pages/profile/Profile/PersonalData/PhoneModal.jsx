@@ -9,12 +9,17 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
   const [countryCode, setCountryCode] = useState('+58');
   const [phoneOperator, setPhoneOperator] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+
+  // Secundario venezolano (cuando principal es +1)
   const [venezuelanOperator, setVenezuelanOperator] = useState('');
   const [venezuelanPhone, setVenezuelanPhone] = useState('');
 
+  // Secundario USA (cuando principal es +58)
+  const [usaSecondaryPhone, setUsaSecondaryPhone] = useState('');
+
   const countries = [
     { code: '+58', name: t('profile.venezuela'), flag: '🇻🇪' },
-    { code: '+1', name: t('profile.united_states'), flag: '🇺🇸' },
+    { code: '+1',  name: t('profile.united_states'), flag: '🇺🇸' },
   ];
 
   const venezuelanOperators = [
@@ -26,129 +31,107 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
   ];
 
   const phoneFormats = {
-    '+58': { mask: '###-##-##', length: 7 },
-    '+1': { mask: '(###) ###-####', length: 10 },
+    '+58': { mask: '###-##-##',     length: 7  },
+    '+1':  { mask: '(###) ###-####', length: 10 },
   };
 
   useEffect(() => {
-    if (show && initialPhone) {
-      parsePhone(initialPhone);
+    if (show) {
+      if (initialPhone)          parsePhone(initialPhone);
+      if (initialPhoneSecondary) parsePhoneSecondary(initialPhoneSecondary);
     }
-    if (show && initialPhoneSecondary) {
-      parsePhoneSecondary(initialPhoneSecondary);
+  }, [show, initialPhone, initialPhoneSecondary]); // eslint-disable-line
+
+  const formatPhone = (text, code) => {
+    const cleaned = text.replace(/\D/g, '');
+    const format  = phoneFormats[code];
+    if (!format) return cleaned;
+
+    const { mask, length } = format;
+    const limited = cleaned.slice(0, length);
+    let formatted = '';
+    let ci = 0;
+    for (let i = 0; i < mask.length && ci < limited.length; i++) {
+      formatted += mask[i] === '#' ? limited[ci++] : mask[i];
     }
-  }, [show, initialPhone, initialPhoneSecondary]);
+    return formatted;
+  };
 
   const parsePhone = (phone) => {
     const country = countries.find(c => phone.startsWith(c.code));
-    if (!country) return;
+    if (!country) {
+      // Sin prefijo — 10 dígitos → USA
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length === 10) {
+        setCountryCode('+1');
+        setPhoneNumber(formatPhone(digits, '+1'));
+      }
+      return;
+    }
 
     const code = country.code;
     setCountryCode(code);
-
     const rest = phone.slice(code.length).trim();
 
     if (code === '+58') {
-      const operatorMatch = rest.match(/^(\([^)]+\))\s*(.+)$/);
-      if (operatorMatch) {
-        setPhoneOperator(operatorMatch[1]);
-        setPhoneNumber(formatPhone(operatorMatch[2], code));
-      }
+      const m = rest.match(/^(\([^)]+\))\s*(.+)$/);
+      if (m) { setPhoneOperator(m[1]); setPhoneNumber(formatPhone(m[2], code)); }
     } else {
       setPhoneNumber(formatPhone(rest, code));
     }
   };
 
   const parsePhoneSecondary = (phone) => {
-    const match = phone.match(/^\+58\s*(\([^)]+\))\s*(.+)$/);
-    if (match) {
-      setVenezuelanOperator(match[1]);
-      setVenezuelanPhone(formatVenezuelanPhone(match[2]));
+    if (!phone) return;
+    // Secundario venezolano: +58 (XXXX) ###-##-##
+    const veMatch = phone.match(/^\+58\s*(\([^)]+\))\s*(.+)$/);
+    if (veMatch) {
+      setVenezuelanOperator(veMatch[1]);
+      setVenezuelanPhone(formatPhone(veMatch[2], '+58'));
+      return;
     }
-  };
-
-  const formatPhone = (text, code) => {
-    const cleaned = text.replace(/\D/g, '');
-    const format = phoneFormats[code];
-    if (!format) return cleaned;
-
-    const { mask, length } = format;
-    const limitedCleaned = cleaned.slice(0, length);
-
-    let formatted = '';
-    let cleanedIndex = 0;
-
-    for (let i = 0; i < mask.length && cleanedIndex < limitedCleaned.length; i++) {
-      if (mask[i] === '#') {
-        formatted += limitedCleaned[cleanedIndex];
-        cleanedIndex++;
-      } else {
-        formatted += mask[i];
-      }
+    // Secundario USA: +1 (###) ###-####
+    if (phone.startsWith('+1')) {
+      const rest = phone.slice(2).trim();
+      setUsaSecondaryPhone(formatPhone(rest, '+1'));
     }
-
-    return formatted;
-  };
-
-  const formatVenezuelanPhone = (text) => {
-    const cleaned = text.replace(/\D/g, '');
-    const limitedCleaned = cleaned.slice(0, 7);
-
-    let formatted = '';
-    let cleanedIndex = 0;
-    const mask = '###-##-##';
-
-    for (let i = 0; i < mask.length && cleanedIndex < limitedCleaned.length; i++) {
-      if (mask[i] === '#') {
-        formatted += limitedCleaned[cleanedIndex];
-        cleanedIndex++;
-      } else {
-        formatted += mask[i];
-      }
-    }
-
-    return formatted;
-  };
-
-  const handlePhoneChange = (value) => {
-    setPhoneNumber(formatPhone(value, countryCode));
-  };
-
-  const handleVenezuelanPhoneChange = (value) => {
-    setVenezuelanPhone(formatVenezuelanPhone(value));
   };
 
   const isPhoneComplete = () => {
     if (!phoneNumber || !countryCode) return false;
     const format = phoneFormats[countryCode];
-    if (!format) return phoneNumber.replace(/\D/g, '').length >= 7;
-
-    const requiredLength = format.length;
-    const actualLength = phoneNumber.replace(/\D/g, '').length;
-
-    if (countryCode === '+58') {
-      return actualLength === requiredLength && !!phoneOperator;
-    }
-
-    return actualLength === requiredLength;
+    const len = phoneNumber.replace(/\D/g, '').length;
+    if (!format) return len >= 7;
+    if (countryCode === '+58') return len === format.length && !!phoneOperator;
+    return len === format.length;
   };
 
-  const isVenezuelanPhoneValid = () => {
-    if (countryCode === '+58') return true;
+  // Valida el secundario venezolano (vacío = válido, parcial = inválido)
+  const isVenezuelanSecondaryValid = () => {
     if (!venezuelanPhone && !venezuelanOperator) return true;
     return !!venezuelanOperator && venezuelanPhone.replace(/\D/g, '').length === 7;
   };
 
+  // Valida el secundario USA (vacío = válido, parcial = inválido)
+  const isUsaSecondaryValid = () => {
+    if (!usaSecondaryPhone) return true;
+    return usaSecondaryPhone.replace(/\D/g, '').length === 10;
+  };
+
+  const isFormValid = () => isPhoneComplete() && isVenezuelanSecondaryValid() && isUsaSecondaryValid();
+
   const handleSave = () => {
-    if (!isPhoneComplete()) return;
+    if (!isFormValid()) return;
 
     const mainPhone = countryCode === '+58'
       ? `${countryCode} ${phoneOperator} ${phoneNumber}`
       : `${countryCode} ${phoneNumber}`;
 
     let secondaryPhone = '';
-    if (countryCode !== '+58' && venezuelanPhone && venezuelanOperator && isVenezuelanPhoneValid()) {
+    if (countryCode === '+1' && venezuelanPhone && venezuelanOperator && isVenezuelanSecondaryValid()) {
       secondaryPhone = `+58 ${venezuelanOperator} ${venezuelanPhone}`;
+    } else if (countryCode === '+58' && usaSecondaryPhone && isUsaSecondaryValid()) {
+      secondaryPhone = `+1 ${usaSecondaryPhone}`;
     }
 
     onSave({ phone: mainPhone, phoneSecondary: secondaryPhone });
@@ -160,12 +143,17 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
     setPhoneNumber('');
     setVenezuelanOperator('');
     setVenezuelanPhone('');
+    setUsaSecondaryPhone('');
     onClose();
   };
 
-  if (!show) return null;
+  const handleCountryChange = (code) => {
+    setCountryCode(code);
+    setPhoneNumber('');
+    setPhoneOperator('');
+  };
 
-  const showVenezuelanSection = countryCode !== '+58';
+  if (!show) return null;
 
   return (
     <div className="phone-modal-overlay" onClick={handleClose}>
@@ -178,27 +166,23 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
         </div>
 
         <div className="phone-modal__body">
-          {/* Selector de país */}
+          {/* ── Selector de país principal ── */}
           <div className="phone-modal__field">
             <label>{t('profile.phone_modal_country')}</label>
             <select
               value={countryCode}
-              onChange={(e) => {
-                setCountryCode(e.target.value);
-                setPhoneNumber('');
-                setPhoneOperator('');
-              }}
+              onChange={(e) => handleCountryChange(e.target.value)}
               className="phone-modal__select"
             >
-              {countries.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.name} ({country.code})
+              {countries.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.flag} {c.name} ({c.code})
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Operadora (solo para Venezuela) */}
+          {/* ── Operadora (solo Venezuela principal) ── */}
           {countryCode === '+58' && (
             <div className="phone-modal__field">
               <label>{t('profile.phone_modal_operator')}</label>
@@ -217,13 +201,13 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
             </div>
           )}
 
-          {/* Número de teléfono */}
+          {/* ── Número principal ── */}
           <div className="phone-modal__field">
             <label>{t('profile.phone_modal_number')}</label>
             <input
               type="tel"
               value={phoneNumber}
-              onChange={(e) => handlePhoneChange(e.target.value)}
+              onChange={(e) => setPhoneNumber(formatPhone(e.target.value, countryCode))}
               placeholder={phoneFormats[countryCode]?.mask || '###########'}
               className="phone-modal__input"
             />
@@ -232,8 +216,8 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
             )}
           </div>
 
-          {/* Sección venezolana adicional */}
-          {showVenezuelanSection && (
+          {/* ── Secundario: Venezuela (cuando principal es USA) ── */}
+          {countryCode === '+1' && (
             <>
               <div className="phone-modal__divider">
                 <span>{t('profile.phone_modal_ve_section')}</span>
@@ -260,12 +244,35 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
                 <input
                   type="tel"
                   value={venezuelanPhone}
-                  onChange={(e) => handleVenezuelanPhoneChange(e.target.value)}
+                  onChange={(e) => setVenezuelanPhone(formatPhone(e.target.value, '+58'))}
                   placeholder="###-##-##"
                   className="phone-modal__input"
                 />
-                {venezuelanPhone && !isVenezuelanPhoneValid() && (
+                {venezuelanPhone && !isVenezuelanSecondaryValid() && (
                   <span className="phone-modal__error">{t('profile.phone_modal_ve_incomplete')}</span>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ── Secundario: USA (cuando principal es Venezuela) ── */}
+          {countryCode === '+58' && (
+            <>
+              <div className="phone-modal__divider">
+                <span>🇺🇸 Número Americano (Opcional)</span>
+              </div>
+
+              <div className="phone-modal__field">
+                <label>Número de teléfono (+1)</label>
+                <input
+                  type="tel"
+                  value={usaSecondaryPhone}
+                  onChange={(e) => setUsaSecondaryPhone(formatPhone(e.target.value, '+1'))}
+                  placeholder="(###) ###-####"
+                  className="phone-modal__input"
+                />
+                {usaSecondaryPhone && !isUsaSecondaryValid() && (
+                  <span className="phone-modal__error">Número incompleto</span>
                 )}
               </div>
             </>
@@ -284,7 +291,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
             type="button"
             className="phone-modal__btn phone-modal__btn--save"
             onClick={handleSave}
-            disabled={!isPhoneComplete() || !isVenezuelanPhoneValid()}
+            disabled={!isFormValid()}
           >
             {t('profile.phone_modal_save')}
           </button>
