@@ -27,7 +27,6 @@ const HomePage = () => {
     getUsaMyShipments()
       .then(res => {
         if (res.success) {
-          // Más reciente primero
           const sorted = [...(res.data ?? [])].sort((a, b) => {
             const da = new Date(a.fecha ?? 0);
             const db = new Date(b.fecha ?? 0);

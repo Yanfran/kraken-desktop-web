@@ -144,9 +144,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   const discountPct       = isPickup ? discounts.pickup?.porcentaje ?? 0 : discounts.dropoff?.porcentaje ?? 0;
   const originPostalCode  = data.selectedOriginAddress?.zip ?? '';
   const pkg               = data.packages?.[0] ?? {};
-  const weightKg          = pkg.unidadPeso?.toLowerCase() === 'lb'
-    ? (parseFloat(pkg.peso || 0) / 2.20462).toFixed(2)
-    : parseFloat(pkg.peso || 0).toFixed(2);
+  const weightLbs = parseFloat(pkg.peso || 0);
 
   // ── Quotes ────────────────────────────────────────────────────────────────
   const loadQuotes = useCallback(async () => {
@@ -160,11 +158,11 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
 
     const result = await fetchUpsQuotes(
       originPostalCode,
-      weightKg,
+      weightLbs,
       parseFloat(pkg.largo || 0),
       parseFloat(pkg.ancho || 0),
       parseFloat(pkg.alto  || 0),
-      'METRIC',
+      'IMPERIAL',
       isPickup ? '06' : '03',
       data.selectedOriginAddress?.province ?? '',
       data.selectedOriginAddress?.city ?? '',
@@ -185,7 +183,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
       updateData({ courierId: first.courier_id, courierServiceId: first.service_id, courierQuote: first });
       setSelected(first);
     }
-  }, [originPostalCode, weightKg, isPickup]); // eslint-disable-line
+  }, [originPostalCode, weightLbs, isPickup]); // eslint-disable-line
 
   useEffect(() => { loadQuotes(); }, [loadQuotes]);
 

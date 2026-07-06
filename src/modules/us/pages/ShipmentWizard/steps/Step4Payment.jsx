@@ -431,12 +431,13 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       unitSystem:    'METRIC',
       serviceCode:   data.courierQuote?.service_code ?? '03',
       nGuia:         reservedNGuia ?? undefined,
-      codCliente:    user?.codCliente ?? '',
+      codCliente:    user?.codCliente ?? data.wizardUser?.codCliente ?? '',
     });
 
-    const trackingNumber = shipmentResult.data?.trackingNumber ?? '';
-    const labelBase64    = shipmentResult.data?.labelBase64    ?? null;
-    const labelUrl       = shipmentResult.data?.labelUrl       ?? null;
+    const trackingNumber  = shipmentResult.data?.trackingNumber ?? '';
+    const labelBase64     = shipmentResult.data?.labelBase64    ?? null;
+    const labelUrl        = shipmentResult.data?.labelUrl       ?? null;
+    const finalNGuia      = shipmentResult.data?.nGuia ?? reservedNGuia;
 
     if (!shipmentResult.success) {
       console.warn('[UPS Shipment] No se pudo generar el label:', shipmentResult.message);
@@ -449,7 +450,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       : (isPickup ? (data.pickupDate ?? null) : null);
 
     const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
-      nGuia:            reservedNGuia ?? undefined,
+      nGuia:            finalNGuia ?? undefined,
       halaraPayTransactionId: transactionId,
       peso:             Number(pkg.peso  || 0),
       largo:            Number(pkg.largo || 0),

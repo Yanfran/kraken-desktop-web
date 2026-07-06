@@ -185,9 +185,12 @@ export const authService = {
   async checkEmailExists(email) {
     try {
       const response = await authAPI.get(`/Users/check-email?email=${encodeURIComponent(email)}`);
-      return { exists: response.data?.exists ?? false };
+      return {
+        exists: response.data?.exists ?? false,
+        isKU:   response.data?.isKU   ?? false,
+      };
     } catch {
-      return { exists: false };
+      return { exists: false, isKU: false };
     }
   },
 

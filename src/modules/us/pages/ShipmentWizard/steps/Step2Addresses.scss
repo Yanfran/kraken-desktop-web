@@ -627,3 +627,51 @@ $radius: 10px;
     &:hover { background: #1a3a8a; }
   }
 }
+
+// ── Wizard Login Modal ──
+.wizard-login-overlay {
+  position: fixed; inset: 0; z-index: 1100;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.wizard-login-modal {
+  background: #fff; border-radius: 16px;
+  width: 90%; max-width: 420px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+
+  &__header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px; border-bottom: 1px solid #E5E7EB;
+    h3 { font-size: 18px; font-weight: 700; color: #022364; margin: 0; }
+    button { background: none; border: none; cursor: pointer; color: #6B7280; padding: 4px;
+      &:hover { color: #1A1A1A; }
+    }
+  }
+
+  &__body { padding: 20px; }
+
+  &__info {
+    font-size: 14px; color: #4B5563; line-height: 1.5;
+    margin-bottom: 16px;
+    strong { color: #022364; }
+  }
+
+  &__pass-row {
+    display: flex; align-items: center; gap: 8px;
+    input { flex: 1; }
+  }
+
+  &__eye {
+    background: none; border: none; cursor: pointer;
+    color: #6B7280; padding: 6px; flex-shrink: 0;
+    &:hover { color: #022364; }
+  }
+
+  &__footer {
+    display: flex; gap: 12px;
+    padding: 16px 20px 20px;
+    button { flex: 1; }
+  }
+}

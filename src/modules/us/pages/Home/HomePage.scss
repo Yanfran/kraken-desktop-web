@@ -314,3 +314,182 @@
     }
   }
 }
+
+// ── Banner ajuste pendiente ───────────────────────────────────────────────────
+.us-home__ajuste-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #FFF7ED;
+  border: 2px solid #F97316;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+
+  &-icon { font-size: 1.5rem; flex-shrink: 0; }
+
+  &-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #C2410C;
+  }
+
+  &-sub {
+    font-size: 0.8rem;
+    color: #9A3412;
+  }
+
+  &-btn {
+    background: #F97316;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+    &:hover { background: #EA580C; }
+  }
+}
+
+// ── Modal ajuste ──────────────────────────────────────────────────────────────
+.us-home__ajuste-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.us-home__ajuste-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+
+  &-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #6B7280;
+    &:hover { color: #1A1A1A; }
+  }
+
+  &-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1B2B6B;
+    margin: 0 0 0.25rem 0;
+  }
+
+  &-guia {
+    font-size: 0.85rem;
+    color: #6B7280;
+    margin: 0 0 0.5rem 0;
+  }
+
+  &-obs {
+    font-size: 0.82rem;
+    color: #9A3412;
+    background: #FFF7ED;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.us-home__ajuste-detail-list {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.us-home__ajuste-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: #374151;
+  border-bottom: 1px solid #F3F4F6;
+
+  &:last-child { border-bottom: none; }
+
+  &--paid {
+    background: #F9FAFB;
+    font-weight: 600;
+    color: #1A1A1A;
+  }
+}
+
+.us-home__ajuste-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-top: 2px solid #1B2B6B;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1A1A1A;
+
+  &-amount {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1B2B6B;
+  }
+}
+
+.us-home__ajuste-error {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.us-home__ajuste-pay-btn {
+  width: 100%;
+  background: #1B2B6B;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: #142057; }
+  &:disabled { background: #D1D5DB; cursor: not-allowed; }
+}
+
+.us-home__ajuste-success {
+  text-align: center;
+  padding: 1rem 0;
+
+  &-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+
+  h3 { font-size: 1.2rem; font-weight: 800; color: #16A34A; margin: 0 0 0.5rem; }
+  p  { font-size: 0.9rem; color: #6B7280; margin: 0 0 1.5rem; }
+}

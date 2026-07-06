@@ -43,6 +43,7 @@ import {
   deleteUsaDestinationAddress,
   setUsaDestinationDefault,
 } from '../../../../../services/us/usAddressService';
+import { authService } from '../../../../../services/auth/authService';
 import './Step2Addresses.scss';
 
 // ── Franjas horarias de pickup ──────────────────────────────────────────────
@@ -1005,7 +1006,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 // ════════════════════════════════════════════════════════════════════════════
 const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, setUserState } = useAuth();
   const clientId = getClientId();
 
   // Datos de contacto para usuarios guest (no logueados)
@@ -1028,6 +1029,13 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   // ✅ FIX: Subir allTiendas al nivel del componente padre (antes solo estaba en DestinationModal)
   // Esto permite enriquecer el destList con idEstado antes de llamar onNext
   const [allTiendas, setAllTiendas] = useState([]);
+
+  // Login modal para usuarios guest cuyo email ya existe
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginPassword,  setLoginPassword]  = useState('');
+  const [loginLoading,   setLoginLoading]   = useState(false);
+  const [loginError,     setLoginError]     = useState('');
+  const [showLoginPass,  setShowLoginPass]  = useState(false);
 
   // ── Carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1097,6 +1105,51 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       } else { toast.error(res.message); }
     }
   }, [clientId]);
+
+  // Cerrar modal de login si el usuario cambia el email mientras está abierto
+  useEffect(() => {
+    if (showLoginModal) { setShowLoginModal(false); setLoginPassword(''); setLoginError(''); }
+  }, [senderEmail]); // eslint-disable-line
+
+  // ── Verificar email al perder foco ─────────────────────────────────────────
+  const handleEmailBlur = async () => {
+    const email = senderEmail.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    try {
+      const { exists, isKU } = await authService.checkEmailExists(email);
+      if (!exists) return;
+      if (!isKU) {
+        setErrors(p => ({ ...p, senderEmail: 'Esta cuenta no tiene acceso al servicio de recogida USA. Intenta con otro correo.' }));
+        return;
+      }
+      setShowLoginModal(true);
+    } catch { /* ignore */ }
+  };
+
+  // ── Login wizard (usuario guest con cuenta existente) ──────────────────────
+  const handleWizardLogin = async () => {
+    setLoginError('');
+    setLoginLoading(true);
+    try {
+      const result = await authService.login({ email: senderEmail, password: loginPassword });
+      if (!result.success) {
+        setLoginError(result.message || 'Contraseña incorrecta.');
+        return;
+      }
+      if (!result.user.codCliente?.startsWith('KU')) {
+        setLoginError('Tu cuenta no tiene acceso al servicio de recogida USA.');
+        return;
+      }
+      // Actualizar AuthContext → user deja de ser null → card contacto desaparece
+      // → clientId cambia → useEffect([clientId]) recarga direcciones automáticamente
+      await setUserState(result.user, result.token);
+      updateData({ wizardUser: result.user, wizardToken: result.token });
+      setShowLoginModal(false);
+      setLoginPassword('');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
 
   // ── Guardar dirección ORIGEN ───────────────────────────────────────────────
   const handleSaveOrigin = async (formData) => {
@@ -1268,6 +1321,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
                 placeholder="correo@ejemplo.com"
                 value={senderEmail}
                 onChange={(e) => { setSenderEmail(e.target.value); setErrors(p => ({ ...p, senderEmail: '' })); }}
+                onBlur={handleEmailBlur}
                 className={errors.senderEmail ? 'input--error' : ''}
               />
               {errors.senderEmail && <span className="field-error">{errors.senderEmail}</span>}
@@ -1398,6 +1452,62 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       )}
       {modal === 'dest' && (
         <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas}  />
+      )}
+
+      {showLoginModal && (
+        <div className="wizard-login-overlay" onClick={() => setShowLoginModal(false)}>
+          <div className="wizard-login-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="wizard-login-modal__header">
+              <h3>Iniciar sesión</h3>
+              <button onClick={() => setShowLoginModal(false)}><IoCloseOutline size={22} /></button>
+            </div>
+            <div className="wizard-login-modal__body">
+              <p className="wizard-login-modal__info">
+                El correo <strong>{senderEmail}</strong> ya tiene una cuenta.<br/>
+                Ingresa tu contraseña para acceder a tus direcciones guardadas.
+              </p>
+              <div className="wizard-field">
+                <label>Contraseña</label>
+                <div className="wizard-login-modal__pass-row">
+                  <input
+                    type={showLoginPass ? 'text' : 'password'}
+                    placeholder="Tu contraseña"
+                    value={loginPassword}
+                    onChange={(e) => { setLoginPassword(e.target.value); setLoginError(''); }}
+                    onKeyDown={(e) => e.key === 'Enter' && !loginLoading && loginPassword && handleWizardLogin()}
+                    className={loginError ? 'input--error' : ''}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="wizard-login-modal__eye"
+                    onClick={() => setShowLoginPass((p) => !p)}
+                  >
+                    <IoEyeOutline size={18} />
+                  </button>
+                </div>
+                {loginError && <span className="field-error">{loginError}</span>}
+              </div>
+            </div>
+            <div className="wizard-login-modal__footer">
+              <button
+                type="button"
+                className="btn-wizard-back"
+                onClick={() => { setShowLoginModal(false); setLoginPassword(''); setLoginError(''); }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-wizard-next"
+                onClick={handleWizardLogin}
+                disabled={loginLoading || !loginPassword}
+              >
+                {loginLoading ? 'Entrando...' : 'Entrar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {viewDetail && (

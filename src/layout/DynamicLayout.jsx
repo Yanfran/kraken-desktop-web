@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useTenant } from '../core/context/TenantContext';
 import Sidebar from '../components/Sidebar/Sidebar';
 import TopNavigation from '../components/TopNavigation/TopNavigation';
+import KUAjusteBanner from '../modules/us/components/KUAjusteBanner';
 import './DynamicLayout.styles.scss';
 
 const DynamicLayout = ({ children }) => {
@@ -77,6 +78,8 @@ const DynamicLayout = ({ children }) => {
                     onToggleSidebar={toggleSidebar}
                     sidebarOpen={sidebarOpen}
                 />
+
+                {tenant?.prefix === 'KU' && <KUAjusteBanner />}
 
                 <main className="page-content">
                     {children}
