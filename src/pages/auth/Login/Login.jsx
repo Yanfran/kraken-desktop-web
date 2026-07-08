@@ -1,5 +1,5 @@
 // src/pages/auth/Login/Login.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -10,6 +10,7 @@ import './Login.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg';
 import PromoBanner from '../../../components/auth/PromoBanner/PromoBanner';
 import InfoBanner from '../../../components/auth/InfoBanner/InfoBanner';
+import axiosInstance from '../../../services/axiosInstance';
 
 // Icons
 import {
@@ -35,6 +36,13 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [appVersion, setAppVersion] = useState(null);
+
+  useEffect(() => {
+    axiosInstance.get('/buildinfo')
+      .then(res => setAppVersion(res.data?.version ?? null))
+      .catch(() => {});
+  }, []);
 
   // Ref síncrona para que el callback de Google pueda leer el prefix seleccionado
   const selectedPrefixRef = useRef('KV');
@@ -333,6 +341,13 @@ const Login = () => {
             </a>
           </p>
         </div>
+
+        {/* Badge de versión */}
+        {appVersion && (
+          <div className="kraken-login__version">
+            <span className="kraken-login__version-badge">{appVersion}</span>
+          </div>
+        )}
       </div>
     </div>
 

@@ -22,7 +22,12 @@
 
 @media (min-width: 769px) {
   .page-content {
-    margin-left: 260px; // Ancho del Sidebar desktop
     padding: 2rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .page-content {
+    margin-left: 260px; // sidebar always visible here
   }
 }
