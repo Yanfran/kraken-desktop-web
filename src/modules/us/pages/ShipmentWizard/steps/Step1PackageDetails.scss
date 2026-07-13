@@ -129,7 +129,36 @@ $radius-sm: 8px;
     &:focus { outline: none; }
   }
 
-  // Selector tipo paquete
+  // Toggle segmentado Caja / Documento
+  &__type-toggle {
+    display: flex;
+    background: #E5E7EB;
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  &__type-toggle-btn {
+    flex: 1;
+    padding: 8px 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #6B7280;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &--active {
+      background: #fff;
+      color: $primary;
+      font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+  }
+
+  // Selector tipo paquete (dropdown legacy — ya no se usa)
   &__type-btn {
     width: 100%;
     display: flex;

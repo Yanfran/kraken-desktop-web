@@ -88,13 +88,14 @@ const AddressBlock = ({ address, flag, onEdit }) => {
 const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) => {
   const { t } = useTranslation();
 
-  const pkg  = data.packages[0];
-  const dims = pkg
-    ? `${pkg.largo || '–'}×${pkg.ancho || '–'}×${pkg.alto || '–'} cm`
-    : '–';
+  const pkg   = data.packages[0];
+  const isDoc = pkg?.tipoPaquete === 'Documento';
+  const dims  = isDoc
+    ? 'Documento'
+    : (pkg ? `${pkg.largo || '–'}×${pkg.ancho || '–'}×${pkg.alto || '–'} in` : '–');
 
   const isPickup   = data.deliveryMethod === 'pickup';
-  const pickupRate = isPickup ? Number(data.pickupRate ?? 0) : 0;
+  const pickupRate = (isPickup && !isDoc) ? Number(data.pickupRate ?? 0) : 0;
 
   // 1. Obtenemos el cálculo de la API
   const calc = data.calculationResult;

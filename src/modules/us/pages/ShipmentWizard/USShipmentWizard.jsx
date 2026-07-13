@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import WizardAuthModal from './WizardAuthModal';
-import { calculateUSShipping } from '../../../../services/us/usCalculatorService';
+import { calculateUSShipping, calculateUSDocumentShipping } from '../../../../services/us/usCalculatorService';
 import { addDestinationAddress } from '../../../../services/es/spainAddressService';
 import { addUsaOriginAddress } from '../../../../services/us/usAddressService';
 import toast from 'react-hot-toast';
@@ -103,21 +103,18 @@ const ESShipmentWizard = () => {
   // Aquí buscamos el que tiene el id seleccionado para extraer idEstado/idMunicipio.
   const handleStep2Next = async ({ destList = [], originList = [] } = {}) => {
       const pkg     = wizardData.packages[0];
+      const isDoc   = pkg.tipoPaquete === 'Documento';
       const destino = destList.find((d) => d.id === wizardData.destinationAddressId);
 
-      // ✅ Guard: igual que Venezuela valida estado antes de calcular
       if (!destino) {
           toast.error(t('us_wizard.error_dest'));
           return;
       }
 
-      // ✅ Igual que Calculator.jsx usa el state seleccionado directamente,
-      // aquí usamos el idEstado ya enriquecido por Step2Addresses
       const stateId = destino.idEstado ?? null;
 
       if (!stateId) {
           toast.error(t('us_wizard.error_state'));
-          console.error('❌ [ESWizard] destino sin idEstado:', destino);
           return;
       }
 
@@ -129,7 +126,6 @@ const ESShipmentWizard = () => {
           const municipios = await fetchMunicipios(stateId);
           if (municipios.length > 0) {
             municipioId = municipios[0].id;
-            console.log(`🏙️ municipio fallback: ${municipios[0].id} (${municipios[0].name})`);
           }
         } catch (e) {
           console.warn('⚠️ No se pudo obtener municipio:', e);
@@ -138,7 +134,7 @@ const ESShipmentWizard = () => {
 
       const lockerId = destino?.idLocker ?? null;
 
-      // ── Peso en KG para enviar al backend (que convierte internamente a lbs) ──
+      // ── Peso en KG para enviar al backend (convierte internamente a lbs) ──
       const pesoRaw = parseFloat(pkg.peso) || 0;
       const pesoKg  = pkg.unidadPeso?.toLowerCase() === 'lb'
         ? parseFloat((pesoRaw / 2.20462).toFixed(2))
@@ -146,31 +142,47 @@ const ESShipmentWizard = () => {
 
       setCalculating(true);
 
-      const result = await calculateUSShipping({
+      const calcParams = {
         stateId,
         municipalityId: municipioId,
         lockerId,
         weight:        pesoKg,
         weightUnit:    'Kg',
         declaredValue: parseFloat(pkg.valorFOB) || 0,
-      });
+      };
 
-      
-      setCalculating(false)
+      const result = isDoc
+        ? await calculateUSDocumentShipping(calcParams)
+        : await calculateUSShipping(calcParams);
+
+      setCalculating(false);
 
       if (!result.success) {
         toast.error(result.message || t('us_wizard.error_calc'));
         return;
       }
 
-       const selectedOrigin = originList.find((a) => a.id === wizardData.originAddressId) ?? null;
+      const selectedOrigin = originList.find((a) => a.id === wizardData.originAddressId) ?? null;
 
       updateData({
         calculationResult:          result,
         selectedOriginAddress:      selectedOrigin,
         selectedDestinationAddress: destino,
+        // Limpiar datos de courier para documentos (no pasan por Step3)
+        ...(isDoc ? { courierId: null, courierServiceId: null, courierQuote: null, pickupRate: null } : {}),
       });
-      setCurrentStep(3);
+
+      if (isDoc) {
+        // Documentos saltan el Step3 — verificar auth antes del resumen
+        if (!user) {
+          setPendingStep4(true);
+          setShowAuthModal(true);
+        } else {
+          setCurrentStep(4);
+        }
+      } else {
+        setCurrentStep(3);
+      }
   };
   // ──────────────────────────────────────────────────────────────────────────
 
@@ -220,15 +232,18 @@ const ESShipmentWizard = () => {
           />
         );
 
-      case 4:  // era case 3
+      case 4: {  // era case 3
+        const isDoc4 = wizardData.packages?.[0]?.tipoPaquete === 'Documento';
         return (
           <Step4Summary
             {...commonProps}
+            onBack={() => setCurrentStep(isDoc4 ? 2 : 3)}
             onNext={() => setCurrentStep(5)}
             onEditPackage={()    => setCurrentStep(1)}
             onEditAddresses={() => setCurrentStep(2)}
           />
         );
+      }
 
       case 5:  // era case 4
         return (

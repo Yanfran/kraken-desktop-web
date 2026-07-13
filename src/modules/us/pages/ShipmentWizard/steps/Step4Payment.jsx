@@ -328,11 +328,13 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const [acceptContent, setAcceptContent] = useState(false);
   const [acceptWeight, setAcceptWeight]   = useState(false);
 
+  const isDoc    = data.packages?.[0]?.tipoPaquete === 'Documento';
+
   // ── Precios en USD ────────────────────────────────────────────────────────
   const usd      = (n) => `$${Number(n || 0).toFixed(2)} USD`;
   const shipping = Number(calculationResult?.data?.total || 0);
-  const courier  = courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0;
-  const pickup   = Number(data.pickupRate ?? 0);
+  const courier  = isDoc ? 0 : (courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0);
+  const pickup   = isDoc ? 0 : Number(data.pickupRate ?? 0);
   const isPickup = data.deliveryMethod === 'pickup';
   const discounts   = data.discounts ?? {};
   const discountPct = isPickup ? (discounts.pickup?.porcentaje ?? 0) : (discounts.dropoff?.porcentaje ?? 0);
@@ -369,6 +371,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       ? parseFloat(pkg.peso || 0) / 2.20462
       : parseFloat(pkg.peso || 0);
 
+    // ── 1. UPS Pickup (igual para caja y documento) ───────────────────────
     let prn = '', pickupTransId = '', pickupResultDate = null;
     let pickupReady = data.pickupReadyTime || '0900';
     let pickupClose = data.pickupCloseTime || '1700';
@@ -412,9 +415,14 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       }
     }
 
-    setSubmitPhase('Reservando número de guía…');
-    const reservedNGuia = await getNextNGuia();
+    // ── 2. Reservar nGuia (solo para cajas — KDO lo genera el backend) ───
+    let reservedNGuia = null;
+    if (!isDoc) {
+      setSubmitPhase('Reservando número de guía…');
+      reservedNGuia = await getNextNGuia();
+    }
 
+    // ── 3. UPS Shipment ───────────────────────────────────────────────────
     setSubmitPhase('Generating shipping label…');
     const shipmentResult = await createUpsShipment({
       contactName:   addr.alias || 'Client',
@@ -425,73 +433,107 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       postalCode:    addr.zip   || '',
       phone:         (addr.phone || '').replace(/\D/g, '').slice(0, 10) || '',
       weight:        parseFloat(weightKg.toFixed(2)) || 1,
-      length:        parseFloat(pkg.largo || 0) || 1,
-      width:         parseFloat(pkg.ancho || 0) || 1,
-      height:        parseFloat(pkg.alto  || 0) || 1,
+      // Documentos usan dimensiones fijas 1×1×1
+      length:        isDoc ? 1 : (parseFloat(pkg.largo || 0) || 1),
+      width:         isDoc ? 1 : (parseFloat(pkg.ancho || 0) || 1),
+      height:        isDoc ? 1 : (parseFloat(pkg.alto  || 0) || 1),
       unitSystem:    'METRIC',
-      serviceCode:   data.courierQuote?.service_code ?? '03',
+      serviceCode:   isDoc ? '03' : (data.courierQuote?.service_code ?? '03'),
       nGuia:         reservedNGuia ?? undefined,
       codCliente:    user?.codCliente ?? data.wizardUser?.codCliente ?? '',
     });
 
-    const trackingNumber  = shipmentResult.data?.trackingNumber ?? '';
-    const labelBase64     = shipmentResult.data?.labelBase64    ?? null;
-    const labelUrl        = shipmentResult.data?.labelUrl       ?? null;
-    const finalNGuia      = shipmentResult.data?.nGuia ?? reservedNGuia;
+    const trackingNumber = shipmentResult.data?.trackingNumber ?? '';
+    const labelBase64    = shipmentResult.data?.labelBase64    ?? null;
+    const labelUrl       = shipmentResult.data?.labelUrl       ?? null;
+    const finalNGuia     = shipmentResult.data?.nGuia ?? reservedNGuia;
 
     if (!shipmentResult.success) {
       console.warn('[UPS Shipment] No se pudo generar el label:', shipmentResult.message);
     }
 
-    setSubmitPhase('Creating your shipment…');
-
     const pickupFechaIso = pickupResultDate
       ? `${pickupResultDate.slice(0,4)}-${pickupResultDate.slice(4,6)}-${pickupResultDate.slice(6,8)}`
       : (isPickup ? (data.pickupDate ?? null) : null);
 
-    const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
-      nGuia:            finalNGuia ?? undefined,
-      halaraPayTransactionId: transactionId,
-      peso:             Number(pkg.peso  || 0),
-      largo:            Number(pkg.largo || 0),
-      ancho:            Number(pkg.ancho || 0),
-      alto:             Number(pkg.alto  || 0),
-      unidadPeso:       pkg.unidadPeso   || 'lb',
-      declaredValueUSD: Number(pkg.valorFOB || 0),
-      fragil:           pkg.fragil ?? false,
-      courierId:        data.courierId        ?? null,
-      courierServiceId: data.courierServiceId ?? null,
-      courierTotal:     Number(data.courierQuote?.total || data.courierQuote?.cost || 0),
-      courierName:      data.courierQuote?.name    || data.courierQuote?.courier || '',
-      courierService:   data.courierQuote?.service || '',
-      pickupCost:       isPickup ? Number(data.pickupRate ?? 0) : 0,
-      discountAmount:   discountAmount > 0 ? Number(discountAmount.toFixed(2)) : 0,
-      discountName:     discountPct > 0 ? discountName : null,
-      idDireccionOrigen:  data.originAddressId      ?? data.selectedOriginAddress?.id      ?? null,
-      idDireccionDestino: data.destinationAddressId ?? data.selectedDestinationAddress?.id ?? null,
-      contenidosIds:    pkg.contenidos?.map(c => c.id) ?? [],
-      costoBase:        Number(data.calculationResult?.data?.total || 0),
-      tienePago:        true,
-      pickupCode:           prn,
-      sendSeiPickupUuid:    prn,
-      sendSeiShipmentUuid:  pickupTransId,
-      pickupFecha:          pickupFechaIso,
-      pickupHoraDesde:      isPickup ? pickupReady : null,
-      pickupHoraHasta:      isPickup ? pickupClose : null,
-      sendSeiTrackingNumber: trackingNumber,
-      labelUrl:              labelUrl,
-      idFormaCreacion:       isPickup ? 5 : 7,
-    });
+    if (isDoc) {
+      // ── 4a. Crear guía KDO (documento) ───────────────────────────────
+      setSubmitPhase('Creating your document shipment…');
+      const { data: docResult } = await axiosPaymentInstance.post('/usa/documento/create', {
+        halaraPayTransactionId: transactionId,
+        peso:             Number(pkg.peso || 0),
+        weightUnit:       pkg.unidadPeso || 'lb',
+        declaredValueUSD: Number(pkg.valorFOB || 0),
+        idDireccionOrigen:  data.originAddressId      ?? data.selectedOriginAddress?.id      ?? null,
+        idDireccionDestino: data.destinationAddressId ?? data.selectedDestinationAddress?.id ?? null,
+        costoBase:          Number(data.calculationResult?.data?.total || 0),
+        idFormaCreacion:    isPickup ? 5 : 7,
+        pickupCode:         prn || null,
+        pickupFecha:        pickupFechaIso,
+        pickupHoraDesde:    isPickup ? pickupReady : null,
+        pickupHoraHasta:    isPickup ? pickupClose : null,
+        sendSeiUuid:        pickupTransId || null,
+        sendSeiTrackingNumber: trackingNumber || null,
+        labelUrl:           labelUrl || null,
+      });
 
-    // Éxito: limpiar recuperación y mostrar pantalla de éxito
-    sessionStorage.removeItem(RECOVERY_KEY);
-    setPendingRetry(null);
-    const nGuia = guiaResult?.nGuia || reservedNGuia || `KU-${Date.now().toString().slice(-6)}`;
-    // Fallback al labelUrl/trackingNumber del guia (igual que la app móvil)
-    const finalLabelUrl       = labelUrl       ?? guiaResult?.labelUrl       ?? guiaResult?.data?.labelUrl       ?? null;
-    const finalLabelBase64    = labelBase64    ?? guiaResult?.labelBase64    ?? guiaResult?.data?.labelBase64    ?? null;
-    const finalTrackingNumber = trackingNumber || guiaResult?.trackingNumber  || guiaResult?.data?.trackingNumber  || '';
-    setGuiaResult({ nGuia, metodoPago: 'card', labelBase64: finalLabelBase64, labelUrl: finalLabelUrl, trackingNumber: finalTrackingNumber, pickupWarning: pickupFailed });
+      sessionStorage.removeItem(RECOVERY_KEY);
+      setPendingRetry(null);
+      const nGuia = docResult?.nGuia || `KDO-${Date.now().toString().slice(-6)}`;
+      setGuiaResult({
+        nGuia,
+        metodoPago:     'card',
+        labelBase64:    labelBase64    ?? docResult?.labelBase64    ?? null,
+        labelUrl:       labelUrl       ?? docResult?.labelUrl       ?? null,
+        trackingNumber: trackingNumber || docResult?.trackingNumber || '',
+        pickupWarning:  pickupFailed,
+      });
+
+    } else {
+      // ── 4b. Crear guía KU (caja) ─────────────────────────────────────
+      setSubmitPhase('Creating your shipment…');
+      const { data: guiaResult } = await axiosPaymentInstance.post('/usa/guia/create', {
+        nGuia:            finalNGuia ?? undefined,
+        halaraPayTransactionId: transactionId,
+        peso:             Number(pkg.peso  || 0),
+        largo:            Number(pkg.largo || 0),
+        ancho:            Number(pkg.ancho || 0),
+        alto:             Number(pkg.alto  || 0),
+        unidadPeso:       pkg.unidadPeso   || 'lb',
+        declaredValueUSD: Number(pkg.valorFOB || 0),
+        fragil:           pkg.fragil ?? false,
+        courierId:        data.courierId        ?? null,
+        courierServiceId: data.courierServiceId ?? null,
+        courierTotal:     Number(data.courierQuote?.total || data.courierQuote?.cost || 0),
+        courierName:      data.courierQuote?.name    || data.courierQuote?.courier || '',
+        courierService:   data.courierQuote?.service || '',
+        pickupCost:       isPickup ? Number(data.pickupRate ?? 0) : 0,
+        discountAmount:   discountAmount > 0 ? Number(discountAmount.toFixed(2)) : 0,
+        discountName:     discountPct > 0 ? discountName : null,
+        idDireccionOrigen:  data.originAddressId      ?? data.selectedOriginAddress?.id      ?? null,
+        idDireccionDestino: data.destinationAddressId ?? data.selectedDestinationAddress?.id ?? null,
+        contenidosIds:    pkg.contenidos?.map(c => c.id) ?? [],
+        costoBase:        Number(data.calculationResult?.data?.total || 0),
+        tienePago:        true,
+        pickupCode:           prn,
+        sendSeiPickupUuid:    prn,
+        sendSeiShipmentUuid:  pickupTransId,
+        pickupFecha:          pickupFechaIso,
+        pickupHoraDesde:      isPickup ? pickupReady : null,
+        pickupHoraHasta:      isPickup ? pickupClose : null,
+        sendSeiTrackingNumber: trackingNumber,
+        labelUrl:              labelUrl,
+        idFormaCreacion:       isPickup ? 5 : 7,
+      });
+
+      sessionStorage.removeItem(RECOVERY_KEY);
+      setPendingRetry(null);
+      const nGuia = guiaResult?.nGuia || reservedNGuia || `KU-${Date.now().toString().slice(-6)}`;
+      const finalLabelUrl       = labelUrl       ?? guiaResult?.labelUrl       ?? guiaResult?.data?.labelUrl       ?? null;
+      const finalLabelBase64    = labelBase64    ?? guiaResult?.labelBase64    ?? guiaResult?.data?.labelBase64    ?? null;
+      const finalTrackingNumber = trackingNumber || guiaResult?.trackingNumber  || guiaResult?.data?.trackingNumber  || '';
+      setGuiaResult({ nGuia, metodoPago: 'card', labelBase64: finalLabelBase64, labelUrl: finalLabelUrl, trackingNumber: finalTrackingNumber, pickupWarning: pickupFailed });
+    }
   };
 
   // ── Callback que recibe el token de HalaraPay (lightbox) ──────────────────
@@ -595,8 +637,8 @@ const Step4Payment = ({ data, updateData, onBack }) => {
     setSubmitError(null);
 
     try {
-      if (!data.courierId || !data.selectedOriginAddress)
-        throw new Error('Missing courier or origin address.');
+      if (!data.selectedOriginAddress || (!isDoc && !data.courierId))
+        throw new Error(isDoc ? 'Missing origin address.' : 'Missing courier or origin address.');
 
       // ZELLE — Pago manual offline
       if (metodoPago === 'zelle') {
