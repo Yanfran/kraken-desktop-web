@@ -232,10 +232,13 @@ const PersonalData = () => {
           return { isValid: false, message: 'RIF debe tener entre 6-12 caracteres' };
         break;
       case 'driverslicense':
-      case 'ein':
       case 'otro':
         if (num.length < 5 || num.length > 20)
           return { isValid: false, message: 'Documento debe tener entre 5-20 caracteres' };
+        break;
+      case 'ein':
+        if (!/^\d{2}-\d{7}$/.test(num))
+          return { isValid: false, message: 'EIN debe tener el formato XX-XXXXXXX (ej: 12-3456789)' };
         break;
       default:
         return { isValid: false, message: 'Selecciona un tipo de documento' };
@@ -354,10 +357,12 @@ const PersonalData = () => {
         filtered = raw.replace(/[^A-Za-z0-9]/g, '');
         maxLen = 20;
         break;
-      case 'ein':
-        filtered = raw.replace(/[^A-Za-z0-9\-]/g, '');
+      case 'ein': {
+        const digits = raw.replace(/[^0-9]/g, '');
+        filtered = digits.length <= 2 ? digits : digits.slice(0, 2) + '-' + digits.slice(2, 9);
         maxLen = 10;
         break;
+      }
       default:
         filtered = raw.replace(/[^A-Za-z0-9]/g, '');
         maxLen = 20;

@@ -7,7 +7,7 @@ export const countryConfig = {
         documentTypes: [
             {
                 label: "Driver's License",
-                value: "drivers license", // TipoIdentificacion de la BD en minúsculas
+                value: "driverslicense",
                 validation: {
                     pattern: /^[A-Za-z0-9]+$/,
                     minLength: 5,
@@ -17,12 +17,22 @@ export const countryConfig = {
             },
             {
                 label: "Passport",
-                value: "pasaporte", // TipoIdentificacion de la BD en minúsculas
+                value: "pasaporte",
                 validation: {
                     pattern: /^[A-Za-z0-9]+$/,
                     minLength: 6,
                     maxLength: 15,
                     description: "Alphanumeric, 6-15 characters"
+                }
+            },
+            {
+                label: "EIN",
+                value: "ein",
+                validation: {
+                    pattern: /^\d{2}-\d{7}$/,
+                    minLength: 10,
+                    maxLength: 10,
+                    description: "Federal Tax ID, format XX-XXXXXXX (e.g. 12-3456789)"
                 }
             }
         ],

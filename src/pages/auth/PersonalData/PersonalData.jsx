@@ -339,7 +339,10 @@ const PersonalData = () => {
     let cleaned = '';
 
     // Config types default cleaning (Alphanumeric) or retain switch for existing types
-    if (docConfig) {
+    if (formData.documentType === 'ein') {
+      const digits = text.replace(/[^0-9]/g, '');
+      cleaned = digits.length <= 2 ? digits : digits.slice(0, 2) + '-' + digits.slice(2, 9);
+    } else if (docConfig) {
       cleaned = text.replace(/[^A-Za-z0-9]/g, '');
     } else {
       switch (formData.documentType) {
