@@ -65,14 +65,19 @@ function getBadge(quote, allQuotes, t) {
 }
 
 // ── Card de courier ────────────────────────────────────────────────────────────
-const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate, discountPct }) => {
+const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate }) => {
   const { t } = useTranslation();
   const base        = parseFloat(quote.price).toFixed(2);
   const fuel        = parseFloat(quote.fuel_surcharge).toFixed(2);
   const pickupExtra = parseFloat(pickupRate ?? 0);
   const subtotal    = parseFloat(quote.total) + pickupExtra;
-  const discountAmt = discountPct > 0 ? subtotal * discountPct / 100 : 0;
-  const total       = (subtotal - discountAmt).toFixed(2);
+  const total         = subtotal.toFixed(2);
+  const publicSubtotal = quote.negotiated && quote.public_total
+    ? (parseFloat(quote.public_total) + pickupExtra)
+    : null;
+  const savingsPct  = publicSubtotal
+    ? Math.round((1 - subtotal / publicSubtotal) * 100)
+    : 0;
 
   return (
     <div
@@ -92,17 +97,17 @@ const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate, discountP
         {badge && <span className={`courier-card__badge ${badge.cls}`}>{badge.label}</span>}
       </div>
       <div className="courier-card__price">
-        {discountPct > 0 && (
+        {publicSubtotal && (
           <span className="courier-card__original" style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '14px', marginRight: '6px' }}>
-            ${subtotal.toFixed(2)}
+            ${publicSubtotal.toFixed(2)}
           </span>
         )}
         <span className="courier-card__total">${total}</span>
         <span className="courier-card__currency">USD</span>
       </div>
-      {discountPct > 0 && (
+      {publicSubtotal && savingsPct > 0 && (
         <div style={{ color: '#16a34a', fontSize: '12px', fontWeight: '600', marginTop: '-4px' }}>
-          <IoPricetagOutline size={12} style={{ verticalAlign: 'middle' }} /> -{discountPct}% descuento
+          <IoPricetagOutline size={12} style={{ verticalAlign: 'middle' }} /> -{savingsPct}% precio negociado UPS
         </div>
       )}
       <div className="courier-card__breakdown">
@@ -144,7 +149,10 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   const discountPct       = isPickup ? discounts.pickup?.porcentaje ?? 0 : discounts.dropoff?.porcentaje ?? 0;
   const originPostalCode  = data.selectedOriginAddress?.zip ?? '';
   const pkg               = data.packages?.[0] ?? {};
-  const weightLbs = parseFloat(pkg.peso || 0);
+  const weightLbs = parseFloat(pkg.peso  || 0);
+  const largoIn   = parseFloat(pkg.largo || 0);
+  const anchoIn   = parseFloat(pkg.ancho || 0);
+  const altoIn    = parseFloat(pkg.alto  || 0);
 
   // ── Quotes ────────────────────────────────────────────────────────────────
   const loadQuotes = useCallback(async () => {
@@ -159,9 +167,9 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
     const result = await fetchUpsQuotes(
       originPostalCode,
       weightLbs,
-      parseFloat(pkg.largo || 0),
-      parseFloat(pkg.ancho || 0),
-      parseFloat(pkg.alto  || 0),
+      largoIn,
+      anchoIn,
+      altoIn,
       'IMPERIAL',
       isPickup ? '06' : '03',
       data.selectedOriginAddress?.province ?? '',
@@ -199,10 +207,11 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
 
   // ── Pickup rate ───────────────────────────────────────────────────────────
   useEffect(() => {
+    let cancelled = false;
     const originAddr = data.selectedOriginAddress;
     if (!isPickup || !originAddr || !data.pickupDate || !data.pickupReadyTime) {
       if (!isPickup) { setPickupRate(0); updateData({ pickupRate: 0 }); }
-      return;
+      return () => { cancelled = true; };
     }
     const pickupDateFormatted = data.pickupDate.replace(/-/g, '');
     setLoadingRate(true);
@@ -216,10 +225,12 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
       readyTime:            data.pickupReadyTime,
       closeTime:            data.pickupCloseTime,
     }).then((res) => {
+      if (cancelled) return;
       const rate = res.success ? res.rate : 0;
       setPickupRate(rate);
       updateData({ pickupRate: rate });
-    }).finally(() => setLoadingRate(false));
+    }).finally(() => { if (!cancelled) setLoadingRate(false); });
+    return () => { cancelled = true; };
   }, [isPickup, data.selectedOriginAddress, data.pickupDate, data.pickupReadyTime]); // eslint-disable-line
 
   // ── Toggle método ─────────────────────────────────────────────────────────
@@ -251,7 +262,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   // ── Selección de courier ──────────────────────────────────────────────────
   const handleSelect = (quote) => {
     setSelected(quote);
-    updateData({ courierId: quote.courier_id, courierServiceId: quote.service_id, courierQuote: quote, pickupRate });
+    updateData({ courierId: quote.courier_id, courierServiceId: quote.service_id, courierQuote: quote, pickupRate: isPickup ? pickupRate : 0 });
   };
 
   // ── Siguiente paso ────────────────────────────────────────────────────────

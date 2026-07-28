@@ -109,13 +109,9 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
   // 4. Obtenemos el total final
   const totalEUR = calc?.data?.total || 0;
 
-  // 5. Descuento KU
-  const discounts   = data.discounts ?? {};
-  const discountPct = isPickup ? (discounts.pickup?.porcentaje ?? 0) : (discounts.dropoff?.porcentaje ?? 0);
-  const discountName = isPickup ? (discounts.pickup?.nombre ?? 'Descuento Pickup') : (discounts.dropoff?.nombre ?? 'Descuento Drop-Off');
-  const subtotalBeforeDiscount = Number(totalEUR) + Number(data.courierQuote?.total ?? 0) + pickupRate;
-  const discountAmount = discountPct > 0 ? subtotalBeforeDiscount * discountPct / 100 : 0;
-  const grandTotal = subtotalBeforeDiscount - discountAmount;
+  const discountPct    = 0;
+  const discountAmount = 0;
+  const grandTotal     = Number(totalEUR) + Number(data.courierQuote?.total ?? 0) + pickupRate;
 
   const editPkg  = onEditPackage   ?? onBack;
   const editAddr = onEditAddresses ?? onBack;

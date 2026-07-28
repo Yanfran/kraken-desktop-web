@@ -332,16 +332,14 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
   // ── Precios en USD ────────────────────────────────────────────────────────
   const usd      = (n) => `$${Number(n || 0).toFixed(2)} USD`;
+  const isPickup = data.deliveryMethod === 'pickup';
   const shipping = Number(calculationResult?.data?.total || 0);
   const courier  = isDoc ? 0 : (courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0);
-  const pickup   = isDoc ? 0 : Number(data.pickupRate ?? 0);
-  const isPickup = data.deliveryMethod === 'pickup';
-  const discounts   = data.discounts ?? {};
-  const discountPct = isPickup ? (discounts.pickup?.porcentaje ?? 0) : (discounts.dropoff?.porcentaje ?? 0);
-  const discountName = isPickup ? (discounts.pickup?.nombre ?? 'Descuento Pickup') : (discounts.dropoff?.nombre ?? 'Descuento Drop-Off');
-  const subtotalBeforeDiscount = shipping + courier + pickup;
-  const discountAmount = discountPct > 0 ? subtotalBeforeDiscount * discountPct / 100 : 0;
-  const total    = Number((subtotalBeforeDiscount - discountAmount).toFixed(2));
+  const pickup   = (isDoc || !isPickup) ? 0 : Number(data.pickupRate ?? 0);
+  const discountPct    = 0;
+  const discountAmount = 0;
+  const discountName   = null;
+  const total          = Number((shipping + courier + pickup).toFixed(2));
 
   const totalRef      = useRef(total);
   const lightboxOpen  = useRef(false);
@@ -412,6 +410,13 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       } catch (pickupErr) {
         pickupFailed = true;
         console.warn('[UPS Pickup] Excepción al crear pickup:', pickupErr);
+      }
+
+      if (pickupFailed) {
+        setSubmitError('UPS no pudo programar la recogida para el horario seleccionado. Por favor selecciona una hora más temprana (antes de las 8:00 AM) e intenta nuevamente.');
+        setSubmitting(false);
+        setSubmitPhase('');
+        return;
       }
     }
 

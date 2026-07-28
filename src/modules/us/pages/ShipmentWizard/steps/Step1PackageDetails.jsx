@@ -256,7 +256,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
             <label>{t('us_wizard.field_largo')}</label>
             <input
               type="number"
-              placeholder="e.g., 30"
+              placeholder="e.g., 12"
               value={pkg.largo}
               min="0"
               onChange={(e) => set('largo', e.target.value)}
@@ -269,7 +269,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
             <label>{t('us_wizard.field_ancho')}</label>
             <input
               type="number"
-              placeholder="e.g., 30"
+              placeholder="e.g., 12"
               value={pkg.ancho}
               min="0"
               onChange={(e) => set('ancho', e.target.value)}
@@ -282,7 +282,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
             <label>{t('us_wizard.field_alto')}</label>
             <input
               type="number"
-              placeholder="e.g., 30"
+              placeholder="e.g., 12"
               value={pkg.alto}
               min="0"
               onChange={(e) => set('alto', e.target.value)}
