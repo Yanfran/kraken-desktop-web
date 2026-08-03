@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { getUsaGuiaDetail } from '../../../../services/us/usGuiasService';
+import { rescheduleUpsPickup } from '../../../../services/us/upsService';
 import styles from './UsaGuideDetail.module.scss';
 import clsx from 'clsx';
 
@@ -15,8 +16,34 @@ import {
   IoReceiptOutline,
   IoCheckmarkDoneOutline,
   IoCloudDownloadOutline,
+  IoCalendarOutline,
+  IoWarningOutline,
+  IoCloseOutline,
+  IoRefreshOutline,
 } from 'react-icons/io5';
 import { API_URL } from '../../../../utils/config';
+
+function getNextBusinessDays(n) {
+  const days = [];
+  const d = new Date();
+  while (days.length < n) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) {
+      const copy = new Date(d);
+      const y = copy.getFullYear();
+      const m = String(copy.getMonth() + 1).padStart(2, '0');
+      const day = String(copy.getDate()).padStart(2, '0');
+      days.push({
+        isoDate: `${y}-${m}-${day}`,
+        short:   copy.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }),
+      });
+    }
+  }
+  return days;
+}
+
+const RESCHEDULE_DAYS   = getNextBusinessDays(5);
+const RESCHEDULE_ALLDAY = { readyTime: '0800', closeTime: '1700' };
 
 export default function UsaGuideDetail() {
   const { idGuia } = useParams();
@@ -30,6 +57,10 @@ export default function UsaGuideDetail() {
     otrosDetalles:    false,
     historialEstatus: false,
   });
+  const [rescheduleOpen,    setRescheduleOpen]    = useState(false);
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [rescheduleError,   setRescheduleError]   = useState('');
+  const [rescheduleDate,    setRescheduleDate]    = useState(RESCHEDULE_DAYS[0].isoDate);
 
   const toggle = useCallback((section) => {
     setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -49,6 +80,24 @@ export default function UsaGuideDetail() {
   useEffect(() => {
     if (isSignedIn && idGuia) load();
   }, [idGuia, isSignedIn, load]);
+
+  // ── Reagendar recogida ───────────────────────────────────────────────────
+  const handleReschedule = useCallback(async () => {
+    if (!detail?.nGuia) return;
+    setRescheduleLoading(true);
+    setRescheduleError('');
+    try {
+      const res = await rescheduleUpsPickup(detail.nGuia, rescheduleDate, RESCHEDULE_ALLDAY.readyTime, RESCHEDULE_ALLDAY.closeTime);
+      if (res.success) {
+        setRescheduleOpen(false);
+        await load();
+      } else {
+        setRescheduleError(res.message ?? 'No se pudo agendar la recogida. Intenta más tarde.');
+      }
+    } finally {
+      setRescheduleLoading(false);
+    }
+  }, [detail, load]);
 
   // ── Descargar label PDF ──────────────────────────────────────────────────
   const handleDownloadLabel = useCallback(() => {
@@ -94,7 +143,8 @@ export default function UsaGuideDetail() {
   const formatUSD = (n = 0) =>
     `$${Number(n).toFixed(2)} USD`;
 
-  const pickupScheduled = envioExterno?.pickupCode
+  const pickupPendiente = envioExterno?.pickupPendiente === true;
+  const pickupScheduled = !pickupPendiente && envioExterno?.pickupCode
     && (envioExterno?.estatus === 'scheduled' || envioExterno?.estatus === 'created');
 
   const totalPaid = (detallesRecibo ?? []).reduce((s, d) => s + (d.monto ?? 0), 0);
@@ -104,21 +154,44 @@ export default function UsaGuideDetail() {
       <div className={styles.scrollView}>
 
         {/* ── Banner pickup status ──────────────────────────────────────────── */}
-        <div className={clsx(
-          styles.alertContainer,
-          pickupScheduled ? styles.alertSuccess : styles.alertInfo
-        )}>
-          {pickupScheduled
-            ? <IoCheckmarkCircleOutline size={24} style={{ color: '#4CAF50' }} />
-            : <IoCheckmarkCircleOutline size={24} style={{ color: '#3b82f6' }} />}
-          <p className={styles.alertText}>
+        {pickupPendiente ? (
+          <div className={clsx(styles.alertContainer, styles.alertWarning)}>
+            <IoWarningOutline size={24} style={{ color: '#B45309', flexShrink: 0 }} />
+            <p className={styles.alertText}>
+              Recogida pendiente — UPS no pudo agendar automáticamente. Puedes reagendarla cuando quieras sin cargo adicional.
+            </p>
+          </div>
+        ) : (
+          <div className={clsx(
+            styles.alertContainer,
+            pickupScheduled ? styles.alertSuccess : styles.alertInfo
+          )}>
             {pickupScheduled
-              ? t('us_guide.pickup_scheduled', { code: envioExterno.pickupCode })
-              : tienePago
-                ? t('us_guide.registered_paid')
-                : t('us_guide.registered')}
-          </p>
-        </div>
+              ? <IoCheckmarkCircleOutline size={24} style={{ color: '#4CAF50' }} />
+              : <IoCheckmarkCircleOutline size={24} style={{ color: '#3b82f6' }} />}
+            <p className={styles.alertText}>
+              {pickupScheduled
+                ? t('us_guide.pickup_scheduled', { code: envioExterno.pickupCode })
+                : tienePago
+                  ? t('us_guide.registered_paid')
+                  : t('us_guide.registered')}
+            </p>
+          </div>
+        )}
+
+        {/* ── Reagendar recogida button ─────────────────────────────────────── */}
+        {pickupPendiente && (
+          <button
+            className={styles.rescheduleButton}
+            onClick={() => {
+              setRescheduleError('');
+              setRescheduleOpen(true);
+            }}
+          >
+            <IoCalendarOutline size={20} />
+            Reagendar Recogida
+          </button>
+        )}
 
         {/* ── N° Guía ───────────────────────────────────────────────────────── */}
         <div className={styles.section}>
@@ -333,6 +406,79 @@ export default function UsaGuideDetail() {
         )}
 
       </div>
+
+      {/* ── Reschedule Modal ─────────────────────────────────────────────── */}
+      {rescheduleOpen && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => { if (!rescheduleLoading) setRescheduleOpen(false); }}
+        >
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Reagendar Recogida</h2>
+              <button
+                className={styles.modalClose}
+                onClick={() => { if (!rescheduleLoading) setRescheduleOpen(false); }}
+                disabled={rescheduleLoading}
+              >
+                <IoCloseOutline size={24} />
+              </button>
+            </div>
+
+            {rescheduleError && (
+              <div className={clsx(styles.alertContainer, styles.alertWarning)} style={{ marginBottom: '1rem' }}>
+                <IoWarningOutline size={20} style={{ color: '#B45309', flexShrink: 0 }} />
+                <p className={styles.alertText} style={{ color: '#92400E' }}>{rescheduleError}</p>
+              </div>
+            )}
+
+            <div style={{ background: '#EFF6FF', border: '1.5px solid #BFDBFE', borderRadius: '10px', padding: '14px 16px', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#022364' }}>
+                <IoCalendarOutline size={16} />
+                <strong>Fecha:</strong>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {RESCHEDULE_DAYS.map((day) => (
+                  <button
+                    key={day.isoDate}
+                    type="button"
+                    onClick={() => setRescheduleDate(day.isoDate)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      border: rescheduleDate === day.isoDate ? '2px solid #F05A22' : '1.5px solid #BFDBFE',
+                      background: rescheduleDate === day.isoDate ? '#FFF5F0' : '#fff',
+                      color: rescheduleDate === day.isoDate ? '#F05A22' : '#022364',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: rescheduleDate === day.isoDate ? '700' : '500',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {day.short}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#022364' }}>
+                <span style={{ width: 16, flexShrink: 0 }}>🕗</span>
+                <span><strong>Ventana:</strong> Todo el día (08:00 – 17:00)</span>
+              </div>
+            </div>
+
+            <button
+              className={styles.rescheduleSubmitBtn}
+              onClick={handleReschedule}
+              disabled={rescheduleLoading}
+            >
+              {rescheduleLoading
+                ? 'Procesando…'
+                : <><IoRefreshOutline size={18} /> Confirmar Reagendamiento</>}
+            </button>
+
+            <p className={styles.rescheduleHint}>No se realizará ningún cargo adicional.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

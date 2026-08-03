@@ -23,38 +23,33 @@ import './Step3CourierSelection.scss';
 
 const KRAKEN_US_WAREHOUSE_ZIP = '33122';
 
-// Próximos N días hábiles (lun–vie) a partir de mañana
-function getNextBusinessDays(n) {
-  const days = [];
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  while (days.length < n) {
-    const dow = d.getDay();
-    if (dow !== 0 && dow !== 6) {
-      days.push(new Date(d));
-    }
-    d.setDate(d.getDate() + 1);
-  }
-  return days;
-}
-
-const NEXT_DAYS = getNextBusinessDays(10);
-
-const TIME_SLOTS = [
-  { id: 'morning',   label: 'Mañana',     sub: '08:00 – 12:00', readyTime: '0800', closeTime: '1200' },
-  { id: 'afternoon', label: 'Tarde',       sub: '12:00 – 17:00', readyTime: '1200', closeTime: '1700' },
-  { id: 'allday',    label: 'Todo el día', sub: '08:00 – 17:00', readyTime: '0800', closeTime: '1700' },
-];
-
-function formatDateLabel(date) {
-  return date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
-}
 function toISO(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
+
+function getNextBusinessDays(n) {
+  const days = [];
+  const d = new Date();
+  while (days.length < n) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) {
+      const copy = new Date(d);
+      days.push({
+        iso:   toISO(copy),
+        short: copy.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }),
+        long:  copy.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }),
+      });
+    }
+  }
+  return days;
+}
+
+const BUSINESS_DAYS = getNextBusinessDays(5);
+
+const ALLDAY_SLOT = { id: 'allday', label: 'Todo el día', sub: '08:00 – 17:00', readyTime: '0800', closeTime: '1700' };
 
 // Badges automáticos
 function getBadge(quote, allQuotes, t) {
@@ -107,7 +102,7 @@ const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate }) => {
       </div>
       {publicSubtotal && savingsPct > 0 && (
         <div style={{ color: '#16a34a', fontSize: '12px', fontWeight: '600', marginTop: '-4px' }}>
-          <IoPricetagOutline size={12} style={{ verticalAlign: 'middle' }} /> -{savingsPct}% precio negociado UPS
+          <IoPricetagOutline size={12} style={{ verticalAlign: 'middle' }} /> -{savingsPct}% de descuento
         </div>
       )}
       <div className="courier-card__breakdown">
@@ -226,12 +221,30 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
       closeTime:            data.pickupCloseTime,
     }).then((res) => {
       if (cancelled) return;
-      const rate = res.success ? res.rate : 0;
-      setPickupRate(rate);
-      updateData({ pickupRate: rate });
+      if (res.success) {
+        setPickupRate(res.rate);
+        updateData({ pickupRate: res.rate });
+        setPickupError('');
+      } else {
+        setPickupRate(0);
+        updateData({ pickupRate: 0 });
+        setPickupError(res.message ?? 'UPS no puede programar la recogida para el horario seleccionado.');
+      }
     }).finally(() => { if (!cancelled) setLoadingRate(false); });
     return () => { cancelled = true; };
   }, [isPickup, data.selectedOriginAddress, data.pickupDate, data.pickupReadyTime]); // eslint-disable-line
+
+  // ── Auto-set pickup date/time on mount if pickup already selected ─────────
+  useEffect(() => {
+    if (isPickup && !data.pickupDate) {
+      updateData({
+        pickupDate:      BUSINESS_DAYS[0].iso,
+        pickupTimeSlot:  ALLDAY_SLOT.id,
+        pickupReadyTime: ALLDAY_SLOT.readyTime,
+        pickupCloseTime: ALLDAY_SLOT.closeTime,
+      });
+    }
+  }, []); // eslint-disable-line
 
   // ── Toggle método ─────────────────────────────────────────────────────────
   const handleToggleMethod = (method) => {
@@ -243,20 +256,14 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
         pickupDate: '', pickupTimeSlot: '', pickupReadyTime: '', pickupCloseTime: '', pickupRate: 0,
       });
     } else {
-      updateData({ deliveryMethod: 'pickup' });
+      updateData({
+        deliveryMethod: 'pickup',
+        pickupDate:      BUSINESS_DAYS[0].iso,
+        pickupTimeSlot:  ALLDAY_SLOT.id,
+        pickupReadyTime: ALLDAY_SLOT.readyTime,
+        pickupCloseTime: ALLDAY_SLOT.closeTime,
+      });
     }
-  };
-
-  // ── Fecha ─────────────────────────────────────────────────────────────────
-  const handleDateSelect = (isoDate) => {
-    setPickupError('');
-    updateData({ pickupDate: isoDate });
-  };
-
-  // ── Franja horaria ────────────────────────────────────────────────────────
-  const handleSlotSelect = (slot) => {
-    setPickupError('');
-    updateData({ pickupTimeSlot: slot.id, pickupReadyTime: slot.readyTime, pickupCloseTime: slot.closeTime });
   };
 
   // ── Selección de courier ──────────────────────────────────────────────────
@@ -268,10 +275,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   // ── Siguiente paso ────────────────────────────────────────────────────────
   const handleNext = () => {
     if (!selected) return;
-    if (isPickup) {
-      if (!data.pickupDate) { setPickupError('Selecciona una fecha de recogida.'); return; }
-      if (!data.pickupTimeSlot) { setPickupError('Selecciona una franja horaria.'); return; }
-    }
+    if (isPickup && (loadingRate || pickupError)) return;
     setPickupError('');
     onNext();
   };
@@ -338,51 +342,39 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
           )}
         </div>
 
-        {/* ── Panel fecha + franja horaria (solo pickup) ────────────────── */}
+        {/* ── Info recogida (solo pickup) ───────────────────────────────── */}
         {isPickup && (
-          <div className="pickup-panel">
-            <div className="pickup-panel__section">
-              <p className="pickup-panel__label">
-                <IoCalendarOutline size={15} style={{ verticalAlign: 'middle' }} /> Fecha de recogida
-              </p>
-              <div className="pickup-panel__dates">
-                {NEXT_DAYS.map((d) => {
-                  const iso = toISO(d);
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      className={`pickup-panel__date-btn ${data.pickupDate === iso ? 'pickup-panel__date-btn--active' : ''}`}
-                      onClick={() => handleDateSelect(iso)}
-                    >
-                      {formatDateLabel(d)}
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="pickup-panel pickup-panel--info">
+            <div className="pickup-panel__info-row" style={{ marginBottom: '8px' }}>
+              <IoCalendarOutline size={15} style={{ verticalAlign: 'middle' }} />
+              <strong>Fecha:</strong>
             </div>
-
-            <div className="pickup-panel__section">
-              <p className="pickup-panel__label">
-                <IoTimeOutline size={15} style={{ verticalAlign: 'middle' }} /> Franja horaria
-              </p>
-              <div className="pickup-panel__slots">
-                {TIME_SLOTS.map((slot) => (
-                  <button
-                    key={slot.id}
-                    type="button"
-                    className={`pickup-panel__slot-btn ${data.pickupTimeSlot === slot.id ? 'pickup-panel__slot-btn--active' : ''}`}
-                    onClick={() => handleSlotSelect(slot)}
-                  >
-                    <div className="slot-texts">
-                      <strong>{slot.label}</strong>
-                      <small>{slot.sub}</small>
-                    </div>
-                  </button>
-                ))}
-              </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+              {BUSINESS_DAYS.map((day) => (
+                <button
+                  key={day.iso}
+                  type="button"
+                  onClick={() => updateData({ pickupDate: day.iso, pickupTimeSlot: ALLDAY_SLOT.id, pickupReadyTime: ALLDAY_SLOT.readyTime, pickupCloseTime: ALLDAY_SLOT.closeTime })}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: data.pickupDate === day.iso ? '2px solid #F05A22' : '1.5px solid #CBD5E1',
+                    background: data.pickupDate === day.iso ? '#FFF5F0' : '#fff',
+                    color: data.pickupDate === day.iso ? '#F05A22' : '#374151',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: data.pickupDate === day.iso ? '700' : '500',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {day.short}
+                </button>
+              ))}
             </div>
-
+            <div className="pickup-panel__info-row">
+              <IoTimeOutline size={15} style={{ verticalAlign: 'middle' }} />
+              <span><strong>Ventana:</strong> Todo el día (08:00 – 17:00)</span>
+            </div>
             {pickupError && (
               <p className="pickup-panel__error">
                 <IoWarningOutline size={14} style={{ verticalAlign: 'middle' }} /> {pickupError}
@@ -435,9 +427,9 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
         <button
           className="btn-wizard-next"
           onClick={handleNext}
-          disabled={!selected || loading}
+          disabled={!selected || loading || (isPickup && (loadingRate || !!pickupError))}
         >
-          {t('us_wizard.continue')}
+          {isPickup && loadingRate ? 'Verificando…' : t('us_wizard.continue')}
         </button>
       </div>
     </div>

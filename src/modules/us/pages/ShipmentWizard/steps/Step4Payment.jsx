@@ -43,6 +43,12 @@ const getNextBusinessDay = () => {
 const HALARAPAY_TOKENIZATION_KEY = 'XEaBVN-yX978V-PJJ64R-Z6KdqZ';
 const HALARAPAY_SCRIPT_SRC = 'https://halarapay.transactiongateway.com/token/Collect.js';
 
+const PICKUP_TIME_SLOTS = [
+  { value: 'morning',   label: 'Mañana',     sub: '08:00 – 12:00', readyTime: '0800', closeTime: '1200' },
+  { value: 'afternoon', label: 'Tarde',       sub: '12:00 – 17:00', readyTime: '1200', closeTime: '1700' },
+  { value: 'allday',    label: 'Todo el día', sub: '08:00 – 17:00', readyTime: '0800', closeTime: '1700' },
+];
+
 // ── Métodos de pago USA — labels resolved at render time via t() ──────────────
 const PAYMENT_METHOD_IDS = [
   { id: 'card', render: () => <IoCardOutline size={22} /> },
@@ -317,12 +323,19 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [submitting,     setSubmitting]     = useState(false);
-  const [submitPhase,    setSubmitPhase]     = useState('');
-  const [pendingRetry,   setPendingRetry]   = useState(null); // { transactionId, orderPayload }
-  const [submitError,    setSubmitError]     = useState(null);
-  const [guiaResult,     setGuiaResult]      = useState(null);
-  const [collectJsReady, setCollectJsReady]  = useState(false);
+  const [submitting,        setSubmitting]        = useState(false);
+  const [submitPhase,       setSubmitPhase]        = useState('');
+  const [pendingRetry,      setPendingRetry]       = useState(null);
+  const [submitError,       setSubmitError]        = useState(null);
+  const [guiaResult,        setGuiaResult]         = useState(null);
+  const [collectJsReady,    setCollectJsReady]     = useState(false);
+
+  // Reagendamiento de recogida post-pago
+  const [pickupRetryVisible, setPickupRetryVisible] = useState(false);
+  const [pickupRetryErrMsg,  setPickupRetryErrMsg]  = useState('');
+  const [pickupRetryTxId,    setPickupRetryTxId]    = useState('');
+  const [pickupRetryDate,    setPickupRetryDate]    = useState('');
+  const [pickupRetrySlot,    setPickupRetrySlot]    = useState('allday');
 
   const { metodoPago, calculationResult, courierQuote } = data;
   const [acceptContent, setAcceptContent] = useState(false);
@@ -361,7 +374,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
   // ── Pasos post-pago: pickup + label + guía ────────────────────────────────
   // Separado del cobro para poder reintentar sin volver a cobrar.
-  const runPostPaymentFlow = async (transactionId) => {
+  const runPostPaymentFlow = async (transactionId, pickupOverride = null) => {
     const pkg  = data.packages?.[0] ?? {};
     const addr = data.selectedOriginAddress ?? {};
 
@@ -369,21 +382,26 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       ? parseFloat(pkg.peso || 0) / 2.20462
       : parseFloat(pkg.peso || 0);
 
+    // Usar override si existe (para reagendamiento post-pago)
+    const effectivePickupDate  = pickupOverride?.date      || data.pickupDate      || getNextBusinessDay();
+    const effectiveReadyTime   = pickupOverride?.readyTime || data.pickupReadyTime || '0900';
+    const effectiveCloseTime   = pickupOverride?.closeTime || data.pickupCloseTime || '1700';
+
     // ── 1. UPS Pickup (igual para caja y documento) ───────────────────────
     let prn = '', pickupTransId = '', pickupResultDate = null;
-    let pickupReady = data.pickupReadyTime || '0900';
-    let pickupClose = data.pickupCloseTime || '1700';
+    let pickupReady = effectiveReadyTime;
+    let pickupClose = effectiveCloseTime;
     let pickupFailed = false;
+    let pickupErrMsg = '';
 
     if (isPickup) {
       setSubmitPhase('Scheduling UPS pickup…');
       try {
         const pickupResult = await createUpsPickup({
-          pickupDate:           data.pickupDate || getNextBusinessDay(),
-          readyTime:            data.pickupReadyTime || '0900',
-          closeTime:            data.pickupCloseTime || '1700',
+          pickupDate:           effectivePickupDate,
+          readyTime:            effectiveReadyTime,
+          closeTime:            effectiveCloseTime,
           contactName:          addr.alias || 'Client',
-          companyName:          'Kraken Courier & Cargo INC',
           addressLine:          addr.line1 || '',
           city:                 addr.city  || '',
           stateProvince:        addr.province || addr.state || addr.stateProvince || 'FL',
@@ -405,6 +423,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
         if (!pickupResult.success || !prn) {
           pickupFailed = true;
+          pickupErrMsg = pickupResult.message ?? '';
           console.warn('[UPS Pickup] No se pudo crear el pickup:', pickupResult.message);
         }
       } catch (pickupErr) {
@@ -413,7 +432,14 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       }
 
       if (pickupFailed) {
-        setSubmitError('UPS no pudo programar la recogida para el horario seleccionado. Por favor selecciona una hora más temprana (antes de las 8:00 AM) e intenta nuevamente.');
+        // Calcular días disponibles para el reagendamiento
+        const today = new Date();
+        const isoToday = today.toISOString().split('T')[0];
+        setPickupRetryErrMsg(pickupErrMsg || 'UPS no pudo agendar la recogida.');
+        setPickupRetryTxId(transactionId);
+        setPickupRetryDate(isoToday);
+        setPickupRetrySlot('allday');
+        setPickupRetryVisible(true);
         setSubmitting(false);
         setSubmitPhase('');
         return;
@@ -603,6 +629,26 @@ const Step4Payment = ({ data, updateData, onBack }) => {
     }
   };
 
+  // ── Reagendar recogida post-pago (sin volver a cobrar) ───────────────────────
+  const handlePickupReschedule = async () => {
+    const slot = PICKUP_TIME_SLOTS.find(s => s.value === pickupRetrySlot) ?? PICKUP_TIME_SLOTS[2];
+    setPickupRetryVisible(false);
+    setSubmitting(true);
+    setSubmitPhase('Programando recogida…');
+    try {
+      await runPostPaymentFlow(pickupRetryTxId, {
+        date:      pickupRetryDate,
+        readyTime: slot.readyTime,
+        closeTime: slot.closeTime,
+      });
+    } catch (err) {
+      setSubmitError('No se pudo completar el envío. Contacta soporte con ID: ' + pickupRetryTxId);
+    } finally {
+      setSubmitting(false);
+      setSubmitPhase('');
+    }
+  };
+
   // Ref estable para el callback — evita stale closures
   const handleTokenReceivedRef = useRef(null);
   handleTokenReceivedRef.current = handleTokenReceived;
@@ -692,6 +738,116 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   };
 
   if (guiaResult) return <SuccessScreen {...guiaResult} />;
+
+  // ── Pantalla de reagendamiento UPS post-pago ──────────────────────────────────
+  if (pickupRetryVisible) {
+    const DAY_NAMES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const MONTH_SHORT_ES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const nextDays = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() + i);
+      return {
+        iso:   d.toISOString().split('T')[0],
+        label: i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : DAY_NAMES[d.getDay()],
+        sub:   `${d.getDate()} ${MONTH_SHORT_ES[d.getMonth()]}`,
+      };
+    });
+    return (
+      <div style={{ background: '#F9FAFB', minHeight: '60vh', display: 'flex', justifyContent: 'center', padding: '40px 20px' }}>
+        <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Pago exitoso */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 12, padding: '14px 16px' }}>
+            <IoCheckmarkCircle size={22} color="#16A34A" />
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#15803D' }}>Tu pago fue procesado correctamente</span>
+          </div>
+
+          {/* Error UPS */}
+          <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <IoWarningOutline size={20} color="#B45309" />
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#92400E' }}>UPS no pudo agendar la recogida</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: '#78350F', lineHeight: '1.6' }}>
+              {pickupRetryErrMsg || 'Por favor selecciona otra fecha u horario e intenta de nuevo.'}
+            </p>
+          </div>
+
+          {/* Selector de fecha */}
+          <div>
+            <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: NAVY, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Selecciona una nueva fecha
+            </p>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+              {nextDays.map(d => (
+                <button key={d.iso} onClick={() => setPickupRetryDate(d.iso)}
+                  style={{
+                    flexShrink: 0, minWidth: 64, padding: '10px 14px', borderRadius: 12,
+                    border: `2px solid ${d.iso === pickupRetryDate ? NAVY : '#D1D5DB'}`,
+                    background: d.iso === pickupRetryDate ? NAVY : '#fff',
+                    color: d.iso === pickupRetryDate ? '#fff' : '#374151',
+                    cursor: 'pointer', textAlign: 'center',
+                  }}>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>{d.label}</div>
+                  <div style={{ fontSize: 11, opacity: 0.75, marginTop: 2 }}>{d.sub}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Selector de franja horaria */}
+          <div>
+            <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: NAVY, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Ventana horaria
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {PICKUP_TIME_SLOTS.map(slot => (
+                <button key={slot.value} onClick={() => setPickupRetrySlot(slot.value)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                    border: `2px solid ${slot.value === pickupRetrySlot ? NAVY : '#D1D5DB'}`,
+                    background: slot.value === pickupRetrySlot ? '#EFF6FF' : '#fff',
+                    textAlign: 'left',
+                  }}>
+                  <div style={{
+                    width: 18, height: 18, borderRadius: '50%',
+                    border: `2px solid ${slot.value === pickupRetrySlot ? NAVY : '#9CA3AF'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    {slot.value === pickupRetrySlot && (
+                      <div style={{ width: 9, height: 9, borderRadius: '50%', background: NAVY }} />
+                    )}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: slot.value === pickupRetrySlot ? NAVY : '#374151' }}>{slot.label}</div>
+                    <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{slot.sub}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {submitError && (
+            <div className="payment-submit-error">⚠️ {submitError}</div>
+          )}
+
+          {/* Botón reagendar */}
+          <button onClick={handlePickupReschedule} disabled={submitting || !pickupRetryDate}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              background: ORANGE, color: '#fff', border: 'none', borderRadius: 14,
+              padding: '15px 20px', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+              opacity: submitting ? 0.65 : 1,
+            }}>
+            <IoRefreshOutline size={18} />
+            {submitting ? (submitPhase || 'Procesando…') : 'Intentar de nuevo'}
+          </button>
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#6B7280', margin: 0 }}>
+            No se realizará ningún cargo adicional.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="step4-layout">

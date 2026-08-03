@@ -381,3 +381,219 @@ $separator-color: #EEEEEE;
     width: 100%;
   }
 }
+
+// ── Reschedule ────────────────────────────────────────────────────────────
+.alertWarning {
+  background-color: #FFFBEB;
+  border-color: #F59E0B;
+  .alertText { color: #92400E; }
+}
+
+.rescheduleButton {
+  width: 100%;
+  background-color: #F05A22;
+  color: white;
+  border: none;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.9; }
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modalCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.modalTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #022364;
+  margin: 0;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  &:hover { background: #F3F4F6; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.rescheduleLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #022364;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.625rem;
+}
+
+.daysRow {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.dayChip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0.875rem;
+  border-radius: 10px;
+  border: 1.5px solid #D1D5DB;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  min-width: 58px;
+  transition: all 0.15s;
+  &:hover { border-color: #022364; }
+}
+
+.dayChipActive {
+  border-color: #022364;
+  background: #022364;
+  .dayChipLabel { color: #fff; }
+  .dayChipSub   { color: #BFDBFE; }
+}
+
+.dayChipLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.dayChipSub {
+  font-size: 0.68rem;
+  color: #6B7280;
+  margin-top: 2px;
+}
+
+.slotsCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1.25rem;
+}
+
+.slotRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border-radius: 10px;
+  border: 1.5px solid #D1D5DB;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s;
+  &:hover { border-color: #022364; }
+}
+
+.slotRowActive {
+  border-color: #022364;
+  background: #EFF6FF;
+}
+
+.radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #9CA3AF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.radioActive { border-color: #022364; }
+
+.radioDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #022364;
+}
+
+.slotLabel {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.slotSub {
+  display: block;
+  font-size: 0.78rem;
+  color: #6B7280;
+  margin-top: 2px;
+}
+
+.rescheduleSubmitBtn {
+  width: 100%;
+  background-color: #F05A22;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s;
+  margin-bottom: 0.75rem;
+  &:hover { opacity: 0.9; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.rescheduleHint {
+  font-size: 0.8rem;
+  color: #6B7280;
+  text-align: center;
+  margin: 0;
+}

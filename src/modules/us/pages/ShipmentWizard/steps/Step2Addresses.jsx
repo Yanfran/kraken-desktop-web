@@ -7,11 +7,7 @@ import { useAuth } from '../../../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
-  IoCarOutline,
   IoStorefrontOutline,
-  IoCalendarOutline,
-  IoTimeOutline,
-  IoCheckmarkCircleOutline,
   IoStarOutline,
   IoStar,
   IoTrashOutline,
@@ -45,19 +41,6 @@ import {
 } from '../../../../../services/us/usAddressService';
 import { authService } from '../../../../../services/auth/authService';
 import './Step2Addresses.scss';
-
-// ── Franjas horarias de pickup ──────────────────────────────────────────────
-const TIME_SLOTS = [
-  { value: 'morning',   label: 'Mañana (08:00 – 12:00)',      readyTime: '0800', closeTime: '1200' },
-  { value: 'afternoon', label: 'Tarde (12:00 – 17:00)',        readyTime: '1200', closeTime: '1700' },
-  { value: 'allday',    label: 'Todo el día (08:00 – 17:00)',  readyTime: '0800', closeTime: '1700' },
-];
-
-const getTomorrow = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().split('T')[0];
-};
 
 // ── Helper: clientId del usuario logueado ──────────────────────────────────
 const getClientId = () => {
@@ -1021,10 +1004,6 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const [modal,           setModal]           = useState(null);
   const [viewDetail,      setViewDetail]      = useState(null);
   const [errors,          setErrors]          = useState({});
-  const [deliveryMethod,  setDeliveryMethod]  = useState(data.deliveryMethod  ?? 'dropoff');
-  const [pickupDate,      setPickupDate]      = useState(data.pickupDate      ?? '');
-  const [pickupTimeSlot,  setPickupTimeSlot]  = useState(data.pickupTimeSlot  ?? '');
-  const minPickupDate = getTomorrow();
 
   // ✅ FIX: Subir allTiendas al nivel del componente padre (antes solo estaba en DestinationModal)
   // Esto permite enriquecer el destList con idEstado antes de llamar onNext
@@ -1253,10 +1232,6 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
 
     if (!data.originAddressId)      e.origin = t('us_wizard.error_origin_required');
     if (!data.destinationAddressId) e.dest   = t('us_wizard.error_dest_required');
-    if (deliveryMethod === 'pickup') {
-      if (!pickupDate)     e.pickupDate = t('us_wizard.error_pickup_date');
-      if (!pickupTimeSlot) e.pickupTime = t('us_wizard.error_pickup_time');
-    }
     if (Object.keys(e).length) { setErrors(e); return; }
 
     const enrichedDestList = destList.map((addr) => {
@@ -1269,13 +1244,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       return addr;
     });
 
-    const slot = TIME_SLOTS.find((s) => s.value === pickupTimeSlot);
     updateData({
-      deliveryMethod,
-      pickupDate,
-      pickupTimeSlot,
-      pickupReadyTime: slot?.readyTime ?? '',
-      pickupCloseTime: slot?.closeTime ?? '',
       ...(!user && { senderName: senderName.trim(), senderLastName: senderLastName.trim(), senderEmail: senderEmail.trim() }),
     });
 
@@ -1362,78 +1331,6 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
             />
           </div>
         </div>
-      </div>
-
-      {/* ── Método de entrega a UPS ────────────────────────────────────── */}
-      <div className="wizard-card" style={{ marginTop: '16px' }}>
-        <h3 className="wizard-card__title">
-          <IoCarOutline size={20} style={{ verticalAlign: 'middle' }} /> ¿Cómo llevarás tu paquete a UPS?
-        </h3>
-
-        <div className="addr-modal__type-selector" style={{ marginTop: '12px' }}>
-          <button
-            type="button"
-            className={`addr-modal__type-btn ${deliveryMethod === 'dropoff' ? 'addr-modal__type-btn--active' : ''}`}
-            onClick={() => { setDeliveryMethod('dropoff'); updateData({ deliveryMethod: 'dropoff' }); }}
-          >
-            <IoStorefrontOutline size={16} style={{ verticalAlign: 'middle' }} /> Drop-off — Llevo mi paquete a una tienda UPS
-          </button>
-          <button
-            type="button"
-            className={`addr-modal__type-btn ${deliveryMethod === 'pickup' ? 'addr-modal__type-btn--active' : ''}`}
-            onClick={() => { setDeliveryMethod('pickup'); updateData({ deliveryMethod: 'pickup' }); }}
-          >
-            <IoCarOutline size={16} style={{ verticalAlign: 'middle' }} /> Pickup — UPS recoge en mi dirección
-          </button>
-        </div>
-
-        {deliveryMethod === 'dropoff' && (
-          <p style={{ marginTop: '10px', color: '#666', fontSize: '13px' }}>
-            <IoCheckmarkCircleOutline size={14} style={{ verticalAlign: 'middle', color: '#22c55e' }} /> Sin costo adicional. Lleva tu paquete a cualquier UPS Store o punto de entrega autorizado.
-          </p>
-        )}
-
-        {deliveryMethod === 'pickup' && (
-          <div style={{ marginTop: '12px' }}>
-            <p style={{ color: '#666', fontSize: '13px', marginBottom: '12px' }}>
-              UPS recogerá el paquete en tu dirección de origen. Se aplicará una tarifa de pickup.
-            </p>
-            <div className="wizard-grid-2">
-              <div className="wizard-field">
-                <label><IoCalendarOutline size={14} style={{ verticalAlign: 'middle' }} /> Fecha de pickup *</label>
-                <input
-                  type="date"
-                  min={minPickupDate}
-                  value={pickupDate}
-                  onChange={(e) => {
-                    setPickupDate(e.target.value);
-                    updateData({ pickupDate: e.target.value });
-                    setErrors((p) => ({ ...p, pickupDate: '' }));
-                  }}
-                  className={errors.pickupDate ? 'input--error' : ''}
-                />
-                {errors.pickupDate && <span className="field-error">{errors.pickupDate}</span>}
-              </div>
-              <div className="wizard-field">
-                <label><IoTimeOutline size={14} style={{ verticalAlign: 'middle' }} /> Ventana horaria *</label>
-                <select
-                  value={pickupTimeSlot}
-                  onChange={(e) => {
-                    setPickupTimeSlot(e.target.value);
-                    setErrors((p) => ({ ...p, pickupTime: '' }));
-                  }}
-                  className={errors.pickupTime ? 'input--error' : ''}
-                >
-                  <option value="">Seleccionar horario...</option>
-                  {TIME_SLOTS.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
-                {errors.pickupTime && <span className="field-error">{errors.pickupTime}</span>}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="wizard-actions">

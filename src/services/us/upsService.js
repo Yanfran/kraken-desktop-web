@@ -74,13 +74,35 @@ export const createUpsShipment = async (shipmentData) => {
   }
 };
 
-export const getUpsTracking = async (trackingNumber) => {
+export const rescheduleUpsPickup = async (nGuia, pickupDate, readyTime, closeTime) => {
   try {
-    const res = await axiosInstance.get(`${BASE}/tracking/${trackingNumber}`);
-    return { success: true, data: res.data };
+    const res = await axiosUPS.post(`${BASE}/pickup/reschedule/${nGuia}`, {
+      pickupDate, readyTime, closeTime,
+    });
+    const json = res.data;
+    return { success: json.success ?? false, prn: json.prn, message: json.message };
   } catch (err) {
     return {
       success: false,
+      message: err.response?.data?.message ?? err?.message ?? 'Error reagendando recogida UPS.',
+    };
+  }
+};
+
+export const getUpsTracking = async (trackingNumber) => {
+  try {
+    const res = await axiosInstance.get(`${BASE}/tracking/${encodeURIComponent(trackingNumber)}`);
+    const d = res.data;
+    return {
+      success:       d.success ?? false,
+      currentStatus: d.currentStatus ?? '',
+      events:        d.events ?? [],
+    };
+  } catch (err) {
+    return {
+      success: false,
+      currentStatus: '',
+      events: [],
       message: err.response?.data?.message ?? 'Error consultando tracking UPS.',
     };
   }
