@@ -347,6 +347,7 @@ export default function GuideDetail() {
     prealertado, nGuia, estatus, fecha, origen, contenido, valorFOB,
     direccionEntrega, contieneLiquidos, esFragil, facturaUrl, peso,
     unidadPeso, medidas, historialEstatus, detalleFactura, detallePago,
+    trackingEscaneado,
   } = guiaDetail;
 
   const consolidatedHistorial = consolidateHistorial(historialEstatus);
@@ -369,23 +370,31 @@ export default function GuideDetail() {
           </p>
         </div>
 
-        {/* N° Guía */}
-        <div className={styles.section}>
-          <label className={styles.sectionLabel}>{t('guide_detail.guide_number')}</label>
-          <p className={styles.sectionValue}>{nGuia}</p>
+        {/* N° Guía y Origen */}
+        <div className={styles.row}>
+          <div className={styles.rowItem}>
+            <label className={styles.sectionLabel}>{t('guide_detail.guide_number')}</label>
+            <p className={styles.sectionValue}>{nGuia}</p>
+          </div>
+          <div className={styles.rowItem}>
+            <label className={styles.sectionLabel}>{t('guide_detail.origin')}</label>
+            <p className={styles.sectionValue}>{origen}</p>
+          </div>
         </div>
 
-        {/* Estatus y Origen */}
+        {/* Estatus y Nº Tracking */}
         <div className={styles.row}>
           <div className={styles.rowItem}>
             <label className={styles.sectionLabel}>{t('guide_detail.status')}</label>
             <p className={styles.sectionValue}>{estatus}</p>
             <span className={styles.sectionSubtext}>{fecha}</span>
           </div>
-          <div className={styles.rowItem}>
-            <label className={styles.sectionLabel}>{t('guide_detail.origin')}</label>
-            <p className={styles.sectionValue}>{origen}</p>
-          </div>
+          {trackingEscaneado && (
+            <div className={styles.rowItem}>
+              <label className={styles.sectionLabel}>Nº Tracking</label>
+              <p className={styles.sectionValue}>{trackingEscaneado}</p>
+            </div>
+          )}
         </div>
 
         {/* Contenido y Valor */}

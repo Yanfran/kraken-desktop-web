@@ -250,16 +250,21 @@ const PersonalData = () => {
   const validateForm = () => {
     const newErrors = {};
 
+    const nameRegex = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/;
     if (!formData.name.trim()) {
       newErrors.name = t('profile.name_required');
     } else if (formData.name.trim().length < 2) {
       newErrors.name = t('profile.name_min');
+    } else if (!nameRegex.test(formData.name.trim())) {
+      newErrors.name = 'El nombre solo puede contener letras y espacios.';
     }
 
     if (!formData.lastName.trim()) {
       newErrors.lastName = t('profile.last_name_required');
     } else if (formData.lastName.trim().length < 2) {
       newErrors.lastName = t('profile.last_name_min');
+    } else if (!nameRegex.test(formData.lastName.trim())) {
+      newErrors.lastName = 'El apellido solo puede contener letras y espacios.';
     }
 
     if (!formData.residenceCountry) {

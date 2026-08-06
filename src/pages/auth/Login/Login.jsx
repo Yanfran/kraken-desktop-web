@@ -342,12 +342,13 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Badge de versión */}
-        {appVersion && (
-          <div className="kraken-login__version">
+        {/* Copyright + Badge de versión */}
+        <div className="kraken-login__version">
+          <p className="kraken-login__copyright">© 2025-2026 Kraken Courier App. Todos los derechos reservados.</p>
+          {appVersion && (
             <span className="kraken-login__version-badge">{appVersion}</span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
 

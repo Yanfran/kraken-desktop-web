@@ -330,7 +330,7 @@ const AddressColumn = ({
 // ════════════════════════════════════════════════════════════════════════════
 // ██  MODAL — ORIGEN (USA) 🇪🇸
 // ════════════════════════════════════════════════════════════════════════════
-const OriginModal = ({ onSave, onClose, saving }) => {
+export const OriginModal = ({ onSave, onClose, saving }) => {
   const { t } = useTranslation();
   const [form, setForm] = useState({
     alias: '', line1: '', city: '', province: '',
@@ -510,7 +510,7 @@ const OriginModal = ({ onSave, onClose, saving }) => {
 // ██  MODAL — DESTINO (Venezuela) 🇻🇪
 //     Lógica idéntica a /profile/addresses de la app
 // ════════════════════════════════════════════════════════════════════════════
-const DestinationModal = ({ onSave, onClose, saving }) => {
+export const DestinationModal = ({ onSave, onClose, saving }) => {
   const { t } = useTranslation();
   // ── Tipo de entrega ────────────────────────────────────────────────────────
   const [tipo, setTipo] = useState('home'); // 'store' | 'home'

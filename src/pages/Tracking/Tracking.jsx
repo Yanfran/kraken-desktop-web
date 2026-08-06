@@ -41,7 +41,7 @@ export default function Tracking() {
           const historial = d.statusHistory ?? [];
           const result = {
             trackingNumber:    d.trackingNumber ?? clean,
-            origin:            d.plataforma ?? 'USA',
+            origin:            d.plataforma ?? null,
             status:            d.currentStatus ?? 'En proceso',
             steps:             historial.length > 0
               ? historial.map((h, i) => ({
@@ -84,7 +84,7 @@ export default function Tracking() {
             : (response.data.estatus || 'En proceso');
           setTrackingResult({
             trackingNumber: response.data.nGuia || clean,
-            origin: response.data.origen || 'USA',
+            origin: response.data.origen || null,
             status: estatusDisplay,
             currentLocation: response.data.ubicacionActual,
             estimatedDelivery: response.data.fechaEstimadaEntrega,
@@ -301,10 +301,12 @@ export default function Tracking() {
                     </div>
 
                     {/* Origen del paquete */}
-                    <div className={styles.originContainer}>
-                      <p className={styles.originLabel}>{t('tracking.origin')}</p>
-                      <p className={styles.originText}>{trackingResult.origin}</p>
-                    </div>
+                    {trackingResult.origin && (
+                      <div className={styles.originContainer}>
+                        <p className={styles.originLabel}>{t('tracking.origin')}</p>
+                        <p className={styles.originText}>{trackingResult.origin}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Estatus UPS */}

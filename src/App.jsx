@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute, PublicRoute, SemiProtectedRoute } from './components/auth/ProtectedRoute';
 import Loading from './components/common/Loading/Loading';
 import { Toaster } from 'react-hot-toast';
+import { isBackupApi } from './utils/config';
 import './App.styles.scss';
 
 // ✅ NUEVO: Smart Platform Detector (reemplaza MobileBlock)
@@ -70,6 +71,17 @@ function App() {
       <SmartPlatformDetector>
         <ThemeProvider>
           <div className="app">
+            {/* Franja de ambiente de pruebas */}
+            {isBackupApi() && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999,
+                background: '#F59E0B', color: '#1C1C1C',
+                textAlign: 'center', padding: '6px 0',
+                fontSize: '13px', fontWeight: '700', letterSpacing: '1px',
+              }}>
+                ⚠️ AMBIENTE DE PRUEBAS — Los datos no son reales
+              </div>
+            )}
             {/* Toast notifications */}
             <Toaster
               position="top-right"

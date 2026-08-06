@@ -491,8 +491,17 @@ body {
 
 .kraken-login__version {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   padding-bottom: 20px;
+}
+
+.kraken-login__copyright {
+  font-size: 11px;
+  color: var(--color-text-secondary, #6B7280);
+  text-align: center;
+  margin: 0;
 }
 
 .kraken-login__version-badge {

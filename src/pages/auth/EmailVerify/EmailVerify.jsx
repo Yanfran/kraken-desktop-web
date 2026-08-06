@@ -8,6 +8,10 @@ import './EmailVerify.styles.scss';
 import logoImage from '../../../assets/images/logo.jpg';
 import axiosInstance from '../../../services/axiosInstance';
 
+// Persiste entre re-mounts para evitar llamadas duplicadas si el componente
+// se desmonta/remonta por cambios en el contexto de auth durante la verificación.
+const handledTokens = new Set();
+
 const EmailVerify = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -26,6 +30,9 @@ const EmailVerify = () => {
       setErrorMessage(t('auth.email_verify_no_token'));
       return;
     }
+
+    if (handledTokens.has(token)) return;
+    handledTokens.add(token);
 
     verifyEmail();
   }, [token]);

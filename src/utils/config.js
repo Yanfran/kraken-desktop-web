@@ -187,6 +187,7 @@ export const validateConfig = () => {
 
 export const isDevelopment = () => !USE_PRODUCTION;
 export const isProduction = () => USE_PRODUCTION;
+export const isBackupApi = () => API_URL.includes('api-backup');
 
 export const log = (...args) => {
   if (isDevelopment()) {

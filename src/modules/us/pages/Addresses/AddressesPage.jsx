@@ -17,12 +17,15 @@ import {
 } from 'react-icons/io5';
 import {
   fetchUsaOriginAddresses,
+  addUsaOriginAddress,
   deleteUsaOriginAddress,
   setUsaOriginDefault,
   fetchUsaDestinationAddresses,
   deleteUsaDestinationAddress,
   setUsaDestinationDefault,
 } from '../../../../services/us/usAddressService';
+import { addDestinationAddress } from '../../../../services/es/spainAddressService';
+import { OriginModal, DestinationModal } from '../ShipmentWizard/steps/Step2Addresses';
 import './AddressesPage.scss';
 
 const MAX_ADDRESSES = 4;
@@ -38,6 +41,8 @@ const AddressesPage = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
   const [viewDetail, setViewDetail] = useState(null);
+  const [addModal, setAddModal] = useState(null); // 'origin' | 'dest' | null
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     if (!clientId) return;
@@ -70,6 +75,26 @@ const AddressesPage = () => {
       : await setUsaDestinationDefault(clientId, id);
     if (res.success) { toast.success('Dirección predeterminada actualizada'); load(); }
     else toast.error(res.message || 'Error');
+  };
+
+  const handleAddOrigin = async (formData) => {
+    setSaving(true);
+    const res = await addUsaOriginAddress({ clientId, ...formData, idPais: 2 });
+    setSaving(false);
+    if (!res.success) { toast.error(res.message); return; }
+    toast.success('Dirección de origen guardada');
+    setAddModal(null);
+    load();
+  };
+
+  const handleAddDest = async (formData) => {
+    setSaving(true);
+    const res = await addDestinationAddress({ clientId, ...formData });
+    setSaving(false);
+    if (!res.success) { toast.error(res.message); return; }
+    toast.success('Dirección de destino guardada');
+    setAddModal(null);
+    load();
   };
 
   if (loading) {
@@ -112,6 +137,7 @@ const AddressesPage = () => {
           onDelete={(id, name) => handleDelete('origin', id, name)}
           onSetDefault={(id) => handleSetDefault('origin', id)}
           canAdd={originList.length < MAX_ADDRESSES}
+          onAdd={() => setAddModal('origin')}
         />
 
         <div className="ku-addr__divider" />
@@ -132,11 +158,19 @@ const AddressesPage = () => {
           onDelete={(id, name) => handleDelete('dest', id, name)}
           onSetDefault={(id) => handleSetDefault('dest', id)}
           canAdd={destList.length < MAX_ADDRESSES}
+          onAdd={() => setAddModal('dest')}
         />
       </div>
 
       {viewDetail && (
         <DetailModal type={viewDetail.type} data={viewDetail.data} onClose={() => setViewDetail(null)} />
+      )}
+
+      {addModal === 'origin' && (
+        <OriginModal onSave={handleAddOrigin} onClose={() => setAddModal(null)} saving={saving} />
+      )}
+      {addModal === 'dest' && (
+        <DestinationModal onSave={handleAddDest} onClose={() => setAddModal(null)} saving={saving} />
       )}
     </div>
   );
@@ -144,7 +178,7 @@ const AddressesPage = () => {
 
 /* ── Sección de direcciones ─────────────────────────────────────────────── */
 
-const AddressSection = ({ title, flag, addresses, deleting, onView, onDelete, onSetDefault, canAdd }) => (
+const AddressSection = ({ title, flag, addresses, deleting, onView, onDelete, onSetDefault, canAdd, onAdd }) => (
   <div className="ku-addr__section">
     <h2 className="ku-addr__section-title">
       <img src={`https://flagcdn.com/24x18/${flag}.png`} alt={flag} width="24" height="18" style={{ borderRadius: 2 }} />
@@ -189,7 +223,7 @@ const AddressSection = ({ title, flag, addresses, deleting, onView, onDelete, on
     )}
 
     {canAdd ? (
-      <button className="ku-addr__add-btn" onClick={() => toast('Usa el wizard de recogida para agregar direcciones', { icon: 'ℹ️' })}>
+      <button className="ku-addr__add-btn" onClick={onAdd}>
         <IoAdd size={18} /> Añadir dirección
       </button>
     ) : (

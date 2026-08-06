@@ -125,12 +125,17 @@ const Register = () => {
     // Validar campos básicos
     const newErrors = {};
     
+    const nameRegex = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/;
     if (!formData.name.trim()) {
       newErrors.name = t('auth.name_required');
+    } else if (!nameRegex.test(formData.name.trim())) {
+      newErrors.name = 'El nombre solo puede contener letras y espacios.';
     }
 
     if (!formData.lastName.trim()) {
       newErrors.lastName = t('auth.last_name_required');
+    } else if (!nameRegex.test(formData.lastName.trim())) {
+      newErrors.lastName = 'El apellido solo puede contener letras y espacios.';
     }
 
     if (!formData.email.trim()) {
