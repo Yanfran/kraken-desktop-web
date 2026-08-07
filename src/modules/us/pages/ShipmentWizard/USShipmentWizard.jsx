@@ -1,5 +1,6 @@
 // src/modules/es/pages/ShipmentWizard/ESShipmentWizard.jsx
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../contexts/AuthContext';
 import WizardAuthModal from './WizardAuthModal';
 import { calculateUSShipping, calculateUSDocumentShipping } from '../../../../services/us/usCalculatorService';
@@ -21,6 +22,7 @@ import {
   IoCardOutline,
   IoCheckmarkOutline,
 } from 'react-icons/io5';
+import logoImg from '../../../../assets/images/logotipo-KrakenCourier.png';
 import './USShipmentWizard.scss';
 
 const STEP_ICONS = [
@@ -75,6 +77,7 @@ const INITIAL_STATE = {
 const ESShipmentWizard = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentStep,    setCurrentStep]    = useState(1);
   const [wizardData,     setWizardData]     = useState(INITIAL_STATE);
   const [showAuthModal,  setShowAuthModal]  = useState(false);
@@ -204,6 +207,7 @@ const ESShipmentWizard = () => {
           <Step1PackageDetails
             {...commonProps}
             onNext={() => setCurrentStep(2)}
+            onBack={!user ? () => navigate('/login') : null}
           />
         );
 
@@ -260,43 +264,57 @@ const ESShipmentWizard = () => {
   // ──────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="us-wizard">
-      <div className="us-wizard__header">
-        <div className="us-wizard__steps">
-          {STEPS.map((step, idx) => {
-            const status =
-              currentStep > step.id  ? 'done'   :
-              currentStep === step.id ? 'active' : 'pending';
+    <div className={`us-wizard${user ? ' us-wizard--auth' : ''}`}>
 
-            return (
-              <React.Fragment key={step.id}>
-                <button
-                  className={`us-wizard__step us-wizard__step--${status}`}
-                  onClick={() => goToStep(step.id)}
-                  disabled={status === 'pending'}
-                  aria-current={status === 'active' ? 'step' : undefined}
-                >
-                  <span className="us-wizard__step-circle">
-                    {status === 'done' ? <IoCheckmarkOutline size={18} /> : step.icon}
-                  </span>
-                  <span className="us-wizard__step-label">{step.label}</span>
-                </button>
+      {/* ── Navbar superior: solo visible sin sesión ── */}
+      {!user && (
+        <nav className="us-wizard__navbar">
+          <img src={logoImg} alt="Kraken Courier" className="us-wizard__navbar-logo" />
+        </nav>
+      )}
 
-                {idx < STEPS.length - 1 && (
-                  <div
-                    className={`us-wizard__connector ${
-                      currentStep > step.id ? 'us-wizard__connector--done' : ''
-                    }`}
-                  />
-                )}
-              </React.Fragment>
-            );
-          })}
+      {/* ── Contenedor central: iguala el ancho del stepper y las tarjetas ── */}
+      <div className="us-wizard__content">
+
+        {/* ── Barra de pasos ── */}
+        <div className="us-wizard__header">
+          <div className="us-wizard__steps">
+            {STEPS.map((step, idx) => {
+              const status =
+                currentStep > step.id  ? 'done'   :
+                currentStep === step.id ? 'active' : 'pending';
+
+              return (
+                <React.Fragment key={step.id}>
+                  <button
+                    className={`us-wizard__step us-wizard__step--${status}`}
+                    onClick={() => goToStep(step.id)}
+                    disabled={status === 'pending'}
+                    aria-current={status === 'active' ? 'step' : undefined}
+                  >
+                    <span className="us-wizard__step-circle">
+                      {status === 'done' ? <IoCheckmarkOutline size={18} /> : step.icon}
+                    </span>
+                    <span className="us-wizard__step-label">{step.label}</span>
+                  </button>
+
+                  {idx < STEPS.length - 1 && (
+                    <div
+                      className={`us-wizard__connector ${
+                        currentStep > step.id ? 'us-wizard__connector--done' : ''
+                      }`}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      <div className="us-wizard__body">
-        {renderStep()}
+        <div className="us-wizard__body">
+          {renderStep()}
+        </div>
+
       </div>
 
       {showAuthModal && (

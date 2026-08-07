@@ -24,14 +24,68 @@ $transition:    0.2s ease;
   display: flex;
   flex-direction: column;
 
-  // ── Barra de pasos ──────────────────────────────────────────────────────────
-  &__header {
-    background: $navy;
-    padding: 0 2rem;
+  // Sin sesión: rompe el padding del page-content para ocupar todo el ancho
+  margin: -1rem -1rem 0;
+  @media (min-width: 769px) { margin: -2rem -2rem 0; }
+
+  // Con sesión: layout normal — sidebar visible, sin márgenes negativos
+  &--auth {
+    margin: 0;
+    padding-top: 1rem;      // espacio entre TopNav del layout y el stepper
+    background: transparent; // hereda var(--color-background) del page-content → sin capas de color
+  }
+
+  // ── Navbar superior (solo logo) ─────────────────────────────────────────────
+  &__navbar {
+    background: #ffffff;
+    border-bottom: 1px solid $border;
+    padding: 0 3rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
     position: sticky;
     top: 0;
+    z-index: 200;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  }
+
+  &__navbar-logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+
+    @media (max-width: 480px) { height: 32px; }
+  }
+
+  // ── Contenedor central (iguala ancho de stepper y tarjetas) ────────────────
+  &__content {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 2rem;
+    box-sizing: border-box;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // ── Barra de pasos — card flotante ──────────────────────────────────────────
+  &__header {
+    background: $navy;
+    padding: 0;
+    position: sticky;
+    top: 64px;          // modo guest: debajo del navbar blanco
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(27,43,107,0.2);
+    overflow: hidden;   // recorta las esquinas redondeadas en los hijos
+    // Sin max-width ni margin: __content se encarga del ancho
+  }
+
+  // Con sesión: stepper flota con 1rem de espacio arriba
+  &--auth &__header {
+    top: 1rem;
   }
 
   &__steps {
@@ -39,14 +93,12 @@ $transition:    0.2s ease;
     align-items: center;
     justify-content: center;
     gap: 0;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 1.25rem 0;
+    padding: 1rem 1.5rem;
     overflow-x: auto;
 
     @media (max-width: 640px) {
       justify-content: flex-start;
-      padding: 1rem 0;
+      padding: 1rem 0.5rem;
     }
   }
 
@@ -101,8 +153,8 @@ $transition:    0.2s ease;
   }
 
   &__step-circle {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     border: 2px solid;
     display: flex;
@@ -137,14 +189,12 @@ $transition:    0.2s ease;
   // ── Zona de contenido del paso ──────────────────────────────────────────────
   &__body {
     flex: 1;
-    // max-width: 960px;
-    width: 100%;
-    margin: 2rem auto;
-    padding: 0 1.5rem 3rem;
+    margin: 1.5rem 0 0;
+    padding: 0 0 3rem;
 
     @media (max-width: 768px) {
-      margin: 1rem auto;
-      padding: 0 1rem 2rem;
+      margin: 1rem 0 0;
+      padding: 0 0 2rem;
     }
   }
 }

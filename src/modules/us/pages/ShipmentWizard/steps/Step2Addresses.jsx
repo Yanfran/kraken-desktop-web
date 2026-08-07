@@ -349,14 +349,17 @@ export const OriginModal = ({ onSave, onClose, saving }) => {
 
   const validate = () => {
     const e = {};
-    if (!form.alias.trim()) e.alias = t('us_wizard.error_alias');
-    if (!form.line1.trim()) e.line1 = t('us_wizard.error_address');
-    if (!form.city.trim())  e.city  = t('us_wizard.error_city_req');
+    if (!form.alias.trim())    e.alias    = t('us_wizard.error_alias');
+    if (!form.line1.trim())    e.line1    = t('us_wizard.error_address');
+    if (!form.city.trim())     e.city     = t('us_wizard.error_city_req');
+    if (!form.province.trim()) e.province = 'El estado/provincia es obligatorio.';
+    if (!form.zip.trim())      e.zip      = 'El código postal es obligatorio.';
+    else if (form.zip.length !== 5) e.zip = 'El código postal debe tener 5 dígitos.';
     // Teléfono USA — obligatorio para UPS (10 dígitos exactos)
     const phoneDigits = form.phone.replace(/\D/g, '');
     if (!phoneDigits) e.phone = 'El teléfono es obligatorio (requerido por UPS).';
     else if (phoneDigits.length !== 10) e.phone = 'Ingresa un teléfono USA de 10 dígitos. Ej: (305) 000-0000';
-    // Teléfono Venezuela: si se escribió número, operadora es obligatoria
+    // Teléfono Venezuela: solo valida si el usuario llenó algo
     if (phoneVeNum && !phoneVeOp) e.phoneVe = 'Selecciona la operadora del teléfono venezolano.';
     if (phoneVeOp && phoneVeNum.replace(/\D/g, '').length !== 7) e.phoneVe = 'El número venezolano debe tener 7 dígitos.';
     // Identificación: todos obligatorios si alguno se completa
@@ -437,16 +440,28 @@ export const OriginModal = ({ onSave, onClose, saving }) => {
               {errors.city && <span className="field-error">{errors.city}</span>}
             </div>
             <div className="wizard-field">
-              <label>{t('us_wizard.field_province')}</label>
-              <input placeholder="Florida" value={form.province} onChange={(e) => set('province', e.target.value)} />
+              <label>{t('us_wizard.field_province')} *</label>
+              <input
+                placeholder="Florida"
+                value={form.province}
+                onChange={(e) => { set('province', e.target.value); setErrors(p => ({ ...p, province: '' })); }}
+                className={errors.province ? 'input--error' : ''}
+              />
+              {errors.province && <span className="field-error">{errors.province}</span>}
             </div>
           </div>
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
-              <label>{t('us_wizard.field_zip')}</label>
-              <input placeholder="33122" maxLength={5} value={form.zip}
-                onChange={(e) => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))} />
+              <label>{t('us_wizard.field_zip')} *</label>
+              <input
+                placeholder="33122"
+                maxLength={5}
+                value={form.zip}
+                onChange={(e) => { set('zip', e.target.value.replace(/\D/g, '').slice(0, 5)); setErrors(p => ({ ...p, zip: '' })); }}
+                className={errors.zip ? 'input--error' : ''}
+              />
+              {errors.zip && <span className="field-error">{errors.zip}</span>}
             </div>
             <div className="wizard-field">
               <label>Teléfono USA *</label>
@@ -462,23 +477,7 @@ export const OriginModal = ({ onSave, onClose, saving }) => {
             </div>
           </div>
 
-          <div className="wizard-field">
-            <label>{t('us_wizard.field_ref')} <span className="label-optional">({t('common.optional')})</span></label>
-            <input placeholder="Portero automático #3, timbre azul..." value={form.referencia} onChange={(e) => set('referencia', e.target.value)} />
-          </div>
-
-          {/* Teléfono Venezuela (opcional) */}
-          <VenezPhoneInput
-            label="Teléfono Venezuela"
-            operator={phoneVeOp}
-            number={phoneVeNum}
-            onOperatorChange={setPhoneVeOp}
-            onNumberChange={setPhoneVeNum}
-            required={false}
-            error={errors.phoneVe}
-          />
-
-          {/* Identificación */}
+          {/* Identificación — obligatoria, va antes de los campos opcionales */}
           <DocIdentInput
             country={docCountry}
             docType={docType}
@@ -487,6 +486,22 @@ export const OriginModal = ({ onSave, onClose, saving }) => {
             onTypeChange={setDocType}
             onNumChange={setDocNum}
             errors={errors}
+          />
+
+          <div className="wizard-field">
+            <label>{t('us_wizard.field_ref')} <span className="label-optional">({t('common.optional')})</span></label>
+            <input placeholder="Portero automático #3, timbre azul..." value={form.referencia} onChange={(e) => set('referencia', e.target.value)} />
+          </div>
+
+          {/* Teléfono Venezuela — opcional, del remitente */}
+          <VenezPhoneInput
+            label={<>Teléfono Venezuela <span className="label-optional">(Opcional)</span></>}
+            operator={phoneVeOp}
+            number={phoneVeNum}
+            onOperatorChange={setPhoneVeOp}
+            onNumberChange={setPhoneVeNum}
+            required={false}
+            error={errors.phoneVe}
           />
 
           <label className="addr-modal__checkbox">
@@ -920,18 +935,7 @@ export const DestinationModal = ({ onSave, onClose, saving }) => {
             error={errors.telefono}
           />
 
-          {/* Teléfono adicional Venezuela (opcional) */}
-          <VenezPhoneInput
-            label={`${t('us_wizard.field_phone2')} (${t('common.optional')})`}
-            required={false}
-            operator={telAdOp}
-            number={telAdNum}
-            onOperatorChange={(v) => { setTelAdOp(v); setErrors(p => ({ ...p, telefonoAdicional: '' })); }}
-            onNumberChange={(v) => { setTelAdNum(v); setErrors(p => ({ ...p, telefonoAdicional: '' })); }}
-            error={errors.telefonoAdicional}
-          />
-
-          {/* Identificación */}
+          {/* Identificación — obligatoria, va después del teléfono principal */}
           <DocIdentInput
             country={cDocCountry}
             docType={cDocType}
@@ -940,6 +944,17 @@ export const DestinationModal = ({ onSave, onClose, saving }) => {
             onTypeChange={(v)    => { setCDocType(v);    setErrors(p => ({ ...p, docType: '' })); }}
             onNumChange={(v)     => { setCDocNum(v);     setErrors(p => ({ ...p, docNum: '' })); }}
             errors={errors}
+          />
+
+          {/* Teléfono adicional Venezuela (opcional) */}
+          <VenezPhoneInput
+            label={<>{t('us_wizard.field_phone2')} <span className="label-optional">({t('common.optional')})</span></>}
+            required={false}
+            operator={telAdOp}
+            number={telAdNum}
+            onOperatorChange={(v) => { setTelAdOp(v); setErrors(p => ({ ...p, telefonoAdicional: '' })); }}
+            onNumberChange={(v) => { setTelAdNum(v); setErrors(p => ({ ...p, telefonoAdicional: '' })); }}
+            error={errors.telefonoAdicional}
           />
 
           {/* Email */}

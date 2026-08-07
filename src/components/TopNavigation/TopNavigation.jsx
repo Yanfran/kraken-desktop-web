@@ -11,7 +11,7 @@ import iconPulpo from '../../../src/assets/images/icon-kraken-web-pulpo-peq.png'
 import iconCalcula from '../../../src/assets/images/icon-kraken-web-calculadora.png'; 
 import iconParlante from '../../../src/assets/images/icon-kraken-web-parlante_1.png'; 
 import iconRastreo from '../../../src/assets/images/icon-kraken-web-rastrear-_1.png'; 
-import iconLogo from '../../../src/assets/images/logo.jpg'; 
+import iconLogo from '../../assets/images/logotipo-KrakenCourier.png';
 
 const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
   const { actualTheme } = useTheme();
@@ -72,10 +72,10 @@ const TopNavigation = ({ onToggleSidebar, sidebarOpen }) => {
             target="_blank" 
             rel="noopener noreferrer"
           >
-            <img 
-              src={iconLogo} 
-              alt="Kraken Logo" 
-              className="top-navigation__logo-imag"
+            <img
+              src={iconLogo}
+              alt="Kraken Logo"
+              className="top-navigation__logo-image"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.parentNode.innerHTML = '<div class="top-navigation__logo-fallback">KRAKEN<br><small>COURIER & CARGO</small></div>';

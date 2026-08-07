@@ -40,11 +40,9 @@ $radius: 10px;
   }
 
   &__grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
-
-    @media (max-width: 480px) { grid-template-columns: 1fr; }
   }
 
   &__loading {
@@ -379,9 +377,11 @@ $radius: 10px;
 
 // ── Etiqueta "opcional" ───────────────────────────────────────────────────────
 .label-optional {
-  font-size: 0.78rem;
+  font-size: 0.65rem;
   font-weight: 400;
   color: #9ca3af;
+  text-transform: none;  // evita que herede el uppercase del <label>
+  letter-spacing: 0;
 }
 
 // ── Checkbox del modal ────────────────────────────────────────────────────────

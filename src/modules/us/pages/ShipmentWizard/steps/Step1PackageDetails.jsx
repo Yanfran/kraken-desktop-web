@@ -46,10 +46,13 @@ const buildValidationErrors = (pkg, t) => {
 // ── Selector de contenidos ────────────────────────────────────────────────────
 const ContenidoSelector = ({ selected, onChange }) => {
   const { t } = useTranslation();
-  const [opciones, setOpciones] = useState([]);
-  const [abierto, setAbierto]   = useState(false);
-  const [loading, setLoading]   = useState(true);
-  const ref = useRef(null);
+  const [opciones, setOpciones]   = useState([]);
+  const [abierto, setAbierto]     = useState(false);
+  const [loading, setLoading]     = useState(true);
+  const [busqueda, setBusqueda]   = useState('');
+  const [abreArriba, setAbreArriba] = useState(false);
+  const ref       = useRef(null);
+  const inputRef  = useRef(null);
 
   useEffect(() => {
     axiosInstance.get('/PaqueteContenidos/getContent')
@@ -58,17 +61,31 @@ const ContenidoSelector = ({ selected, onChange }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  // ✅ Cierra al hacer click fuera
+  // Cierra al hacer click fuera
   useEffect(() => {
-    if (!abierto) return; // solo escucha cuando está abierto
+    if (!abierto) return;
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
         setAbierto(false);
+        setBusqueda('');
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [abierto]); // ← depende de abierto
+  }, [abierto]);
+
+  // Auto-foco y detección de espacio disponible al abrir
+  useEffect(() => {
+    if (abierto) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+      // Detecta si hay espacio suficiente hacia abajo; si no, abre hacia arriba
+      if (ref.current) {
+        const rect = ref.current.getBoundingClientRect();
+        const espacioAbajo = window.innerHeight - rect.bottom;
+        setAbreArriba(espacioAbajo < 320);
+      }
+    }
+  }, [abierto]);
 
   const toggle = (item) => {
     const existe = selected.find(s => s.id === item.id);
@@ -78,12 +95,16 @@ const ContenidoSelector = ({ selected, onChange }) => {
     );
   };
 
+  const opcionesFiltradas = busqueda.trim()
+    ? opciones.filter(op => op.contenido.toLowerCase().includes(busqueda.toLowerCase()))
+    : opciones;
+
   const label = selected.length === 0
     ? t('us_wizard.select_contents')
     : t('us_wizard.content_selected_n', { count: selected.length });
 
   return (
-    <div className="contenido-selector" ref={ref}> {/* ✅ ref conectado */}
+    <div className="contenido-selector" ref={ref}>
       <button
         type="button"
         className={`contenido-selector__trigger ${abierto ? 'contenido-selector__trigger--open' : ''}`}
@@ -94,23 +115,40 @@ const ContenidoSelector = ({ selected, onChange }) => {
       </button>
 
       {abierto && (
-        <div className="contenido-selector__dropdown">
-          {loading
-            ? <p className="contenido-selector__loading">{t('common.loading')}</p>
-            : opciones.map(op => {
-                const activo = !!selected.find(s => s.id === op.id);
-                return (
-                  <div
-                    key={op.id}
-                    className={`contenido-selector__option ${activo ? 'contenido-selector__option--active' : ''}`}
-                    onMouseDown={(e) => { e.preventDefault(); toggle(op); }}
-                  >
-                    <span>{op.contenido}</span>
-                    {activo && <span className="contenido-selector__check">✓</span>}
-                  </div>
-                );
-              })
-          }
+        <div className={`contenido-selector__dropdown${abreArriba ? ' contenido-selector__dropdown--up' : ''}`}>
+          {/* Buscador */}
+          <div className="contenido-selector__search-wrap">
+            <input
+              ref={inputRef}
+              type="text"
+              className="contenido-selector__search"
+              placeholder="Buscar contenido..."
+              value={busqueda}
+              onMouseDown={(e) => e.stopPropagation()}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
+
+          <div className="contenido-selector__options-list">
+            {loading
+              ? <p className="contenido-selector__loading">{t('common.loading')}</p>
+              : opcionesFiltradas.length === 0
+                ? <p className="contenido-selector__loading">Sin resultados</p>
+                : opcionesFiltradas.map(op => {
+                    const activo = !!selected.find(s => s.id === op.id);
+                    return (
+                      <div
+                        key={op.id}
+                        className={`contenido-selector__option ${activo ? 'contenido-selector__option--active' : ''}`}
+                        onMouseDown={(e) => { e.preventDefault(); toggle(op); }}
+                      >
+                        <span>{op.contenido}</span>
+                        {activo && <span className="contenido-selector__check">✓</span>}
+                      </div>
+                    );
+                  })
+            }
+          </div>
         </div>
       )}
 
@@ -372,7 +410,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
 };
 
 // ── Componente principal del paso 1 ─────────────────────────────────────────
-const Step1PackageDetails = ({ data, updateData, onNext }) => {
+const Step1PackageDetails = ({ data, updateData, onNext, onBack }) => {
   const { t } = useTranslation();
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -467,6 +505,11 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
         </button> */}
 
         <div className="wizard-actions">
+          {onBack && (
+            <button className="btn-wizard-back" onClick={onBack}>
+              {t('us_wizard.back')}
+            </button>
+          )}
           <button className="btn-wizard-next" onClick={handleNext}>
             {t('us_wizard.continue')}
           </button>

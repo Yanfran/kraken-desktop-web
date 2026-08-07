@@ -16,7 +16,6 @@ import axiosInstance from '../../../services/axiosInstance';
 import {
   IoEyeOutline,
   IoEyeOffOutline,
-  IoCarOutline,
 } from 'react-icons/io5';
 
 const COUNTRY_OPTIONS = [
@@ -194,17 +193,6 @@ const Login = () => {
             className="kraken-login__google-icon"
           />
           <span>{googleLoading ? 'Conectando...' : t('auth.google')}</span>
-        </button>
-
-        {/* Botón Realizar Recogida (KU) */}
-        <button
-          type="button"
-          className="kraken-login__pickup-button"
-          onClick={() => navigate('/pickup')}
-          disabled={isLoading}
-        >
-          <IoCarOutline size={20} />
-          Realizar una Recogida
         </button>
 
         {/* Separador */}

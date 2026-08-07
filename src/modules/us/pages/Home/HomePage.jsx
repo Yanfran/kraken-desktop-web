@@ -93,7 +93,7 @@ const HomePage = () => {
               )}
 
               <div className="us-home__shipments">
-                {shipments.map((s) => (
+                {shipments.slice(0, 10).map((s) => (
                   <div
                     key={s.guiaId}
                     className="us-home__shipment-item"

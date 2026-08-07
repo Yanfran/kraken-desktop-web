@@ -6,6 +6,7 @@ import { ProtectedRoute, PublicRoute, SemiProtectedRoute } from './components/au
 import Loading from './components/common/Loading/Loading';
 import { Toaster } from 'react-hot-toast';
 import { isBackupApi } from './utils/config';
+import { useAuth } from './contexts/AuthContext';
 import './App.styles.scss';
 
 // ✅ NUEVO: Smart Platform Detector (reemplaza MobileBlock)
@@ -63,6 +64,18 @@ const ChangePassword = React.lazy(() => import('./pages/profile/Profile/ChangePa
 
 // Hook simplificado para compatibilidad
 export { useAuth } from './contexts/AuthContext';
+
+// Envuelve el wizard de recogida en DynamicLayout solo cuando hay sesión activa
+const PickupWrapper = () => {
+  const { user } = useAuth();
+  return user ? (
+    <DynamicLayout>
+      <USShipmentWizardPublic />
+    </DynamicLayout>
+  ) : (
+    <USShipmentWizardPublic />
+  );
+};
 
 function App() {
   return (
@@ -195,10 +208,10 @@ function App() {
                   </SemiProtectedRoute>
                 } />
 
-                {/* Wizard de Recogida KU — accesible sin login (el wizard maneja su propio auth) */}
+                {/* Wizard de Recogida KU — accesible sin login; con sesión muestra sidebar */}
                 <Route path="/pickup" element={
                   <SemiProtectedRoute>
-                    <USShipmentWizardPublic />
+                    <PickupWrapper />
                   </SemiProtectedRoute>
                 } />
 

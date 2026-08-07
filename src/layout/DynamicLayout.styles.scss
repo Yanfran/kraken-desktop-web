@@ -6,17 +6,18 @@
 
 .main-content {
   flex: 1;
+  min-width: 0; // evita que el flex item desborde su contenedor
   display: flex;
   flex-direction: column;
   transition: margin-left 0.3s ease;
   min-height: 100vh;
-  width: 100%;
 }
 
 .page-content {
   padding: 1rem;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; // evita scrollbar horizontal
   margin-top: 0px; // Altura del TopNav
 }
 
@@ -27,7 +28,7 @@
 }
 
 @media (min-width: 1200px) {
-  .page-content {
-    margin-left: 260px; // sidebar always visible here
+  .main-content {
+    margin-left: 260px; // sidebar always visible here — aplica a TopNav y page-content
   }
 }
