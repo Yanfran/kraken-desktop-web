@@ -111,7 +111,7 @@ const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate }) => {
         {pickupExtra        > 0 && <span>+ {t('us_wizard.breakdown_pickup')}: ${pickupExtra.toFixed(2)}</span>}
       </div>
       <div className="courier-card__meta">
-        <IoScaleOutline size={14} style={{ verticalAlign: 'middle' }} /> {quote.weight_max} kg
+        <IoScaleOutline size={14} style={{ verticalAlign: 'middle' }} /> {quote.weight_max} lb
         &nbsp;·&nbsp;
         <IoCubeOutline size={14} style={{ verticalAlign: 'middle' }} /> {quote.total_packages} {t('us_wizard.bultos')}
       </div>

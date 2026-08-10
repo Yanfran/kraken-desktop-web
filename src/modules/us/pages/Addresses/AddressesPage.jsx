@@ -14,17 +14,19 @@ import {
   IoCallOutline,
   IoPersonOutline,
   IoChevronBack,
+  IoPencilOutline,
 } from 'react-icons/io5';
 import {
   fetchUsaOriginAddresses,
   addUsaOriginAddress,
   deleteUsaOriginAddress,
   setUsaOriginDefault,
+  updateUsaOriginAddress,
   fetchUsaDestinationAddresses,
   deleteUsaDestinationAddress,
   setUsaDestinationDefault,
 } from '../../../../services/us/usAddressService';
-import { addDestinationAddress } from '../../../../services/es/spainAddressService';
+import { addDestinationAddress, updateDestinationAddress } from '../../../../services/es/spainAddressService';
 import { OriginModal, DestinationModal } from '../ShipmentWizard/steps/Step2Addresses';
 import './AddressesPage.scss';
 
@@ -41,7 +43,8 @@ const AddressesPage = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
   const [viewDetail, setViewDetail] = useState(null);
-  const [addModal, setAddModal] = useState(null); // 'origin' | 'dest' | null
+  const [addModal, setAddModal] = useState(null);  // 'origin' | 'dest' | null
+  const [editModal, setEditModal] = useState(null); // { type: 'origin'|'dest', data: object } | null
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -97,6 +100,26 @@ const AddressesPage = () => {
     load();
   };
 
+  const handleEditOrigin = async (formData) => {
+    setSaving(true);
+    const res = await updateUsaOriginAddress({ clientId, addressId: editModal.data.id, ...formData });
+    setSaving(false);
+    if (!res.success) { toast.error(res.message); return; }
+    toast.success('Dirección actualizada');
+    setEditModal(null);
+    load();
+  };
+
+  const handleEditDest = async (formData) => {
+    setSaving(true);
+    const res = await updateDestinationAddress({ clientId, addressId: editModal.data.id, ...formData });
+    setSaving(false);
+    if (!res.success) { toast.error(res.message); return; }
+    toast.success('Dirección actualizada');
+    setEditModal(null);
+    load();
+  };
+
   if (loading) {
     return (
       <div className="ku-addr">
@@ -134,6 +157,7 @@ const AddressesPage = () => {
           }))}
           deleting={deleting}
           onView={(id) => { const a = originList.find((x) => x.id === id); if (a) setViewDetail({ type: 'origin', data: a }); }}
+          onEdit={(id) => { const a = originList.find((x) => x.id === id); if (a) setEditModal({ type: 'origin', data: a }); }}
           onDelete={(id, name) => handleDelete('origin', id, name)}
           onSetDefault={(id) => handleSetDefault('origin', id)}
           canAdd={originList.length < MAX_ADDRESSES}
@@ -155,6 +179,7 @@ const AddressesPage = () => {
           }))}
           deleting={deleting}
           onView={(id) => { const a = destList.find((x) => x.id === id); if (a) setViewDetail({ type: 'dest', data: a }); }}
+          onEdit={(id) => { const a = destList.find((x) => x.id === id); if (a) setEditModal({ type: 'dest', data: a }); }}
           onDelete={(id, name) => handleDelete('dest', id, name)}
           onSetDefault={(id) => handleSetDefault('dest', id)}
           canAdd={destList.length < MAX_ADDRESSES}
@@ -172,13 +197,20 @@ const AddressesPage = () => {
       {addModal === 'dest' && (
         <DestinationModal onSave={handleAddDest} onClose={() => setAddModal(null)} saving={saving} />
       )}
+
+      {editModal?.type === 'origin' && (
+        <OriginModal onSave={handleEditOrigin} onClose={() => setEditModal(null)} saving={saving} initialData={editModal.data} />
+      )}
+      {editModal?.type === 'dest' && (
+        <DestinationModal onSave={handleEditDest} onClose={() => setEditModal(null)} saving={saving} initialData={editModal.data} />
+      )}
     </div>
   );
 };
 
 /* ── Sección de direcciones ─────────────────────────────────────────────── */
 
-const AddressSection = ({ title, flag, addresses, deleting, onView, onDelete, onSetDefault, canAdd, onAdd }) => (
+const AddressSection = ({ title, flag, addresses, deleting, onView, onEdit, onDelete, onSetDefault, canAdd, onAdd }) => (
   <div className="ku-addr__section">
     <h2 className="ku-addr__section-title">
       <img src={`https://flagcdn.com/24x18/${flag}.png`} alt={flag} width="24" height="18" style={{ borderRadius: 2 }} />
@@ -206,16 +238,19 @@ const AddressSection = ({ title, flag, addresses, deleting, onView, onDelete, on
             </div>
           </div>
           <div className="ku-addr__card-actions">
-            <button className="ku-addr__action ku-addr__action--view" onClick={() => onView(addr.id)}>
-              <IoEyeOutline size={16} /> Ver
+            <button className="ku-addr__action ku-addr__action--view" title="Ver detalle" onClick={() => onView(addr.id)}>
+              <IoEyeOutline size={16} />
+            </button>
+            <button className="ku-addr__action ku-addr__action--edit" title="Editar" onClick={() => onEdit(addr.id)}>
+              <IoPencilOutline size={16} />
             </button>
             {!addr.isDefault && (
-              <button className="ku-addr__action ku-addr__action--star" onClick={() => onSetDefault(addr.id)}>
-                <IoStarOutline size={16} /> Predeterminada
+              <button className="ku-addr__action ku-addr__action--star" title="Marcar como predeterminada" onClick={() => onSetDefault(addr.id)}>
+                <IoStarOutline size={16} />
               </button>
             )}
-            <button className="ku-addr__action ku-addr__action--delete" onClick={() => onDelete(addr.id, addr.name)} disabled={deleting === addr.id}>
-              <IoTrashOutline size={16} /> Eliminar
+            <button className="ku-addr__action ku-addr__action--delete" title="Eliminar" onClick={() => onDelete(addr.id, addr.name)} disabled={deleting === addr.id}>
+              <IoTrashOutline size={16} />
             </button>
           </div>
         </div>

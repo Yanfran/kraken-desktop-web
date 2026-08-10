@@ -111,6 +111,16 @@ export const fetchDestinationAddresses = async (clientId) => {
   }
 };
 
+export const updateDestinationAddress = async (payload) => {
+  try {
+    const body = { ...payload, clientId: Number(payload.clientId), addressId: Number(payload.addressId) };
+    const response = await axiosInstance.put('/spain/addresses/destination/update', body);
+    return { success: response.data.success, data: response.data.data ?? null, message: response.data.message };
+  } catch (error) {
+    return { success: false, data: null, message: error.response?.data?.message || 'Error al actualizar dirección de destino' };
+  }
+};
+
 export const addDestinationAddress = async (payload) => {
   try {
     const body = { ...payload, clientId: Number(payload.clientId) };

@@ -120,26 +120,31 @@ $radius: 10px;
   &__actions {
     display: flex;
     gap: 6px;
-    margin-top: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
   }
 
   &__action-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 0;
     background: #fff;
     border: 1px solid #E5E7EB;
     border-radius: 8px;
-    padding: 6px 12px;
+    padding: 7px;
+    width: 32px;
+    height: 32px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
     transition: all 0.15s;
+    flex-shrink: 0;
 
-    span { white-space: nowrap; }
+    span { display: none; }
 
-    &--view { color: #022364; &:hover { background: #EFF6FF; border-color: #022364; } }
-    &--star { color: #F05A22; &:hover { background: #FFF7ED; border-color: #F05A22; } }
+    &--view   { color: #022364; &:hover { background: #EFF6FF; border-color: #022364; } }
+    &--star   { color: #F05A22; &:hover { background: #FFF7ED; border-color: #F05A22; } }
     &--danger { color: #EF4444; &:hover { background: #FEF2F2; border-color: #EF4444; } }
   }
 }
@@ -443,9 +448,10 @@ $radius: 10px;
   margin-bottom: 6px;
 }
 
-// ── Botón estrella (marcar predeterminada) ────────────────────────────────────
-.addr-card__action-btn--star {
-  &:hover { background: #fef9c3; color: #ca8a04; }
+// ── Botón editar ──────────────────────────────────────────────────────────────
+.addr-card__action-btn--edit {
+  color: #2563eb;
+  &:hover { background: #eff6ff; border-color: #bfdbfe; }
 }
 
 // ── Error de campo ────────────────────────────────────────────────────────────

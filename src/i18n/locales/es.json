@@ -914,7 +914,7 @@
     "volumetric": "(Volumétrico)",
     "pickup_address": "Dirección de Recogida",
     "delivery_address": "Dirección de Entrega",
-    "rate_detail": "Detalle de Tarifa",
+    "rate_detail": "Resumen de Tarifa",
     "error_no_calc": "No se pudo calcular la tarifa. Vuelve al paso anterior.",
     "pickup_label": "(Recogida)",
     "proceed_payment": "Proceder al Pago →",

@@ -196,7 +196,9 @@ const DocumentIllustration = () => (
 // ── Componente de una caja individual ───────────────────────────────────────
 const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
   const { t } = useTranslation();
-  const [showFOBTooltip, setShowFOBTooltip] = useState(false);
+  const [showFOBTooltip,       setShowFOBTooltip]       = useState(false);
+  const [showPesoTooltip,      setShowPesoTooltip]      = useState(false);
+  const [showContenidoTooltip, setShowContenidoTooltip] = useState(false);
   const isDoc = pkg.tipoPaquete === 'Documento';
 
   const set = (field, value) => onChange(pkg.id, field, value);
@@ -331,10 +333,26 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
         </div>
       )}
 
-      {/* ── Fila 2: Peso (+ unidad) ── */}
-      <div className="pkg-form__meta-row" style={{ gridTemplateColumns: isDoc ? '1fr' : undefined }}>
+      {/* ── Fila: Peso (+ unidad) | Valor FOB — en la misma fila ── */}
+      <div className="wizard-grid-2" style={{ marginBottom: '1rem' }}>
+        {/* PESO */}
         <div className="wizard-field">
-          <label>{t('us_wizard.field_peso')}</label>
+          <label style={{ position: 'relative' }}>
+            {t('us_wizard.field_peso')}
+            <button
+              type="button"
+              className="pkg-form__tooltip-trigger"
+              onMouseEnter={() => setShowPesoTooltip(true)}
+              onMouseLeave={() => setShowPesoTooltip(false)}
+            >
+              ⓘ
+            </button>
+            {showPesoTooltip && (
+              <span className="pkg-form__tooltip">
+                Ingresa el peso de tu paquete en libras (lb). El peso correcto determina el costo del envío.
+              </span>
+            )}
+          </label>
           <div className="pkg-form__peso-wrap">
             <input
               type="number"
@@ -355,12 +373,10 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
           </div>
           {errors?.peso && <span className="field-error-msg">{errors.peso}</span>}
         </div>
-      </div>
 
-      {/* Valor FOB */}
-      <div className="wizard-grid-2" style={{ marginBottom: '1rem' }}>
+        {/* VALOR FOB */}
         <div className="wizard-field">
-          <label>
+          <label style={{ position: 'relative' }}>
             {t('us_wizard.field_fob')}
             <button
               type="button"
@@ -395,7 +411,22 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
       {/* Descripción del contenido — solo para Caja */}
       {!isDoc && (
         <div className="wizard-field">
-          <label>{t('us_wizard.field_content_desc')}</label>
+          <label style={{ position: 'relative' }}>
+            {t('us_wizard.field_content_desc')}
+            <button
+              type="button"
+              className="pkg-form__tooltip-trigger"
+              onMouseEnter={() => setShowContenidoTooltip(true)}
+              onMouseLeave={() => setShowContenidoTooltip(false)}
+            >
+              ⓘ
+            </button>
+            {showContenidoTooltip && (
+              <span className="pkg-form__tooltip">
+                Puedes seleccionar más de un tipo de contenido para tu paquete.
+              </span>
+            )}
+          </label>
           <ContenidoSelector
             selected={pkg.contenidos ?? []}
             onChange={(items) => {

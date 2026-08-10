@@ -710,21 +710,47 @@ const Step4Payment = ({ data, updateData, onBack }) => {
         lightboxOpen.current = true;
         window.CollectJS.startPaymentRequest();
 
-        // Detectar cierre del lightbox sin completar el pago.
-        // CollectJS no tiene callback de cancelación; cuando el usuario cierra
-        // el modal, la ventana recupera el foco. Si el token aún no llegó
-        // (lightboxOpen.current sigue true) reseteamos el estado.
+        // Esperar a que CollectJS renderice el lightbox, luego:
+        // 1. Bloquear el backdrop para que no cierre al hacer click fuera.
+        // 2. Hacer polling para detectar cuándo el usuario cierra el modal (con X)
+        //    y restaurar el botón a su estado original.
         setTimeout(() => {
-          if (!lightboxOpen.current) return;
-          const handleFocus = () => {
-            if (lightboxOpen.current) {
+          // 1. Neutralizar el backdrop (div fixed pantalla-completa sin inputs)
+          document.querySelectorAll('body > div').forEach(el => {
+            const r  = el.getBoundingClientRect();
+            const cs = window.getComputedStyle(el);
+            if (
+              cs.position === 'fixed' &&
+              r.width  > window.innerWidth  * 0.8 &&
+              r.height > window.innerHeight * 0.8 &&
+              !el.querySelector('iframe, input, form')
+            ) {
+              el.style.pointerEvents = 'none';
+            }
+          });
+
+          // 2. Polling cada 500ms: si ya no hay overlay full-screen y el token
+          //    no llegó aún, el usuario cerró el modal → restaurar estado.
+          const poll = setInterval(() => {
+            if (!lightboxOpen.current) { clearInterval(poll); return; }
+            const isOpen = [...document.querySelectorAll('body > div')].some(el => {
+              const r  = el.getBoundingClientRect();
+              const cs = window.getComputedStyle(el);
+              return (
+                cs.position === 'fixed' &&
+                r.width  > window.innerWidth  * 0.8 &&
+                r.height > window.innerHeight * 0.8
+              );
+            });
+            if (!isOpen) {
+              clearInterval(poll);
               lightboxOpen.current = false;
               setSubmitting(false);
               setSubmitPhase('');
             }
-          };
-          window.addEventListener('focus', handleFocus, { once: true });
-        }, 800);
+          }, 500);
+          setTimeout(() => clearInterval(poll), 600_000);
+        }, 350);
 
         return;
       }
@@ -912,7 +938,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           {courierQuote && (
             <div className="order-row">
               <span>
-                <IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> {courierQuote.courier || 'UPS'} {courierQuote.service || ''}
+                <IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> {courierQuote.service || courierQuote.courier || 'UPS Ground'}
               </span>
               <span style={{ fontWeight: '600' }}>{usd(courier)}</span>
             </div>

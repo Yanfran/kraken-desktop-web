@@ -45,6 +45,16 @@ export const setUsaOriginDefault = async (clientId, addressId) => {
   }
 };
 
+export const updateUsaOriginAddress = async (payload) => {
+  try {
+    const body = { ...payload, clientId: Number(payload.clientId), addressId: Number(payload.addressId) };
+    const { data } = await axiosInstance.put('/spain/addresses/origin/update', body);
+    return { success: data.success, data: data.data ?? null, message: data.message };
+  } catch (error) {
+    return { success: false, data: null, message: error.response?.data?.message || 'Error al actualizar dirección de origen USA' };
+  }
+};
+
 export const fetchUsaDestinationAddresses = async (clientId) => {
   try {
     const { data } = await axiosInstance.get(`/spain/addresses/destinationUSA?clientId=${Number(clientId)}`);

@@ -63,11 +63,22 @@ $transition:    0.2s ease;
     max-width: 1100px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 1.5rem 2.5rem 0; // 1.5rem superior = aire entre navbar y stepper (guest)
     box-sizing: border-box;
     flex: 1;
     display: flex;
     flex-direction: column;
+
+    @media (max-width: 640px) {
+      padding: 1rem 1rem 0;
+    }
+  }
+
+  // Auth mode: el wrapper ya tiene padding-top:1rem, no duplicar espacio
+  &--auth &__content {
+    padding-top: 0;
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 
   // ── Barra de pasos — card flotante ──────────────────────────────────────────
@@ -75,7 +86,7 @@ $transition:    0.2s ease;
     background: $navy;
     padding: 0;
     position: sticky;
-    top: 64px;          // modo guest: debajo del navbar blanco
+    top: 76px;          // modo guest: 64px navbar + 12px de aire visual
     z-index: 100;
     border-radius: 14px;
     box-shadow: 0 4px 20px rgba(27,43,107,0.2);

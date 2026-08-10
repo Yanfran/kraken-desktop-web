@@ -19,6 +19,7 @@ import {
   IoPersonOutline,
   IoEyeOutline,
   IoCloseOutline,
+  IoPencilOutline,
 } from 'react-icons/io5';
 import {
   fetchOriginAddresses,
@@ -35,10 +36,12 @@ import {
 } from '../../../../../services/es/spainAddressService';
 import {
   addUsaOriginAddress,
+  updateUsaOriginAddress,
   fetchUsaDestinationAddresses,
   deleteUsaDestinationAddress,
   setUsaDestinationDefault,
 } from '../../../../../services/us/usAddressService';
+import { updateDestinationAddress } from '../../../../../services/es/spainAddressService';
 import { authService } from '../../../../../services/auth/authService';
 import './Step2Addresses.scss';
 
@@ -224,7 +227,7 @@ const DocIdentInput = ({ country, docType, docNum, onCountryChange, onTypeChange
 // ════════════════════════════════════════════════════════════════════════════
 // ██  TARJETA DE DIRECCIÓN
 // ════════════════════════════════════════════════════════════════════════════
-const AddressCard = ({ address, selected, onSelect, onView, onDelete, onSetDefault, flag }) => {
+const AddressCard = ({ address, selected, onSelect, onView, onEdit, onDelete, onSetDefault, flag }) => {
   const { t } = useTranslation();
   return (
   <button
@@ -257,6 +260,11 @@ const AddressCard = ({ address, selected, onSelect, onView, onDelete, onSetDefau
         title="Ver detalle"
         onClick={() => onView(address.id)}
       ><IoEyeOutline size={16} /> <span>Ver</span></button>
+      <button
+        className="addr-card__action-btn addr-card__action-btn--edit"
+        title="Editar"
+        onClick={() => onEdit(address)}
+      ><IoPencilOutline size={16} /> <span>Editar</span></button>
       {!address.esPredeterminada && (
         <button
           className="addr-card__action-btn addr-card__action-btn--star"
@@ -279,7 +287,7 @@ const AddressCard = ({ address, selected, onSelect, onView, onDelete, onSetDefau
 // ════════════════════════════════════════════════════════════════════════════
 const AddressColumn = ({
   title, flag, country, addresses, selectedId,
-  onSelect, onView, onAdd, onDelete, onSetDefault, loading,
+  onSelect, onView, onEdit, onAdd, onDelete, onSetDefault, loading,
 }) => {
   const { t } = useTranslation();
   return (
@@ -306,6 +314,7 @@ const AddressColumn = ({
             selected={addr.id === selectedId}
             onSelect={onSelect}
             onView={onView}
+            onEdit={onEdit}
             onDelete={onDelete}
             onSetDefault={onSetDefault}
             flag={flag}
@@ -330,11 +339,18 @@ const AddressColumn = ({
 // ════════════════════════════════════════════════════════════════════════════
 // ██  MODAL — ORIGEN (USA) 🇪🇸
 // ════════════════════════════════════════════════════════════════════════════
-export const OriginModal = ({ onSave, onClose, saving }) => {
+export const OriginModal = ({ onSave, onClose, saving, initialData }) => {
   const { t } = useTranslation();
+  const isEditing = !!initialData;
   const [form, setForm] = useState({
-    alias: '', line1: '', city: '', province: '',
-    zip: '', phone: '', referencia: '', setAsDefault: false,
+    alias:        initialData?.alias      ?? '',
+    line1:        initialData?.line1      ?? '',
+    city:         initialData?.city       ?? '',
+    province:     initialData?.province   ?? '',
+    zip:          initialData?.zip        ?? '',
+    phone:        initialData?.phone      ?? '',
+    referencia:   initialData?.referencia ?? '',
+    setAsDefault: false,
   });
   // Teléfono Venezuela (opcional)
   const [phoneVeOp, setPhoneVeOp] = useState('');
@@ -398,10 +414,10 @@ export const OriginModal = ({ onSave, onClose, saving }) => {
   };
 
   return (
-    <div className="addr-modal-backdrop" onClick={onClose}>
-      <div className="addr-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="addr-modal-backdrop">
+      <div className="addr-modal">
         <div className="addr-modal__header">
-          <h3>🇺🇸 {t('us_wizard.origin_modal_title')}</h3>
+          <h3>🇺🇸 {isEditing ? 'Editar dirección USA' : t('us_wizard.origin_modal_title')}</h3>
           <button className="addr-modal__close" onClick={onClose} disabled={saving}>✕</button>
         </div>
 
@@ -513,7 +529,7 @@ export const OriginModal = ({ onSave, onClose, saving }) => {
         <div className="addr-modal__footer">
           <button className="btn-wizard-back" onClick={onClose} disabled={saving}>{t('common.cancel')}</button>
           <button className="btn-wizard-next" onClick={handleSave} disabled={saving}>
-            {saving ? t('us_wizard.saving') : t('us_wizard.save_address')}
+            {saving ? t('us_wizard.saving') : isEditing ? 'Guardar cambios' : t('us_wizard.save_address')}
           </button>
         </div>
       </div>
@@ -525,22 +541,31 @@ export const OriginModal = ({ onSave, onClose, saving }) => {
 // ██  MODAL — DESTINO (Venezuela) 🇻🇪
 //     Lógica idéntica a /profile/addresses de la app
 // ════════════════════════════════════════════════════════════════════════════
-export const DestinationModal = ({ onSave, onClose, saving }) => {
+// Quita el prefijo "Domicilio: " o "Retiro en tienda: " del alias
+const stripAliasPrefix = (alias) =>
+  (alias ?? '').replace(/^(Domicilio:\s*|Retiro en tienda:\s*)/i, '');
+
+export const DestinationModal = ({ onSave, onClose, saving, initialData }) => {
   const { t } = useTranslation();
+  const isEditing = !!initialData;
+
   // ── Tipo de entrega ────────────────────────────────────────────────────────
-  const [tipo, setTipo] = useState('home'); // 'store' | 'home'
+  const [tipo, setTipo] = useState(initialData?.tipoDireccion ?? 'home');
 
   // ── Estado del formulario TIENDA ──────────────────────────────────────────
-  const [storeForm, setStoreForm] = useState({ city: '', store: '' });
+  const [storeForm, setStoreForm] = useState({
+    city:  '',
+    store: initialData?.idLocker?.toString() ?? '',
+  });
 
   // ── Estado del formulario DOMICILIO ───────────────────────────────────────
   const [homeForm, setHomeForm] = useState({
-    alias:     '',
-    idEstado:  '',
-    idMunicipio: '',
-    idParroquia: '',
-    direccion:   '',
-    referencia:  '',
+    alias:        initialData?.tipoDireccion === 'home' ? stripAliasPrefix(initialData?.alias) : '',
+    idEstado:     initialData?.idEstado?.toString()    ?? '',
+    idMunicipio:  initialData?.idMunicipio?.toString() ?? '',
+    idParroquia:  initialData?.idParroquia?.toString() ?? '',
+    direccion:    initialData?.line1                   ?? '',
+    referencia:   initialData?.referencia              ?? '',
     setAsDefault: false,
   });
 
@@ -573,6 +598,10 @@ export const DestinationModal = ({ onSave, onClose, saving }) => {
   const setStore = (k, v) => setStoreForm((p) => ({ ...p, [k]: v }));
   const setHome  = (k, v) => setHomeForm((p) => ({ ...p, [k]: v }));
 
+  // Evitar que los effects reset municipio/parroquia en la carga inicial al editar
+  const skipEstadoReset    = React.useRef(!!initialData);
+  const skipMunicipioReset = React.useRef(!!initialData);
+
   // ── Tiendas filtradas por ciudad (idZonaCiudad) ────────────────────────────
   // Mismo patrón que DeliveryOption.jsx → filteredStores
   const filteredTiendas = useMemo(() => {
@@ -595,6 +624,27 @@ export const DestinationModal = ({ onSave, onClose, saving }) => {
     fetchVenezuelaStates().then(setEstados);
   }, []);
 
+  // ── Pre-cargar geo data cuando se edita una dirección existente ─────────────
+  useEffect(() => {
+    if (!initialData?.idEstado) return;
+    setLoadingGeo(true);
+    fetchMunicipios(initialData.idEstado)
+      .then((munis) => {
+        setMunicipios(munis);
+        if (initialData.idMunicipio) {
+          return fetchParroquias(initialData.idMunicipio).then(setParroquias);
+        }
+      })
+      .finally(() => setLoadingGeo(false));
+  }, []); // eslint-disable-line
+
+  // ── Pre-rellenar ciudad de la tienda cuando allTiendas cargue ──────────────
+  useEffect(() => {
+    if (!initialData?.idLocker || !allTiendas.length) return;
+    const tienda = allTiendas.find((t) => t.id === Number(initialData.idLocker));
+    if (tienda?.idZonaCiudad) setStore('city', tienda.idZonaCiudad.toString());
+  }, [allTiendas]); // eslint-disable-line
+
   // ── Limpiar tienda al cambiar ciudad ──────────────────────────────────────
   useEffect(() => {
     setStore('store', '');
@@ -614,22 +664,26 @@ export const DestinationModal = ({ onSave, onClose, saving }) => {
       .then(setMunicipios)
       .catch(() => toast.error(t('us_wizard.error_load_municipios')))
       .finally(() => setLoadingGeo(false));
-    setHome('idMunicipio', '');
-    setHome('idParroquia', '');
-  }, [homeForm.idEstado]);
+    if (!skipEstadoReset.current) {
+      setHome('idMunicipio', '');
+      setHome('idParroquia', '');
+    }
+    skipEstadoReset.current = false;
+  }, [homeForm.idEstado]); // eslint-disable-line
 
   // ── Cargar parroquias al cambiar municipio ────────────────────────────────
   useEffect(() => {
     if (!homeForm.idMunicipio) {
       setParroquias([]);
-      setHome('idParroquia', '');
+      if (!skipMunicipioReset.current) setHome('idParroquia', '');
       return;
     }
     fetchParroquias(homeForm.idMunicipio)
       .then(setParroquias)
       .catch(() => toast.error(t('us_wizard.error_load_parroquias')));
-    setHome('idParroquia', '');
-  }, [homeForm.idMunicipio]);
+    if (!skipMunicipioReset.current) setHome('idParroquia', '');
+    skipMunicipioReset.current = false;
+  }, [homeForm.idMunicipio]); // eslint-disable-line
 
   // ── Validación ─────────────────────────────────────────────────────────────
   const validate = () => {
@@ -688,8 +742,11 @@ export const DestinationModal = ({ onSave, onClose, saving }) => {
 
     if (tipo === 'store') {
       const tiendaSeleccionada = allTiendas.find((t) => t.id === parseInt(storeForm.store));
+      const estadoNombre = estados.find((e) => e.id === tiendaSeleccionada?.idEstado)?.name ?? '';
       onSave({
         alias:         tiendaSeleccionada?.nombre ?? '',
+        nombreLocker:  tiendaSeleccionada?.nombre ?? '',
+        city:          estadoNombre,
         tipoDireccion: 'store',
         idLocker:      Number(storeForm.store),
         idEstado:      tiendaSeleccionada?.idEstado ?? null,
@@ -718,10 +775,10 @@ export const DestinationModal = ({ onSave, onClose, saving }) => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="addr-modal-backdrop" onClick={onClose}>
-      <div className="addr-modal addr-modal--wide" onClick={(e) => e.stopPropagation()}>
+    <div className="addr-modal-backdrop">
+      <div className="addr-modal addr-modal--wide">
         <div className="addr-modal__header">
-          <h3>🇻🇪 {t('us_wizard.dest_modal_title')}</h3>
+          <h3>🇻🇪 {isEditing ? 'Editar dirección Venezuela' : t('us_wizard.dest_modal_title')}</h3>
           <button className="addr-modal__close" onClick={onClose} disabled={saving}>✕</button>
         </div>
 
@@ -991,7 +1048,7 @@ export const DestinationModal = ({ onSave, onClose, saving }) => {
         <div className="addr-modal__footer">
           <button className="btn-wizard-back" onClick={onClose} disabled={saving}>{t('common.cancel')}</button>
           <button className="btn-wizard-next" onClick={handleSave} disabled={saving}>
-            {saving ? t('us_wizard.saving') : t('us_wizard.save_address')}
+            {saving ? t('us_wizard.saving') : isEditing ? 'Guardar cambios' : t('us_wizard.save_address')}
           </button>
         </div>
       </div>
@@ -1016,6 +1073,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const [destList,        setDestList]        = useState([]);
   const [loading,         setLoading]         = useState({ origin: true, dest: true });
   const [saving,          setSaving]          = useState(false);
+  // modal: null | { type: 'origin'|'dest', editData?: object }
   const [modal,           setModal]           = useState(null);
   const [viewDetail,      setViewDetail]      = useState(null);
   const [errors,          setErrors]          = useState({});
@@ -1147,23 +1205,44 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
 
   // ── Guardar dirección ORIGEN ───────────────────────────────────────────────
   const handleSaveOrigin = async (formData) => {
+    const editId = modal?.editData?.id;
+
     // Guest: guardar local, sincronizar al backend tras autenticación
     if (!user) {
-      const localId = `local_${Date.now()}`;
+      const localId = editId ?? `local_${Date.now()}`;
       const card = {
         id: localId, alias: formData.alias, line1: formData.line1,
         city: formData.city, province: formData.province ?? '',
         zip: formData.zip ?? '', phone: formData.phone ?? '',
         esPredeterminada: true,
       };
-      setOriginList([card]);
+      setOriginList(editId ? (p) => p.map((a) => (a.id === editId ? card : a)) : [card]);
       updateData({ originAddressId: localId, localOriginFormData: { ...formData, setAsDefault: true } });
       setModal(null);
-      toast.success(t('us_wizard.origin_saved'));
+      toast.success(editId ? 'Dirección actualizada.' : t('us_wizard.origin_saved'));
       return;
     }
 
     setSaving(true);
+
+    if (editId) {
+      const res = await updateUsaOriginAddress({ clientId, addressId: editId, ...formData });
+      setSaving(false);
+      if (!res.success) { toast.error(res.message); return; }
+      setOriginList((p) => p.map((a) => a.id === editId ? {
+        ...a,
+        alias:    res.data.alias,
+        line1:    res.data.line1,
+        city:     res.data.city,
+        province: res.data.province,
+        zip:      res.data.zip,
+        phone:    res.data.phone,
+      } : a));
+      setModal(null);
+      toast.success('Dirección actualizada correctamente.');
+      return;
+    }
+
     const res = await addUsaOriginAddress({ clientId, ...formData, idPais: 2 });
     setSaving(false);
     if (!res.success) { toast.error(res.message); return; }
@@ -1189,12 +1268,16 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
 
   // ── Guardar dirección DESTINO ──────────────────────────────────────────────
   const handleSaveDestination = async (formData) => {
-    // Guest: guardar local, sincronizar al backend tras autenticación
+    const editId = modal?.editData?.id;
+
+    // Guest: guardar local
     if (!user) {
-      const localId = `local_${Date.now()}`;
+      const localId = editId ?? `local_${Date.now()}`;
       const card = {
         id: localId,
         alias: formData.alias ?? formData.direccion ?? '',
+        nombreLocker: formData.nombreLocker ?? null,
+        city: formData.city ?? null,
         line1: formData.direccion ?? '',
         tipoDireccion: formData.tipoDireccion,
         esPredeterminada: true,
@@ -1202,14 +1285,33 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         idMunicipio: formData.idMunicipio ?? null,
         idLocker: formData.idLocker ?? null,
       };
-      setDestList([card]);
+      setDestList(editId ? (p) => p.map((a) => (a.id === editId ? card : a)) : [card]);
       updateData({ destinationAddressId: localId, localDestFormData: { ...formData, setAsDefault: true } });
       setModal(null);
-      toast.success(t('us_wizard.dest_saved'));
+      toast.success(editId ? 'Dirección actualizada.' : t('us_wizard.dest_saved'));
       return;
     }
 
     setSaving(true);
+
+    if (editId) {
+      const res = await updateDestinationAddress({ clientId, addressId: editId, ...formData });
+      setSaving(false);
+      if (!res.success) { toast.error(res.message); return; }
+      setDestList((p) => p.map((a) => a.id === editId ? {
+        ...a,
+        alias:         res.data.alias,
+        tipoDireccion: res.data.tipoDireccion,
+        line1:         formData.direccion ?? a.line1,
+        idEstado:      formData.idEstado    ?? a.idEstado,
+        idMunicipio:   formData.idMunicipio ?? a.idMunicipio,
+        idLocker:      formData.idLocker    ?? a.idLocker,
+      } : a));
+      setModal(null);
+      toast.success('Dirección actualizada correctamente.');
+      return;
+    }
+
     const res = await addDestinationAddress({ clientId, ...formData });
     setSaving(false);
     if (!res.success) { toast.error(res.message); return; }
@@ -1217,12 +1319,18 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
     const card = {
       id:               res.data.id,
       alias:            res.data.alias,
+      nombreLocker:     formData.nombreLocker ?? res.data.nombreLocker ?? null,
+      city:             formData.city         ?? res.data.city         ?? null,
       line1:            formData.direccion ?? '',
       tipoDireccion:    formData.tipoDireccion,
       esPredeterminada: res.data.esPredeterminada ?? formData.setAsDefault,
       idEstado:         res.data.idEstado   ?? formData.idEstado   ?? null,
       idMunicipio:      res.data.idMunicipio ?? formData.idMunicipio ?? null,
       idLocker:         formData.idLocker ?? null,
+      contactoNombres:   formData.contactoNombres   ?? null,
+      contactoApellidos: formData.contactoApellidos ?? null,
+      contactoEmail:     formData.contactoEmail     ?? null,
+      contactoTelefono:  formData.contactoTelefono  ?? null,
     };
     setDestList((p) => {
       const lista = formData.setAsDefault ? p.map((a) => ({ ...a, esPredeterminada: false })) : [...p];
@@ -1328,7 +1436,8 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
               loading={loading.origin}
               onSelect={(id) => { updateData({ originAddressId: id }); setErrors((p) => ({ ...p, origin: null })); }}
               onView={(id) => { const a = originList.find((x) => x.id === id); if (a) setViewDetail({ type: 'origin', data: a }); }}
-              onAdd={() => setModal('origin')}
+              onEdit={(addr) => setModal({ type: 'origin', editData: addr })}
+              onAdd={() => setModal({ type: 'origin' })}
               onDelete={(id) => handleDelete('origin', id)}
               onSetDefault={(id) => handleSetDefault('origin', id)}
             />
@@ -1340,7 +1449,8 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
               loading={loading.dest}
               onSelect={(id) => { updateData({ destinationAddressId: id }); setErrors((p) => ({ ...p, dest: null })); }}
               onView={(id) => { const a = destList.find((x) => x.id === id); if (a) setViewDetail({ type: 'dest', data: a }); }}
-              onAdd={() => setModal('dest')}
+              onEdit={(addr) => setModal({ type: 'dest', editData: addr })}
+              onAdd={() => setModal({ type: 'dest' })}
               onDelete={(id) => handleDelete('dest', id)}
               onSetDefault={(id) => handleSetDefault('dest', id)}
             />
@@ -1359,11 +1469,11 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         </button>
       </div>
 
-      {modal === 'origin' && (
-        <OriginModal onSave={handleSaveOrigin} onClose={() => setModal(null)} saving={saving} />
+      {modal?.type === 'origin' && (
+        <OriginModal onSave={handleSaveOrigin} onClose={() => setModal(null)} saving={saving} initialData={modal?.editData} />
       )}
-      {modal === 'dest' && (
-        <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas}  />
+      {modal?.type === 'dest' && (
+        <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas} initialData={modal?.editData} />
       )}
 
       {showLoginModal && (

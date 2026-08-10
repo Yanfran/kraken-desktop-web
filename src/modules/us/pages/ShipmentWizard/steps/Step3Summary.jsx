@@ -1,6 +1,7 @@
 // src/modules/es/pages/ShipmentWizard/steps/Step3Summary.jsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../../../../contexts/AuthContext';
 import {
   IoCreateOutline,
   IoWarningOutline,
@@ -35,7 +36,7 @@ const CostRow = ({ label, valueUSD, isDiscount }) => (
 );
 
 // ── Bloque de dirección legible ───────────────────────────────────────────────
-const AddressBlock = ({ address, flag, onEdit }) => {
+const AddressBlock = ({ address, flag, onEdit, senderName, senderEmail }) => {
   const { t } = useTranslation();
 
   if (!address) {
@@ -51,26 +52,42 @@ const AddressBlock = ({ address, flag, onEdit }) => {
 
   const esStore = address.tipoDireccion === 'store';
 
+  // Línea combinada ciudad + estado + ZIP para direcciones USA
+  const cityLine = [address.city, address.province].filter(Boolean).join(', ')
+    + (address.zip ? ` ${address.zip}` : '');
+
+  // Datos del contacto de destino
+  const contactName = address.contactoNombres
+    ? `${address.contactoNombres} ${address.contactoApellidos ?? ''}`.trim()
+    : null;
+  const contactEmail    = address.contactoEmail    ?? null;
+  const contactPhone    = address.contactoTelefono ?? null;
+
   return (
     <div className="summary-addr">
+      {/* Nombre del remitente/contacto */}
+      {senderName  && <p className="summary-addr__contact">👤 {senderName}</p>}
+      {senderEmail && <p className="summary-addr__contact">✉️ {senderEmail}</p>}
+      {contactName  && <p className="summary-addr__contact">👤 {contactName}</p>}
+      {contactEmail && <p className="summary-addr__contact">✉️ {contactEmail}</p>}
+      {contactPhone && !address.phone && <p className="summary-addr__contact">📞 {contactPhone}</p>}
+
       <p className="summary-addr__name">
         {flag} {address.alias || address.nombreLocker || t('us_wizard.no_name')}
       </p>
 
       {esStore ? (
         <>
-          {address.nombreLocker && <p className="summary-addr__line">🏪 {address.nombreLocker}</p>}
-          {address.line1        && <p className="summary-addr__line">{address.line1}</p>}
+          {address.city        && <p className="summary-addr__line">📍 {address.city}</p>}
+          {address.nombreLocker && !address.alias?.includes(address.nombreLocker) && (
+            <p className="summary-addr__line">🏪 {address.nombreLocker}</p>
+          )}
+          {address.line1       && <p className="summary-addr__line">{address.line1}</p>}
         </>
       ) : (
         <>
           {address.line1      && <p className="summary-addr__line">{address.line1}</p>}
-          {address.city       && (
-            <p className="summary-addr__line">
-              {address.city}{address.zip ? ` - ${address.zip}` : ''}
-            </p>
-          )}
-          {address.province   && <p className="summary-addr__line">{address.province}</p>}
+          {cityLine.trim()    && <p className="summary-addr__line">{cityLine}</p>}
           {address.phone      && <p className="summary-addr__line">📞 {address.phone}</p>}
           {address.direccion  && <p className="summary-addr__line">📍 {address.direccion}</p>}
           {address.referencia && (
@@ -87,6 +104,12 @@ const AddressBlock = ({ address, flag, onEdit }) => {
 // ── Componente principal ──────────────────────────────────────────────────────
 const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
+
+  const senderName  = user
+    ? `${user.nombre ?? ''} ${user.apellido ?? ''}`.trim()
+    : `${data.senderName ?? ''} ${data.senderLastName ?? ''}`.trim() || null;
+  const senderEmail = user?.email ?? data.senderEmail ?? null;
 
   const pkg   = data.packages[0];
   const isDoc = pkg?.tipoPaquete === 'Documento';
@@ -188,7 +211,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
               <h3 className="summary-section__title">{t('us_wizard.pickup_address')}</h3>
               <button className="summary-section__edit" onClick={editAddr} title="Editar dirección"><IoCreateOutline size={16} /></button>
             </div>
-            <AddressBlock address={data.selectedOriginAddress} flag="🇺🇸" onEdit={editAddr} />
+            <AddressBlock address={data.selectedOriginAddress} flag="🇺🇸" onEdit={editAddr} senderName={senderName} senderEmail={senderEmail} />
           </section>
 
           <div className="wizard-divider" />
@@ -225,7 +248,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                   <IoTimeOutline size={14} style={{ verticalAlign: 'middle' }} /> {fmtTime(data.pickupReadyTime)} – {fmtTime(data.pickupCloseTime)}
                 </p>
                 {pickupRate > 0 && (
-                  <p className="summary-addr__line" style={{ color: '#1e40af', fontWeight: '600' }}>
+                  <p className="summary-addr__line" style={{ fontWeight: '600' }}>
                     <IoCashOutline size={14} style={{ verticalAlign: 'middle' }} /> +${pickupRate.toFixed(2)} USD (tarifa recogida)
                   </p>
                 )}
@@ -275,7 +298,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                 {/* ✅ Línea UPS si hay courierQuote */}
                 {data.courierQuote && (
                   <CostRow
-                    label={<><IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> {data.courierQuote.courier ?? 'UPS'} {data.courierQuote.service ?? 'Ground'} (Flete USA)</>}
+                    label={<><IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> {data.courierQuote.service ?? data.courierQuote.courier ?? 'UPS Ground'} (Flete USA)</>}
                     valueUSD={fmtUSD(data.courierQuote.total ?? 0)}
                     isDiscount={false}
                   />
@@ -303,7 +326,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
               {/* ── Total incluyendo UPS ─────────────────────────────── */}
               <div className="cost-total cost-total--espana">
                 <span className="cost-total__label">Total PREPAID</span>
-                <span className="cost-total__usd" style={{ color: '#fff', fontSize: '18px', fontFamily: 'Courier New, monospace' }}>
+                <span className="cost-total__usd">
                   {fmtUSD(grandTotal)}
                 </span>
               </div>

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Loading from '../common/Loading/Loading';
-import LanguageToggle from '../common/LanguageToggle/LanguageToggle';
 
 // ===== RUTA PROTEGIDA =====
 export const ProtectedRoute = ({ children }) => {
@@ -69,12 +68,7 @@ export const PublicRoute = ({ children }) => {
     return <Navigate to="/complete-profile" replace />;
   }
 
-  return (
-    <>
-      <LanguageToggle />
-      {children}
-    </>
-  );
+  return children;
 };
 
 // ===== RUTA SEMI-PROTEGIDA (para procesos de verificación) =====
@@ -92,10 +86,5 @@ export const SemiProtectedRoute = ({ children, requireAuth = false }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return (
-    <>
-      <LanguageToggle />
-      {children}
-    </>
-  );
+  return children;
 };
