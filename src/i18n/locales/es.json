@@ -123,7 +123,7 @@
     "welcome_go_dashboard": "Ir a mi cuenta",
     "welcome_help_text": "¿Tienes dudas? Revisa",
     "welcome_how_it_works": "cómo funciona",
-    "complete_verified": "Tu cuenta ha sido verificada",
+    "complete_verified": "Tu cuenta {{email}} ha sido verificada",
     "complete_desc": "Solo necesitamos unos últimos datos para que podamos traer tus compras online.",
     "complete_card_title": "Completa tu perfil para acceder a todas las funcionalidades",
     "complete_processing": "Procesando...",

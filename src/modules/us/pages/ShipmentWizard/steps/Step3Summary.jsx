@@ -52,44 +52,41 @@ const AddressBlock = ({ address, flag, onEdit, senderName, senderEmail }) => {
 
   const esStore = address.tipoDireccion === 'store';
 
-  // Línea combinada ciudad + estado + ZIP para direcciones USA
   const cityLine = [address.city, address.province].filter(Boolean).join(', ')
     + (address.zip ? ` ${address.zip}` : '');
 
-  // Datos del contacto de destino
   const contactName = address.contactoNombres
     ? `${address.contactoNombres} ${address.contactoApellidos ?? ''}`.trim()
     : null;
-  const contactEmail    = address.contactoEmail    ?? null;
-  const contactPhone    = address.contactoTelefono ?? null;
+
+  // Datos unificados: props de remitente (origen) tienen prioridad; si no, los del contacto guardado (destino)
+  const displayName  = senderName  || contactName                          || null;
+  const displayEmail = senderEmail || address.contactoEmail                || null;
+  const displayPhone = address.contactoTelefono ?? address.phone           ?? null;
 
   return (
     <div className="summary-addr">
-      {/* Nombre del remitente/contacto */}
-      {senderName  && <p className="summary-addr__contact">👤 {senderName}</p>}
-      {senderEmail && <p className="summary-addr__contact">✉️ {senderEmail}</p>}
-      {contactName  && <p className="summary-addr__contact">👤 {contactName}</p>}
-      {contactEmail && <p className="summary-addr__contact">✉️ {contactEmail}</p>}
-      {contactPhone && !address.phone && <p className="summary-addr__contact">📞 {contactPhone}</p>}
-
+      {/* Alias / nombre del locker */}
       <p className="summary-addr__name">
         {flag} {address.alias || address.nombreLocker || t('us_wizard.no_name')}
       </p>
 
+      {/* Nombre y Apellido */}
+      {displayName && <p className="summary-addr__contact">👤 {displayName}</p>}
+
       {esStore ? (
         <>
-          {address.city        && <p className="summary-addr__line">📍 {address.city}</p>}
+          {address.city && <p className="summary-addr__line">📍 {address.city}</p>}
           {address.nombreLocker && !address.alias?.includes(address.nombreLocker) && (
             <p className="summary-addr__line">🏪 {address.nombreLocker}</p>
           )}
-          {address.line1       && <p className="summary-addr__line">{address.line1}</p>}
+          {address.line1 && <p className="summary-addr__line">{address.line1}</p>}
         </>
       ) : (
         <>
-          {address.line1      && <p className="summary-addr__line">{address.line1}</p>}
-          {cityLine.trim()    && <p className="summary-addr__line">{cityLine}</p>}
-          {address.phone      && <p className="summary-addr__line">📞 {address.phone}</p>}
-          {address.direccion  && <p className="summary-addr__line">📍 {address.direccion}</p>}
+          {address.line1     && <p className="summary-addr__line">{address.line1}</p>}
+          {cityLine.trim()   && <p className="summary-addr__line">{cityLine}</p>}
+          {address.direccion && <p className="summary-addr__line">📍 {address.direccion}</p>}
           {address.referencia && (
             <p className="summary-addr__line" style={{ color: '#9ca3af' }}>
               Ref: {address.referencia}
@@ -97,6 +94,10 @@ const AddressBlock = ({ address, flag, onEdit, senderName, senderEmail }) => {
           )}
         </>
       )}
+
+      {/* Teléfono y Email al final */}
+      {displayPhone && <p className="summary-addr__contact">📞 {displayPhone}</p>}
+      {displayEmail && <p className="summary-addr__contact">✉️ {displayEmail}</p>}
     </div>
   );
 };
@@ -107,7 +108,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
   const { user } = useAuth();
 
   const senderName  = user
-    ? `${user.nombre ?? ''} ${user.apellido ?? ''}`.trim()
+    ? `${user.nombre ?? user.name ?? ''} ${user.apellido ?? user.lastName ?? ''}`.trim() || null
     : `${data.senderName ?? ''} ${data.senderLastName ?? ''}`.trim() || null;
   const senderEmail = user?.email ?? data.senderEmail ?? null;
 
@@ -275,7 +276,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
       <div className="step3-layout__right">
         <div className="cost-card" style={{ borderTop: '4px solid #022364' }}>
           <h3 className="cost-card__title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🇺🇸 {t('us_wizard.rate_detail')}
+            🇺🇸 Resumen de Tarifa
           </h3>
 
           {!calc ? (

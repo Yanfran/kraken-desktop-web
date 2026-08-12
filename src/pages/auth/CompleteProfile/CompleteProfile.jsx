@@ -48,6 +48,7 @@ const CompleteProfile = () => {
   const navigate = useNavigate();
   const { actualTheme } = useTheme();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [isCompleting, setIsCompleting] = useState(false);
 
   // Completar perfil con loading visible
@@ -108,7 +109,7 @@ const CompleteProfile = () => {
         <div className="kraken-complete-profile__verification-badge">
           <span className="kraken-complete-profile__check-icon">✓</span>
           <span className="kraken-complete-profile__verification-text">
-            {t('auth.complete_verified')}
+            {t('auth.complete_verified', { email: user?.email ?? '' })}
           </span>
         </div>
 

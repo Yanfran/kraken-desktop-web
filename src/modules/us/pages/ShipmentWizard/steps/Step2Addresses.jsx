@@ -17,6 +17,7 @@ import {
   IoWarningOutline,
   IoHomeOutline,
   IoPersonOutline,
+  IoMailOutline,
   IoEyeOutline,
   IoCloseOutline,
   IoPencilOutline,
@@ -227,8 +228,15 @@ const DocIdentInput = ({ country, docType, docNum, onCountryChange, onTypeChange
 // ════════════════════════════════════════════════════════════════════════════
 // ██  TARJETA DE DIRECCIÓN
 // ════════════════════════════════════════════════════════════════════════════
-const AddressCard = ({ address, selected, onSelect, onView, onEdit, onDelete, onSetDefault, flag }) => {
+const AddressCard = ({ address, selected, onSelect, onView, onEdit, onDelete, onSetDefault, flag, userInfo }) => {
   const { t } = useTranslation();
+
+  const displayName = address.contactoNombres
+    ? `${address.contactoNombres} ${address.contactoApellidos ?? ''}`.trim()
+    : userInfo?.name ?? null;
+  const displayPhone = address.contactoTelefono ?? address.phone ?? null;
+  const displayEmail = address.contactoEmail ?? userInfo?.email ?? null;
+
   return (
   <button
     type="button"
@@ -242,16 +250,20 @@ const AddressCard = ({ address, selected, onSelect, onView, onEdit, onDelete, on
 
     <div className="addr-card__body">
       <p className="addr-card__alias">{flag} {address.alias}</p>
+      {displayName && (
+        <p className="addr-card__line"><IoPersonOutline size={13} style={{ verticalAlign: 'middle' }} /> {displayName}</p>
+      )}
       <p className="addr-card__line">{address.line1}</p>
       {address.city && (
         <p className="addr-card__line">
           {address.city}{address.zip ? ` - ${address.zip}` : ''}
         </p>
       )}
-      {address.phone && <p className="addr-card__phone"><IoCallOutline size={13} style={{ verticalAlign: 'middle' }} /> {address.phone}</p>}
       {address.tipoDireccion === 'store' && address.nombreLocker && (
         <p className="addr-card__line"><IoStorefrontOutline size={13} style={{ verticalAlign: 'middle' }} /> {address.nombreLocker}</p>
       )}
+      {displayPhone && <p className="addr-card__phone"><IoCallOutline size={13} style={{ verticalAlign: 'middle' }} /> {displayPhone}</p>}
+      {displayEmail && <p className="addr-card__line"><IoMailOutline size={13} style={{ verticalAlign: 'middle' }} /> {displayEmail}</p>}
     </div>
 
     <div className="addr-card__actions" onClick={(e) => e.stopPropagation()}>
@@ -287,7 +299,7 @@ const AddressCard = ({ address, selected, onSelect, onView, onEdit, onDelete, on
 // ════════════════════════════════════════════════════════════════════════════
 const AddressColumn = ({
   title, flag, country, addresses, selectedId,
-  onSelect, onView, onEdit, onAdd, onDelete, onSetDefault, loading,
+  onSelect, onView, onEdit, onAdd, onDelete, onSetDefault, loading, userInfo,
 }) => {
   const { t } = useTranslation();
   return (
@@ -318,6 +330,7 @@ const AddressColumn = ({
             onDelete={onDelete}
             onSetDefault={onSetDefault}
             flag={flag}
+            userInfo={userInfo}
           />
         ))}
         {addresses.length < 4 ? (
@@ -1434,6 +1447,10 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
               title={t('us_wizard.origin_label')} flag="🇺🇸" country="USA"
               addresses={originList} selectedId={data.originAddressId}
               loading={loading.origin}
+              userInfo={user
+                ? { name: [user.name, user.lastName].filter(Boolean).join(' '), email: user.email }
+                : { name: [senderName, senderLastName].filter(Boolean).join(' '), email: senderEmail }
+              }
               onSelect={(id) => { updateData({ originAddressId: id }); setErrors((p) => ({ ...p, origin: null })); }}
               onView={(id) => { const a = originList.find((x) => x.id === id); if (a) setViewDetail({ type: 'origin', data: a }); }}
               onEdit={(addr) => setModal({ type: 'origin', editData: addr })}

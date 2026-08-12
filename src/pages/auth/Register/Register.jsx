@@ -37,10 +37,11 @@ const Register = () => {
   const [showPasswordValidator, setShowPasswordValidator] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showCountryModal, setShowCountryModal] = useState(false);
-  // Selector de país inline para registro con email
   const [clientPrefix, setClientPrefix] = useState('KV');
-  // Ref síncrona para el callback de Google
+  // Ref síncrona para el callback de Google (evita closure stale)
   const selectedPrefixRef = useRef('KV');
+  // true cuando el modal se abre desde el flujo email (no Google)
+  const [pendingEmailSubmit, setPendingEmailSubmit] = useState(false);
 
   // Manejar cambios en inputs
   const handleInputChange = (field, value) => {
@@ -81,13 +82,54 @@ const Register = () => {
   };
 
   const handleGoogleButtonClick = () => {
+    setPendingEmailSubmit(false);
     setShowCountryModal(true);
   };
 
   const handleCountrySelected = (prefix) => {
     selectedPrefixRef.current = prefix;
+    setClientPrefix(prefix);
     setShowCountryModal(false);
-    googleLogin();
+
+    if (pendingEmailSubmit) {
+      setPendingEmailSubmit(false);
+      doSignUp(prefix);
+    } else {
+      googleLogin();
+    }
+  };
+
+  const doSignUp = async (prefix) => {
+    try {
+      const result = await signUp({
+        name: formData.name.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        clientPrefix: prefix,
+        fromWizard: prefix === 'KU',
+      });
+
+      if (result.success) {
+        toast.success(t('auth.register_success'));
+        if (prefix === 'KU') {
+          navigate('/pickup');
+        } else {
+          navigate('/email-confirmation', { state: { email: formData.email } });
+        }
+      } else {
+        if (result.field) {
+          setErrors({ [result.field]: result.message });
+        } else {
+          setErrors({ submit: result.message });
+        }
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Error en registro:', error);
+      setErrors({ submit: t('auth.connection_error') });
+      toast.error(t('auth.connection_error'));
+    }
   };
 
   // Configurar Google Login
@@ -118,14 +160,13 @@ const Register = () => {
     },
   });
 
-  // Manejar submit del formulario
-  const handleSubmit = async (e) => {
+  // Valida el formulario y, si es correcto, abre el modal de país
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validar campos básicos
     const newErrors = {};
-    
     const nameRegex = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/;
+
     if (!formData.name.trim()) {
       newErrors.name = t('auth.name_required');
     } else if (!nameRegex.test(formData.name.trim())) {
@@ -158,37 +199,10 @@ const Register = () => {
       toast.error(t('auth.register_form_errors'));
       return;
     }
-    
-    try {
-      const result = await signUp({
-        name: formData.name.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        clientPrefix,
-        fromWizard: clientPrefix === 'KU',
-      });
 
-      if (result.success) {
-        toast.success(t('auth.register_success'));
-        if (clientPrefix === 'KU') {
-          navigate('/pickup');
-        } else {
-          navigate('/email-confirmation', { state: { email: formData.email } });
-        }
-      } else {
-        if (result.field) {
-          setErrors({ [result.field]: result.message });
-        } else {
-          setErrors({ submit: result.message });
-        }
-        toast.error(result.message);
-      }
-    } catch (error) {
-      console.error('Error en registro:', error);
-      setErrors({ submit: t('auth.connection_error') });
-      toast.error(t('auth.connection_error'));
-    }
+    // Formulario válido → pedir país de residencia antes de registrar
+    setPendingEmailSubmit(true);
+    setShowCountryModal(true);
   };
 
   return (
@@ -219,28 +233,6 @@ const Register = () => {
 
         {/* Título */}
         <h1 className="kraken-register__title">{t('auth.register_title')}</h1>
-
-        {/* Selector de país inline */}
-        <div className="country-selector">
-          {COUNTRY_OPTIONS.map((opt) => (
-            <button
-              key={opt.prefix}
-              type="button"
-              disabled={opt.disabled}
-              className={`country-selector__btn${clientPrefix === opt.prefix ? ' country-selector__btn--active' : ''}${opt.disabled ? ' country-selector__btn--disabled' : ''}`}
-              onClick={() => !opt.disabled && setClientPrefix(opt.prefix)}
-            >
-              <img
-                src={`https://flagcdn.com/20x15/${opt.countryCode}.png`}
-                alt={opt.name}
-                width="20"
-                height="15"
-                style={{ borderRadius: '2px', opacity: opt.disabled ? 0.4 : 1 }}
-              />
-              <span>{opt.disabled ? `${opt.name} (Próx.)` : opt.name}</span>
-            </button>
-          ))}
-        </div>
 
         {/* Botón Google */}
         <button
@@ -432,8 +424,8 @@ const Register = () => {
     {showCountryModal && (
       <div className="country-modal-overlay" onClick={() => setShowCountryModal(false)}>
         <div className="country-modal" onClick={(e) => e.stopPropagation()}>
-          <h3 className="country-modal__title">País de Residencia</h3>
-          <p className="country-modal__subtitle">Selecciona tu país de residencia para continuar con Google</p>
+          <h3 className="country-modal__title">¿Dónde resides?</h3>
+          <p className="country-modal__subtitle">Selecciona tu país de residencia para crear tu cuenta</p>
           <div className="country-modal__options">
             {COUNTRY_OPTIONS.map((opt) => (
               <button

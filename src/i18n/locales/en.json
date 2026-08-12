@@ -123,7 +123,7 @@
     "welcome_go_dashboard": "Go to my account",
     "welcome_help_text": "Have questions? Check",
     "welcome_how_it_works": "how it works",
-    "complete_verified": "Your account has been verified",
+    "complete_verified": "Your account {{email}} has been verified",
     "complete_desc": "We just need a few more details so we can bring your online purchases to you.",
     "complete_card_title": "Complete your profile to access all features",
     "complete_processing": "Processing...",

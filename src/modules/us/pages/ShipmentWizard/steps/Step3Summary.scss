@@ -8,7 +8,7 @@ $text-muted: #6b7280;
 // ── Layout de dos columnas ────────────────────────────────────────────────────
 .step3-layout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 380px;
   gap: 1.5rem;
   align-items: start;
 
@@ -107,6 +107,11 @@ $text-muted: #6b7280;
     color: $text-muted;
     margin: 0 0 4px;
     strong { color: $text-main; }
+  }
+  &__contact {
+    font-size: 0.85rem;
+    color: $text-muted;
+    margin: 0 0 4px;
   }
 }
 
@@ -283,9 +288,9 @@ $text-muted: #6b7280;
   }
 
   &__usd {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    color: #111827;
+    color: #F05A22;
   }
 }
 

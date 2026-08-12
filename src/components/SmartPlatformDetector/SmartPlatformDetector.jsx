@@ -53,8 +53,10 @@ const SmartPlatformDetector = ({ children }) => {
       
       if (isProduction) {
         // En producción, detectar por hostname
-        isOnWebApp = currentHostname.includes('app.krakencourier.com');
-        isOnMobileApp = currentHostname.includes('m.krakencourier.com');
+        // Cualquier subdominio de krakencourier.com que no sea m. es la app web
+        // (cubre app.krakencourier.com, app-backup.krakencourier.com, etc.)
+        isOnMobileApp = currentHostname === 'm.krakencourier.com';
+        isOnWebApp = !isOnMobileApp;
       } else {
         // En desarrollo, detectar por puerto
         isOnWebApp = currentPort === '3000';
