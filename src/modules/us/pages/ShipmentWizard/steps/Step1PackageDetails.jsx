@@ -240,50 +240,98 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
           {isDoc ? (
             <DocumentIllustration />
           ) : (
-            <svg viewBox="0 0 340 200" className="pkg-form__box-svg" aria-hidden="true">
+            <svg viewBox="0 0 860 360" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="pkgBoxTitle pkgBoxDesc" className="pkg-form__box-svg">
+              <title id="pkgBoxTitle">Dimensiones del paquete</title>
+              <desc id="pkgBoxDesc">Caja con las cotas Alto, Ancho y Largo y su significado.</desc>
               <defs>
-                <linearGradient id="faceTop" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%"   stopColor="#e8c89a"/>
-                  <stop offset="100%" stopColor="#d4a96a"/>
+                <marker id="dimArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="#1E2A6E"/>
+                </marker>
+                <linearGradient id="gTop" x1="0" y1="0" x2="0.4" y2="1">
+                  <stop offset="0" stopColor="#E4C085"/>
+                  <stop offset="1" stopColor="#D4AB69"/>
                 </linearGradient>
-                <linearGradient id="faceLeft" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%"   stopColor="#c48a4a"/>
-                  <stop offset="100%" stopColor="#b87a38"/>
+                <linearGradient id="gFront" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="#D7AD6D"/>
+                  <stop offset="1" stopColor="#C99A57"/>
                 </linearGradient>
-                <linearGradient id="faceRight" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%"   stopColor="#d4a05a"/>
-                  <stop offset="100%" stopColor="#c49040"/>
+                <linearGradient id="gRight" x1="0" y1="0" x2="1" y2="0.4">
+                  <stop offset="0" stopColor="#C0935A"/>
+                  <stop offset="1" stopColor="#AB7F43"/>
                 </linearGradient>
-                <filter id="boxShadow" x="-10%" y="-10%" width="120%" height="130%">
-                  <feDropShadow dx="2" dy="6" stdDeviation="5" floodColor="#00000022"/>
+                <linearGradient id="gTape" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stopColor="#F1E3C1"/>
+                  <stop offset="1" stopColor="#E5D0A2"/>
+                </linearGradient>
+                <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="6"/>
                 </filter>
               </defs>
-              <polygon points="60,70  200,30  280,65  140,105" fill="url(#faceTop)" stroke="#a06830" strokeWidth="1" filter="url(#boxShadow)"/>
-              <polygon points="60,70  140,105  140,165  60,130" fill="url(#faceLeft)" stroke="#8a5820" strokeWidth="1"/>
-              <polygon points="140,105  280,65  280,125  140,165" fill="url(#faceRight)" stroke="#9a6828" strokeWidth="1"/>
-              <line x1="60" y1="70" x2="280" y2="65" stroke="#a06830" strokeWidth="1.5"/>
-              <line x1="140" y1="105" x2="140" y2="30" stroke="#a06830" strokeWidth="1" strokeOpacity="0.4"/>
-              <polygon points="60,84   200,44   214,50   74,90" fill="#1B2B6B" opacity="0.55"/>
-              <polygon points="164,30  178,34  158,108  144,104" fill="#1B2B6B" opacity="0.45"/>
-              <rect x="60" y="100" width="80" height="9" fill="#1B2B6B" opacity="0.35" transform="skewY(25)"/>
-              <line x1="99" y1="105" x2="99" y2="165" stroke="#1B2B6B" strokeWidth="8" strokeOpacity="0.30" transform="skewX(-5)"/>
-              <line x1="207" y1="80" x2="207" y2="148" stroke="#1B2B6B" strokeWidth="7" strokeOpacity="0.25"/>
-              <line x1="60"  y1="70"  x2="60"  y2="130" stroke="#7a4818" strokeWidth="1.5"/>
-              <line x1="280" y1="65"  x2="280" y2="125" stroke="#7a4818" strokeWidth="1.5"/>
-              <line x1="60"  y1="130" x2="140" y2="165" stroke="#7a4818" strokeWidth="1.5"/>
-              <line x1="140" y1="165" x2="280" y2="125" stroke="#7a4818" strokeWidth="1.5"/>
-              <line x1="294" y1="65" x2="294" y2="125" stroke="#555" strokeWidth="1.5"/>
-              <line x1="280" y1="65"  x2="297" y2="65"  stroke="#555" strokeWidth="1"/>
-              <line x1="280" y1="125" x2="297" y2="125" stroke="#555" strokeWidth="1"/>
-              <text x="300" y="100" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">{t('us_wizard.svg_alto')}</text>
-              <line x1="35" y1="70" x2="35" y2="130" stroke="#555" strokeWidth="1.5"/>
-              <line x1="35" y1="70"  x2="62" y2="70"  stroke="#555" strokeWidth="1"/>
-              <line x1="35" y1="130" x2="62" y2="130" stroke="#555" strokeWidth="1"/>
-              <text x="3" y="103" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">{t('us_wizard.svg_largo')}</text>
-              <line x1="140" y1="177" x2="280" y2="137" stroke="#555" strokeWidth="1.5"/>
-              <line x1="140" y1="165" x2="140" y2="180" stroke="#555" strokeWidth="1"/>
-              <line x1="280" y1="125" x2="280" y2="140" stroke="#555" strokeWidth="1"/>
-              <text x="185" y="190" fontSize="13" fill="#444" fontWeight="700" fontFamily="sans-serif">{t('us_wizard.svg_ancho')}</text>
+              <ellipse cx="255" cy="293" rx="132" ry="11" fill="#000000" opacity="0.09" filter="url(#soft)"/>
+              <polygon points="150,125 295,125 373,71 228,71" fill="url(#gTop)"/>
+              <polygon points="150,125 295,125 295,285 150,285" fill="url(#gFront)"/>
+              <polygon points="295,125 373,71 373,231 295,285" fill="url(#gRight)"/>
+              <polygon points="182,125 214,125 214,285 182,285" fill="url(#gTape)" opacity="0.55"/>
+              <polygon points="182,125 214,125 292,71 260,71" fill="url(#gTape)" opacity="0.65"/>
+              <line x1="198" y1="125" x2="198" y2="285" stroke="#FFFFFF" strokeWidth="1.2" opacity="0.30"/>
+              <line x1="198" y1="125" x2="276" y2="71" stroke="#FFFFFF" strokeWidth="1.2" opacity="0.30"/>
+              <path d="M150,285 L150,125 L228,71 L373,71 L373,231 L295,285 Z" fill="none" stroke="#96702F" strokeWidth="1.8" strokeLinejoin="round"/>
+              <path d="M150,125 L295,125 M295,125 L373,71 M295,125 L295,285" fill="none" stroke="#96702F" strokeWidth="1.8" strokeLinejoin="round"/>
+              <line x1="151" y1="125" x2="294" y2="125" stroke="#F0DCAE" strokeWidth="1" opacity="0.5"/>
+              <g stroke="#C7CCD6" strokeWidth="1.2">
+                <line x1="150" y1="125" x2="120" y2="125"/>
+                <line x1="150" y1="285" x2="120" y2="285"/>
+                <line x1="150" y1="285" x2="150" y2="315"/>
+                <line x1="295" y1="285" x2="295" y2="315"/>
+                <line x1="295" y1="285" x2="309" y2="303"/>
+                <line x1="373" y1="231" x2="387" y2="249"/>
+              </g>
+              <g stroke="#1E2A6E" strokeWidth="2" markerStart="url(#dimArrow)" markerEnd="url(#dimArrow)">
+                <line x1="125" y1="125" x2="125" y2="285"/>
+                <line x1="150" y1="312" x2="295" y2="312"/>
+                <line x1="309" y1="303" x2="387" y2="249"/>
+              </g>
+              <g fontFamily="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" fontWeight="700" fontSize="13">
+                <rect x="102" y="194" width="46" height="22" rx="11" fill="#FFFFFF" stroke="#1E2A6E" strokeWidth="1.5"/>
+                <text x="125" y="209" textAnchor="middle" fill="#1E2A6E">Alto</text>
+                <rect x="193" y="301" width="58" height="22" rx="11" fill="#FFFFFF" stroke="#1E2A6E" strokeWidth="1.5"/>
+                <text x="222" y="316" textAnchor="middle" fill="#1E2A6E">Ancho</text>
+                <rect x="321" y="265" width="54" height="22" rx="11" fill="#FFFFFF" stroke="#1E2A6E" strokeWidth="1.5"/>
+                <text x="348" y="280" textAnchor="middle" fill="#1E2A6E">Largo</text>
+              </g>
+              <g stroke="#EAECF3" strokeWidth="1">
+                <line x1="458" y1="155" x2="840" y2="155"/>
+                <line x1="458" y1="245" x2="840" y2="245"/>
+              </g>
+              <g fontFamily="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+                <circle cx="472" cy="110" r="22" fill="#E85D26"/>
+                <g stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                  <line x1="472" y1="98" x2="472" y2="122"/>
+                  <path d="M466,104 L472,98 L478,104"/>
+                  <path d="M466,116 L472,122 L478,116"/>
+                </g>
+                <text x="508" y="105" fontSize="17" fontWeight="800" fill="#1E2A6E" letterSpacing="0.5">ALTO</text>
+                <text x="508" y="126" fontSize="13.5" fill="#5A6273">Medida vertical desde la base</text>
+                <text x="508" y="143" fontSize="13.5" fill="#5A6273">hasta la parte superior.</text>
+                <circle cx="472" cy="200" r="22" fill="#E85D26"/>
+                <g stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                  <line x1="460" y1="200" x2="484" y2="200"/>
+                  <path d="M466,194 L460,200 L466,206"/>
+                  <path d="M478,194 L484,200 L478,206"/>
+                </g>
+                <text x="508" y="195" fontSize="17" fontWeight="800" fill="#1E2A6E" letterSpacing="0.5">ANCHO</text>
+                <text x="508" y="216" fontSize="13.5" fill="#5A6273">Medida horizontal de lado a lado</text>
+                <text x="508" y="233" fontSize="13.5" fill="#5A6273">de la base.</text>
+                <circle cx="472" cy="290" r="22" fill="#E85D26"/>
+                <g stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                  <line x1="460" y1="302" x2="484" y2="278"/>
+                  <path d="M476,278 L484,278 L484,286"/>
+                  <path d="M468,302 L460,302 L460,294"/>
+                </g>
+                <text x="508" y="285" fontSize="17" fontWeight="800" fill="#1E2A6E" letterSpacing="0.5">LARGO</text>
+                <text x="508" y="306" fontSize="13.5" fill="#5A6273">Medida horizontal desde el frente</text>
+                <text x="508" y="323" fontSize="13.5" fill="#5A6273">hacia el fondo.</text>
+              </g>
             </svg>
           )}
         </div>

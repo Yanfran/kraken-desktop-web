@@ -48,9 +48,9 @@ $radius-sm: 8px;
   }
 
   &__box-svg {
-    width: 320px;
-    height: 190px;
-    max-width: 100%;
+    width: 100%;
+    height: auto;
+    display: block;
   }
 
   // ── Fila 1: Largo | Ancho | Alto (3 columnas iguales) ──
