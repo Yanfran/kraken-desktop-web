@@ -351,7 +351,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
       <div className="wizard-grid-2" style={{ marginBottom: '1rem' }}>
         <div className="wizard-field">
           <label>
-            Valor FOB (USD)
+            Valor (FOB) USD
             <button
               type="button"
               className="pkg-form__tooltip-trigger"

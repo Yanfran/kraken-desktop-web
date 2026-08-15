@@ -217,11 +217,12 @@ $radius-sm: 8px;
   // Valor FOB
   &__fob-wrap {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     border: 1.5px solid $border;
     border-radius: $radius-sm;
     overflow: hidden;
     transition: border-color 0.2s;
+    height: 40px;
 
     &:focus-within {
       border-color: $primary;
@@ -230,19 +231,28 @@ $radius-sm: 8px;
   }
 
   &__fob-prefix {
-    padding: 0.6rem 0.75rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
     background: #f9fafb;
     color: $text-muted;
     font-size: 0.95rem;
     border-right: 1.5px solid $border;
+    flex-shrink: 0;
   }
 
   &__fob-wrap input {
-    border: none;
-    padding: 0.6rem 0.85rem;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0.85rem;
     font-size: 0.95rem;
     flex: 1;
-    &:focus { outline: none; box-shadow: none; }
+    min-width: 0;
+    width: auto !important;
+    height: 100% !important;
+    background: #fff;
+    color: #1a1a1a;
+    &:focus { outline: none; box-shadow: none !important; }
   }
 
   // Tooltip FOB

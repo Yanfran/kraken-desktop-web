@@ -272,11 +272,7 @@ const AddressCard = ({ address, selected, onSelect, onView, onEdit, onDelete, on
         title="Ver detalle"
         onClick={() => onView(address.id)}
       ><IoEyeOutline size={16} /> <span>Ver</span></button>
-      <button
-        className="addr-card__action-btn addr-card__action-btn--edit"
-        title="Editar"
-        onClick={() => onEdit(address)}
-      ><IoPencilOutline size={16} /> <span>Editar</span></button>
+      {/* botón Editar oculto en KU */}
       {!address.esPredeterminada && (
         <button
           className="addr-card__action-btn addr-card__action-btn--star"

@@ -241,9 +241,7 @@ const AddressSection = ({ title, flag, addresses, deleting, onView, onEdit, onDe
             <button className="ku-addr__action ku-addr__action--view" title="Ver detalle" onClick={() => onView(addr.id)}>
               <IoEyeOutline size={16} />
             </button>
-            <button className="ku-addr__action ku-addr__action--edit" title="Editar" onClick={() => onEdit(addr.id)}>
-              <IoPencilOutline size={16} />
-            </button>
+            {/* botón Editar oculto en KU */}
             {!addr.isDefault && (
               <button className="ku-addr__action ku-addr__action--star" title="Marcar como predeterminada" onClick={() => onSetDefault(addr.id)}>
                 <IoStarOutline size={16} />

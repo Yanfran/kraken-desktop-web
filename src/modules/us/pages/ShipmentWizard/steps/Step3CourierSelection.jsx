@@ -224,12 +224,8 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
       if (res.success) {
         setPickupRate(res.rate);
         updateData({ pickupRate: res.rate });
-        setPickupError('');
-      } else {
-        setPickupRate(0);
-        updateData({ pickupRate: 0 });
-        setPickupError(res.message ?? 'UPS no puede programar la recogida para el horario seleccionado.');
       }
+      setPickupError('');
     }).finally(() => { if (!cancelled) setLoadingRate(false); });
     return () => { cancelled = true; };
   }, [isPickup, data.selectedOriginAddress, data.pickupDate, data.pickupReadyTime]); // eslint-disable-line
@@ -275,7 +271,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   // ── Siguiente paso ────────────────────────────────────────────────────────
   const handleNext = () => {
     if (!selected) return;
-    if (isPickup && (loadingRate || pickupError)) return;
+    if (isPickup && loadingRate) return;
     setPickupError('');
     onNext();
   };
@@ -375,11 +371,12 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
               <IoTimeOutline size={15} style={{ verticalAlign: 'middle' }} />
               <span><strong>Ventana:</strong> Todo el día (08:00 – 17:00)</span>
             </div>
-            {pickupError && (
-              <p className="pickup-panel__error">
-                <IoWarningOutline size={14} style={{ verticalAlign: 'middle' }} /> {pickupError}
-              </p>
-            )}
+            {loadingRate
+              ? null
+              : pickupRate > 0
+                ? <p className="pickup-panel__rate-info">Tarifa de recogida: <strong>${Number(pickupRate).toFixed(2)} USD</strong></p>
+                : <p className="pickup-panel__rate-info" style={{ color: '#6B7280' }}>La tarifa de recogida se confirmará al programar el pickup con UPS.</p>
+            }
           </div>
         )}
 
@@ -427,7 +424,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
         <button
           className="btn-wizard-next"
           onClick={handleNext}
-          disabled={!selected || loading || (isPickup && (loadingRate || !!pickupError))}
+          disabled={!selected || loading || (isPickup && loadingRate)}
         >
           {isPickup && loadingRate ? 'Verificando…' : t('us_wizard.continue')}
         </button>

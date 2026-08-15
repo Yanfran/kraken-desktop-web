@@ -1224,6 +1224,10 @@ export default function PaymentPage() {
               placeholder="Ej. Juan Perez"
               value={nombreCompleto}
               onChange={(e) => setNombreCompleto(sanitizeNombreCompleto(e.target.value))}
+              onBlur={() => {
+                if (!tcNombreTitular.trim() && nombreCompleto.trim())
+                  setTcNombreTitular(sanitizeNombreCompleto(nombreCompleto).toUpperCase().slice(0, 26));
+              }}
               maxLength={250}
             />
             <small>Solo letras, números, comas y puntos. Sin acentos ni caracteres especiales.</small>
@@ -1265,8 +1269,9 @@ export default function PaymentPage() {
           <div className={styles.inputGroup}>
             <label>Número de tarjeta</label>
             <input
-              type="text"
+              type="password"
               inputMode="numeric"
+              autoComplete="cc-number"
               placeholder="0000 0000 0000 0000"
               value={tcPanDisplay}
               onChange={handleTCPanChange}
@@ -1286,6 +1291,7 @@ export default function PaymentPage() {
               onChange={(e) => setTcNombreTitular(e.target.value.toUpperCase())}
               maxLength={26}
             />
+            <small>Tal como aparece impreso en la tarjeta. Puedes modificarlo si la tarjeta es de otra persona.</small>
           </div>
 
           {/* Vencimiento + CVV */}

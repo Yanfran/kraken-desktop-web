@@ -812,7 +812,7 @@
     "field_alto": "Alto (in)",
     "field_peso": "Peso",
     "field_package_type": "Tipo de Paquete",
-    "field_fob": "Valor FOB (USD)",
+    "field_fob": "Valor (FOB) USD",
     "fob_tooltip": "Valor FOB es el valor de la mercancía en puerto de origen, sin incluir flete ni seguro.",
     "field_content_desc": "Descripción del Contenido",
     "step1_title": "Detalles del Envío",

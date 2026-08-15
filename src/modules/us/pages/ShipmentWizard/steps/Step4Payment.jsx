@@ -8,7 +8,7 @@ import { axiosPaymentInstance } from '../../../../../services/axiosInstance';
 import { createUpsPickup, createUpsShipment } from '../../../../../services/us/upsService';
 import { getNextNGuia } from '../../../../../services/us/usGuiasService';
 import { useAuth } from '../../../../../contexts/AuthContext';
-import { API_URL } from '../../../../../utils/config';
+import { API_URL, isDevelopment } from '../../../../../utils/config';
 import {
   IoCheckmarkCircle,
   IoCheckmarkDoneOutline,
@@ -703,6 +703,33 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
       // CARD — HalaraPay Lightbox
       if (metodoPago === 'card') {
+        // ── Modo simulación (development / staging) ─────────────────────────
+        if (isDevelopment()) {
+          setSubmitPhase('Simulando pago...');
+          try {
+            const { data: chargeResult } = await axiosPaymentInstance.post('/usa/payment/charge', {
+              token: 'SIMULATED',
+              amountUSD: totalRef.current,
+              nGuia: '',
+              guiaId: null,
+            });
+            if (!chargeResult.success) {
+              setSubmitError(chargeResult.message ?? 'Error en simulación de pago.');
+              setSubmitting(false);
+              setSubmitPhase('');
+              return;
+            }
+            const transactionId = chargeResult.transactionId ?? '';
+            sessionStorage.setItem(RECOVERY_KEY, JSON.stringify({ transactionId }));
+            await runPostPaymentFlow(transactionId);
+          } catch (err) {
+            setSubmitError(err.message ?? 'Error inesperado en la simulación.');
+            setSubmitting(false);
+            setSubmitPhase('');
+          }
+          return;
+        }
+
         if (!window.CollectJS || !collectJsReady)
           throw new Error('Payment form not ready. Please wait a moment and try again.');
 
