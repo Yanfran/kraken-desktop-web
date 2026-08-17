@@ -369,7 +369,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
             </div>
             <div className="pickup-panel__info-row">
               <IoTimeOutline size={15} style={{ verticalAlign: 'middle' }} />
-              <span><strong>Ventana:</strong> Todo el día (08:00 – 17:00)</span>
+              <span><strong> Rango Horario:</strong> Todo el día (08:00 – 17:00)</span>
             </div>
             {loadingRate
               ? null

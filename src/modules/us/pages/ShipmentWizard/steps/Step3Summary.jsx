@@ -326,7 +326,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
 
               {/* ── Total incluyendo UPS ─────────────────────────────── */}
               <div className="cost-total cost-total--espana">
-                <span className="cost-total__label">Total PREPAID</span>
+                <span className="cost-total__label">TOTAL</span>
                 <span className="cost-total__usd">
                   {fmtUSD(grandTotal)}
                 </span>

@@ -262,6 +262,46 @@ $radius: 10px;
   }
 }
 
+// ── Botones del footer del modal (disponibles aunque el wizard no esté cargado)
+$primary-hover: #e03d00;
+$transition: 0.2s ease;
+
+.btn-wizard-back {
+  padding: 0.75rem 1.75rem;
+  border-radius: 25px;
+  border: 2px solid $border;
+  background: transparent;
+  color: $text-muted;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition;
+
+  &:hover {
+    border-color: $navy;
+    color: $navy;
+  }
+}
+
+.btn-wizard-next {
+  padding: 0.75rem 2.25rem;
+  border-radius: 25px;
+  border: none;
+  background: $primary;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background $transition, transform $transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:hover { background: $primary-hover; transform: translateY(-1px); }
+  &:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+}
+
 // ── Spinner pequeño ───────────────────────────────────────────────────────────
 .spinner-small {
   width: 18px;

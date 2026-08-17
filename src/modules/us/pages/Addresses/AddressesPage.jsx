@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../../contexts/AuthContext';
+import { useCustomAlert } from '../../../../hooks/useCustomAlert';
+import CustomAlert from '../../../../components/common/CustomAlert/CustomAlert';
 import {
   IoEyeOutline,
   IoTrashOutline,
@@ -37,6 +39,7 @@ const AddressesPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const clientId = user?.id ? Number(user.id) : 0;
+  const alert = useCustomAlert();
 
   const [originList, setOriginList] = useState([]);
   const [destList, setDestList] = useState([]);
@@ -61,15 +64,32 @@ const AddressesPage = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleDelete = async (type, id, name) => {
-    if (!window.confirm(`¿Eliminar "${name}"?`)) return;
-    setDeleting(id);
-    const res = type === 'origin'
-      ? await deleteUsaOriginAddress(clientId, id)
-      : await deleteUsaDestinationAddress(clientId, id);
-    setDeleting(null);
-    if (res.success) { toast.success('Dirección eliminada'); load(); }
-    else toast.error(res.message || 'Error al eliminar');
+  const handleDelete = (type, id, name) => {
+    alert.showDeleteConfirm(
+      name,
+      async () => {
+        try {
+          setDeleting(id);
+          const res = type === 'origin'
+            ? await deleteUsaOriginAddress(clientId, id)
+            : await deleteUsaDestinationAddress(clientId, id);
+          if (res.success) {
+            alert.hideAlert();
+            toast.success('Dirección eliminada');
+            load();
+          } else {
+            alert.hideAlert();
+            toast.error(res.message || 'Error al eliminar');
+          }
+        } catch {
+          alert.hideAlert();
+          toast.error('Error al eliminar la dirección');
+        } finally {
+          setDeleting(null);
+        }
+      },
+      () => {}
+    );
   };
 
   const handleSetDefault = async (type, id) => {
@@ -204,6 +224,8 @@ const AddressesPage = () => {
       {editModal?.type === 'dest' && (
         <DestinationModal onSave={handleEditDest} onClose={() => setEditModal(null)} saving={saving} initialData={editModal.data} />
       )}
+
+      <CustomAlert {...alert.alertProps} />
     </div>
   );
 };

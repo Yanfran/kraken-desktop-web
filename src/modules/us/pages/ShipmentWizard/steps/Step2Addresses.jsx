@@ -426,7 +426,7 @@ export const OriginModal = ({ onSave, onClose, saving, initialData }) => {
     <div className="addr-modal-backdrop">
       <div className="addr-modal">
         <div className="addr-modal__header">
-          <h3>🇺🇸 {isEditing ? 'Editar dirección USA' : t('us_wizard.origin_modal_title')}</h3>
+          <h3>{isEditing ? 'Editar dirección USA' : t('us_wizard.origin_modal_title')}</h3>
           <button className="addr-modal__close" onClick={onClose} disabled={saving}>✕</button>
         </div>
 
@@ -787,7 +787,7 @@ export const DestinationModal = ({ onSave, onClose, saving, initialData }) => {
     <div className="addr-modal-backdrop">
       <div className="addr-modal addr-modal--wide">
         <div className="addr-modal__header">
-          <h3>🇻🇪 {isEditing ? 'Editar dirección Venezuela' : t('us_wizard.dest_modal_title')}</h3>
+          <h3>{isEditing ? 'Editar dirección Venezuela' : t('us_wizard.dest_modal_title')}</h3>
           <button className="addr-modal__close" onClick={onClose} disabled={saving}>✕</button>
         </div>
 
