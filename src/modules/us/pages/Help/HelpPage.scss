@@ -1,0 +1,143 @@
+// src/modules/us/pages/Help/HelpPage.scss
+
+$navy:       #1B2B6B;
+$orange:     #F05A22;
+$text:       #1A1A1A;
+$muted:      #6B7280;
+$icon-bg:    #EAF0FB;
+$border:     #E5E7EB;
+$radius:     16px;
+$transition: 0.2s ease;
+
+.ku-help {
+  min-height: 100vh;
+  padding: 32px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url('/src/assets/images/fondo-app-dashboard-767px.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    z-index: -1;
+    opacity: 0.95;
+
+    @media (min-width: 768px) {
+      background-image: url('/src/assets/images/fondo-app-dashboard-1200px.png');
+    }
+  }
+
+  // ── Header section ────────────────────────────────────────────────────────
+  &__header-section {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: $radius;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  &__back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: $orange;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    &:hover { opacity: 0.8; }
+  }
+
+  &__main-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: $text;
+    margin: 0 0 6px;
+  }
+
+  &__subtitle {
+    font-size: 15px;
+    color: $muted;
+    margin: 0;
+  }
+
+  // ── Body (cards) ──────────────────────────────────────────────────────────
+  &__body {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: $radius;
+    padding: 24px 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  &__card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 0;
+    border-bottom: 1px solid $border;
+
+    &:last-child { border-bottom: none; }
+  }
+
+  &__card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: $icon-bg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__card-content {
+    flex: 1;
+  }
+
+  &__card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 4px;
+  }
+
+  &__card-desc {
+    font-size: 13px;
+    color: $muted;
+    margin: 0 0 8px;
+    line-height: 1.6;
+    white-space: pre-line;
+  }
+
+  &__card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: $orange;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity $transition;
+    &:hover { opacity: 0.75; }
+  }
+
+  // ── Responsive ──────────────────────────────────────────────────────────
+  @media (max-width: 640px) {
+    padding: 16px;
+
+    &__header-section,
+    &__body { padding: 20px 16px; }
+
+    &__main-title { font-size: 22px; }
+  }
+}

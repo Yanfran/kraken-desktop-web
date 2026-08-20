@@ -58,6 +58,7 @@ const UsaGuideDetail = React.lazy(() =>
 const UsaGuidesList = React.lazy(() =>
   import('../modules/us/pages/GuidesList/UsaGuidesList')
 );
+const USHelp = React.lazy(() => import('../modules/us/pages/Help/HelpPage'));
 
 
 // ============================================
@@ -151,6 +152,7 @@ const TenantRouter = () => {
                         <Route path="/change-password" element={<ChangePassword />} />
                         <Route path="/guide/guides" element={<UsaGuidesList />} />
                         <Route path="/guide/detail/:idGuia" element={<UsaGuideDetail />} />
+                        <Route path="/help" element={<USHelp />} />
 
                         {/* Redirección por defecto */}
                         <Route path="/" element={<Navigate to="/home" replace />} />

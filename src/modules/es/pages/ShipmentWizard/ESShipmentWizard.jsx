@@ -11,7 +11,7 @@ import Step5Payment          from './steps/Step4Payment';   // renombrar import
 import './ESShipmentWizard.scss';
 
 const STEPS = [
-  { id: 1, label: 'Detalles del Envío'  },
+  { id: 1, label: 'Detalles del paquete'  },
   { id: 2, label: 'Recogida y Entrega'  },
   { id: 3, label: 'Servicio de Recogida'},  // ← nuevo paso SendSei
   { id: 4, label: 'Resumen'             },

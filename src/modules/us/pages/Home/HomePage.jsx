@@ -134,35 +134,31 @@ const HomePage = () => {
               <div className="us-home__addresses">
                 <div
                   className="us-home__address-card"
-                  onClick={() => navigate('/tracking')}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="us-home__address-icon">🔍</span>
-                  <span className="us-home__address-name">{t('us_home.track_package')}</span>
-                </div>
-                <div
-                  className="us-home__address-card"
-                  onClick={() => navigate('/calculator')}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="us-home__address-icon">🧮</span>
-                  <span className="us-home__address-name">{t('us_home.calculator')}</span>
-                </div>
-                {/* <div
-                  className="us-home__address-card"
-                  onClick={() => navigate('/profile/addresses')}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="us-home__address-icon">📍</span>
-                  <span className="us-home__address-name">Mis direcciones</span>
-                </div> */}
-                <div
-                  className="us-home__address-card"
-                  onClick={() => navigate('/pickup')}
-                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate('/guide/guides')}
                 >
                   <span className="us-home__address-icon">📦</span>
-                  <span className="us-home__address-name">{t('us_home.new_pickup_action')}</span>
+                  <span className="us-home__address-name">Mis Envíos</span>
+                </div>
+                <div
+                  className="us-home__address-card"
+                  onClick={() => navigate('/profile/addresses')}
+                >
+                  <span className="us-home__address-icon">📍</span>
+                  <span className="us-home__address-name">Direcciones</span>
+                </div>
+                <div
+                  className="us-home__address-card"
+                  onClick={() => navigate('/tracking')}
+                >
+                  <span className="us-home__address-icon">🔍</span>
+                  <span className="us-home__address-name">Seguimiento</span>
+                </div>
+                <div
+                  className="us-home__address-card"
+                  onClick={() => navigate('/help')}
+                >
+                  <span className="us-home__address-icon">❓</span>
+                  <span className="us-home__address-name">Ayuda</span>
                 </div>
               </div>
             </section>

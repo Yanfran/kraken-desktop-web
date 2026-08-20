@@ -269,7 +269,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
               ? `⏳ ${submitPhase || 'Procesando...'}`
               : metodoPago === 'bizum' 
                   ? 'Confirmar Solicitud' 
-                  : `Confirmar Pago ${eur(total)}`}
+                  : `Pagar Ahora ${eur(total)}`}
           </button>
         </div>
       </div>

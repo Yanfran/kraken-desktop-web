@@ -170,7 +170,7 @@ export default function KUAjusteBanner() {
                 <div className="ku-ajuste-total">
                   <span>Monto a pagar ahora</span>
                   <span className="ku-ajuste-total__amount">
-                    ${Number(ajusteModal.montoAPagar ?? 0).toFixed(2)} USD
+                    ${Math.abs(Number(ajusteModal.montoAPagar ?? 0)).toFixed(2)} USD
                   </span>
                 </div>
 
@@ -185,7 +185,7 @@ export default function KUAjusteBanner() {
                     ? 'Procesando…'
                     : !collectReady
                     ? 'Cargando pasarela…'
-                    : `Pagar $${Number(ajusteModal.montoAPagar ?? 0).toFixed(2)} USD`}
+                    : `Pagar $${Math.abs(Number(ajusteModal.montoAPagar ?? 0)).toFixed(2)} USD`}
                 </button>
               </>
             )}

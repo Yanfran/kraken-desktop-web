@@ -752,7 +752,7 @@
     "prev": "← Anterior",
     "next": "Siguiente →",
     "total_shipments": "{{count}} envío(s) en total",
-    "loading_detail": "Cargando detalles del envío…",
+    "loading_detail": "Cargando detalles del paquete…",
     "not_found_title": "Envío no encontrado",
     "not_found_desc": "No se pudieron cargar los detalles. Intenta de nuevo más tarde.",
     "go_back": "Volver",
@@ -796,7 +796,7 @@
     "created": "Dirección creada"
   },
   "us_wizard": {
-    "step1": "Detalles del Envío",
+    "step1": "Detalles del paquete",
     "step2": "Recogida y Entrega",
     "step3": "Servicio de Recogida",
     "step4": "Resumen",
@@ -813,9 +813,9 @@
     "field_peso": "Peso",
     "field_package_type": "Tipo de Paquete",
     "field_fob": "Valor (FOB) USD",
-    "fob_tooltip": "Valor FOB es el valor de la mercancía en puerto de origen, sin incluir flete ni seguro.",
+    "fob_tooltip": "Es el valor declarado de la mercancía en puerto de origen, sin incluir flete ni seguro.",
     "field_content_desc": "Descripción del Contenido",
-    "step1_title": "Detalles del Envío",
+    "step1_title": "Detalles del paquete",
     "box_n": "Caja {{index}} de {{total}}",
     "package_details": "Detalles del Paquete",
     "continue": "Continuar →",
@@ -899,7 +899,7 @@
     "breakdown_base": "Base",
     "breakdown_fuel": "Combustible",
     "breakdown_pickup": "Recogida",
-    "bultos": "bulto(s)",
+    "bultos": "paquete(s)",
     "no_courier_services": "No hay servicios disponibles para este código postal. Revisa la dirección de recogida.",
     "retry": "Reintentar",
     "error_addr_not_found": "No se encontró la dirección seleccionada.",
@@ -936,7 +936,7 @@
     "zelle_desc": "Envía el pago manualmente usando Zelle desde tu app bancaria.",
     "zelle_hint": "Tu envío solo será procesado después de que nuestro equipo confirme el pago.",
     "card_sec_title": "Pago Seguro con Tarjeta",
-    "card_sec_desc": "Haz clic en \"Confirmar Pago\" para abrir el formulario seguro. Tus datos de tarjeta son tokenizados por HalaraPay y nunca se almacenan en nuestros servidores.",
+    "card_sec_desc": "Haz clic en \"Pagar Ahora\" para abrir el formulario seguro. Tus datos de tarjeta son tokenizados por HalaraPay y nunca se almacenan en nuestros servidores.",
     "card_sec_hint": "🔒 Aceptamos: VISA, MasterCard, AMEX",
     "order_summary": "Resumen del Pedido",
     "intl_shipping": "Envío Internacional",
@@ -946,7 +946,7 @@
     "processing": "Procesando...",
     "loading_payment": "Cargando formulario de pago...",
     "confirm_request": "Confirmar Solicitud",
-    "confirm_payment": "Confirmar Pago {{amount}}"
+    "confirm_payment": "Pagar Ahora {{amount}}"
   },
   "errors": {
     "REQUIRED_FIELDS": "Todos los campos son requeridos",

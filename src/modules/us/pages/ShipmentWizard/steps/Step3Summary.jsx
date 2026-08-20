@@ -257,7 +257,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
             ) : (
               <div className="summary-addr">
                 <p className="summary-addr__name">
-                  <IoStorefrontOutline size={15} style={{ verticalAlign: 'middle' }} /> Drop-off en tienda UPS
+                  <IoStorefrontOutline size={15} style={{ verticalAlign: 'middle' }} /> Drop-off
                 </p>
                 <p className="summary-addr__line" style={{ color: '#6b7280' }}>
                   Llevar el paquete a la tienda UPS más cercana al origen
@@ -299,7 +299,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
                 {/* ✅ Línea UPS si hay courierQuote */}
                 {data.courierQuote && (
                   <CostRow
-                    label={<><IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> {data.courierQuote.service ?? data.courierQuote.courier ?? 'UPS Ground'} (Flete USA)</>}
+                    label={data.courierQuote.service ?? data.courierQuote.courier ?? 'UPS Ground'}
                     valueUSD={fmtUSD(data.courierQuote.total ?? 0)}
                     isDiscount={false}
                   />

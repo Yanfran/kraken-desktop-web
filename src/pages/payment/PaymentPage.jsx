@@ -1429,7 +1429,7 @@ export default function PaymentPage() {
     // Sub-paso 3: confirmación del pago
     return (
       <div className={styles.formContainer}>
-        <h3 className={styles.stepTitle}>Confirmar Pago</h3>
+        <h3 className={styles.stepTitle}>Pagar Ahora</h3>
         <p className={styles.stepDescription}>Revisa el resumen y confirma el pago con tu tarjeta</p>
 
         {renderTCStep(2)}
@@ -1908,7 +1908,7 @@ export default function PaymentPage() {
           disabled={isLoading || !otpCode}
           className={styles.btn_primary}
         >
-          {isLoading ? 'Confirmando...' : 'Confirmar Pago'} <IoCheckmark />
+          {isLoading ? 'Confirmando...' : 'Pagar Ahora'} <IoCheckmark />
         </button>
       </div>
     </div>

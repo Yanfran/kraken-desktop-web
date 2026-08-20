@@ -813,7 +813,7 @@
     "field_peso": "Weight",
     "field_package_type": "Package Type",
     "field_fob": "FOB Value (USD)",
-    "fob_tooltip": "FOB value is the value of the goods at the port of origin, not including freight or insurance.",
+    "fob_tooltip": "It is the declared value of the goods at the port of origin, not including freight or insurance.",
     "field_content_desc": "Content Description",
     "step1_title": "Package Details",
     "box_n": "Box {{index}} of {{total}}",

@@ -37,9 +37,21 @@ const buildValidationErrors = (pkg, t) => {
     if (!pkg.ancho  || isNaN(pkg.ancho)  || Number(pkg.ancho)  <= 0) errors.ancho  = t('us_wizard.required');
     if (!pkg.alto   || isNaN(pkg.alto)   || Number(pkg.alto)   <= 0) errors.alto   = t('us_wizard.required');
     if (!pkg.contenidos?.length) errors.contenidos = t('us_wizard.required');
+
+    // UPS size limits (solo si las 3 dimensiones son válidas)
+    if (!errors.largo && !errors.ancho && !errors.alto) {
+      const dims = [Number(pkg.largo), Number(pkg.ancho), Number(pkg.alto)].sort((a, b) => b - a);
+      const combined = dims[0] + 2 * dims[1] + 2 * dims[2];
+      if (dims[0] > 108) {
+        errors.upsSize = `El lado más largo (${dims[0]} in) supera el máximo de 108 in permitido por UPS.`;
+      } else if (combined > 165) {
+        errors.upsSize = `Tamaño combinado (${combined} in) supera el máximo de 165 in. Reduce las dimensiones.`;
+      }
+    }
   }
-  if (!pkg.peso   || isNaN(pkg.peso)   || Number(pkg.peso)   <= 0) errors.peso   = t('us_wizard.required');
-  if (!pkg.valorFOB || isNaN(pkg.valorFOB) || Number(pkg.valorFOB) < 0) errors.valorFOB = t('us_wizard.required');
+  if (!pkg.peso   || isNaN(pkg.peso)   || Number(pkg.peso)   <= 0) errors.peso = t('us_wizard.required');
+  else if (Number(pkg.peso) > 150) errors.peso = `El peso (${Number(pkg.peso)} lb) supera el máximo de 150 lb permitido por UPS.`;
+  if (!pkg.valorFOB || isNaN(pkg.valorFOB) || Number(pkg.valorFOB) < 1) errors.valorFOB = 'El valor FOB debe ser al menos $1 USD.';
   return errors;
 };
 
@@ -339,46 +351,49 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
 
       {/* ── Fila 1: Largo | Ancho | Alto — solo para Caja ── */}
       {!isDoc && (
-        <div className="pkg-form__dims-row">
-          <div className="wizard-field">
-            <label>{t('us_wizard.field_largo')}</label>
-            <input
-              type="number"
-              placeholder="e.g., 12"
-              value={pkg.largo}
-              min="0"
-              onChange={(e) => set('largo', e.target.value)}
-              className={errors?.largo ? 'field-error' : ''}
-            />
-            {errors?.largo && <span className="field-error-msg">{errors.largo}</span>}
-          </div>
+        <>
+          <div className="pkg-form__dims-row">
+            <div className="wizard-field">
+              <label>{t('us_wizard.field_largo')}</label>
+              <input
+                type="number"
+                placeholder="e.g., 12"
+                value={pkg.largo}
+                min="0"
+                onChange={(e) => set('largo', e.target.value)}
+                className={errors?.largo ? 'field-error' : ''}
+              />
+              {errors?.largo && <span className="field-error-msg">{errors.largo}</span>}
+            </div>
 
-          <div className="wizard-field">
-            <label>{t('us_wizard.field_ancho')}</label>
-            <input
-              type="number"
-              placeholder="e.g., 12"
-              value={pkg.ancho}
-              min="0"
-              onChange={(e) => set('ancho', e.target.value)}
-              className={errors?.ancho ? 'field-error' : ''}
-            />
-            {errors?.ancho && <span className="field-error-msg">{errors.ancho}</span>}
-          </div>
+            <div className="wizard-field">
+              <label>{t('us_wizard.field_ancho')}</label>
+              <input
+                type="number"
+                placeholder="e.g., 12"
+                value={pkg.ancho}
+                min="0"
+                onChange={(e) => set('ancho', e.target.value)}
+                className={errors?.ancho ? 'field-error' : ''}
+              />
+              {errors?.ancho && <span className="field-error-msg">{errors.ancho}</span>}
+            </div>
 
-          <div className="wizard-field">
-            <label>{t('us_wizard.field_alto')}</label>
-            <input
-              type="number"
-              placeholder="e.g., 12"
-              value={pkg.alto}
-              min="0"
-              onChange={(e) => set('alto', e.target.value)}
-              className={errors?.alto ? 'field-error' : ''}
-            />
-            {errors?.alto && <span className="field-error-msg">{errors.alto}</span>}
+            <div className="wizard-field">
+              <label>{t('us_wizard.field_alto')}</label>
+              <input
+                type="number"
+                placeholder="e.g., 12"
+                value={pkg.alto}
+                min="0"
+                onChange={(e) => set('alto', e.target.value)}
+                className={errors?.alto ? 'field-error' : ''}
+              />
+              {errors?.alto && <span className="field-error-msg">{errors.alto}</span>}
+            </div>
           </div>
-        </div>
+          {errors?.upsSize && <span className="field-error-msg">{errors.upsSize}</span>}
+        </>
       )}
 
       {/* ── Fila: Peso (+ unidad) | Valor FOB — en la misma fila ── */}
@@ -397,7 +412,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
             </button>
             {showPesoTooltip && (
               <span className="pkg-form__tooltip">
-                Ingresa el peso de tu paquete en libras (lb). El peso correcto determina el costo del envío.
+                Ingresa el peso de tu paquete en libras (lb). El peso correcto determina el costo del envío. El peso máximo por caja / bulto es de 150 Lbs.
               </span>
             )}
           </label>
