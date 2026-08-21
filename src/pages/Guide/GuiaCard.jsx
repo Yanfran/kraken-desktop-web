@@ -68,6 +68,11 @@ export default function GuiaCard({
   const isPaid = guia.tienePago || guia.estaPagado;
   const isMenuOpen = openMenuId === guia.idGuia;
 
+  const historialFiltradoGuia = (guia.historialEstatus ?? []).filter(h => h.estatus !== 'Incidencia');
+  const estatusGuia = guia.estatus === 'Incidencia'
+    ? (historialFiltradoGuia[historialFiltradoGuia.length - 1]?.estatus ?? 'En proceso')
+    : (guia.estatus || '');
+
   const getCosto = () => {
     if (isCalculatingCost) {
       return '...';
@@ -142,7 +147,7 @@ export default function GuiaCard({
         </td>
         
         <td className={styles.statusCell}>
-          <div className={styles.statusText}>{guia.estatus || ''}</div>
+          <div className={styles.statusText}>{estatusGuia}</div>
           <div className={styles.dateText}>{ formatDateTime(guia.fechaEstatus || '') }</div>
         </td>
         
@@ -362,7 +367,7 @@ export default function GuiaCard({
       <div className={styles.cardBody}>
         <div className={styles.cardRow}>
           <span className={styles.cardLabel}>{t('guides.status')}:</span>
-          <span className={styles.statusText}>{guia.estatus || 'Pendiente de Pago'}</span>
+          <span className={styles.statusText}>{estatusGuia || 'Pendiente de Pago'}</span>
         </div>
         <div className={styles.cardRow}>
           <span className={styles.cardLabel}>{t('guides.date')}:</span>

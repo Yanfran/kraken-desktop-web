@@ -350,7 +350,11 @@ export default function GuideDetail() {
     trackingEscaneado,
   } = guiaDetail;
 
-  const consolidatedHistorial = consolidateHistorial(historialEstatus);
+  const historialFiltrado = (historialEstatus ?? []).filter(h => h.estatus !== 'Incidencia');
+  const estatusDisplay = estatus === 'Incidencia'
+    ? (historialFiltrado[historialFiltrado.length - 1]?.estatus ?? 'En proceso')
+    : (estatus || 'En proceso');
+  const consolidatedHistorial = consolidateHistorial(historialFiltrado);
 
   // ── Render ────────────────────────────────────────────────────────────
   return (
@@ -386,7 +390,7 @@ export default function GuideDetail() {
         <div className={styles.row}>
           <div className={styles.rowItem}>
             <label className={styles.sectionLabel}>{t('guide_detail.status')}</label>
-            <p className={styles.sectionValue}>{estatus}</p>
+            <p className={styles.sectionValue}>{estatusDisplay}</p>
             <span className={styles.sectionSubtext}>{fecha}</span>
           </div>
           {trackingEscaneado && (
