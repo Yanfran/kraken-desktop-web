@@ -103,7 +103,7 @@ const AddressBlock = ({ address, flag, onEdit, senderName, senderEmail }) => {
 };
 
 // ── Componente principal ──────────────────────────────────────────────────────
-const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) => {
+const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses, calculating = false }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -337,10 +337,10 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses }) 
           <button
             className="btn-wizard-next cost-card__proceed-btn"
             onClick={onNext}
-            disabled={!calc}
+            disabled={!calc || calculating}
             style={{ marginTop: '20px' }}
           >
-            {t('us_wizard.proceed_payment')}
+            {calculating ? '⏳ Recalculando tarifa…' : t('us_wizard.proceed_payment')}
           </button>
           
           <p style={{ fontSize: '12px', color: '#6c757d', textAlign: 'center', marginTop: '12px' }}>

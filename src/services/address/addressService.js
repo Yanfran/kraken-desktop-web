@@ -20,14 +20,14 @@ export const getStatesByCountry = async (countryId) => {
     
     return {
       success: false,
-      message: response.data.message || 'Error al obtener estados',
+      message: response.data.message || 'No pudimos obtener los estados',
       data: []
     };
   } catch (error) {
     console.error('Error en getStatesByCountry:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
+      message: error.response?.data?.message || 'Sin conexión',
       error: error.message,
       data: []
     };
@@ -53,14 +53,14 @@ export const getMunicipalitiesByState = async (stateId) => {
     
     return {
       success: false,
-      message: response.data.message || 'Error al obtener municipios',
+      message: response.data.message || 'No pudimos obtener los municipios',
       data: []
     };
   } catch (error) {
     console.error('Error en getMunicipalitiesByState:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
+      message: error.response?.data?.message || 'Sin conexión',
       error: error.message,
       data: []
     };
@@ -86,14 +86,14 @@ export const getParishesByMunicipality = async (municipalityId) => {
     
     return {
       success: false,
-      message: response.data.message || 'Error al obtener parroquias',
+      message: response.data.message || 'No pudimos obtener las parroquias',
       data: []
     };
   } catch (error) {
     console.error('Error en getParishesByMunicipality:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
+      message: error.response?.data?.message || 'Sin conexión',
       error: error.message,
       data: []
     };
@@ -118,14 +118,14 @@ export const getDeliveryData = async () => {
     
     return {
       success: false,
-      message: response.data.message || 'Error al obtener datos de delivery',
+      message: response.data.message || 'No pudimos obtener los datos de entrega',
       data: null
     };
   } catch (error) {
     console.error('Error en getDeliveryData:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
+      message: error.response?.data?.message || 'Sin conexión',
       error: error.message,
       data: null
     };
@@ -165,7 +165,7 @@ export const getUserAddresses = async () => {
     
     return {
       success: false,
-      message: response.data.message || 'Error al obtener direcciones',
+      message: response.data.message || 'No pudimos obtener las direcciones',
       data: []
     };
 
@@ -173,7 +173,7 @@ export const getUserAddresses = async () => {
     console.error('❌ Error en getUserAddresses:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
+      message: error.response?.data?.message || 'Sin conexión',
       data: []
     };
   }
@@ -220,7 +220,7 @@ export const getCasilleros = async () => {
     console.error('❌ Error en getCasilleros:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
+      message: error.response?.data?.message || 'Sin conexión',
       data: []
     };
   }
@@ -246,13 +246,13 @@ export const registerPersonalData = async (data) => {
     
     return {
       success: false,
-      message: response.data.message || 'Error al registrar datos personales'
+      message: response.data.message || 'No pudimos registrar los datos personales'
     };
   } catch (error) {
     console.error('Error en registerPersonalData:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
+      message: error.response?.data?.message || 'Sin conexión',
       error: error.message
     };
   }
@@ -286,7 +286,7 @@ export const setDefaultAddress = async (addressId) => {
     console.error('Error en setDefaultAddress:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al establecer dirección',
+      message: error.response?.data?.message || 'No pudimos establecer la dirección predeterminada',
       error: error.message
     };
   }
@@ -319,7 +319,7 @@ export const deleteAddress = async (addressId) => {
     console.error('Error en deleteAddress:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al eliminar dirección',
+      message: error.response?.data?.message || 'No pudimos eliminar la dirección',
       error: error.message
     };
   }
@@ -341,7 +341,7 @@ export const getAddresses = async () => {
     console.error('❌ Error en getAddresses:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error de conexión',
+      message: error.response?.data?.message || 'Sin conexión',
       data: []
     };
   }

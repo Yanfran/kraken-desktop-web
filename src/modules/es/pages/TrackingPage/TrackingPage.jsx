@@ -43,7 +43,7 @@ export default function TrackingPage() {
         if (res.data.success) setData(res.data.data);
         else setError('No se encontró información para este número de guía.');
       })
-      .catch(() => setError('Error al consultar el tracking. Intenta nuevamente.'))
+      .catch(() => setError('No pudimos consultar el tracking. Verifica tu conexión e intenta de nuevo.'))
       .finally(() => setLoading(false));
   };
 

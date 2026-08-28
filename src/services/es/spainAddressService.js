@@ -22,7 +22,7 @@ export const fetchOriginAddresses = async (clientId) => {
     return {
       success: false,
       data: [],
-      message: error.response?.data?.message || 'Error al cargar direcciones de origen',
+      message: error.response?.data?.message || 'No pudimos cargar las direcciones de origen',
       errors: error.response?.data?.errors || [error.message],
     };
   }
@@ -43,7 +43,7 @@ export const addOriginAddress = async (payload) => {
     return {
       success: false,
       data: null,
-      message: error.response?.data?.message || 'Error al crear dirección de origen',
+      message: error.response?.data?.message || 'No pudimos crear la dirección de origen',
       errors: error.response?.data?.errors || [error.message],
     };
   }
@@ -64,7 +64,7 @@ export const setOriginDefault = async (clientId, addressId) => {
     console.error('Error setting origin default:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al establecer predeterminada de origen',
+      message: error.response?.data?.message || 'No pudimos establecer la predeterminada de origen',
     };
   }
 };
@@ -83,7 +83,7 @@ export const deleteOriginAddress = async (clientId, addressId) => {
     console.error('Error deleting origin address:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al eliminar dirección de origen',
+      message: error.response?.data?.message || 'No pudimos eliminar la dirección de origen',
     };
   }
 };
@@ -106,7 +106,7 @@ export const fetchDestinationAddresses = async (clientId) => {
     return {
       success: false,
       data: [],
-      message: error.response?.data?.message || 'Error al cargar direcciones de destino',
+      message: error.response?.data?.message || 'No pudimos cargar las direcciones de destino',
     };
   }
 };
@@ -117,7 +117,7 @@ export const updateDestinationAddress = async (payload) => {
     const response = await axiosInstance.put('/spain/addresses/destination/update', body);
     return { success: response.data.success, data: response.data.data ?? null, message: response.data.message };
   } catch (error) {
-    return { success: false, data: null, message: error.response?.data?.message || 'Error al actualizar dirección de destino' };
+    return { success: false, data: null, message: error.response?.data?.message || 'No pudimos actualizar la dirección de destino' };
   }
 };
 
@@ -136,7 +136,7 @@ export const addDestinationAddress = async (payload) => {
     return {
       success: false,
       data: null,
-      message: error.response?.data?.message || 'Error al crear dirección de destino',
+      message: error.response?.data?.message || 'No pudimos crear la dirección de destino',
     };
   }
 };
@@ -156,7 +156,7 @@ export const setDestinationDefault = async (clientId, addressId) => {
     console.error('Error setting destination default:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al establecer predeterminada de destino',
+      message: error.response?.data?.message || 'No pudimos establecer la predeterminada de destino',
     };
   }
 };
@@ -175,7 +175,7 @@ export const deleteDestinationAddress = async (clientId, addressId) => {
     console.error('Error deleting destination address:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al eliminar dirección de destino',
+      message: error.response?.data?.message || 'No pudimos eliminar la dirección de destino',
     };
   }
 };

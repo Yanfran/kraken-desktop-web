@@ -14,7 +14,7 @@ export const iniciarPagoRedsys = async (importeEuros, referenciaPedido) => {
   } catch (err) {
     return {
       success: false,
-      message: err.response?.data?.message ?? 'Error al iniciar el pago.',
+      message: err.response?.data?.message ?? 'No pudimos iniciar el pago',
     };
   }
 };
@@ -28,7 +28,7 @@ export const preRegistrarSesion = async (numeroPedido, importeEuros) => {
     });
     return { success: true, data: res.data };
   } catch (err) {
-    return { success: false, message: 'Error al pre-registrar sesión.' };
+    return { success: false, message: 'No pudimos pre-registrar la sesión' };
   }
 };
 
@@ -42,7 +42,7 @@ export const vincularGuiaASesion = async (numeroPedido, nGuia, guiaId) => {
     });
     return { success: true, data: res.data };
   } catch (err) {
-    return { success: false, message: 'Error al vincular guía.' };
+    return { success: false, message: 'No pudimos vincular la guía' };
   }
 };
 

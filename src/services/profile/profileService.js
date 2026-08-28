@@ -36,7 +36,7 @@ export const updateProfile = async (profileData) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Error al actualizar el perfil');
+      throw new Error(data.message || 'No pudimos actualizar el perfil');
     }
 
     return data;
@@ -69,7 +69,7 @@ export const getProfile = async (userId) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Error al obtener el perfil');
+      throw new Error(data.message || 'No pudimos obtener el perfil');
     }
 
     return data;
@@ -105,7 +105,7 @@ export const updateAvatar = async (avatarId, email) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Error al actualizar el avatar');
+      throw new Error(data.message || 'No pudimos actualizar el avatar');
     }
 
     return data;

@@ -176,7 +176,7 @@ export const authService = {
       
       return {
         success: false,
-        message: 'Error de conexión. Intenta de nuevo.'
+        message: 'Sin conexión. Intenta de nuevo.'
       };
     }
   },
@@ -261,7 +261,7 @@ export const authService = {
       
       return {
         success: false,
-        message: 'Error de conexión. Intenta de nuevo.'
+        message: 'Sin conexión. Intenta de nuevo.'
       };
     }
   },
@@ -415,7 +415,7 @@ export const authService = {
     
     return {
       success: false,
-      message: error.message || 'Error de conexión con Google'
+      message: error.message || 'Sin conexión con Google'
     };
   }
 },
@@ -432,7 +432,7 @@ export const authService = {
       console.error('❌ [AuthService] Forgot password error:', error);
       return {
         success: false,
-        message: 'Error al enviar email de recuperación'
+        message: 'No pudimos enviar el email de recuperación'
       };
     }
   },
@@ -451,7 +451,7 @@ export const authService = {
       console.error('❌ [AuthService] Reset password error:', error);
       return {
         success: false,
-        message: 'Error al restablecer contraseña'
+        message: 'No pudimos restablecer la contraseña'
       };
     }
   },
@@ -467,7 +467,7 @@ export const authService = {
       console.error('❌ [AuthService] Resend verification error:', error);
       return {
         success: false,
-        message: 'Error al reenviar email de verificación'
+        message: 'No pudimos reenviar el email de verificación'
       };
     }
   },

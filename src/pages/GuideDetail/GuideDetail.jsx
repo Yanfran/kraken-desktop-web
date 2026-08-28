@@ -77,7 +77,7 @@ export default function GuideDetail() {
         );
       }
     } catch (error) {
-      alert.showError(t('guide_detail.connection_error'), 'No se pudieron cargar los detalles de la guía.');
+      alert.showError(t('guide_detail.connection_error'), 'No pudimos cargar los detalles de esta guía. Verifica tu conexión e intenta de nuevo.');
       console.error('Error loading guia detail:', error);
     } finally {
       setIsLoading(false);
@@ -129,7 +129,7 @@ export default function GuideDetail() {
   // ── Ver factura comercial (abre visor / confirma si hay varias) ───────
   const handleVerFactura = useCallback(async () => {
     if (!guiaDetail?.idGuia) {
-      alert.showError('Error', 'No se puede obtener información de la guía');
+      alert.showError('Información no disponible', 'No pudimos obtener los datos de esta guía. Intenta recargar la página.');
       return;
     }
     try {
@@ -154,7 +154,7 @@ export default function GuideDetail() {
         if (success) {
           alert.showSuccess('Descarga exitosa', `Se inició la descarga de: ${factura.nombre}`);
         } else {
-          alert.showError('Error', 'No se pudo descargar la factura');
+          alert.showError('No pudimos descargar la factura', 'Ocurrió un problema al descargar. Intenta de nuevo.');
         }
         return;
       }
@@ -173,17 +173,17 @@ export default function GuideDetail() {
             if (result.success) {
               alert.showSuccess('Descarga exitosa', result.message);
             } else {
-              alert.showError('Error en descarga', result.message);
+              alert.showError('No pudimos descargar las facturas', result.message);
             }
           } catch (error) {
             console.error('Error descargando todas las facturas:', error);
-            alert.showError('Error', 'No se pudieron descargar las facturas');
+            alert.showError('No pudimos descargar las facturas', 'Ocurrió un problema al descargar. Intenta de nuevo.');
           }
         }
       );
     } catch (error) {
       console.error('Error obteniendo facturas:', error);
-      alert.showError('Error', 'No se pudieron obtener las facturas de esta guía');
+      alert.showError('Sin conexión', 'No pudimos obtener las facturas de esta guía. Verifica tu conexión e intenta de nuevo.');
     } finally {
       setIsDownloadingInvoices(false);
     }
@@ -206,7 +206,7 @@ export default function GuideDetail() {
 
       if (facturas.length === 1) {
         const success = await downloadInvoice(facturas[0].id, facturas[0].nombre);
-        if (!success) alert.showError('Error', 'No se pudo descargar la factura.');
+        if (!success) alert.showError('No pudimos descargar la factura', 'Ocurrió un problema al descargar. Intenta de nuevo.');
         return;
       }
 
@@ -214,10 +214,10 @@ export default function GuideDetail() {
       if (result.success) {
         alert.showSuccess('Descarga exitosa', result.message);
       } else {
-        alert.showError('Error', result.message);
+        alert.showError('No pudimos descargar las facturas', result.message);
       }
     } catch {
-      alert.showError('Error', 'No se pudo descargar la factura.');
+      alert.showError('No pudimos descargar la factura', 'Ocurrió un problema al descargar. Verifica tu conexión e intenta de nuevo.');
     } finally {
       setIsDownloadingComercial(false);
     }
@@ -240,7 +240,7 @@ export default function GuideDetail() {
         const fileURL = URL.createObjectURL(blob);
         window.open(fileURL, '_blank');
       } catch {
-        alert.showError('Error', 'No se pudo abrir el PDF. Intenta de nuevo.');
+        alert.showError('No pudimos abrir el PDF', 'Ocurrió un problema al abrir el documento. Intenta de nuevo.');
       } finally {
         setOpeningPdfId(null);
       }
@@ -268,7 +268,7 @@ export default function GuideDetail() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       } catch {
-        alert.showError('Error', 'No se pudo descargar el PDF. Intenta de nuevo.');
+        alert.showError('No pudimos descargar el PDF', 'Ocurrió un problema al descargar el documento. Intenta de nuevo.');
       } finally {
         setDownloadingPdfId(null);
       }
@@ -347,7 +347,7 @@ export default function GuideDetail() {
     prealertado, nGuia, estatus, fecha, origen, contenido, valorFOB,
     direccionEntrega, contieneLiquidos, esFragil, facturaUrl, peso,
     unidadPeso, medidas, historialEstatus, detalleFactura, detallePago,
-    trackingEscaneado,
+    trackingEscaneado, codEntrega,
   } = guiaDetail;
 
   const historialFiltrado = (historialEstatus ?? []).filter(h => h.estatus !== 'Incidencia');
@@ -418,6 +418,14 @@ export default function GuideDetail() {
           <label className={styles.sectionLabel}>{t('guide_detail.delivery_address')}</label>
           <p className={styles.sectionValue}>{direccionEntrega}</p>
         </div>
+
+        {/* Código de Entrega */}
+        {codEntrega && (
+          <div className={styles.section}>
+            <label className={styles.sectionLabel}>Código de Entrega</label>
+            <p className={styles.sectionValue}>{codEntrega}</p>
+          </div>
+        )}
 
         {/* Otros Detalles */}
         <div className={styles.expandableHeader} onClick={() => toggleSection('otrosDetalles')}>

@@ -26,7 +26,7 @@ export const searchTrackingNumber = async (trackingNumber) => {
     
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Error de conexión al buscar el tracking',
+      message: error.response?.data?.message || error.message || 'Sin conexión al buscar el tracking',
     };
   }
 };
@@ -84,13 +84,13 @@ export const searchTrackingInGuias = async (trackingNumber) => {
     } else {
       return {
         success: false,
-        message: 'Error al cargar las guías',
+        message: 'No pudimos cargar las guías',
       };
     }
   } catch (error) {        
     return {
       success: false,
-      message: error.message || 'Error de conexión',
+      message: error.message || 'Sin conexión',
     };
   }
 };
@@ -116,7 +116,7 @@ export const searchMultipleTrackings = async (trackingNumbers) => {
     
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Error de conexión al buscar los trackings',
+      message: error.response?.data?.message || error.message || 'Sin conexión al buscar los trackings',
     };
   }
 };

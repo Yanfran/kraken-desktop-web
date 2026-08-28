@@ -50,7 +50,7 @@ export const calculateUSShipping = async ({
     return {
       success: false,
       data:    null,
-      message: error.response?.data?.message ?? 'Error al calcular tarifa',
+      message: error.response?.data?.message ?? 'No pudimos calcular la tarifa',
     };
   }
 };
@@ -100,7 +100,7 @@ export const calculateUSDocumentShipping = async ({
     return {
       success: false,
       data:    null,
-      message: error.response?.data?.message ?? 'Error al calcular tarifa',
+      message: error.response?.data?.message ?? 'No pudimos calcular la tarifa',
     };
   }
 };

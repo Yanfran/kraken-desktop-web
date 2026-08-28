@@ -63,7 +63,7 @@ const WizardAuthModal = ({ email, name, lastName, onSuccess, onCancel }) => {
         }
       }
     } catch (e) {
-      setError('Error de conexión. Intenta de nuevo.');
+      setError('Sin conexión. Verifica tu internet e intenta de nuevo.');
     } finally {
       setLoading(false);
     }

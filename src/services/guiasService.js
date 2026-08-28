@@ -18,7 +18,7 @@ export const getGuias = async () => {
     console.error('Error fetching guias:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al cargar guías',
+      message: error.response?.data?.message || 'No pudimos cargar las guías',
       errors: error.response?.data?.errors || [error.message],
     };
   }
@@ -36,7 +36,7 @@ export const fetchGuias = async ({ page = 1, pageSize = 10, tab = 'activos', sea
   const apiResponse = response.data;
 
   if (!apiResponse.success) {
-    throw new Error(apiResponse.message || 'Error al cargar las guías.');
+    throw new Error(apiResponse.message || 'No pudimos cargar las guías.');
   }
 
   return {
@@ -72,7 +72,7 @@ export const getGuiaById = async (id) => {
     console.error('Error fetching guia by ID:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al cargar guía',
+      message: error.response?.data?.message || 'No pudimos cargar la guía',
       errors: error.response?.data?.errors || [error.message],
       data: null
     };
@@ -98,7 +98,7 @@ export const calculateSingleGuiaPrice = async (guiaId) => {
     console.error('Error calculating single guia price:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al calcular precio',
+      message: error.response?.data?.message || 'No pudimos calcular el precio',
       errors: error.response?.data?.errors || [error.message],
       data: null
     };
@@ -150,7 +150,7 @@ export const getLastShipment = async () => {
     console.error('Error fetching last shipment:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al cargar último envío',
+      message: error.response?.data?.message || 'No pudimos cargar el último envío',
       data: null,
     };
   }
@@ -199,7 +199,7 @@ const formatDateTime = (isoString) => {
 //     console.error('Error calculating guias price:', error);
 //     return {
 //       success: false,
-//       message: error.response?.data?.message || 'Error al calcular precio',
+//       message: error.response?.data?.message || 'No pudimos calcular el precio',
 //       errors: error.response?.data?.errors || [error.message],
 //       data: null
 //     };
@@ -223,7 +223,7 @@ export const getGuiaInvoices = async (guiaId) => {
     console.error('Error fetching guia invoices:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al cargar facturas',
+      message: error.response?.data?.message || 'No pudimos cargar las facturas',
       errors: error.response?.data?.errors || [error.message],
       data: null
     };
@@ -319,7 +319,7 @@ export const uploadGuiaInvoice = async (guiaId, file) => {
         const result = reader.result;
         
         if (!result || typeof result !== 'string') {
-          reject(new Error('Error al leer el archivo'));
+          reject(new Error('No pudimos leer el archivo'));
           return;
         }
         
@@ -391,7 +391,7 @@ export const uploadGuiaInvoice = async (guiaId, file) => {
     
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Error al subir factura',
+      message: error.response?.data?.message || error.message || 'No pudimos subir la factura',
       errors: error.response?.data?.errors || [error.message],
       data: null
     };
@@ -422,7 +422,7 @@ export const getMultipleGuiasPaymentData = async (guiaIds) => {
     console.error('❌ Error obteniendo datos de pago múltiple:', error);
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al obtener datos de pago múltiple',
+      message: error.response?.data?.message || 'No pudimos obtener los datos del pago',
       errors: error.response?.data?.errors || [error.message],
       data: null
     };
@@ -449,7 +449,7 @@ export const uploadGuiaMSDS = async (guiaId, file) => {
       reader.onload = () => {
         const result = reader.result;
         if (!result || typeof result !== 'string') {
-          reject(new Error('Error al leer el archivo'));
+          reject(new Error('No pudimos leer el archivo'));
           return;
         }
         resolve(result); // CON prefijo "data:application/pdf;base64,..."
@@ -485,7 +485,7 @@ export const uploadGuiaMSDS = async (guiaId, file) => {
     console.error('❌ Error uploading MSDS:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Error al subir MSDS',
+      message: error.response?.data?.message || error.message || 'No pudimos subir el MSDS',
       errors: error.response?.data?.errors || [error.message]
     };
   }
@@ -503,7 +503,7 @@ export const uploadGuiaNONDG = async (guiaId, file) => {
       reader.onload = () => {
         const result = reader.result;
         if (!result || typeof result !== 'string') {
-          reject(new Error('Error al leer el archivo'));
+          reject(new Error('No pudimos leer el archivo'));
           return;
         }
         resolve(result);
@@ -539,7 +539,7 @@ export const uploadGuiaNONDG = async (guiaId, file) => {
     console.error('❌ Error uploading NONDG:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Error al subir NONDG',
+      message: error.response?.data?.message || error.message || 'No pudimos subir el NONDG',
       errors: error.response?.data?.errors || [error.message]
     };
   }
@@ -562,7 +562,7 @@ export const getFiscalInvoices = async (guiaId) => {
     console.error('getFiscalInvoices error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error?.message || 'Error de conexión',
+      message: error.response?.data?.message || error?.message || 'Sin conexión',
       data: null
     };
   }

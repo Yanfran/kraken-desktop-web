@@ -25,7 +25,7 @@ export const useAddresses = () => {
         return response.data || [];
       }
       
-      throw new Error(response.message || 'Error al cargar direcciones');
+      throw new Error(response.message || 'No pudimos cargar las direcciones');
     },
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,

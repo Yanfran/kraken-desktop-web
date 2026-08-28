@@ -189,7 +189,7 @@ const QuickRegisterSpain = () => {
       }
     } catch (error) {
       console.error('Error al registrar:', error);
-      toast.error('Error de conexión. Intenta nuevamente.');
+      toast.error('Sin conexión. No pudimos crear tu cuenta. Verifica tu internet e intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }

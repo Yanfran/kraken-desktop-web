@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('❌ [Auth] Error en login:', error);
-      const errorMessage = error.message || 'Error de conexión. Intenta de nuevo.';
+      const errorMessage = error.message || 'Sin conexión. Intenta de nuevo.';
       dispatch({ type: 'ERROR', payload: errorMessage });
       return { success: false, message: errorMessage };
     }
@@ -218,7 +218,7 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: false });
       return { 
         success: false, 
-        message: error.message || 'Error de conexión. Intenta de nuevo.' 
+        message: error.message || 'Sin conexión. Intenta de nuevo.'
       };
     }
   }, []);
@@ -390,7 +390,7 @@ export const AuthProvider = ({ children }) => {
       console.error('❌ [Auth] Error al reenviar email:', error);
       return { 
         success: false, 
-        message: error.message || 'Error al reenviar email de verificación' 
+        message: error.message || 'No pudimos reenviar el email de verificación'
       };
     }
   }, []);

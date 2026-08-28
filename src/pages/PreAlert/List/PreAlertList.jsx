@@ -68,11 +68,11 @@ const PreAlertList = () => {
       if (response.success) {
         setPreAlertas(response.data);
       } else {
-        showAlert('error', 'Error', response.message || 'Error cargando pre-alertas');
+        showAlert('error', 'No pudimos cargar tus pre-alertas', response.message || 'Verifica tu conexión e intenta de nuevo.');
       }
     } catch (error) {
       console.error('Error loading pre-alerts:', error);
-      showAlert('error', 'Error', error.message || 'Error cargando pre-alertas');
+      showAlert('error', 'Sin conexión', error.message || 'No pudimos cargar tus pre-alertas. Verifica tu conexión e intenta de nuevo.');
     }
   }, [user?.id]);
 

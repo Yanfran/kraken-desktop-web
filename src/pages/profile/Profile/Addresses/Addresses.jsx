@@ -320,7 +320,7 @@ const Addresses = () => {
 
     if (userAddresses.length <= 1) {
       alert.showError(
-        "Error",
+        "Acción no permitida",
         t('my_addresses.cannot_delete_only'),
       );
       return;

@@ -19,6 +19,8 @@ import {
   fetchParroquias,
 } from '../../../../../services/es/spainAddressService';
 import './Step2Addresses.scss';
+import { useCustomAlert } from '../../../../../hooks/useCustomAlert';
+import CustomAlert from '../../../../../components/common/CustomAlert/CustomAlert';
 
 // ── Helper: clientId del usuario logueado ──────────────────────────────────
 const getClientId = () => {
@@ -543,6 +545,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
 // ════════════════════════════════════════════════════════════════════════════
 const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const clientId = getClientId();
+  const confirmAlert = useCustomAlert();
 
   const [originList, setOriginList] = useState([]);
   const [destList,   setDestList]   = useState([]);
@@ -588,23 +591,25 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   }, [clientId]);
 
   // ── Eliminar ───────────────────────────────────────────────────────────────
-  const handleDelete = useCallback(async (type, id) => {
-    if (!window.confirm('¿Eliminar esta dirección?')) return;
-    if (type === 'origin') {
-      const res = await deleteOriginAddress(clientId, id);
-      if (res.success) {
-        setOriginList((p) => p.filter((a) => a.id !== id));
-        if (data.originAddressId === id) updateData({ originAddressId: null });
-        toast.success('Dirección de origen eliminada');
-      } else { toast.error(res.message); }
-    } else {
-      const res = await deleteDestinationAddress(clientId, id);
-      if (res.success) {
-        setDestList((p) => p.filter((a) => a.id !== id));
-        if (data.destinationAddressId === id) updateData({ destinationAddressId: null });
-        toast.success('Dirección de destino eliminada');
-      } else { toast.error(res.message); }
-    }
+  const handleDelete = useCallback((type, id) => {
+    confirmAlert.showDeleteConfirm('esta dirección', async () => {
+      confirmAlert.hideAlert();
+      if (type === 'origin') {
+        const res = await deleteOriginAddress(clientId, id);
+        if (res.success) {
+          setOriginList((p) => p.filter((a) => a.id !== id));
+          if (data.originAddressId === id) updateData({ originAddressId: null });
+          toast.success('Dirección de origen eliminada');
+        } else { toast.error(res.message); }
+      } else {
+        const res = await deleteDestinationAddress(clientId, id);
+        if (res.success) {
+          setDestList((p) => p.filter((a) => a.id !== id));
+          if (data.destinationAddressId === id) updateData({ destinationAddressId: null });
+          toast.success('Dirección de destino eliminada');
+        } else { toast.error(res.message); }
+      }
+    }, () => {});
   }, [clientId, data, updateData]);
 
   // ── Predeterminada ─────────────────────────────────────────────────────────
@@ -751,6 +756,8 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       {modal === 'dest' && (
         <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas}  />
       )}
+
+      <CustomAlert {...confirmAlert.alertProps} />
     </div>
   );
 };

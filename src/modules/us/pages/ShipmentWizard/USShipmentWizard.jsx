@@ -92,7 +92,8 @@ const ESShipmentWizard = () => {
   ];
 
   // ── CAMBIO 3: añadir estado "calculating" ─────────────────────────────────
-  const [calculating, setCalculating] = useState(false);
+  const [calculating,     setCalculating]     = useState(false);
+  const [returnToSummary, setReturnToSummary] = useState(false);
   // ──────────────────────────────────────────────────────────────────────────
 
   const updateData = useCallback((patch) => {
@@ -189,6 +190,56 @@ const ESShipmentWizard = () => {
   };
   // ──────────────────────────────────────────────────────────────────────────
 
+  // Recalcula la tarifa usando la dirección ya guardada, sin pasar por Step 2 completo
+  const recalculateAndReturnToSummary = async () => {
+    const pkg    = wizardData.packages[0];
+    const isDoc  = pkg?.tipoPaquete === 'Documento';
+    const destino = wizardData.selectedDestinationAddress;
+
+    if (!destino) {
+      toast.error('No se encontró la dirección de destino. Vuelve al paso de direcciones.');
+      return;
+    }
+
+    const stateId = destino.idEstado ?? null;
+    if (!stateId) {
+      toast.error('La dirección de destino no tiene estado asignado.');
+      return;
+    }
+
+    let municipioId = destino.idMunicipio ?? null;
+    if (!municipioId && stateId) {
+      try {
+        const municipios = await fetchMunicipios(stateId);
+        if (municipios.length > 0) municipioId = municipios[0].id;
+      } catch { /* ignorar */ }
+    }
+
+    const pesoRaw = parseFloat(pkg.peso) || 0;
+    const pesoKg  = pkg.unidadPeso?.toLowerCase() === 'lb'
+      ? parseFloat((pesoRaw / 2.20462).toFixed(2))
+      : pesoRaw;
+
+    setCalculating(true);
+    const result = isDoc
+      ? await calculateUSDocumentShipping({ stateId, municipalityId: municipioId, lockerId: destino.idLocker ?? null, weight: pesoKg, weightUnit: 'Kg', declaredValue: parseFloat(pkg.valorFOB) || 0 })
+      : await calculateUSShipping({ stateId, municipalityId: municipioId, lockerId: destino.idLocker ?? null, weight: pesoKg, weightUnit: 'Kg', declaredValue: parseFloat(pkg.valorFOB) || 0 });
+    setCalculating(false);
+
+    if (!result.success) {
+      toast.error(result.message || 'No se pudo recalcular la tarifa.');
+      return;
+    }
+
+    updateData({ calculationResult: result });
+    if (isDoc) {
+      setReturnToSummary(false);
+      setCurrentStep(4);
+    } else {
+      setCurrentStep(3); // returnToSummary sigue true → Step 3 recalcula UPS y vuelve al Resumen
+    }
+  };
+
   // ── CAMBIO 5: actualizar renderStep ───────────────────────────────────────
   // ANTES ERA:
   //   const props = { data: wizardData, updateData, onNext: goNext, onBack: goBack };
@@ -206,7 +257,7 @@ const ESShipmentWizard = () => {
         return (
           <Step1PackageDetails
             {...commonProps}
-            onNext={() => setCurrentStep(2)}
+            onNext={returnToSummary ? recalculateAndReturnToSummary : () => setCurrentStep(2)}
             onBack={!user ? () => navigate('/login') : null}
           />
         );
@@ -229,6 +280,7 @@ const ESShipmentWizard = () => {
                 setPendingStep4(true);
                 setShowAuthModal(true);
               } else {
+                setReturnToSummary(false);
                 setCurrentStep(4);
               }
             }}
@@ -243,8 +295,9 @@ const ESShipmentWizard = () => {
             {...commonProps}
             onBack={() => setCurrentStep(isDoc4 ? 2 : 3)}
             onNext={() => setCurrentStep(5)}
-            onEditPackage={()    => setCurrentStep(1)}
+            onEditPackage={() => { setReturnToSummary(true); setCurrentStep(1); }}
             onEditAddresses={() => setCurrentStep(2)}
+            calculating={calculating}
           />
         );
       }

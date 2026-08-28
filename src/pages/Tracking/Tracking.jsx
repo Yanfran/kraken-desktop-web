@@ -29,7 +29,7 @@ export default function Tracking() {
 
   const handleTrackPackage = async () => {
     const clean = trackingNumber.trim().toUpperCase();
-    if (!clean) { alert.showError('Error', 'Ingresa un número de guía o tracking.'); return; }
+    if (!clean) { alert.showError('Campo requerido', 'Ingresa un número de guía o de tracking para continuar.'); return; }
 
     setIsLoading(true);
 

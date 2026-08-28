@@ -101,7 +101,7 @@ export const processMegasoftC2PPayment = async (paymentData) => {
     }
     return {
       success: false,
-      message: error.message || 'Error de conexión al procesar el pago',
+      message: error.message || 'Sin conexión al procesar el pago',
       error: error.message,
     };
   }
@@ -145,7 +145,7 @@ export const processMegasoftP2CPayment = async (paymentData) => {
     }
     return {
       success: false,
-      message: error.message || 'Error de conexión al procesar el pago',
+      message: error.message || 'Sin conexión al procesar el pago',
       error: error.message,
     };
   }
@@ -186,12 +186,12 @@ export const processMegasoftDIAutorizar = async (paymentData) => {
       return {
         success: false,
         data: backendData.data || null,
-        message: backendData.message || 'Error al autorizar el pago',
+        message: backendData.message || 'No pudimos autorizar el pago',
       };
     }
     return {
       success: false,
-      message: error.message || 'Error de conexión',
+      message: error.message || 'Sin conexión',
     };
   }
 };
@@ -232,12 +232,12 @@ export const processMegasoftDIConfirmar = async ({
       return {
         success: false,
         data: backendData.data || null,
-        message: backendData.message || 'Error al confirmar el OTP',
+        message: backendData.message || 'No pudimos confirmar el OTP',
       };
     }
     return {
       success: false,
-      message: error.message || 'Error de conexión',
+      message: error.message || 'Sin conexión',
     };
   }
 };
@@ -282,7 +282,7 @@ export const processMegasoftCreditoInmediato = async (paymentData) => {
     }
     return {
       success: false,
-      message: error.message || 'Error de conexión al procesar el pago',
+      message: error.message || 'Sin conexión al procesar el pago',
     };
   }
 };
@@ -324,7 +324,7 @@ export const megasoftTCCrearToken = async (data) => {
     }
     return {
       success: false,
-      message: error.message || 'Error de conexión al tokenizar la tarjeta.',
+      message: error.message || 'Sin conexión al tokenizar la tarjeta',
     };
   }
 };
@@ -355,7 +355,7 @@ export const megasoftTCVerificarToken = async (token, { montoverificacion1, mont
     }
     return {
       success: false,
-      message: error.message || 'Error al verificar la tarjeta.',
+      message: error.message || 'No pudimos verificar la tarjeta',
     };
   }
 };
@@ -377,7 +377,7 @@ export const megasoftTCPreregistro = async () => {
     console.error('❌ [TC Preregistro] Error:', error);
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Error al iniciar la transacción.',
+      message: error.response?.data?.message || error.message || 'No pudimos iniciar la transacción',
     };
   }
 };
@@ -409,7 +409,7 @@ export const megasoftTCCobrar = async (data) => {
     }
     return {
       success: false,
-      message: error.message || 'Error de conexión. Intenta de nuevo.',
+      message: error.message || 'Sin conexión. Intenta de nuevo.',
     };
   }
 };
@@ -432,7 +432,7 @@ export const processMercantilPayment = async (paymentData) => {
   } catch (error) {
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al procesar el pago',
+      message: error.response?.data?.message || 'No pudimos procesar el pago',
       error: error.message,
     };
   }
@@ -473,7 +473,7 @@ export const processMercantilDebitCardPayment = async (paymentData) => {
     return {
       success: false,
       message:
-        error.response?.data?.message || 'Error al procesar el pago con tarjeta',
+        error.response?.data?.message || 'No pudimos procesar el pago con tarjeta',
       error: error.message,
     };
   }
@@ -500,7 +500,7 @@ export const getPaymentInfo = async (guiaId) => {
   } catch (error) {
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al obtener información',
+      message: error.response?.data?.message || 'No pudimos obtener la información',
       error: error.message,
     };
   }
@@ -519,7 +519,7 @@ export const calculateMultiplePayment = async (guiaIds) => {
   } catch (error) {
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al calcular precio',
+      message: error.response?.data?.message || 'No pudimos calcular el precio',
       error: error.message,
     };
   }

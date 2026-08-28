@@ -23,9 +23,6 @@ import {
   IoPencilOutline,
 } from 'react-icons/io5';
 import {
-  fetchOriginAddresses,
-  deleteOriginAddress,
-  setOriginDefault,
   fetchDestinationAddresses,
   addDestinationAddress,
   deleteDestinationAddress,
@@ -38,6 +35,9 @@ import {
 import {
   addUsaOriginAddress,
   updateUsaOriginAddress,
+  fetchUsaOriginAddresses,
+  deleteUsaOriginAddress,
+  setUsaOriginDefault,
   fetchUsaDestinationAddresses,
   deleteUsaDestinationAddress,
   setUsaDestinationDefault,
@@ -45,6 +45,8 @@ import {
 import { updateDestinationAddress } from '../../../../../services/es/spainAddressService';
 import { authService } from '../../../../../services/auth/authService';
 import './Step2Addresses.scss';
+import { useCustomAlert } from '../../../../../hooks/useCustomAlert';
+import CustomAlert from '../../../../../components/common/CustomAlert/CustomAlert';
 
 // ── Helper: clientId del usuario logueado ──────────────────────────────────
 const getClientId = () => {
@@ -1072,6 +1074,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const { t } = useTranslation();
   const { user, setUserState } = useAuth();
   const clientId = getClientId();
+  const confirmAlert = useCustomAlert();
 
   // Datos de contacto para usuarios guest (no logueados)
   const [senderName,     setSenderName]     = useState(data.senderName     ?? '');
@@ -1107,7 +1110,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
 
     if (!clientId) { setLoading({ origin: false, dest: false }); return; }
 
-    fetchOriginAddresses(clientId).then((res) => {
+    fetchUsaOriginAddresses(clientId).then((res) => {
       if (res.success) {
         setOriginList(res.data);
         const pred = res.data.find((a) => a.esPredeterminada);
@@ -1131,29 +1134,31 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   }, [clientId]);
 
   // ── Eliminar ───────────────────────────────────────────────────────────────
-  const handleDelete = useCallback(async (type, id) => {
-    if (!window.confirm(t('us_wizard.delete_confirm'))) return;
-    if (type === 'origin') {
-      const res = await deleteOriginAddress(clientId, id);
-      if (res.success) {
-        setOriginList((p) => p.filter((a) => a.id !== id));
-        if (data.originAddressId === id) updateData({ originAddressId: null });
-        toast.success(t('us_wizard.origin_deleted'));
-      } else { toast.error(res.message); }
-    } else {
-      const res = await deleteUsaDestinationAddress(clientId, id);
-      if (res.success) {
-        setDestList((p) => p.filter((a) => a.id !== id));
-        if (data.destinationAddressId === id) updateData({ destinationAddressId: null });
-        toast.success(t('us_wizard.dest_deleted'));
-      } else { toast.error(res.message); }
-    }
+  const handleDelete = useCallback((type, id) => {
+    confirmAlert.showDeleteConfirm('esta dirección', async () => {
+      confirmAlert.hideAlert();
+      if (type === 'origin') {
+        const res = await deleteUsaOriginAddress(clientId, id);
+        if (res.success) {
+          setOriginList((p) => p.filter((a) => a.id !== id));
+          if (data.originAddressId === id) updateData({ originAddressId: null });
+          toast.success(t('us_wizard.origin_deleted'));
+        } else { toast.error(res.message); }
+      } else {
+        const res = await deleteUsaDestinationAddress(clientId, id);
+        if (res.success) {
+          setDestList((p) => p.filter((a) => a.id !== id));
+          if (data.destinationAddressId === id) updateData({ destinationAddressId: null });
+          toast.success(t('us_wizard.dest_deleted'));
+        } else { toast.error(res.message); }
+      }
+    }, () => {});
   }, [clientId, data, updateData]);
 
   // ── Predeterminada ─────────────────────────────────────────────────────────
   const handleSetDefault = useCallback(async (type, id) => {
     if (type === 'origin') {
-      const res = await setOriginDefault(clientId, id);
+      const res = await setUsaOriginDefault(clientId, id);
       if (res.success) {
         setOriginList((p) => p.map((a) => ({ ...a, esPredeterminada: a.id === id })));
         toast.success(t('us_wizard.origin_default_updated'));
@@ -1593,6 +1598,8 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
           </div>
         </div>
       )}
+
+      <CustomAlert {...confirmAlert.alertProps} />
     </div>
   );
 };

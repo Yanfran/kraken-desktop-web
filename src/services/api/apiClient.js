@@ -54,7 +54,7 @@ export const authService = {
       
       return {
         success: false,
-        message: 'Error de conexión. Intenta de nuevo.'
+        message: 'Sin conexión. Intenta de nuevo.'
       };
     }
   },
@@ -102,7 +102,7 @@ export const authService = {
       
       return {
         success: false,
-        message: 'Error de conexión. Intenta de nuevo.'
+        message: 'Sin conexión. Intenta de nuevo.'
       };
     }
   },
@@ -177,7 +177,7 @@ export const authService = {
       console.error('[AuthService] Forgot password error:', error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Error al enviar email'
+        message: error.response?.data?.message || 'No pudimos enviar el email'
       };
     }
   },
@@ -194,7 +194,7 @@ export const authService = {
       console.error('[AuthService] Resend verification error:', error);
       return {
         success: false,
-        message: 'Error al reenviar verificación'
+        message: 'No pudimos reenviar el código de verificación'
       };
     }
   },

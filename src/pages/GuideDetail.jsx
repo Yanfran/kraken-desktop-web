@@ -58,12 +58,12 @@ export default function GuideDetail() {
         // ──────────────────────────────────────────────────────────────
       } else {
         alert.showError(
-          'Error al cargar la guía',
-          response.message || 'No se pudieron obtener los detalles.'
+          'No pudimos cargar la guía',
+          response.message || 'Ocurrió un problema al obtener los detalles. Intenta de nuevo.'
         );
       }
     } catch (error) {
-      alert.showError('Error de Conexión', 'No se pudieron cargar los detalles de la guía.');
+      alert.showError('Sin conexión', 'No pudimos cargar los detalles de esta guía. Verifica tu conexión e intenta de nuevo.');
       console.error('Error loading guia detail:', error);
     } finally {
       setIsLoading(false);
@@ -125,7 +125,7 @@ export default function GuideDetail() {
         alert.showWarning('Sin facturas', 'No hay facturas disponibles para esta guía.');
       }
     } catch {
-      alert.showError('Error', 'No se pudieron obtener las facturas.');
+      alert.showError('Sin conexión', 'No pudimos obtener las facturas. Verifica tu conexión e intenta de nuevo.');
     } finally {
       setIsDownloadingInvoices(false);
     }
@@ -153,7 +153,7 @@ export default function GuideDetail() {
         const fileURL = URL.createObjectURL(blob);
         window.open(fileURL, '_blank');
       } catch {
-        alert.showError('Error', 'No se pudo abrir el PDF. Intenta de nuevo.');
+        alert.showError('No pudimos abrir el PDF', 'Ocurrió un problema al abrir el documento. Intenta de nuevo.');
       } finally {
         setOpeningPdfId(null);
       }

@@ -30,6 +30,7 @@ import {
 } from '../../../../services/us/usAddressService';
 import { addDestinationAddress, updateDestinationAddress } from '../../../../services/es/spainAddressService';
 import { OriginModal, DestinationModal } from '../ShipmentWizard/steps/Step2Addresses';
+import '../ShipmentWizard/steps/Step2Addresses.scss';
 import './AddressesPage.scss';
 
 const MAX_ADDRESSES = 4;
@@ -97,7 +98,7 @@ const AddressesPage = () => {
       ? await setUsaOriginDefault(clientId, id)
       : await setUsaDestinationDefault(clientId, id);
     if (res.success) { toast.success('Dirección predeterminada actualizada'); load(); }
-    else toast.error(res.message || 'Error');
+    else toast.error(res.message || 'No pudimos actualizar la dirección predeterminada. Intenta de nuevo.');
   };
 
   const handleAddOrigin = async (formData) => {

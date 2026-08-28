@@ -22,6 +22,6 @@ export const chargeAjuste = async ({ ajusteId, token, firstName, lastName, email
     });
     return data;
   } catch (e) {
-    return { success: false, message: e?.response?.data?.message ?? e.message ?? 'Error al procesar el pago.' };
+    return { success: false, message: e?.response?.data?.message ?? e.message ?? 'No pudimos procesar el pago' };
   }
 };

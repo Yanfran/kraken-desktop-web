@@ -15,7 +15,7 @@ const fileToBase64 = (file) => {
       const result = reader.result;
       
       if (!result || typeof result !== 'string') {
-        reject(new Error('Error al leer el archivo'));
+        reject(new Error('No pudimos leer el archivo'));
         return;
       }
       
@@ -33,7 +33,7 @@ const fileToBase64 = (file) => {
     
     reader.onerror = (error) => {
       console.error('❌ Error en FileReader:', error);
-      reject(new Error(`Error al leer el archivo: ${error.message || 'Desconocido'}`));
+      reject(new Error(`No pudimos leer el archivo: ${error.message || 'Desconocido'}`));
     };
     
     // ✅ readAsDataURL automáticamente agrega el prefijo "data:tipo;base64,"
@@ -239,7 +239,7 @@ export const getPreAlertas = async (userId) => {
     
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al cargar pre-alertas',
+      message: error.response?.data?.message || 'No pudimos cargar las pre-alertas',
       errors: error.response?.data?.errors || [error.message],
       data: []
     };
@@ -268,7 +268,7 @@ export const getPreAlertasPendientes = async () => {
     
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al cargar pre-alertas pendientes',
+      message: error.response?.data?.message || 'No pudimos cargar las pre-alertas pendientes',
       errors: error.response?.data?.errors || [error.message],
       data: []
     };
@@ -302,7 +302,7 @@ export const getPreAlertaById = async (id) => {
     
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al cargar pre-alerta',
+      message: error.response?.data?.message || 'No pudimos cargar la pre-alerta',
       errors: error.response?.data?.errors || [error.message],
       data: null
     };
@@ -348,7 +348,7 @@ export const createPreAlerta = async (payload) => {
     });
 
     if (response.data.success === false) {
-      const errMsg = response.data.message || 'Error al crear pre-alerta';
+      const errMsg = response.data.message || 'No pudimos crear la pre-alerta';
       throw new Error(errMsg);
     }
 
@@ -359,7 +359,7 @@ export const createPreAlerta = async (payload) => {
     };
   } catch (error) {
     console.error('❌ Error creating pre-alert:', error);
-    throw new Error(error.response?.data?.message || error.message || 'Error al crear pre-alerta');
+    throw new Error(error.response?.data?.message || error.message || 'No pudimos crear la pre-alerta');
   }
 };
 
@@ -388,7 +388,7 @@ export const updatePreAlerta = async (id, payload) => {
     });
 
     if (response.data.success === false) {
-      const errMsg = response.data.message || 'Error al actualizar pre-alerta';
+      const errMsg = response.data.message || 'No pudimos actualizar la pre-alerta';
       throw new Error(errMsg);
     }
 
@@ -399,7 +399,7 @@ export const updatePreAlerta = async (id, payload) => {
     };
   } catch (error) {
     console.error('❌ Error updating pre-alert:', error);
-    throw new Error(error.response?.data?.message || error.message || 'Error al actualizar pre-alerta');
+    throw new Error(error.response?.data?.message || error.message || 'No pudimos actualizar la pre-alerta');
   }
 };
 
@@ -430,7 +430,7 @@ export const deletePreAlerta = async (id) => {
     
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al eliminar pre-alerta',
+      message: error.response?.data?.message || 'No pudimos eliminar la pre-alerta',
       errors: error.response?.data?.errors || [error.message],
       data: null
     };
@@ -459,7 +459,7 @@ export const getPaquetesContenidos = async () => {
     
     return {
       success: false,
-      message: error.response?.data?.message || 'Error al cargar contenidos',
+      message: error.response?.data?.message || 'No pudimos cargar los contenidos',
       errors: error.response?.data?.errors || [error.message],
       data: []
     };

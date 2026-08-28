@@ -51,7 +51,7 @@ export const getNovedades = async () => {
     // Si success es false
     return {
       success: false,
-      message: response.data.message || 'Error al obtener novedades',
+      message: response.data.message || 'No pudimos obtener las novedades',
       data: []
     };
     
@@ -59,7 +59,7 @@ export const getNovedades = async () => {
     // Manejo de errores detallado
     const errorMessage = error.response?.data?.message 
       || error.message 
-      || 'Error de conexión al cargar novedades';
+      || 'Sin conexión al cargar las novedades';
     
     return {
       success: false,
@@ -94,7 +94,7 @@ export const getNovedadById = async (id) => {
     
     return {
       success: false,
-      message: response.data.message || 'Error al cargar novedad',
+      message: response.data.message || 'No pudimos cargar la novedad',
       data: null
     };
     
@@ -103,7 +103,7 @@ export const getNovedadById = async (id) => {
     
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Error al cargar novedad',
+      message: error.response?.data?.message || error.message || 'No pudimos cargar la novedad',
       data: null
     };
   }

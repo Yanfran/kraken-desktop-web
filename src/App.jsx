@@ -4,7 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute, PublicRoute, SemiProtectedRoute } from './components/auth/ProtectedRoute';
 import Loading from './components/common/Loading/Loading';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, ToastBar, toast } from 'react-hot-toast';
 import { isBackupApi } from './utils/config';
 import { useAuth } from './contexts/AuthContext';
 import './App.styles.scss';
@@ -120,7 +120,37 @@ function App() {
                   },
                 },
               }}
-            />
+            >
+              {(t) => (
+                <ToastBar toast={t}>
+                  {({ icon, message }) => (
+                    <>
+                      {icon}
+                      {message}
+                      {t.type !== 'loading' && (
+                        <button
+                          onClick={() => toast.dismiss(t.id)}
+                          aria-label="Cerrar"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px 2px 4px 8px',
+                            color: 'inherit',
+                            fontSize: '18px',
+                            lineHeight: 1,
+                            opacity: 0.7,
+                            flexShrink: 0,
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </>
+                  )}
+                </ToastBar>
+              )}
+            </Toaster>
 
             {/* Rutas principales */}
             <Suspense fallback={<Loading />}>

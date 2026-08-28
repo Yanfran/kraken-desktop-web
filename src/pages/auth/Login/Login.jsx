@@ -146,8 +146,8 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Error en login yyy:', error);
-      setErrors({ submit: 'Error de conexión. Intenta de nuevo.' });
-      toast.error('Error de conexión. Intenta de nuevo.');
+      setErrors({ submit: 'Sin conexión. Verifica tu internet e intenta de nuevo.' });
+      toast.error('Sin conexión. Verifica tu internet e intenta de nuevo.');
     }
   };
 

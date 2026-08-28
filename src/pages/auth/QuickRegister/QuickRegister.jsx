@@ -197,7 +197,7 @@ const QuickRegister = () => {
         toast.error(data?.message || 'Error en el registro');
       }
     } catch (error) {
-      toast.error('Error de conexión. Intenta nuevamente.');
+      toast.error('Sin conexión. No pudimos crear tu cuenta. Verifica tu internet e intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }

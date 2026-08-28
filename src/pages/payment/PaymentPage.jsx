@@ -403,7 +403,7 @@ export default function PaymentPage() {
 
     } catch (error) {
       console.error('Error loading payment data:', error);
-      setDataError('Error de conexión al cargar los datos');
+      setDataError('Sin conexión. No pudimos cargar los datos del pago. Verifica tu conexión e intenta de nuevo.');
       setStep('loading');
     } finally {
       setDataLoading(false);
@@ -547,9 +547,9 @@ export default function PaymentPage() {
       }
     } catch (err) {
       console.error('Error C2P:', err);
-      setError('Error de conexión');
+      setError('Sin conexión');
       setErrorDetails({
-        title: 'Error de conexión',
+        title: 'Sin conexión',
         message: 'No pudimos conectar con el servicio de pagos.',
         code: 'NETWORK',
         technicalDetail: err.message || '',
@@ -605,9 +605,9 @@ export default function PaymentPage() {
       }
     } catch (err) {
       console.error('Error P2C:', err);
-      setError('Error de conexión');
+      setError('Sin conexión');
       setErrorDetails({
-        title: 'Error de conexión',
+        title: 'Sin conexión',
         message: 'No pudimos conectar con el servicio de pagos.',
         code: 'NETWORK',
         technicalDetail: err.message || '',
@@ -665,9 +665,9 @@ export default function PaymentPage() {
       }
     } catch (err) {
       console.error('Error DI Autorizar:', err);
-      setError('Error de conexión');
+      setError('Sin conexión');
       setErrorDetails({
-        title: 'Error de conexión',
+        title: 'Sin conexión',
         message: 'No pudimos conectar con el servicio de pagos.',
         code: 'NETWORK',
         technicalDetail: err.message || '',
@@ -721,9 +721,9 @@ export default function PaymentPage() {
       }
     } catch (err) {
       console.error('Error DI Confirmar:', err);
-      setError('Error de conexión');
+      setError('Sin conexión');
       setErrorDetails({
-        title: 'Error de conexión',
+        title: 'Sin conexión',
         message: 'No pudimos conectar con el servicio de pagos.',
         code: 'NETWORK',
         technicalDetail: err.message || '',
@@ -780,9 +780,9 @@ export default function PaymentPage() {
       }
     } catch (err) {
       console.error('Error CI:', err);
-      setError('Error de conexión');
+      setError('Sin conexión');
       setErrorDetails({
-        title: 'Error de conexión',
+        title: 'Sin conexión',
         message: 'No pudimos conectar con el servicio de pagos.',
         code: 'NETWORK',
         technicalDetail: err.message || '',
@@ -945,7 +945,7 @@ export default function PaymentPage() {
         setTcError(response.message || 'No se pudo tokenizar la tarjeta. Verifica los datos.');
       }
     } catch (err) {
-      setTcError('Error de conexión al tokenizar la tarjeta.');
+      setTcError('Sin conexión. No pudimos registrar tu tarjeta. Verifica tu conexión e intenta de nuevo.');
     } finally {
       setIsLoading(false);
       submittingRef.current = false;
@@ -987,7 +987,7 @@ export default function PaymentPage() {
         }
       }
     } catch (err) {
-      setTcError('Error de conexión al verificar la tarjeta.');
+      setTcError('Sin conexión. No pudimos verificar tu tarjeta. Verifica tu conexión e intenta de nuevo.');
     } finally {
       setIsLoading(false);
       submittingRef.current = false;
@@ -1051,8 +1051,8 @@ export default function PaymentPage() {
     } catch (err) {
       console.error('Error TC Cobrar:', err);
       setErrorDetails({
-        title: 'Error de conexión',
-        message: 'No pudimos conectar con el servicio de pagos.',
+        title: 'Sin conexión',
+        message: 'No pudimos conectar con el servicio de pagos. Verifica tu conexión e intenta de nuevo.',
         code: 'NETWORK',
         technicalDetail: err.message || '',
       });
@@ -1995,8 +1995,8 @@ export default function PaymentPage() {
 
   const renderError = () => {
     const info = errorDetails || {
-      title: 'Error en el proceso',
-      message: error || 'Ocurrió un error inesperado',
+      title: 'No se pudo procesar el pago',
+      message: error || 'Ocurrió un error inesperado. Verifica tu conexión e intenta de nuevo.',
       code: 'N/A',
       technicalDetail: '',
     };

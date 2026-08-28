@@ -60,7 +60,7 @@ function getBadge(quote, allQuotes, t) {
 }
 
 // ── Card de courier ────────────────────────────────────────────────────────────
-const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate }) => {
+const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate, isPickup }) => {
   const { t } = useTranslation();
   const base        = parseFloat(quote.price).toFixed(2);
   const fuel        = parseFloat(quote.fuel_surcharge).toFixed(2);
@@ -106,7 +106,7 @@ const CourierCard = ({ quote, isSelected, onSelect, badge, pickupRate }) => {
         </div>
       )}
       <div className="courier-card__breakdown">
-        <span>{t('us_wizard.breakdown_base')}: ${base}</span>
+        {isPickup && <span>Tarifa regular: ${base}</span>}
         {parseFloat(fuel)   > 0 && <span>+ {t('us_wizard.breakdown_fuel')}: ${fuel}</span>}
         {pickupExtra        > 0 && <span>+ {t('us_wizard.breakdown_pickup')}: ${pickupExtra.toFixed(2)}</span>}
       </div>
@@ -412,6 +412,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
                 onSelect={handleSelect}
                 badge={getBadge(q, quotes, t)}
                 pickupRate={isPickup ? pickupRate : 0}
+                isPickup={isPickup}
                 discountPct={discountPct}
               />
             ))}
