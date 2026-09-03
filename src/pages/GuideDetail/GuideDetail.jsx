@@ -347,8 +347,10 @@ export default function GuideDetail() {
     prealertado, nGuia, estatus, fecha, origen, contenido, valorFOB,
     direccionEntrega, contieneLiquidos, esFragil, facturaUrl, peso,
     unidadPeso, medidas, historialEstatus, detalleFactura, detallePago,
-    trackingEscaneado, codEntrega,
+    trackingEscaneado, trackings, codEntrega,
   } = guiaDetail;
+
+  const trackingDisplay = trackingEscaneado ?? trackings?.[0] ?? null;
 
   const historialFiltrado = (historialEstatus ?? []).filter(h => h.estatus !== 'Incidencia');
   const estatusDisplay = estatus === 'Incidencia'
@@ -393,10 +395,10 @@ export default function GuideDetail() {
             <p className={styles.sectionValue}>{estatusDisplay}</p>
             <span className={styles.sectionSubtext}>{fecha}</span>
           </div>
-          {trackingEscaneado && (
+          {trackingDisplay && (
             <div className={styles.rowItem}>
               <label className={styles.sectionLabel}>Nº Tracking</label>
-              <p className={styles.sectionValue}>{trackingEscaneado}</p>
+              <p className={styles.sectionValue}>{trackingDisplay}</p>
             </div>
           )}
         </div>
