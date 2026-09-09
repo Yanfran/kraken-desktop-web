@@ -40,6 +40,8 @@ import {
   megasoftTCPreregistro,
   megasoftTCCobrar,
   getMetodosDisponibles,
+  getMegasoftP2CBancosDestino,
+  checkGuiaPaid,
 } from '@/services/payment/paymentService';
 
 // ============================================================
@@ -276,6 +278,8 @@ export default function PaymentPage() {
 
   // P2C
   const [p2cReferencia, setP2cReferencia] = useState('');
+  const [p2cBancosDestino, setP2cBancosDestino] = useState([]);
+  const [p2cBancoDestinoId, setP2cBancoDestinoId] = useState('0191');
 
   // DI / CI — selector de identificación
   const [diIdMethod, setDiIdMethod] = useState('telefono'); // 'telefono' | 'cuenta'
@@ -334,6 +338,12 @@ export default function PaymentPage() {
       return;
     }
     loadPaymentData();
+    getMegasoftP2CBancosDestino().then(bancos => {
+      if (bancos.length > 0) {
+        setP2cBancosDestino(bancos);
+        setP2cBancoDestinoId(bancos[0].codigoBanco);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isSignedIn, navigate]);
 
@@ -354,6 +364,14 @@ export default function PaymentPage() {
     try {
       setDataLoading(true);
       setDataError('');
+
+      if (!isMultiplePayment) {
+        const alreadyPaid = await checkGuiaPaid(parseInt(id));
+        if (alreadyPaid) {
+          navigate('/guide/guides');
+          return;
+        }
+      }
 
       if (isMultiplePayment) {
         const guiaIds = multipleIds.split(',').map(Number);
@@ -527,6 +545,7 @@ export default function PaymentPage() {
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
         guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
         isMultiplePayment,
+        bancoDestinoKrakenId: p2cBancoDestinoId,
       };
 
       const response = await processMegasoftC2PPayment(request);
@@ -585,6 +604,7 @@ export default function PaymentPage() {
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
         guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
         isMultiplePayment,
+        bancoDestinoKrakenId: p2cBancoDestinoId,
       };
 
       const response = await processMegasoftP2CPayment(request);
@@ -768,7 +788,7 @@ export default function PaymentPage() {
         setPaymentReference(data.paymentReference || data.PaymentReference || '');
         setAuthorizationCode(data.authorizationCode || data.AuthorizationCode || '');
         setPaymentVoucher(data.voucher || '');
-        setPaymentMethodLabel('Crédito Inmediato');
+        setPaymentMethodLabel('Transferencia bancaria');
         setStep('success');
         toast.success('¡Pago procesado exitosamente!');
       } else {
@@ -938,9 +958,18 @@ export default function PaymentPage() {
         const pan4 = tcPan.slice(-4);
         setTcToken(response.token);
         setTcPanLast4(pan4);
-        setTcSubStep('tc_verificar');
-        tcSaveSession({ tcSubStep: 'tc_verificar', tcToken: response.token, tcPanLast4: pan4 });
-        toast.success('Tarjeta tokenizada. Revisa tu estado de cuenta para los cobros de prueba.', { duration: 6000 });
+        if (response.yaVerificado) {
+          // Megasoft confirma que la tarjeta ya fue verificada — saltar microcargos
+          tcSaveVerifiedToken(response.token, pan4);
+          setTcVerifiedFromStorage(true);
+          setTcSubStep('tc_confirmar');
+          tcSaveSession({ tcSubStep: 'tc_confirmar', tcToken: response.token, tcPanLast4: pan4 });
+          toast.success(`Tarjeta ya verificada (****${pan4}). Procede al pago.`, { duration: 5000 });
+        } else {
+          setTcSubStep('tc_verificar');
+          tcSaveSession({ tcSubStep: 'tc_verificar', tcToken: response.token, tcPanLast4: pan4 });
+          toast.success('Tarjeta tokenizada. Revisa tu estado de cuenta para los cobros de prueba.', { duration: 6000 });
+        }
       } else {
         setTcError(response.message || 'No se pudo tokenizar la tarjeta. Verifica los datos.');
       }
@@ -971,7 +1000,7 @@ export default function PaymentPage() {
         tcSaveVerifiedToken(tcToken, tcPanLast4 || tcPan.slice(-4));
         tcSaveSession({ tcSubStep: 'tc_confirmar' });
         setTcSubStep('tc_confirmar');
-        toast.success('¡Tarjeta verificada exitosamente!');
+        toast.success(response.yaVerificado ? '¡Tarjeta ya verificada!' : '¡Tarjeta verificada exitosamente!');
       } else {
         const intentos = response.intentosRestantes ?? null;
         setTcIntentosRestantes(intentos);
@@ -999,8 +1028,8 @@ export default function PaymentPage() {
     if (submittingRef.current) return;
     setTcError('');
 
-    if (!tcCvvConfirm || tcCvvConfirm.length < 3)
-      return toast.error('Ingresa el CVV de tu tarjeta para confirmar el pago');
+    if (!tcCvv || tcCvv.length < 3)
+      return toast.error('CVV no disponible. Vuelve al paso inicial e ingresa los datos de tu tarjeta.');
 
     submittingRef.current = true;
     try {
@@ -1024,7 +1053,7 @@ export default function PaymentPage() {
         customerId: `${idType}${idNumber}`,
         token: tcToken,
         control: preregistro.control,
-        cvv: tcCvvConfirm,
+        cvv: tcCvv,
         amount: amount.toString(),
         tasa: paymentData.tasaCambio,
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
@@ -1215,23 +1244,6 @@ export default function PaymentPage() {
           <p className={styles.stepDescription}>Ingresa los datos de tu tarjeta de crédito</p>
 
           {renderTCStep(0)}
-
-          {/* Nombre y Apellido */}
-          <div className={styles.inputGroup}>
-            <label>Nombre y Apellido</label>
-            <input
-              type="text"
-              placeholder="Ej. Juan Perez"
-              value={nombreCompleto}
-              onChange={(e) => setNombreCompleto(sanitizeNombreCompleto(e.target.value))}
-              onBlur={() => {
-                if (!tcNombreTitular.trim() && nombreCompleto.trim())
-                  setTcNombreTitular(sanitizeNombreCompleto(nombreCompleto).toUpperCase().slice(0, 26));
-              }}
-              maxLength={250}
-            />
-            <small>Solo letras, números, comas y puntos. Sin acentos ni caracteres especiales.</small>
-          </div>
 
           {/* Cédula */}
           <div className={styles.inputGroup}>
@@ -1451,22 +1463,6 @@ export default function PaymentPage() {
           )}
         </div>
 
-        <div className={styles.inputGroup}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <IoLockClosedOutline size={15} /> CVV (confirma tu tarjeta)
-          </label>
-          <input
-            type="password"
-            inputMode="numeric"
-            placeholder="•••"
-            value={tcCvvConfirm}
-            onChange={(e) => setTcCvvConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
-            maxLength={4}
-            autoFocus
-          />
-          <small>Por seguridad, ingresa el CVV nuevamente para confirmar el cobro</small>
-        </div>
-
         {tcError && (
           <div className={styles.tcErrorInline}>
             <IoWarningOutline size={18} /> {tcError}
@@ -1477,7 +1473,6 @@ export default function PaymentPage() {
           <button
             onClick={() => {
               setTcError('');
-              setTcCvvConfirm('');
               setTcSubStep(tcVerifiedFromStorage ? 'tc_datos' : 'tc_verificar');
             }}
             className={styles.btn_secondary}
@@ -1487,7 +1482,7 @@ export default function PaymentPage() {
           </button>
           <button
             onClick={handleTCCobrar}
-            disabled={isLoading || !tcCvvConfirm}
+            disabled={isLoading}
             className={styles.btn_primary}
           >
             {isLoading ? 'Procesando pago...' : `Pagar ${formatBolivar(parseFloat(amount))}`}
@@ -1512,7 +1507,7 @@ export default function PaymentPage() {
           {isC2P ? 'Datos del Pago Móvil C2P'
             : isP2C ? 'Datos del Pago Móvil P2C'
             : isDI ? 'Datos del Débito Inmediato'
-            : 'Datos del Crédito Inmediato'}
+            : 'Datos de Transferencia bancaria'}
         </h3>
         <p className={styles.stepDescription}>
           {isC2P ? 'Completa la información para realizar el pago C2P'
@@ -1703,6 +1698,35 @@ export default function PaymentPage() {
           </div>
         )}
 
+        {/* Banco receptor C2P */}
+        {isC2P && p2cBancosDestino.length > 1 && (
+          <div className={styles.inputGroup}>
+            <label>Banco receptor <small style={{ fontWeight: 'normal', opacity: 0.7 }}>(donde llegará tu pago)</small></label>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {p2cBancosDestino.map(banco => (
+                <button
+                  key={banco.codigoBanco}
+                  type="button"
+                  onClick={() => setP2cBancoDestinoId(banco.codigoBanco)}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '20px',
+                    border: `2px solid ${p2cBancoDestinoId === banco.codigoBanco ? '#0175c8' : '#ccc'}`,
+                    background: p2cBancoDestinoId === banco.codigoBanco ? '#0175c8' : 'transparent',
+                    color: p2cBancoDestinoId === banco.codigoBanco ? '#fff' : 'inherit',
+                    fontWeight: p2cBancoDestinoId === banco.codigoBanco ? '600' : '400',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {banco.nombre}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Clave C2P */}
         {isC2P && (
           <div className={styles.inputGroup}>
@@ -1726,41 +1750,80 @@ export default function PaymentPage() {
         {/* Referencia P2C */}
         {isP2C && (
           <>
-            {/* Datos bancarios para el pago móvil */}
-            <div className={styles.p2cBankCard}>
-              <div className={styles.p2cBankCardHeader}>
-                <IoPhonePortraitOutline size={20} />
-                <span>Datos para el Pago Móvil</span>
+            {/* Selector de banco receptor */}
+            {p2cBancosDestino.length > 1 && (
+              <div className={styles.inputGroup}>
+                <label>Banco receptor <small style={{ fontWeight: 'normal', opacity: 0.7 }}>(donde llegará tu pago)</small></label>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {p2cBancosDestino.map(banco => (
+                    <button
+                      key={banco.codigoBanco}
+                      type="button"
+                      onClick={() => { setP2cBancoDestinoId(banco.codigoBanco); setCopiedField(null); }}
+                      style={{
+                        padding: '8px 18px',
+                        borderRadius: '20px',
+                        border: `2px solid ${p2cBancoDestinoId === banco.codigoBanco ? '#0175c8' : '#ccc'}`,
+                        background: p2cBancoDestinoId === banco.codigoBanco ? '#0175c8' : 'transparent',
+                        color: p2cBancoDestinoId === banco.codigoBanco ? '#fff' : 'inherit',
+                        fontWeight: p2cBancoDestinoId === banco.codigoBanco ? '600' : '400',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {banco.nombre}
+                    </button>
+                  ))}
+                </div>
               </div>
-              {[
+            )}
+
+            {/* Datos bancarios para el pago móvil */}
+            {(() => {
+              const banco = p2cBancosDestino.find(b => b.codigoBanco === p2cBancoDestinoId);
+              const items = banco ? [
+                { label: 'Banco', value: `${banco.nombre} (${banco.codigoBanco})`, field: 'banco' },
+                { label: 'Cédula', value: banco.cedulaDisplay || banco.cedula, field: 'cedula' },
+                { label: 'Teléfono', value: banco.telefono, display: banco.telefonoDisplay, field: 'telefono' },
+              ] : [
                 { label: 'Banco', value: 'Banco Nacional de Crédito (0191)', field: 'banco' },
                 { label: 'Cédula', value: 'J-504893072', field: 'cedula' },
-                { label: 'Teléfono', value: '04242574822', field: 'telefono', display: '0424 257 4822' },
-              ].map(({ label, value, field, display }) => (
-                <div key={field} className={styles.p2cBankRow}>
-                  <span className={styles.p2cBankLabel}>{label}</span>
-                  <div className={styles.p2cBankValueGroup}>
-                    <span className={styles.p2cBankValue}>{display || value}</span>
-                    <button
-                      type="button"
-                      className={`${styles.p2cCopyBtn} ${copiedField === field ? styles.p2cCopyBtnDone : ''}`}
-                      onClick={() => {
-                        navigator.clipboard.writeText(value);
-                        setCopiedField(field);
-                        setTimeout(() => setCopiedField(null), 2000);
-                      }}
-                      title={`Copiar ${label}`}
-                    >
-                      {copiedField === field ? (
-                        <><IoCheckmark size={14} /> Copiado</>
-                      ) : (
-                        <><IoCopyOutline size={14} /> Copiar</>
-                      )}
-                    </button>
+                { label: 'Teléfono', value: '04242574822', display: '0424 257 4822', field: 'telefono' },
+              ];
+              return (
+                <div className={styles.p2cBankCard}>
+                  <div className={styles.p2cBankCardHeader}>
+                    <IoPhonePortraitOutline size={20} />
+                    <span>Datos para el Pago Móvil</span>
                   </div>
+                  {items.map(({ label, value, field, display }) => (
+                    <div key={field} className={styles.p2cBankRow}>
+                      <span className={styles.p2cBankLabel}>{label}</span>
+                      <div className={styles.p2cBankValueGroup}>
+                        <span className={styles.p2cBankValue}>{display || value}</span>
+                        <button
+                          type="button"
+                          className={`${styles.p2cCopyBtn} ${copiedField === field ? styles.p2cCopyBtnDone : ''}`}
+                          onClick={() => {
+                            navigator.clipboard.writeText(value);
+                            setCopiedField(field);
+                            setTimeout(() => setCopiedField(null), 2000);
+                          }}
+                          title={`Copiar ${label}`}
+                        >
+                          {copiedField === field ? (
+                            <><IoCheckmark size={14} /> Copiado</>
+                          ) : (
+                            <><IoCopyOutline size={14} /> Copiar</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
 
             <div className={styles.p2cInstructions}>
               <IoReceiptOutline size={20} />
@@ -1919,7 +1982,7 @@ export default function PaymentPage() {
       paymentMethod === 'c2p' ? 'Pago Móvil C2P'
         : paymentMethod === 'p2c' ? 'Pago Móvil P2C'
         : paymentMethod === 'debitoInmediato' ? 'Débito Inmediato'
-        : paymentMethod === 'creditoInmediato' ? 'Crédito Inmediato'
+        : paymentMethod === 'creditoInmediato' ? 'Transferencia bancaria'
         : paymentMethod === 'tarjetaCredito' ? 'Tarjeta de Crédito'
         : 'Tarjeta de Débito';
 
@@ -2090,7 +2153,7 @@ export default function PaymentPage() {
       if (paymentMethod === 'c2p') return 'Pago Móvil C2P';
       if (paymentMethod === 'p2c') return 'Pago Móvil P2C';
       if (paymentMethod === 'debitoInmediato') return 'Débito Inmediato';
-      if (paymentMethod === 'creditoInmediato') return 'Crédito Inmediato';
+      if (paymentMethod === 'creditoInmediato') return 'Transferencia bancaria';
       if (paymentMethod === 'tarjetaCredito') return 'Tarjeta de Crédito';
     }
     return 'Pago';

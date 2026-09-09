@@ -466,7 +466,7 @@ const PreAlertCreate = () => {
 
     // ✅ CASO 1: Usar dirección predeterminada
     if (addressState.selectedOption === 'default') {
-      const defaultAddr = userAddresses?.find((a) => a.esPredeterminada === true);
+      const defaultAddr = userAddresses?.find((a) => a.esPredeterminada === true || a.EsPredeterminada === true);
 
       if (defaultAddr) {
         // 🔥 CRÍTICO: Usar PascalCase

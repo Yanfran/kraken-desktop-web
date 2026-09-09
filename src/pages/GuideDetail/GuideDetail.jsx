@@ -279,6 +279,7 @@ export default function GuideDetail() {
 
   const puedePagar = () => {
     if (!guiaDetail || guiaDetail.detallePago || guiaDetail.tienePago) return false;
+    if ((guiaDetail.estatus || '').toLowerCase() === 'cerrado') return false;
     const fob       = guiaDetail.valorFOB  || 0;
     const idEstatus = guiaDetail.idEstatus || 0;
     if (fob <= 100) return idEstatus >= 2;

@@ -300,6 +300,30 @@ export const getMetodosDisponibles = async () => {
 };
 
 // ============================================================
+// CHECK GUIA YA PAGADA
+// ============================================================
+export const checkGuiaPaid = async (guiaId) => {
+  try {
+    const response = await axiosPaymentInstance.get(`/Payment/${guiaId}/check-paid`);
+    return response.data?.isPaid ?? false;
+  } catch {
+    return false;
+  }
+};
+
+// ============================================================
+// 🐙 MEGASOFT P2C — BANCOS DESTINO DISPONIBLES
+// ============================================================
+export const getMegasoftP2CBancosDestino = async () => {
+  try {
+    const response = await axiosPaymentInstance.get('/Payment/megasoft/p2c/bancos-destino');
+    return response.data?.bancos ?? [];
+  } catch {
+    return [];
+  }
+};
+
+// ============================================================
 // 🐙 MEGASOFT TARJETA DE CRÉDITO — CREAR TOKEN (Paso 2)
 // ============================================================
 export const megasoftTCCrearToken = async (data) => {
@@ -312,6 +336,7 @@ export const megasoftTCCrearToken = async (data) => {
       success: response.data?.success ?? false,
       token: response.data?.token || '',
       message: response.data?.message || 'Token creado exitosamente',
+      yaVerificado: response.data?.yaVerificado ?? false,
     };
   } catch (error) {
     console.error('❌ [TC CrearToken] Error:', error);
@@ -320,11 +345,13 @@ export const megasoftTCCrearToken = async (data) => {
       return {
         success: false,
         message: backendData.message || 'No se pudo tokenizar la tarjeta. Verifica los datos.',
+        yaVerificado: false,
       };
     }
     return {
       success: false,
       message: error.message || 'Sin conexión al tokenizar la tarjeta',
+      yaVerificado: false,
     };
   }
 };
@@ -341,6 +368,7 @@ export const megasoftTCVerificarToken = async (token, { montoverificacion1, mont
     return {
       success: response.data?.success ?? false,
       message: response.data?.message || 'Token verificado',
+      yaVerificado: response.data?.yaVerificado ?? false,
     };
   } catch (error) {
     console.error('❌ [TC VerificarToken] Error:', error);

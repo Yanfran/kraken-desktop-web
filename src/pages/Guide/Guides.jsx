@@ -194,10 +194,11 @@ export default function Guides() {
   // Verificar si se puede pagar
   const sePuedePagar = (guia) => {
     if (!guia) return false;
+    if ((guia.estatus || '').toLowerCase() === 'cerrado') return false;
     const fob = guia.valorFOB || 0;
     const idEstatusActual = guia.idEstatusActual || 0;
     const tienePago = guia.tienePago || guia.estaPagado || false;
-    
+
     if (tienePago) return false;
     
     if (fob <= 100) {

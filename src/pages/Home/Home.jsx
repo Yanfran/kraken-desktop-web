@@ -151,13 +151,15 @@ const Home = ({ onNavigateToShipments }) => {
       // console.log('❌ No hay shipment');
       return false;
     }
-    
+    const estatusStr = (shipment.calculationData?.estatus || shipment.estatus || shipment.status || '').toLowerCase();
+    if (estatusStr === 'cerrado') return false;
+
     // console.log('🔍 Evaluando sePuedePagar:', {
     //   id: shipment.id,
     //   trackingNumber: shipment.trackingNumber,
     //   calculationData: shipment.calculationData
     // });
-    
+
     // ✅ ACCESO SEGURO con optional chaining
     const tienePago = shipment.calculationData?.detallePago || false;
     
