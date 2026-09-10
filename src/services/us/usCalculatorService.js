@@ -105,6 +105,50 @@ export const calculateUSDocumentShipping = async ({
   }
 };
 
+export const calculateUSShippingBothTiers = async ({
+  stateId,
+  municipalityId = null,
+  lockerId       = null,
+  weight,
+  declaredValue,
+  weightUnit     = 'Kg',
+}) => {
+  try {
+    const { data: api } = await axiosInstance.post('/usa/tarifa/calcular-ambas', {
+      stateId:        stateId        ? Number(stateId)        : null,
+      municipalityId: municipalityId ? Number(municipalityId) : null,
+      lockerId:       lockerId       ? Number(lockerId)       : null,
+      weight:         parseFloat(weight),
+      weightUnit,
+      declaredValue:  parseFloat(declaredValue) || 0,
+    });
+
+    if (!api.success) return { success: false, data: null, message: api.message };
+
+    const raw = api.data;
+    const normalizeTier = (tier) => ({
+      detalles: (tier.detalles ?? []).map(d => ({
+        descripcionItem: d.descripcionItem,
+        monto:           d.monto,
+        esDescuento:     d.esDescuento ?? false,
+        categoria:       d.categoria   ?? '',
+      })),
+      total: tier.totalUSD,
+    });
+
+    return {
+      success:    true,
+      pesoLbs:    raw.pesoLbs,
+      prime_box:  normalizeTier(raw.prime_box),
+      family_box: normalizeTier(raw.family_box),
+      message:    'Cálculo completado',
+    };
+  } catch (error) {
+    console.error('❌ [USCalculatorBothTiers] Error:', error);
+    return { success: false, data: null, message: error.response?.data?.message ?? 'No pudimos calcular la tarifa' };
+  }
+};
+
 export const fetchUsaDescuentos = async () => {
   try {
     const { data: api } = await axiosInstance.get('/usa/tarifa/descuentos');

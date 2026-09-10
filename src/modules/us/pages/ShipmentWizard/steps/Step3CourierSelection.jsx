@@ -144,6 +144,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
   const discountPct       = isPickup ? discounts.pickup?.porcentaje ?? 0 : discounts.dropoff?.porcentaje ?? 0;
   const originPostalCode  = data.selectedOriginAddress?.zip ?? '';
   const pkg               = data.packages?.[0] ?? {};
+  const isDoc             = (pkg.tipoPaquete || '').toLowerCase() === 'documento';
   const weightLbs = parseFloat(pkg.peso  || 0);
   const largoIn   = parseFloat(pkg.largo || 0);
   const anchoIn   = parseFloat(pkg.ancho || 0);
@@ -159,12 +160,17 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
     setLoading(true);
     setError(null);
 
+    // Documentos usan 1×1×1 como dimensiones para la cotización UPS
+    const qLargo = isDoc ? 1 : largoIn;
+    const qAncho = isDoc ? 1 : anchoIn;
+    const qAlto  = isDoc ? 1 : altoIn;
+
     const result = await fetchUpsQuotes(
       originPostalCode,
       weightLbs,
-      largoIn,
-      anchoIn,
-      altoIn,
+      qLargo,
+      qAncho,
+      qAlto,
       'IMPERIAL',
       isPickup ? '06' : '03',
       data.selectedOriginAddress?.province ?? '',
@@ -286,6 +292,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
         <p className="courier-step__subtitle">
           {t('us_wizard.step3_subtitle', { city: data.selectedOriginAddress?.city ?? '', zip: originPostalCode })}
         </p>
+
 
         {/* ── Toggle Drop-off / Pickup ──────────────────────────────────── */}
         <div className="method-toggle">

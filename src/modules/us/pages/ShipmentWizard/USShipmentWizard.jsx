@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../../contexts/AuthContext';
 import WizardAuthModal from './WizardAuthModal';
-import { calculateUSShipping, calculateUSDocumentShipping } from '../../../../services/us/usCalculatorService';
+import { calculateUSShipping, calculateUSDocumentShipping, calculateUSShippingBothTiers } from '../../../../services/us/usCalculatorService';
 import { addDestinationAddress } from '../../../../services/es/spainAddressService';
 import { addUsaOriginAddress } from '../../../../services/us/usAddressService';
 import toast from 'react-hot-toast';
@@ -58,10 +58,13 @@ const INITIAL_STATE = {
   calculationResult: null,   // { cost, weightLbVol, deliveryOptions, breakdowns:{oficina,domicilio} }
   // ──────────────────────────────────────────────────────────────────────────
 
-  courierId:        null,   // ID del courier seleccionado (ej: 3)
-  courierServiceId: null,   // ID del servicio seleccionado (ej: 4)
-  courierQuote:     null,   // Objeto completo del quote seleccionado
-  discounts:        null,   // { pickup: { porcentaje, nombre }, dropoff: { porcentaje, nombre } }
+  courierId:        null,
+  courierServiceId: null,
+  courierQuote:     null,
+  discounts:        null,
+  deliveryMethod:   'pickup',
+  boxTiers:         null,   // { prime_box, family_box } — ambas tarifas para selección del usuario
+  selectedBoxType:  null,   // 'prime_box' | 'family_box'
 
   seguroActivo: false,
   metodoPago: 'card',
@@ -155,9 +158,27 @@ const ESShipmentWizard = () => {
         declaredValue: parseFloat(pkg.valorFOB) || 0,
       };
 
-      const result = isDoc
-        ? await calculateUSDocumentShipping(calcParams)
-        : await calculateUSShipping(calcParams);
+      // Peso en libras para decidir qué planes ofrecer
+      const pesoLbs = pkg.unidadPeso?.toLowerCase() === 'lb' ? pesoRaw : pesoRaw * 2.20462;
+      const mostrarFamilyBox = !isDoc && pesoLbs >= 30;
+
+      let result, boxTiers = null;
+      if (isDoc) {
+        result = await calculateUSDocumentShipping(calcParams);
+      } else if (mostrarFamilyBox) {
+        // >= 30 lb: mostrar selección Family Box / Prime Box
+        const tiersResult = await calculateUSShippingBothTiers(calcParams);
+        if (!tiersResult.success) {
+          setCalculating(false);
+          toast.error(tiersResult.message || t('us_wizard.error_calc'));
+          return;
+        }
+        boxTiers = { prime_box: tiersResult.prime_box, family_box: tiersResult.family_box };
+        result = { success: true, data: null };
+      } else {
+        // < 30 lb: solo Prime Box, se auto-selecciona
+        result = await calculateUSShipping(calcParams);
+      }
 
       setCalculating(false);
 
@@ -169,21 +190,16 @@ const ESShipmentWizard = () => {
       const selectedOrigin = originList.find((a) => a.id === wizardData.originAddressId) ?? null;
 
       updateData({
-        calculationResult:          result,
+        calculationResult:          (isDoc || !mostrarFamilyBox) ? result : null,
+        boxTiers,
+        selectedBoxType:            null,
         selectedOriginAddress:      selectedOrigin,
         selectedDestinationAddress: destino,
-        // Limpiar datos de courier para documentos (no pasan por Step3)
-        ...(isDoc ? { courierId: null, courierServiceId: null, courierQuote: null, pickupRate: null } : {}),
       });
 
-      if (isDoc) {
-        // Documentos saltan el Step3 — verificar auth antes del resumen
-        if (!user) {
-          setPendingStep4(true);
-          setShowAuthModal(true);
-        } else {
-          setCurrentStep(4);
-        }
+      if (!user) {
+        setPendingStep4(true);
+        setShowAuthModal(true);
       } else {
         setCurrentStep(3);
       }
@@ -232,12 +248,7 @@ const ESShipmentWizard = () => {
     }
 
     updateData({ calculationResult: result });
-    if (isDoc) {
-      setReturnToSummary(false);
-      setCurrentStep(4);
-    } else {
-      setCurrentStep(3); // returnToSummary sigue true → Step 3 recalcula UPS y vuelve al Resumen
-    }
+    setCurrentStep(3); // returnToSummary sigue true → Step 3 recalcula UPS y vuelve al Resumen
   };
 
   // ── CAMBIO 5: actualizar renderStep ───────────────────────────────────────

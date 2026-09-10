@@ -435,6 +435,11 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
             </select>
           </div>
           {errors?.peso && <span className="field-error-msg">{errors.peso}</span>}
+          {!isDoc && (
+            <span style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px', display: 'block' }}>
+              📦 +30 lb → accedes a <strong>Family Box</strong> (18-21 días, mejor precio)
+            </span>
+          )}
         </div>
 
         {/* VALOR FOB */}

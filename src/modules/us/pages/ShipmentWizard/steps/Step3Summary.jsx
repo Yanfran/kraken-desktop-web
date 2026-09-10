@@ -103,23 +103,33 @@ const AddressBlock = ({ address, flag, onEdit, senderName, senderEmail }) => {
 };
 
 // ── Componente principal ──────────────────────────────────────────────────────
-const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses, calculating = false }) => {
+const Step3Summary = ({ data, updateData, onNext, onBack, onEditPackage, onEditAddresses, calculating = false }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [selectedBoxType, setSelectedBoxType] = React.useState(data.selectedBoxType ?? null);
 
   const senderName  = user
     ? `${user.nombre ?? user.name ?? ''} ${user.apellido ?? user.lastName ?? ''}`.trim() || null
     : `${data.senderName ?? ''} ${data.senderLastName ?? ''}`.trim() || null;
   const senderEmail = user?.email ?? data.senderEmail ?? null;
 
-  const pkg   = data.packages[0];
-  const isDoc = pkg?.tipoPaquete === 'Documento';
-  const dims  = isDoc
+  const pkg      = data.packages[0];
+  const isDoc    = pkg?.tipoPaquete === 'Documento';
+  const hasTiers = !isDoc && !!data.boxTiers;
+  const dims     = isDoc
     ? 'Documento'
     : (pkg ? `${pkg.largo || '–'}×${pkg.ancho || '–'}×${pkg.alto || '–'} in` : '–');
 
   const isPickup   = data.deliveryMethod === 'pickup';
   const pickupRate = (isPickup && !isDoc) ? Number(data.pickupRate ?? 0) : 0;
+
+  const handleSelectBoxType = (type) => {
+    setSelectedBoxType(type);
+    const tierData = data.boxTiers?.[type];
+    if (tierData) {
+      updateData({ selectedBoxType: type, calculationResult: { data: tierData } });
+    }
+  };
 
   // 1. Obtenemos el cálculo de la API
   const calc = data.calculationResult;
@@ -279,9 +289,57 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses, ca
             🇺🇸 Resumen de Tarifa
           </h3>
 
-          {!calc ? (
+          {/* ── Selección de plan (solo cuando hay tiers) ─────────────── */}
+          {hasTiers && (
+            <div style={{ marginBottom: '14px' }}>
+              <p style={{ fontSize: '12px', fontWeight: '600', color: '#022364', marginBottom: '8px' }}>
+                Selecciona tu plan de envío
+              </p>
+              {[
+                { key: 'family_box', title: 'FAMILY BOX ♥', time: '18-21 días', total: data.boxTiers?.family_box?.total },
+                { key: 'prime_box',  title: 'PRIME BOX ⚡',  time: '6-8 días',   total: data.boxTiers?.prime_box?.total  },
+              ].map((plan) => {
+                const isSel = selectedBoxType === plan.key;
+                return (
+                  <div
+                    key={plan.key}
+                    onClick={() => handleSelectBoxType(plan.key)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSelectBoxType(plan.key)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '8px 10px', marginBottom: '6px', borderRadius: '8px', cursor: 'pointer',
+                      border: isSel ? '2px solid #F05A22' : '1.5px solid #CBD5E1',
+                      background: isSel ? '#FFF5F0' : '#fff',
+                    }}
+                  >
+                    <span style={{
+                      width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0,
+                      border: isSel ? '4px solid #F05A22' : '2px solid #CBD5E1',
+                      background: '#fff', display: 'inline-block',
+                    }} />
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontWeight: '700', fontSize: '12px', color: '#022364' }}>{plan.title}</span>
+                      <span style={{ fontSize: '11px', color: '#6B7280', marginLeft: '5px' }}>{plan.time}</span>
+                    </div>
+                    <span style={{ fontWeight: '700', fontSize: '13px', color: '#F05A22' }}>
+                      ${Number(plan.total ?? 0).toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })}
+              <hr style={{ margin: '10px 0', borderColor: '#E5E7EB' }} />
+            </div>
+          )}
+
+          {!calc && !hasTiers ? (
             <p className="cost-card__error">
               <IoWarningOutline size={16} style={{ verticalAlign: 'middle' }} /> {t('us_wizard.error_no_calc')}
+            </p>
+          ) : !calc && hasTiers ? (
+            <p style={{ fontSize: '13px', color: '#6B7280', textAlign: 'center', padding: '8px 0' }}>
+              Selecciona un plan para ver el desglose de tarifa.
             </p>
           ) : (
             <>
@@ -337,7 +395,7 @@ const Step3Summary = ({ data, onNext, onBack, onEditPackage, onEditAddresses, ca
           <button
             className="btn-wizard-next cost-card__proceed-btn"
             onClick={onNext}
-            disabled={!calc || calculating}
+            disabled={(hasTiers && !selectedBoxType) || !calc || calculating}
             style={{ marginTop: '20px' }}
           >
             {calculating ? '⏳ Recalculando tarifa…' : t('us_wizard.proceed_payment')}
