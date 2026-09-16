@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import NewsCarousel from '../../components/NewsCarousel/NewsCarousel';
 import { getLastShipment, uploadGuiaInvoice } from '../../services/guiasService';
 import { getPreAlertasPendientes, deletePreAlerta } from '../../services/preAlertService';
+import { getSaldoNotaCredito } from '../../services/notaCreditoService';
 import { getNovedades } from '../../services/novedadesService';
 import { useAddresses } from '@hooks/useAddresses';
 import toast from 'react-hot-toast';
@@ -62,6 +63,7 @@ const Home = ({ onNavigateToShipments }) => {
   // Data states
   const [lastShipment, setLastShipment] = useState(null);
   const [preAlerts, setPreAlerts] = useState([]);
+  const [saldoCredito, setSaldoCredito] = useState(0);
   const [newsItems, setNewsItems] = useState([]);
   
   // Menu states
@@ -396,6 +398,9 @@ const Home = ({ onNavigateToShipments }) => {
       loadLastShipment();
       loadPreAlerts();
       loadNews();
+      getSaldoNotaCredito().then(res => {
+        if (res.success && res.data?.tieneSaldo) setSaldoCredito(res.data.saldo);
+      });
     }
   }, [user, loadLastShipment, loadPreAlerts, loadNews]);
 
@@ -570,6 +575,19 @@ const Home = ({ onNavigateToShipments }) => {
           </span>
         </div>
       </div>
+
+      {/* Saldo a favor (Nota de Crédito VES) */}
+      {saldoCredito > 0 && (
+        <div className="credit-balance-banner">
+          <IoCardOutline size={20} className="credit-balance-banner__icon" />
+          <div className="credit-balance-banner__text">
+            <span className="credit-balance-banner__label">Saldo disponible a favor</span>
+            <span className="credit-balance-banner__amount">
+              Bs. {saldoCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Último Envío */}
       <section className="last-shipment-card">
