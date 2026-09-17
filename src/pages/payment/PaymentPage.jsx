@@ -42,7 +42,9 @@ import {
   getMetodosDisponibles,
   getMegasoftP2CBancosDestino,
   checkGuiaPaid,
+  pagarConNotaCredito,
 } from '@/services/payment/paymentService';
+import { getSaldoNotaCredito } from '@/services/notaCreditoService';
 
 // ============================================================
 // CONSTANTES
@@ -305,6 +307,10 @@ export default function PaymentPage() {
   // Detalles guía múltiple
   const [showGuiasDetails, setShowGuiasDetails] = useState(false);
 
+  // Nota de crédito
+  const [saldoNotaCredito, setSaldoNotaCredito] = useState(0);
+  const [ncLoading, setNcLoading] = useState(false);
+
   // P2C — copiar datos bancarios
   const [copiedField, setCopiedField] = useState(null);
 
@@ -418,6 +424,10 @@ export default function PaymentPage() {
       const metodos = await getMetodosDisponibles();
       setMetodosDisponibles(metodos);
       if (metodos.length > 0) setPaymentMethod(metodos[0].key);
+
+      getSaldoNotaCredito().then(res => {
+        if (res.success && res.data?.tieneSaldo) setSaldoNotaCredito(res.data.saldo);
+      });
 
     } catch (error) {
       console.error('Error loading payment data:', error);
@@ -546,6 +556,7 @@ export default function PaymentPage() {
         guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
         isMultiplePayment,
         bancoDestinoKrakenId: p2cBancoDestinoId,
+        ...(saldoNotaCredito > 0 && { montoNotaCredito: saldoNotaCredito }),
       };
 
       const response = await processMegasoftC2PPayment(request);
@@ -605,6 +616,7 @@ export default function PaymentPage() {
         guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
         isMultiplePayment,
         bancoDestinoKrakenId: p2cBancoDestinoId,
+        ...(saldoNotaCredito > 0 && { montoNotaCredito: saldoNotaCredito }),
       };
 
       const response = await processMegasoftP2CPayment(request);
@@ -1167,7 +1179,39 @@ export default function PaymentPage() {
     </div>
   );
 
-  const renderMethodSelection = () => (
+  const handlePagarConNC = async () => {
+    if (!paymentData?.idGuia) return;
+    setNcLoading(true);
+    try {
+      const result = await pagarConNotaCredito(paymentData.idGuia);
+      if (!result.success) {
+        toast.error(result.message || 'No se pudo procesar el saldo a favor');
+        return;
+      }
+      if (result.pagadoCompleto) {
+        setPaymentReference('NC');
+        setPaymentVoucher('');
+        setPaymentMethodLabel('Saldo a favor');
+        setStep('success');
+      } else {
+        // Pago parcial: deducir saldo y mostrar métodos para el restante
+        setSaldoNotaCredito(0);
+        setAmount(result.restante.toFixed(2));
+        toast.success(`Se aplicaron Bs. ${result.montoAplicado.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} de tu saldo a favor`);
+        setStep('form');
+      }
+    } finally {
+      setNcLoading(false);
+    }
+  };
+
+  const renderMethodSelection = () => {
+    const totalAmount = parseFloat(amount) || 0;
+    const ncCubreTotal = saldoNotaCredito >= totalAmount && totalAmount > 0;
+    const ncParcial = saldoNotaCredito > 0 && saldoNotaCredito < totalAmount;
+    const restanteConNC = ncParcial ? Math.max(0, totalAmount - saldoNotaCredito) : totalAmount;
+
+    return (
     <div className={styles.methodContainer}>
       <h3 className={styles.stepTitle}>Selecciona el Método de Pago</h3>
       <p className={styles.stepDescription}>
@@ -1176,40 +1220,76 @@ export default function PaymentPage() {
           : 'Elige cómo deseas realizar el pago para tu guía'}
       </p>
 
-      <div className={styles.methodOptions}>
-        {metodosDisponibles.map((metodo) => {
-          const iconMap = {
-            p2c: <IoPhonePortraitOutline size={32} />,
-            c2p: <IoPhonePortraitOutline size={32} />,
-            debitoInmediato: <IoCardOutline size={32} />,
-            creditoInmediato: <IoBusinessOutline size={32} />,
-            tarjetaCredito: <IoCardOutline size={32} />,
-          };
-          return (
-            <div
-              key={metodo.key}
-              className={`${styles.methodOption} ${paymentMethod === metodo.key ? styles.methodOptionActive : ''}`}
-              onClick={() => setPaymentMethod(metodo.key)}
+      {saldoNotaCredito > 0 && (
+        <div className={styles.ncBanner}>
+          <IoCardOutline size={22} className={styles.ncBannerIcon} />
+          <div className={styles.ncBannerText}>
+            <span className={styles.ncBannerLabel}>
+              Saldo disponible a favor: <strong>Bs. {saldoNotaCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+            </span>
+            {ncParcial && (
+              <span className={styles.ncBannerSub}>
+                Cubre Bs. {saldoNotaCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} — faltarían Bs. {restanteConNC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            )}
+          </div>
+          {ncCubreTotal && (
+            <button
+              className={styles.ncBannerBtn}
+              onClick={handlePagarConNC}
+              disabled={ncLoading}
             >
-              <div className={styles.methodIcon}>{iconMap[metodo.key] ?? <IoCardOutline size={32} />}</div>
-              <h4>{metodo.label}</h4>
-              <p>{metodo.descripcion}</p>
-            </div>
-          );
-        })}
-      </div>
+              {ncLoading ? 'Procesando...' : 'Pagar con saldo'}
+            </button>
+          )}
+        </div>
+      )}
 
-      <button
-        onClick={() => {
-          if (paymentMethod === 'tarjetaCredito') tcResetState();
-          setStep('form');
-        }}
-        className={styles.btn_primary}
-      >
-        Continuar <IoArrowForward />
-      </button>
+      {ncParcial && (
+        <p className={styles.ncPartialNote}>
+          Tu saldo cubrirá Bs. {saldoNotaCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} automáticamente al confirmar. Selecciona cómo pagar el resto (Bs. {restanteConNC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}):
+        </p>
+      )}
+
+      {(!ncCubreTotal) && (
+        <>
+          <div className={styles.methodOptions}>
+            {metodosDisponibles.map((metodo) => {
+              const iconMap = {
+                p2c: <IoPhonePortraitOutline size={32} />,
+                c2p: <IoPhonePortraitOutline size={32} />,
+                debitoInmediato: <IoCardOutline size={32} />,
+                creditoInmediato: <IoBusinessOutline size={32} />,
+                tarjetaCredito: <IoCardOutline size={32} />,
+              };
+              return (
+                <div
+                  key={metodo.key}
+                  className={`${styles.methodOption} ${paymentMethod === metodo.key ? styles.methodOptionActive : ''}`}
+                  onClick={() => setPaymentMethod(metodo.key)}
+                >
+                  <div className={styles.methodIcon}>{iconMap[metodo.key] ?? <IoCardOutline size={32} />}</div>
+                  <h4>{metodo.label}</h4>
+                  <p>{metodo.descripcion}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => {
+              if (paymentMethod === 'tarjetaCredito') tcResetState();
+              setStep('form');
+            }}
+            className={styles.btn_primary}
+          >
+            Continuar <IoArrowForward />
+          </button>
+        </>
+      )}
     </div>
   );
+  };
 
   const renderTCStep = (activeIndex) => {
     const steps = ['Datos de tarjeta', 'Verificación', 'Confirmación'];

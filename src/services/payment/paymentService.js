@@ -443,6 +443,30 @@ export const megasoftTCCobrar = async (data) => {
 };
 
 // ============================================================
+// 💳 NOTA DE CRÉDITO — PAGAR COMPLETAMENTE CON SALDO A FAVOR
+// ============================================================
+export const pagarConNotaCredito = async (idGuia) => {
+  try {
+    const response = await axiosPaymentInstance.post('/Payment/nota-credito/pagar', { idGuia });
+    return {
+      success: response.data?.success ?? false,
+      pagadoCompleto: response.data?.pagadoCompleto ?? false,
+      montoAplicado: response.data?.montoAplicado ?? 0,
+      restante: response.data?.restante ?? 0,
+      idPago: response.data?.idPago,
+      message: response.data?.message || '',
+    };
+  } catch (error) {
+    const backendData = error.response?.data;
+    return {
+      success: false,
+      pagadoCompleto: false,
+      message: backendData?.message || 'Error al procesar el saldo a favor',
+    };
+  }
+};
+
+// ============================================================
 // ⚠️ MERCANTIL - DEPRECADO (mantener por rollback)
 // ============================================================
 export const processMercantilPayment = async (paymentData) => {
