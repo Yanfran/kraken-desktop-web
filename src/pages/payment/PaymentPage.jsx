@@ -126,6 +126,9 @@ const FUNDS_ERROR_CODES = new Set(['51', '52', '61', '65']);
 const DATA_ERROR_CODES = new Set(['AG', 'V0', '99']);
 const PLATFORM_ERROR_CODES = new Set(['EX', 'P0', 'A0', 'EE', 'XA']);
 const PLATFORM_ERROR_KEYWORDS = ['no disponible', 'timeout', 'plataforma', 'servicio', 'interno megasoft'];
+const TECHNICAL_ERROR_KEYWORDS = ['data is null', 'null values', 'nullreferenceexception', 'object reference', 'system.', 'cannot be called', 'unhandled exception', 'stack trace', 'internal server error'];
+const isTechnicalError = (text) => TECHNICAL_ERROR_KEYWORDS.some((kw) => text.toLowerCase().includes(kw));
+const FRIENDLY_SERVICE_ERROR = 'El servicio no está disponible en este momento. Por favor, intenta más tarde o contacta a soporte.';
 
 // ============================================================
 // TC SESSION — sessionStorage (se borra al cerrar la pestaña)
@@ -228,13 +231,18 @@ const extractMegasoftError = (response) => {
     }
   }
 
+  const rawMessage = megasoftMsg || backendMessage || '';
+  const displayMessage = isTechnicalError(rawMessage)
+    ? FRIENDLY_SERVICE_ERROR
+    : rawMessage || 'Error desconocido al procesar el pago.';
+
   return {
-    title: isPlatformError(megasoftCode, fullText)
+    title: isTechnicalError(rawMessage) || isPlatformError(megasoftCode, fullText)
       ? 'Servicio no disponible'
       : 'No pudimos procesar el pago',
-    message: megasoftMsg || backendMessage || 'Error desconocido al procesar el pago.',
+    message: displayMessage,
     code: megasoftCode || 'N/A',
-    technicalDetail: backendMessage,
+    technicalDetail: rawMessage,
   };
 };
 
@@ -544,12 +552,15 @@ export default function PaymentPage() {
       setError('');
       setErrorDetails(null);
 
+      const effectiveAmountC2P = saldoNotaCredito > 0
+        ? (parseFloat(amount) - saldoNotaCredito).toFixed(2)
+        : amount.toString();
       const request = {
         customerId,
         nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         originMobileNumber: formatPhoneForMercantil(phoneCode, phoneNumber),
         destinationBankId: selectedBank,
-        amount: amount.toString(),
+        amount: effectiveAmountC2P,
         codigoC2P: twofactorAuth,
         tasa: paymentData.tasaCambio,
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
@@ -604,12 +615,15 @@ export default function PaymentPage() {
       setError('');
       setErrorDetails(null);
 
+      const effectiveAmountP2C = saldoNotaCredito > 0
+        ? (parseFloat(amount) - saldoNotaCredito).toFixed(2)
+        : amount.toString();
       const request = {
         customerId,
         nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         originMobileNumber: buildTelefonoLocal(),
         destinationBankId: selectedBank,
-        amount: amount.toString(),
+        amount: effectiveAmountP2C,
         referencia: p2cReferencia,
         tasa: paymentData.tasaCambio,
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
@@ -1966,7 +1980,7 @@ export default function PaymentPage() {
           <label>Monto a Pagar</label>
           <input
             type="text"
-            value={formatBolivar(parseFloat(amount))}
+            value={formatBolivar(saldoNotaCredito > 0 ? Math.max(0, parseFloat(amount) - saldoNotaCredito) : parseFloat(amount))}
             disabled
             className={styles.disabled}
           />
