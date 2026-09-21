@@ -208,13 +208,14 @@ export const processMegasoftDIConfirmar = async ({
   codigoOtp,
   customerId,
   telefonoCliente,
+  montoNotaCredito,
 }) => {
   try {
     console.log('🐙 [Megasoft DI Fase 2] Confirmando OTP');
 
     const response = await axiosPaymentInstance.post(
       '/Payment/megasoft/debito-inmediato/confirmar',
-      { control, pagoId, codigoOtp, customerId, telefonoCliente }
+      { control, pagoId, codigoOtp, customerId, telefonoCliente, montoNotaCredito }
     );
 
     console.log('✅ [Megasoft DI Fase 2] Respuesta:', response.data);

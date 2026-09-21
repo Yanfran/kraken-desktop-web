@@ -679,17 +679,21 @@ export default function PaymentPage() {
       setError('');
       setErrorDetails(null);
 
+      const effectiveAmountDI = saldoNotaCredito > 0
+        ? (parseFloat(amount) - saldoNotaCredito).toFixed(2)
+        : amount.toString();
       const request = {
         customerId,
         nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         cuentaCliente: diIdMethod === 'cuenta' ? cuentaCliente : null,
         telefonoCliente: diIdMethod === 'telefono' ? buildTelefonoLocal() : null,
         codigoBanco: selectedBank,
-        amount: amount.toString(),
+        amount: effectiveAmountDI,
         tasa: paymentData.tasaCambio,
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
         guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
         isMultiplePayment,
+        ...(saldoNotaCredito > 0 && { montoNotaCredito: saldoNotaCredito }),
       };
 
       const response = await processMegasoftDIAutorizar(request);
@@ -748,6 +752,7 @@ export default function PaymentPage() {
         codigoOtp: otpCode,
         customerId,
         telefonoCliente: diIdMethod === 'telefono' ? buildTelefonoLocal() : null,
+        ...(saldoNotaCredito > 0 && { montoNotaCredito: saldoNotaCredito }),
       });
 
       if (response.success) {
@@ -795,17 +800,21 @@ export default function PaymentPage() {
       setError('');
       setErrorDetails(null);
 
+      const effectiveAmountCI = saldoNotaCredito > 0
+        ? (parseFloat(amount) - saldoNotaCredito).toFixed(2)
+        : amount.toString();
       const request = {
         customerId,
         nombreCompleto: sanitizeNombreCompleto(nombreCompleto),
         cuentaCliente: diIdMethod === 'cuenta' ? cuentaCliente : null,
         telefonoCliente: diIdMethod === 'telefono' ? buildTelefonoLocal() : null,
         codigoBanco: selectedBank,
-        amount: amount.toString(),
+        amount: effectiveAmountCI,
         tasa: paymentData.tasaCambio,
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
         guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
         isMultiplePayment,
+        ...(saldoNotaCredito > 0 && { montoNotaCredito: saldoNotaCredito }),
       };
 
       const response = await processMegasoftCreditoInmediato(request);
@@ -1075,16 +1084,20 @@ export default function PaymentPage() {
         return;
       }
 
+      const effectiveAmountTC = saldoNotaCredito > 0
+        ? (parseFloat(amount) - saldoNotaCredito).toFixed(2)
+        : amount.toString();
       const response = await megasoftTCCobrar({
         customerId: `${idType}${idNumber}`,
         token: tcToken,
         control: preregistro.control,
         cvv: tcCvv,
-        amount: amount.toString(),
+        amount: effectiveAmountTC,
         tasa: paymentData.tasaCambio,
         idGuia: isMultiplePayment ? paymentData.guiaIds[0] : paymentData.idGuia,
         guiasIds: isMultiplePayment ? paymentData.guiaIds : [paymentData.idGuia],
         isMultiplePayment,
+        ...(saldoNotaCredito > 0 && { montoNotaCredito: saldoNotaCredito }),
       });
 
       if (response.success) {
