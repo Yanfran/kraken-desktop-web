@@ -1252,11 +1252,11 @@ export default function PaymentPage() {
           <IoCardOutline size={22} className={styles.ncBannerIcon} />
           <div className={styles.ncBannerText}>
             <span className={styles.ncBannerLabel}>
-              Saldo disponible a favor: <strong>Bs. {saldoNotaCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+              Saldo disponible: <strong>Bs. {saldoNotaCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
             </span>
             {ncParcial && (
               <span className={styles.ncBannerSub}>
-                Cubre Bs. {saldoNotaCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} — faltarían Bs. {restanteConNC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                Por pagar: Bs. {restanteConNC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             )}
           </div>
@@ -1274,7 +1274,7 @@ export default function PaymentPage() {
 
       {ncParcial && (
         <p className={styles.ncPartialNote}>
-          Tu saldo cubrirá Bs. {saldoNotaCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} automáticamente al confirmar. Selecciona cómo pagar el resto (Bs. {restanteConNC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}):
+          Selecciona tu método de pago
         </p>
       )}
 
