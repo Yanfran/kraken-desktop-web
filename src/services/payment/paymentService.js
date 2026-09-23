@@ -96,7 +96,7 @@ export const processMegasoftC2PPayment = async (paymentData) => {
       return {
         success: false,
         data: backendData.data || null,
-        message: backendData.message || 'Pago rechazado por Megasoft',
+        message: backendData.message || 'Pago rechazado por el servicio de pagos',
       };
     }
     return {
@@ -140,7 +140,7 @@ export const processMegasoftP2CPayment = async (paymentData) => {
       return {
         success: false,
         data: backendData.data || null,
-        message: backendData.message || 'Pago rechazado por Megasoft',
+        message: backendData.message || 'Pago rechazado por el servicio de pagos',
       };
     }
     return {
@@ -278,7 +278,7 @@ export const processMegasoftCreditoInmediato = async (paymentData) => {
       return {
         success: false,
         data: backendData.data || null,
-        message: backendData.message || 'Pago rechazado por Megasoft',
+        message: backendData.message || 'Pago rechazado por el servicio de pagos',
       };
     }
     return {
