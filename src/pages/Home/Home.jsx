@@ -581,7 +581,7 @@ const Home = ({ onNavigateToShipments }) => {
         <div className="credit-balance-banner">
           <IoCardOutline size={20} className="credit-balance-banner__icon" />
           <div className="credit-balance-banner__text">
-            <span className="credit-balance-banner__label">Saldo disponible a favor</span>
+            <span className="credit-balance-banner__label">Saldo disponible</span>
             <span className="credit-balance-banner__amount">
               Bs. {saldoCredito.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>

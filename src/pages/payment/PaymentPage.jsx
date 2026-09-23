@@ -126,7 +126,7 @@ const FUNDS_ERROR_CODES = new Set(['51', '52', '61', '65']);
 const DATA_ERROR_CODES = new Set(['AG', 'V0', '99']);
 const PLATFORM_ERROR_CODES = new Set(['EX', 'P0', 'A0', 'EE', 'XA']);
 const PLATFORM_ERROR_KEYWORDS = ['no disponible', 'timeout', 'plataforma', 'servicio', 'interno megasoft'];
-const TECHNICAL_ERROR_KEYWORDS = ['data is null', 'null values', 'nullreferenceexception', 'object reference', 'system.', 'cannot be called', 'unhandled exception', 'stack trace', 'internal server error'];
+const TECHNICAL_ERROR_KEYWORDS = ['data is null', 'null values', 'nullreferenceexception', 'object reference', 'system.', 'cannot be called', 'unhandled exception', 'stack trace', 'internal server error', 'megasoft'];
 const isTechnicalError = (text) => TECHNICAL_ERROR_KEYWORDS.some((kw) => text.toLowerCase().includes(kw));
 const FRIENDLY_SERVICE_ERROR = 'El servicio no está disponible en este momento. Por favor, intenta más tarde o contacta a soporte.';
 
