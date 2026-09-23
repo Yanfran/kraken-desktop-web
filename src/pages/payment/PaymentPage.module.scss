@@ -358,6 +358,21 @@ $transition-base: 0.3s ease;
     }
   }
 
+  .formRow {
+    display: flex;
+    gap: 1rem;
+
+    .inputGroup {
+      flex: 1;
+      min-width: 0;
+    }
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+
   .inputGroup {
     margin-bottom: 1.5rem;
     position: relative;

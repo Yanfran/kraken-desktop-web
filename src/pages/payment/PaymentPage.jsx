@@ -129,6 +129,8 @@ const PLATFORM_ERROR_KEYWORDS = ['no disponible', 'timeout', 'plataforma', 'serv
 const TECHNICAL_ERROR_KEYWORDS = ['data is null', 'null values', 'nullreferenceexception', 'object reference', 'system.', 'cannot be called', 'unhandled exception', 'stack trace', 'internal server error', 'megasoft'];
 const isTechnicalError = (text) => TECHNICAL_ERROR_KEYWORDS.some((kw) => text.toLowerCase().includes(kw));
 const FRIENDLY_SERVICE_ERROR = 'El servicio no está disponible en este momento. Por favor, intenta más tarde o contacta a soporte.';
+// El detalle técnico solo se muestra si no delata errores internos/de proveedor (ej. no debe verse "Megasoft" en ningún lado)
+const sanitizeTechnicalDetail = (text) => (text && !isTechnicalError(text)) ? text : null;
 
 // ============================================================
 // TC SESSION — sessionStorage (se borra al cerrar la pestaña)
@@ -173,7 +175,7 @@ const extractMegasoftError = (response) => {
         : 'Pago no procesado',
       message: MEGASOFT_ERROR_HINTS[megasoftCode],
       code: megasoftCode,
-      technicalDetail: megasoftMsg || backendMessage,
+      technicalDetail: sanitizeTechnicalDetail(megasoftMsg || backendMessage),
       isTimeout,
       isFundsError,
       isDataError,
@@ -218,7 +220,7 @@ const extractMegasoftError = (response) => {
           : 'Pago no procesado',
         message: hint,
         code: megasoftCode || 'N/A',
-        technicalDetail: megasoftMsg || backendMessage,
+        technicalDetail: sanitizeTechnicalDetail(megasoftMsg || backendMessage),
         isFundsError: isFundsKw,
         suggestions: isFundsKw
           ? [
@@ -242,7 +244,7 @@ const extractMegasoftError = (response) => {
       : 'No pudimos procesar el pago',
     message: displayMessage,
     code: megasoftCode || 'N/A',
-    technicalDetail: rawMessage,
+    technicalDetail: sanitizeTechnicalDetail(rawMessage),
   };
 };
 
@@ -253,7 +255,7 @@ export default function PaymentPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth();
   const { actualTheme } = useTheme();
 
   // Estados principales
@@ -477,13 +479,6 @@ export default function PaymentPage() {
 
   const getNombreCompletoEnvio = () =>
     sanitizeNombreCompleto(`${nombre} ${apellido}`.trim());
-
-  // Pre-poblar nombre y apellido del perfil al montar
-  useEffect(() => {
-    if (!nombre) setNombre(sanitizeNombreCompleto(user?.name || user?.nombres || '').slice(0, 50));
-    if (!apellido) setApellido(sanitizeNombreCompleto(user?.lastName || user?.apellidos || '').slice(0, 50));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
 
   // ============================================================
   // VALIDACIÓN
@@ -1620,28 +1615,29 @@ export default function PaymentPage() {
             : 'Ingresa los datos de tu cuenta para el cobro directo'}
         </p>
 
-        {/* Nombre */}
-        <div className={styles.inputGroup}>
-          <label>Nombre</label>
-          <input
-            type="text"
-            placeholder="Ej. Juan"
-            value={nombre}
-            onChange={(e) => setNombre(sanitizeNombreCompleto(e.target.value).slice(0, 50))}
-            maxLength={50}
-          />
-        </div>
+        {/* Nombre y Apellido */}
+        <div className={styles.formRow}>
+          <div className={styles.inputGroup}>
+            <label>Nombre</label>
+            <input
+              type="text"
+              placeholder="Ej. Juan"
+              value={nombre}
+              onChange={(e) => setNombre(sanitizeNombreCompleto(e.target.value).slice(0, 50))}
+              maxLength={50}
+            />
+          </div>
 
-        {/* Apellido */}
-        <div className={styles.inputGroup}>
-          <label>Apellido</label>
-          <input
-            type="text"
-            placeholder="Ej. Perez"
-            value={apellido}
-            onChange={(e) => setApellido(sanitizeNombreCompleto(e.target.value).slice(0, 50))}
-            maxLength={50}
-          />
+          <div className={styles.inputGroup}>
+            <label>Apellido</label>
+            <input
+              type="text"
+              placeholder="Ej. Perez"
+              value={apellido}
+              onChange={(e) => setApellido(sanitizeNombreCompleto(e.target.value).slice(0, 50))}
+              maxLength={50}
+            />
+          </div>
         </div>
 
         {/* Cédula */}
