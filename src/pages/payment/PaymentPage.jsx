@@ -884,7 +884,9 @@ export default function PaymentPage() {
   };
 
   // TC — helpers de localStorage (token verificado permanente)
-  const tcLocalStorageKey = () => `megasoft_tc_token_${idType}${idNumber}`;
+  // La clave incluye los últimos 4 dígitos de la tarjeta: un token verificado
+  // de una tarjeta no debe reutilizarse para otra tarjeta distinta del mismo cliente.
+  const tcLocalStorageKey = () => `megasoft_tc_token_${idType}${idNumber}_${tcPan.slice(-4)}`;
 
   const tcSaveVerifiedToken = (token, pan4) => {
     try {
@@ -975,7 +977,9 @@ export default function PaymentPage() {
       setIsLoading(true);
       const response = await megasoftTCCrearToken({
         customerId: `${idType}${idNumber}`,
-        nombreCompleto: getNombreCompletoEnvio(),
+        // El formulario de Tarjeta de Crédito no tiene campos de Nombre/Apellido
+        // (esos son de C2P/P2C/DI/CI) — se usa el nombre del titular de la tarjeta.
+        nombreCompleto: tcNombreTitular,
         pan: tcPan,
         cvv: tcCvv,
         exp: tcExp.replace('/', ''),

@@ -136,10 +136,12 @@ export const getLastShipment = async () => {
         trackingNumbers: g.trackings || [],
         tasaCambio: df.tasaCambio,
         estaPagado: g.estaPagado,
+        pagoPendiente: g.pagoPendiente,
         calculationData: {
           detalleFactura: df,
           tasaCambio: df.tasaCambio,
           detallePago: g.estaPagado,
+          pagoPendiente: g.pagoPendiente,
           valorFOB: g.valorFOB,
           idEstatus: g.idEstatusActual,
         },

@@ -200,7 +200,8 @@ export default function Guides() {
     const tienePago = guia.tienePago || guia.estaPagado || false;
 
     if (tienePago) return false;
-    
+    if (guia.pagoPendiente) return false;
+
     if (fob <= 100) {
       return idEstatusActual >= 2;
     } else {

@@ -169,6 +169,10 @@ const Home = ({ onNavigateToShipments }) => {
       // console.log('❌ Ya tiene pago registrado');
       return false;
     }
+
+    if (shipment.calculationData?.pagoPendiente || shipment.pagoPendiente) {
+      return false;
+    }
     
     // ✅ Obtener valores desde calculationData (donde están los datos reales)
     const fob = shipment.calculationData?.valorFOB || 0;
