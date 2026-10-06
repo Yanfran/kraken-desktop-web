@@ -48,9 +48,9 @@ $radius-sm: 8px;
   }
 
   &__box-svg {
-    width: 320px;
-    height: 190px;
-    max-width: 100%;
+    width: 100%;
+    height: auto;
+    display: block;
   }
 
   // ── Fila 1: Largo | Ancho | Alto (3 columnas iguales) ──
@@ -129,7 +129,36 @@ $radius-sm: 8px;
     &:focus { outline: none; }
   }
 
-  // Selector tipo paquete
+  // Toggle segmentado Caja / Sobre
+  &__type-toggle {
+    display: flex;
+    background: #E5E7EB;
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  &__type-toggle-btn {
+    flex: 1;
+    padding: 8px 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #6B7280;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &--active {
+      background: #fff;
+      color: $primary;
+      font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+  }
+
+  // Selector tipo paquete (dropdown legacy — ya no se usa)
   &__type-btn {
     width: 100%;
     display: flex;
@@ -188,11 +217,12 @@ $radius-sm: 8px;
   // Valor FOB
   &__fob-wrap {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     border: 1.5px solid $border;
     border-radius: $radius-sm;
     overflow: hidden;
     transition: border-color 0.2s;
+    height: 40px;
 
     &:focus-within {
       border-color: $primary;
@@ -201,19 +231,28 @@ $radius-sm: 8px;
   }
 
   &__fob-prefix {
-    padding: 0.6rem 0.75rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
     background: #f9fafb;
     color: $text-muted;
     font-size: 0.95rem;
     border-right: 1.5px solid $border;
+    flex-shrink: 0;
   }
 
   &__fob-wrap input {
-    border: none;
-    padding: 0.6rem 0.85rem;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0.85rem;
     font-size: 0.95rem;
     flex: 1;
-    &:focus { outline: none; box-shadow: none; }
+    min-width: 0;
+    width: auto !important;
+    height: 100% !important;
+    background: #fff;
+    color: #1a1a1a;
+    &:focus { outline: none; box-shadow: none !important; }
   }
 
   // Tooltip FOB
@@ -245,6 +284,8 @@ $radius-sm: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     white-space: normal;
     font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
 
     &::before {
       content: '';

@@ -68,6 +68,7 @@ const ESHome = React.lazy(() => import('../modules/es/pages/Home/HomePage'));
 const ESShipmentWizard = React.lazy(() => import('../modules/es/pages/ShipmentWizard/ESShipmentWizard'));
 const ESTracking = React.lazy(() => import('../modules/es/pages/TrackingPage/TrackingPage'));
 const RedsysPagoResultado = React.lazy(() => import('../modules/es/pages/RedsysPagoResultado/RedsysPagoResultado'));
+const ESGuideDetail = React.lazy(() => import('../modules/es/pages/GuideDetail/ESGuideDetail'));
 
 const TenantRouter = () => {
     const { tenant, isLoading } = useTenant();
@@ -179,6 +180,9 @@ const TenantRouter = () => {
 
                         <Route path="/pickup" element={<ESShipmentWizard />} />
                         {/* <Route path="/shipment/new"   element={<ESShipmentWizard />} /> */}
+
+                        {/* Detalle de guía */}
+                        <Route path="/guide/detail/:idGuia" element={<ESGuideDetail />} />
 
                         {/* Perfil */}
                         <Route path="/profile" element={<Navigate to="/profile/personal-data" replace />} />

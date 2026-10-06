@@ -8,14 +8,30 @@ import Step2Addresses from './steps/Step2Addresses';
 import Step3CourierSelection from './steps/Step3CourierSelection';
 import Step4Summary          from './steps/Step3Summary';   // renombrar import alias
 import Step5Payment          from './steps/Step4Payment';   // renombrar import
+import {
+  IoCubeOutline,
+  IoLocationOutline,
+  IoCarOutline,
+  IoDocumentTextOutline,
+  IoCardOutline,
+  IoCheckmarkOutline,
+} from 'react-icons/io5';
 import './ESShipmentWizard.scss';
 
+const STEP_ICONS = [
+  <IoCubeOutline size={18} />,
+  <IoLocationOutline size={18} />,
+  <IoCarOutline size={18} />,
+  <IoDocumentTextOutline size={18} />,
+  <IoCardOutline size={18} />,
+];
+
 const STEPS = [
-  { id: 1, label: 'Detalles del paquete'  },
-  { id: 2, label: 'Recogida y Entrega'  },
-  { id: 3, label: 'Servicio de Recogida'},  // ← nuevo paso SendSei
-  { id: 4, label: 'Resumen'             },
-  { id: 5, label: 'Pago'                },
+  { id: 1, label: 'Detalles del paquete',  icon: STEP_ICONS[0] },
+  { id: 2, label: 'Recogida y Entrega',    icon: STEP_ICONS[1] },
+  { id: 3, label: 'Servicio de Recogida',  icon: STEP_ICONS[2] },  // ← nuevo paso SendSei
+  { id: 4, label: 'Resumen',               icon: STEP_ICONS[3] },
+  { id: 5, label: 'Pago',                  icon: STEP_ICONS[4] },
 ];
 
 const INITIAL_STATE = {
@@ -228,7 +244,7 @@ const ESShipmentWizard = () => {
                   aria-current={status === 'active' ? 'step' : undefined}
                 >
                   <span className="es-wizard__step-circle">
-                    {status === 'done' ? '✓' : step.id}
+                    {status === 'done' ? <IoCheckmarkOutline size={18} /> : step.icon}
                   </span>
                   <span className="es-wizard__step-label">{step.label}</span>
                 </button>

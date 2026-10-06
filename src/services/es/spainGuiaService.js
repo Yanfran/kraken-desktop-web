@@ -15,15 +15,23 @@ const BASE = '/spain/guia';
  * @returns {{ success: boolean, nGuia: string, guiaId: number }}
  */
 export const createSpainGuia = async (
-    wizardData, 
-    sendSeiUuid = null, 
+    wizardData,
+    sendSeiUuid = null,
     pickupCode = null,
-    sendSeiShipmentData = null,  
-    pickupData = null            
+    sendSeiShipmentData = null,
+    pickupData = null,
+    numeroPedidoRedsys = null
   ) => {
   // ↑ renombrado pickupDate → pickupCode
   try {
     const quote = wizardData?.courierQuote ?? null;
+
+    // Desglose real de la tarifa Kraken (Flete Internacional, Gastos de Salida,
+    // Seguro, etc.) tal como lo vio el cliente en el resumen — excluye la línea TOTAL
+    // porque el backend la recalcula sola sumando estas líneas + el costo del courier.
+    const tarifaDetalles = (wizardData?.calculationResult?.data?.detalles ?? [])
+      .filter((d) => d.categoria !== 'TOTAL')
+      .map((d) => ({ descripcion: d.descripcionItem, monto: d.monto }));
 
     // La web guarda los datos directamente en wizardData (no en packages[0])
     const peso      = wizardData?.packages?.[0]?.peso      ?? wizardData?.peso      ?? 0;
@@ -57,6 +65,11 @@ export const createSpainGuia = async (
       courierService:      quote?.service      ?? null,
       courierTotal:        quote ? parseFloat(quote.total) : null,
       pickupCode:          pickupCode   ?? null,
+
+      // ✅ Sin esto el backend nunca vincula el pago Redsys ni guarda la dirección de recogida
+      numeroPedidoRedsys:  numeroPedidoRedsys ?? null,
+      idDireccionOrigen:   wizardData?.selectedOriginAddress?.id ?? null,
+      tarifaDetalles:      tarifaDetalles.length > 0 ? tarifaDetalles : null,
 
       // ✅ FIX: usar las variables ya extraídas, no "packages" que no existe
       contenido:     descripcion ?? '',
@@ -101,5 +114,23 @@ export const getSpainGuia = async (nGuia) => {
     return { success: true, data: res.data };
   } catch (err) {
     return { success: false, data: null, error: err?.response?.data?.message ?? err.message };
+  }
+};
+
+// ── Detalle completo de una guía ──────────────────────────────────────────────
+/**
+ * GET api/spain/guia/{guiaId}/detail
+ * Usado en la pantalla de "Ver detalle" de una guía (mismo formato que USA).
+ */
+export const getSpainGuiaDetail = async (guiaId) => {
+  try {
+    const { data } = await axiosInstance.get(`${BASE}/${guiaId}/detail`);
+    return data;
+  } catch (err) {
+    return {
+      success: false,
+      data: null,
+      message: err?.response?.data?.message ?? 'Error cargando el detalle de la guía',
+    };
   }
 };

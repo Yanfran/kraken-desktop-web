@@ -89,7 +89,7 @@ const HomePage = () => {
                   <div
                     key={s.guiaId}
                     className="us-home__shipment-item"
-                    onClick={() => navigate(`/ke/tracking/${s.nGuia}`)}
+                    onClick={() => navigate(`/guide/detail/${s.guiaId}`)}
                   >
                     <div className="us-home__shipment-info">
                       <span className="us-home__shipment-id">{s.nGuia}</span>

@@ -1,7 +1,7 @@
 // src/modules/es/pages/RedsysPagoResultado/RedsysPagoResultado.jsx
 import { useEffect, useState, useRef  } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { vincularGuiaASesion } from '../../../../services/es/spainPaymentService'; // ✅ solo esta
+import { vincularGuiaASesion, consultarEstadoPago } from '../../../../services/es/spainPaymentService';
 import { createSendSeiShipment, createSendSeiPickup } from '../../../../services/es/sendSeiService';
 import { createSpainGuia } from '../../../../services/es/spainGuiaService';
 import './RedsysPagoResultado.scss';
@@ -60,6 +60,35 @@ export default function RedsysPagoResultado() {
               packages, courierQuote } = wizardData;
       const pkg = packages?.[0] ?? {};
 
+      // 1.5 Intentar confirmar el pago antes de seguir (solo para mostrar "ko" rápido
+      //     si Redsys ya rechazó la tarjeta). El webhook server-to-server de Redsys
+      //     suele llegar antes que este redirect del navegador, pero NO es garantía
+      //     — así que si no llega a tiempo, seguimos igual: la guía nunca debe
+      //     depender del webhook para poder crearse. Si el webhook llega después
+      //     (durante o tras la creación de la guía), el backend vincula el pago en
+      //     ese momento (ver CreateGuia / Notificacion / VincularGuia).
+      setFase('verificando');
+      const MAX_INTENTOS = 5;
+      const INTERVALO_MS = 2000;
+      let estadoPago = null;
+
+      for (let intento = 0; intento < MAX_INTENTOS; intento++) {
+        const res = await consultarEstadoPago(numeroPedido);
+        if (res.success && res.data?.procesado) {
+          estadoPago = res.data;
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, INTERVALO_MS));
+      }
+
+      // Solo bloqueamos si Redsys YA confirmó explícitamente el rechazo.
+      // Si no llegó respuesta todavía (estadoPago === null), seguimos optimistamente.
+      if (estadoPago && !estadoPago.autorizado) {
+        limpiar();
+        setFase('ko');
+        return;
+      }
+
       // 2. Crear shipment SendSei
       setFase('creando_envio');
       const shipmentRes = await createSendSeiShipment({
@@ -102,7 +131,7 @@ export default function RedsysPagoResultado() {
       setFase('creando_guia');
       const guiaRes = await createSpainGuia(
         wizardData, shipmentUuid, pickupCode,
-        shipmentRes.data, pickupRes.data
+        shipmentRes.data, pickupRes.data, numeroPedido
       );
 
       if (!guiaRes?.nGuia) throw new Error('Error creando la guía.');

@@ -15,12 +15,16 @@ import SmartPlatformDetector from './components/SmartPlatformDetector';
 import DashboardLayout from './components/common/Layout/DashboardLayout';
 
 // ✅ MULTI-TENANT IMPORTS
-import { TenantProvider } from './core/context/TenantContext';
+import { TenantProvider, useTenant } from './core/context/TenantContext';
 import TenantRouter from './router/TenantRouter';
 import DynamicLayout from './layout/DynamicLayout';
 
 const USShipmentWizardPublic = React.lazy(() =>
   import('./modules/us/pages/ShipmentWizard/USShipmentWizard')
+);
+
+const ESShipmentWizardPublic = React.lazy(() =>
+  import('./modules/es/pages/ShipmentWizard/ESShipmentWizard')
 );
 
 // ===== LAZY LOADING DE COMPONENTES =====
@@ -65,15 +69,26 @@ const ChangePassword = React.lazy(() => import('./pages/profile/Profile/ChangePa
 // Hook simplificado para compatibilidad
 export { useAuth } from './contexts/AuthContext';
 
-// Envuelve el wizard de recogida en DynamicLayout solo cuando hay sesión activa
+// Envuelve el wizard de recogida en DynamicLayout solo cuando hay sesión activa.
+// Sin sesión no hay forma de saber el tenant del visitante, así que se mantiene
+// el wizard de USA (comportamiento público original de esta ruta). Con sesión,
+// se muestra el wizard del tenant real del usuario (España vs. USA).
 const PickupWrapper = () => {
   const { user } = useAuth();
-  return user ? (
+  const { tenant } = useTenant();
+
+  if (!user) {
+    return <USShipmentWizardPublic />;
+  }
+
+  const tenantId = tenant?.id?.toString?.().toUpperCase?.() || '';
+  const tenantPrefix = tenant?.prefix?.toString?.().toUpperCase?.() || '';
+  const isES = tenantId === 'ES' || tenantPrefix === 'KE';
+
+  return (
     <DynamicLayout>
-      <USShipmentWizardPublic />
+      {isES ? <ESShipmentWizardPublic /> : <USShipmentWizardPublic />}
     </DynamicLayout>
-  ) : (
-    <USShipmentWizardPublic />
   );
 };
 
