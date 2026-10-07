@@ -144,6 +144,36 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  // ===== RENOVAR SESIÓN =====
+  // Con sesión iniciada, al abrir la web y al volver a la pestaña se pide un token nuevo
+  // (como mucho cada 12 h). Así la sesión no caduca mientras el cliente use la web.
+  useEffect(() => {
+    if (!state.user?.id) return;
+
+    const RENEW_INTERVAL_MS = 12 * 60 * 60 * 1000;
+
+    const renewSessionIfNeeded = async () => {
+      const lastRenewedAt = Number(localStorage.getItem('tokenRenewedAt')) || 0;
+      if (Date.now() - lastRenewedAt < RENEW_INTERVAL_MS) return;
+      if (!localStorage.getItem('authToken')) return;
+
+      const result = await authService.renewToken();
+      if (result?.success && result.token) {
+        localStorage.setItem('authToken', result.token);
+        Cookies.set('authToken', result.token, { expires: 30 });
+        localStorage.setItem('tokenRenewedAt', String(Date.now()));
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') renewSessionIfNeeded();
+    };
+
+    renewSessionIfNeeded();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [state.user?.id]);
+
   // ===== SIGN IN (Email/Password) =====
  const signIn = useCallback(async (email, password) => {
     try {
@@ -224,7 +254,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // ===== SIGN IN CON GOOGLE =====
-  const signInWithGoogle = useCallback(async (credentialResponse, clientPrefix = 'KV') => {
+  // intent: 'login' = no crear la cuenta si no existe; 'register' = crearla (como hasta ahora)
+  const signInWithGoogle = useCallback(async (credentialResponse, clientPrefix = 'KV', intent = 'register') => {
   try {
     dispatch({ type: 'LOADING' });
     // console.log('🔵 [Auth] Iniciando Google Sign-In...');
@@ -244,7 +275,7 @@ export const AuthProvider = ({ children }) => {
     // console.log('✅ [Auth] Credencial de Google obtenida');
 
     // Enviar credencial al backend
-    const response = await authService.loginWithGoogle(credential, clientPrefix);
+    const response = await authService.loginWithGoogle(credential, clientPrefix, intent);
     
     if (response.success) {
       // ✅ NORMALIZAR DATOS DEL USUARIO ANTES DE GUARDAR
@@ -298,7 +329,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: normalizedUser, isNewUser };
     } else {
       dispatch({ type: 'ERROR', payload: response.message });
-      return { success: false, message: response.message };
+      return { success: false, message: response.message, code: response.code };
     }
   } catch (error) {
     // console.error('❌ [Auth] Error en Google Sign-In:', error);
@@ -321,6 +352,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       localStorage.removeItem('userId'); // ✅ AGREGAR
+      localStorage.removeItem('tokenRenewedAt');
       Cookies.remove('authToken');
       
       // ✅ CRÍTICO: Limpiar TODO el caché de React Query

@@ -131,7 +131,7 @@ const HomePage = () => {
             {/* Acciones rápidas */}
             <section className="us-home__section">
               <h2 className="us-home__section-title">{t('us_home.quick_actions')}</h2>
-              <div className="us-home__addresses">
+              <div className="us-home__addresses us-home__addresses--acciones">
                 <div
                   className="us-home__address-card"
                   onClick={() => navigate('/guide/guides')}
@@ -153,13 +153,8 @@ const HomePage = () => {
                   <span className="us-home__address-icon">🔍</span>
                   <span className="us-home__address-name">Seguimiento</span>
                 </div>
-                <div
-                  className="us-home__address-card"
-                  onClick={() => navigate('/help')}
-                >
-                  <span className="us-home__address-icon">❓</span>
-                  <span className="us-home__address-name">Ayuda</span>
-                </div>
+                {/* "Ayuda" (/help) oculto: su información es errónea y no se puede editar.
+                    Se retomará en la etapa de usuario universal (ticket #728). */}
               </div>
             </section>
 

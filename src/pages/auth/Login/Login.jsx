@@ -1,5 +1,5 @@
 // src/pages/auth/Login/Login.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -18,12 +18,6 @@ import {
   IoEyeOffOutline,
 } from 'react-icons/io5';
 
-const COUNTRY_OPTIONS = [
-  { prefix: 'KV', countryCode: 've', name: 'Venezuela',      desc: 'Encomiendas y envíos internacionales',  disabled: false },
-  { prefix: 'KU', countryCode: 'us', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA',  disabled: false },
-  { prefix: 'KE', countryCode: 'eu', name: 'Europa',         desc: 'Próximamente',                          disabled: true  },
-];
-
 const Login = () => {
   const navigate = useNavigate();
   const { signIn, signInWithGoogle, isLoading } = useAuth();
@@ -34,7 +28,6 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [showCountryModal, setShowCountryModal] = useState(false);
   const [appVersion, setAppVersion] = useState(null);
 
   useEffect(() => {
@@ -42,9 +35,6 @@ const Login = () => {
       .then(res => setAppVersion(res.data?.version ?? null))
       .catch(() => {});
   }, []);
-
-  // Ref síncrona para que el callback de Google pueda leer el prefix seleccionado
-  const selectedPrefixRef = useRef('KV');
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -59,15 +49,41 @@ const Login = () => {
     }
   };
 
-  // Google: abre modal de país primero
+  // En el login la cuenta ya debe existir: no se pregunta el país (solo se usa al
+  // registrarse) y el backend no crea cuentas con intent "login".
   const handleGoogleButtonClick = () => {
-    setShowCountryModal(true);
+    googleLogin();
   };
 
-  const handleCountrySelected = (prefix) => {
-    selectedPrefixRef.current = prefix;
-    setShowCountryModal(false);
-    googleLogin();
+  // Sin cuenta: se invita a registrarse en vez de crearla automáticamente
+  const showAccountNotFound = (message) => {
+    toast(
+      (tt) => (
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span>{message || 'No tienes una cuenta con este correo. Regístrate para continuar.'}</span>
+          <button
+            type="button"
+            onClick={() => {
+              toast.dismiss(tt.id);
+              navigate('/register');
+            }}
+            style={{
+              alignSelf: 'flex-start',
+              background: '#FF4500',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '6px 14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Registrarme
+          </button>
+        </span>
+      ),
+      { icon: 'ℹ️', duration: 8000 }
+    );
   };
 
   const googleLogin = useGoogleLogin({
@@ -76,11 +92,14 @@ const Login = () => {
       try {
         const result = await signInWithGoogle(
           { credential: tokenResponse.access_token },
-          selectedPrefixRef.current
+          'KV',
+          'login'
         );
         if (result.success) {
           toast.success('¡Bienvenido!');
           redirectAfterAuth(result.user, result.isNewUser);
+        } else if (result.code === 'ACCOUNT_NOT_FOUND') {
+          showAccountNotFound(result.message);
         } else {
           toast.error(result.message || 'Error con Google');
         }
@@ -340,40 +359,6 @@ const Login = () => {
       </div>
     </div>
 
-    {/* Modal selección de país */}
-    {showCountryModal && (
-      <div className="country-modal-overlay" onClick={() => setShowCountryModal(false)}>
-        <div className="country-modal" onClick={(e) => e.stopPropagation()}>
-          <h3 className="country-modal__title">País de Residencia</h3>
-          <p className="country-modal__subtitle">Selecciona tu país de residencia para continuar con Google</p>
-          <div className="country-modal__options">
-            {COUNTRY_OPTIONS.map((opt) => (
-              <button
-                key={opt.prefix}
-                className={`country-modal__option${opt.disabled ? ' country-modal__option--disabled' : ''}`}
-                onClick={() => !opt.disabled && handleCountrySelected(opt.prefix)}
-                disabled={opt.disabled}
-              >
-                <img
-                  src={`https://flagcdn.com/32x24/${opt.countryCode}.png`}
-                  alt={opt.name}
-                  className="country-modal__flag"
-                  width="32"
-                  height="24"
-                />
-                <div className="country-modal__info">
-                  <span className="country-modal__name">{opt.name}</span>
-                  <span className="country-modal__desc">{opt.desc}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-          <button className="country-modal__cancel" onClick={() => setShowCountryModal(false)}>
-            Cancelar
-          </button>
-        </div>
-      </div>
-    )}
     </>
   );
 };

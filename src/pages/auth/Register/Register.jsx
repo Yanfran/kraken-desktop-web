@@ -139,7 +139,8 @@ const Register = () => {
       try {
         const result = await signInWithGoogle(
           { credential: tokenResponse.access_token },
-          selectedPrefixRef.current
+          selectedPrefixRef.current,
+          'register'
         );
         if (result.success) {
           toast.success('¡Bienvenido!');

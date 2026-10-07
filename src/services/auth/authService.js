@@ -304,7 +304,9 @@ export const authService = {
   },
 
   // ===== 🔥 GOOGLE AUTH - SIN THIS =====
-  async loginWithGoogle(tokenOrCredential, clientPrefix = 'KV') {
+  // El backend verifica el token con Google (id token o access token) y decide según intent:
+  // 'register' crea la cuenta o inicia sesión si ya existe; 'login' solo inicia sesión.
+  async loginWithGoogle(tokenOrCredential, clientPrefix = 'KV', intent = 'register') {
   try {
     // console.log('🔵 [AuthService] Procesando Google auth...');
     
@@ -349,67 +351,44 @@ export const authService = {
 
     const fakePassword = userId + '_google';
 
-    // Intentar REGISTRO primero
-    try {
-      // console.log('🔵 [AuthService] Intentando REGISTRO con Google...');
-      const registerResponse = await authAPI.post('/Users/google', {
-        name: firstName,
-        email: userEmail,
-        password: fakePassword,
-        last: lastName,
-        clientPrefix
-      });
-
-      if (registerResponse.data.success && registerResponse.data.token && registerResponse.data.user) {
-        // console.log('✅ [AuthService] Usuario Google auth OK');
-
-        const userData = mapUserData(registerResponse.data.user);
-        localStorage.setItem('userId', userData.id.toString());
-
-        return {
-          success: true,
-          token: registerResponse.data.token,
-          user: userData
-        };
-      }
-    } catch (registerError) {
-      // console.log('⚠️ [AuthService] Registro falló, intentando LOGIN...');
-    }
-
-    // Si el registro falla, intentar LOGIN
-    // console.log('🔵 [AuthService] Intentando LOGIN con Google...');
-    const loginResponse = await authAPI.post('/Users/google', {
+    // Una sola llamada: el backend verifica el token con Google y, según intent,
+    // crea la cuenta (registro) o solo inicia sesión (login).
+    const response = await authAPI.post('/Users/google', {
       name: firstName,
       email: userEmail,
       password: fakePassword,
-      last: lastName
+      last: lastName,
+      clientPrefix,
+      intent,
+      // El botón propio (useGoogleLogin) entrega access token; el botón oficial, id token (JWT)
+      ...(isJWT ? { idToken: tokenOrCredential } : { accessToken: tokenOrCredential }),
     });
 
-    if (loginResponse.data.success && loginResponse.data.token && loginResponse.data.user) {
-      // console.log('✅ [AuthService] Usuario LOGUEADO con Google');
-
-      const userData = mapUserData(loginResponse.data.user);
+    if (response.data.success && response.data.token && response.data.user) {
+      const userData = mapUserData(response.data.user);
       localStorage.setItem('userId', userData.id.toString());
 
       return {
         success: true,
-        token: loginResponse.data.token,
+        token: response.data.token,
         user: userData
       };
     }
 
     return {
       success: false,
-      message: loginResponse.data.message || 'Error con Google Auth'
+      message: response.data.message || 'Error con Google Auth',
+      code: response.data.code
     };
 
   } catch (error) {
     console.error('❌ [AuthService] Google auth error:', error);
-    
+
     if (error.response?.data) {
       return {
         success: false,
-        message: error.response.data.message || 'Error de autenticación con Google'
+        message: error.response.data.message || 'Error de autenticación con Google',
+        code: error.response.data.code
       };
     }
     
@@ -472,11 +451,23 @@ export const authService = {
     }
   },
 
+  // Pide un token nuevo con la sesión actual (aún válida) para que no caduque.
+  // Si falla (sin conexión, token ya caducado) no hace nada: se reintenta más tarde.
+  async renewToken() {
+    try {
+      const response = await authAPI.post('/Users/renovar-token');
+      return response.data;
+    } catch {
+      return { success: false };
+    }
+  },
+
   async logout() {
     try {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       localStorage.removeItem('userId');
+      localStorage.removeItem('tokenRenewedAt');
       return { success: true };
     } catch (error) {
       console.error('❌ [AuthService] Logout error:', error);

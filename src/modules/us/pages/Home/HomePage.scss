@@ -172,6 +172,36 @@
     @media (max-width: 768px) {
       grid-template-columns: repeat(2, 1fr);
     }
+
+    // Acciones rápidas de USA: 3 en una fila, icono encima del texto.
+    // Variante propia para no afectar a otras pantallas que reutilizan estas clases (Home España).
+    &--acciones {
+      grid-template-columns: repeat(3, 1fr);
+
+      @media (max-width: 768px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .us-home__address-card {
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        gap: 0.5rem;
+        padding: 1rem 0.5rem;
+        min-width: 0;
+      }
+
+      .us-home__address-name {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        @media (max-width: 400px) {
+          font-size: 0.8rem;
+        }
+      }
+    }
   }
 
   &__address-card {
