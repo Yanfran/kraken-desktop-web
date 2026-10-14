@@ -142,6 +142,11 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           packages:              data.packages,
           calculationResult:     data.calculationResult,
           courierQuote:          data.courierQuote,
+          deliveryMethod:        data.deliveryMethod,
+          pickupDate:            data.pickupDate,
+          pickupTimeFrom:        data.pickupTimeFrom,
+          pickupTimeTo:          data.pickupTimeTo,
+          dropoffPoint:          data.dropoffPoint,
         },
       }));
 
@@ -238,7 +243,10 @@ const Step4Payment = ({ data, updateData, onBack }) => {
 
           {courierQuote && (
             <div className="order-row">
-              <span>Recogida local ({courierQuote.name || courierQuote.service || 'Courier'})</span>
+              <span>
+                {data.deliveryMethod === 'dropoff' ? 'Entrega en punto SEUR' : 'Recogida local'}
+                {' '}({courierQuote.name || courierQuote.service || 'Courier'})
+              </span>
               <span style={{ fontWeight: '600' }}>{eur(courier)}</span>
             </div>
           )}

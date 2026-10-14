@@ -217,3 +217,56 @@ $warning:     #d97706;
     }
   }
 }
+// ── Punto SEUR (drop-off) ─────────────────────────────────────────────────────
+.redsys-resultado__punto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  max-width: 440px;
+  background: #F0FDF4;
+  border: 1.5px solid #BBF7D0;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  text-align: left;
+}
+
+.redsys-resultado__punto-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #16A34A;
+}
+
+.redsys-resultado__punto-nombre { font-size: 1rem; color: #022364; }
+.redsys-resultado__punto-direccion { font-size: 0.88rem; color: #374151; }
+
+.redsys-resultado__horario {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0.5rem 0 0;
+  border-top: 1px solid #DCFCE7;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: #374151;
+
+  li { display: flex; justify-content: space-between; gap: 1rem; }
+  li span:first-child { font-weight: 600; color: #022364; }
+}
+
+.redsys-resultado__punto-nota {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: #6B7280;
+}
+
+.redsys-resultado__label-error {
+  max-width: 440px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: #B45309;
+  text-align: center;
+}

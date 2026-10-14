@@ -294,3 +294,107 @@ $separator-color: #EEEEEE;
     width: 100%;
   }
 }
+
+// ── Reschedule (copiado de UsaGuideDetail.module.scss) ───────────────────
+.alertWarning {
+  background-color: #FFFBEB;
+  border-color: #F59E0B;
+  .alertText { color: #92400E; }
+}
+
+.rescheduleButton {
+  width: 100%;
+  background-color: #F05A22;
+  color: white;
+  border: none;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.9; }
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modalCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.modalTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #022364;
+  margin: 0;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  &:hover { background: #F3F4F6; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.rescheduleSubmitBtn {
+  width: 100%;
+  background-color: #F05A22;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s;
+  margin-bottom: 0.75rem;
+  &:hover { opacity: 0.9; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.rescheduleHint {
+  font-size: 0.8rem;
+  color: #6B7280;
+  text-align: center;
+  margin: 0;
+}

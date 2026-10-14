@@ -2,7 +2,15 @@
 import { useEffect, useState, useRef  } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { vincularGuiaASesion, consultarEstadoPago } from '../../../../services/es/spainPaymentService';
-import { createSendSeiShipment, createSendSeiPickup } from '../../../../services/es/sendSeiService';
+import {
+  createSendSeiShipment,
+  createSendSeiPickup,
+  getPickupResult,
+  getNextBusinessDays,
+  PICKUP_SLOT,
+  openSpainLabel,
+  formatHorarioSeur,
+} from '../../../../services/es/sendSeiService';
 import { createSpainGuia } from '../../../../services/es/spainGuiaService';
 import './RedsysPagoResultado.scss';
 
@@ -12,12 +20,9 @@ const KRAKEN_WAREHOUSE = {
   addressNumber: '1', postalCode: '28013', city: 'Madrid',
 };
 
-const getNextBusinessDate = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  if (d.getDay() === 6) d.setDate(d.getDate() + 2);
-  if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-  return d.toISOString().split('T')[0];
+const toKg = (peso, unidad) => {
+  const n = parseFloat(peso || 0);
+  return String(unidad).toLowerCase() === 'lb' ? (n / 2.20462).toFixed(2) : n.toFixed(2);
 };
 
 export default function RedsysPagoResultado() {
@@ -30,6 +35,14 @@ export default function RedsysPagoResultado() {
   const [fase,  setFase]  = useState('verificando');
   const [guia,  setGuia]  = useState(null);
   const [error, setError] = useState(null);
+  const [labelError, setLabelError] = useState(null);
+
+  const descargarEtiqueta = async () => {
+    setLabelError(null);
+    const res = await openSpainLabel(guia.nGuia);
+    if (!res.success)
+      setLabelError('La etiqueta todavía no está disponible. Vuelve a intentarlo en unos minutos desde el detalle del envío.');
+  };
 
     // ✅ Guardia anti-doble ejecución (React Strict Mode ejecuta useEffect 2 veces en dev)
   const yaEjecutado = useRef(false);
@@ -46,7 +59,22 @@ export default function RedsysPagoResultado() {
 
 
 
-  const limpiar = () => sessionStorage.removeItem('ke_pago_pendiente');
+  const limpiar = () => {
+    sessionStorage.removeItem('ke_pago_pendiente');
+    sessionStorage.removeItem('ke_pago_progreso');
+  };
+
+  // Progreso post-pago por pedido: si la página se recarga o falla a mitad, no se
+  // vuelve a crear el envío en SendSei (cada envío se cobra) ni la recogida.
+  const leerProgreso = (numeroPedido) => {
+    try {
+      const p = JSON.parse(sessionStorage.getItem('ke_pago_progreso') ?? 'null');
+      return p?.numeroPedido === numeroPedido ? p : { numeroPedido };
+    } catch { return { numeroPedido }; }
+  };
+  const guardarProgreso = (p) => {
+    try { sessionStorage.setItem('ke_pago_progreso', JSON.stringify(p)); } catch { /* sin storage */ }
+  };
 
   const procesarPagoOk = async () => {
     try {
@@ -57,8 +85,10 @@ export default function RedsysPagoResultado() {
       const { numeroPedido, total, wizardData } = JSON.parse(raw);
       const { courierId, courierServiceId,
               selectedOriginAddress: origin,
-              packages, courierQuote } = wizardData;
+              packages, courierQuote,
+              deliveryMethod, pickupDate, pickupTimeFrom, pickupTimeTo, dropoffPoint } = wizardData;
       const pkg = packages?.[0] ?? {};
+      const esDropOff = deliveryMethod === 'dropoff';
 
       // 1.5 Intentar confirmar el pago antes de seguir (solo para mostrar "ko" rápido
       //     si Redsys ya rechazó la tarjeta). El webhook server-to-server de Redsys
@@ -89,9 +119,13 @@ export default function RedsysPagoResultado() {
         return;
       }
 
-      // 2. Crear shipment SendSei
+      const progreso = leerProgreso(numeroPedido);
+
+      // 2. Crear shipment SendSei (una sola vez por pedido)
       setFase('creando_envio');
-      const shipmentRes = await createSendSeiShipment({
+      const shipmentRes = progreso.shipment
+        ? { success: true, data: progreso.shipment }
+        : await createSendSeiShipment({
         courierId, courierServiceId,
         insuredAmount: total > 0 ? parseFloat(total).toFixed(2) : null,
         origin: {
@@ -105,8 +139,9 @@ export default function RedsysPagoResultado() {
           city:          origin.city      ?? '',
         },
         destination: KRAKEN_WAREHOUSE,
+        originPickupPointCode: esDropOff ? dropoffPoint?.pudo_id : null,
         packages: [{
-          weightKg:           String(parseFloat(pkg.peso  || 0)),
+          weightKg:           toKg(pkg.peso, pkg.unidadPeso),
           lengthCm:           String(parseFloat(pkg.largo || 0)),
           widthCm:            String(parseFloat(pkg.ancho || 0)),
           heightCm:           String(parseFloat(pkg.alto  || 0)),
@@ -119,22 +154,41 @@ export default function RedsysPagoResultado() {
         throw new Error('Error creando envío con el courier.');
 
       const shipmentUuid = shipmentRes.data.uuid;
+      progreso.shipment = shipmentRes.data;
+      guardarProgreso(progreso);
 
-      // 3. Crear pickup
-      const pickupRes = await createSendSeiPickup(
-        getNextBusinessDate(), '09:00', '14:00',
-        [shipmentUuid], 'Recogida Kraken Courier'
-      );
-      const pickupCode = pickupRes.data?.pickups?.[0]?.pickup_code ?? null;
+      // 3. Crear pickup (solo recogida a domicilio; en drop-off el cliente lleva el paquete al punto)
+      //    Si SendSei no agenda la recogida, la guía se crea igual con pickupPendiente
+      //    y el cliente la reagenda desde el detalle (mismo criterio que USA).
+      let pickupRes  = { data: progreso.pickupData ?? null };
+      let pickupCode = progreso.pickupCode ?? null;
+      if (!esDropOff && !progreso.pickupIntentado) {
+        pickupRes = await createSendSeiPickup(
+          pickupDate ?? getNextBusinessDays(1)[0].iso,
+          pickupTimeFrom ?? PICKUP_SLOT.from,
+          pickupTimeTo ?? PICKUP_SLOT.to,
+          [shipmentUuid], 'Recogida Kraken Courier'
+        );
+        const pickupResult = getPickupResult(pickupRes.data);
+        if (pickupResult.ok) pickupCode = pickupResult.pickup.pickup_code;
+        else console.warn('[RedsysPagoResultado] Recogida no agendada:', pickupResult.message ?? pickupRes.error);
+        guardarProgreso({ ...progreso, pickupIntentado: true, pickupData: pickupRes.data, pickupCode });
+      }
 
       // 4. Crear guía
       setFase('creando_guia');
-      const guiaRes = await createSpainGuia(
-        wizardData, shipmentUuid, pickupCode,
-        shipmentRes.data, pickupRes.data, numeroPedido
-      );
+      // Reintento: si la respuesta se pierde (timeout/red) la guía puede existir ya;
+      // el backend la devuelve por numeroPedidoRedsys sin duplicarla.
+      let guiaRes = null;
+      for (let intento = 0; intento < 3 && !guiaRes?.nGuia; intento++) {
+        if (intento > 0) await new Promise((r) => setTimeout(r, 3000));
+        guiaRes = await createSpainGuia(
+          wizardData, shipmentUuid, pickupCode,
+          shipmentRes.data, pickupRes.data, numeroPedido
+        );
+      }
 
-      if (!guiaRes?.nGuia) throw new Error('Error creando la guía.');
+      if (!guiaRes?.nGuia) throw new Error(guiaRes?.error ?? 'Error creando la guía.');
 
       // 5. ✅ Vincular NGuia a la sesión pre-registrada
       //    Si el webhook ya llegó → VincularGuia marca TienePago=true automáticamente
@@ -144,9 +198,15 @@ export default function RedsysPagoResultado() {
       limpiar();
       setGuia({
         nGuia:          guiaRes.nGuia,
+        guiaId:         guiaRes.guiaId,
         courierName:    courierQuote?.courier ?? null,
         courierService: courierQuote?.service ?? null,
         courierTotal:   courierQuote?.total   ?? null,
+        esDropOff,
+        dropoffPoint:   esDropOff ? dropoffPoint : null,
+        labelUrl:       shipmentRes.data?.label_url ?? null,
+        pickupCode,
+        pickupPendiente: !esDropOff && !pickupCode,
       });
       setFase('ok');
 
@@ -160,7 +220,7 @@ export default function RedsysPagoResultado() {
   // ── Renders ───────────────────────────────────────────────────────────────
   const FASES_CARGA = {
     verificando:   'Verificando tu pago...',
-    creando_envio: 'Registrando recogida con el courier...',
+    creando_envio: 'Registrando el envío con el courier...',
     creando_guia:  'Generando tu guía de envío...',
   };
 
@@ -189,10 +249,42 @@ export default function RedsysPagoResultado() {
           {guia.courierTotal && <strong> €{Number(guia.courierTotal).toFixed(2)}</strong>}
         </div>
       )}
+      {guia?.esDropOff && guia.dropoffPoint && (
+        <div className="redsys-resultado__punto">
+          <span className="redsys-resultado__punto-label">📍 Entrega en punto SEUR</span>
+          <strong className="redsys-resultado__punto-nombre">{guia.dropoffPoint.name}</strong>
+          <span className="redsys-resultado__punto-direccion">
+            {guia.dropoffPoint.address}, {guia.dropoffPoint.postal_code} {guia.dropoffPoint.city}
+          </span>
+          {formatHorarioSeur(guia.dropoffPoint.hours).length > 0 && (
+            <ul className="redsys-resultado__horario">
+              {formatHorarioSeur(guia.dropoffPoint.hours).map((h) => (
+                <li key={h.dia}><span>{h.dia}</span><span>{h.horas}</span></li>
+              ))}
+            </ul>
+          )}
+          <p className="redsys-resultado__punto-nota">
+            Imprime la etiqueta, pégala en el paquete y llévalo a este punto.
+          </p>
+        </div>
+      )}
+      {guia?.pickupCode && (
+        <div className="redsys-resultado__courier">📅 Recogida agendada — código <strong>{guia.pickupCode}</strong></div>
+      )}
+      {guia?.pickupPendiente && (
+        <div className="redsys-resultado__courier" style={{ color: '#B45309' }}>
+          ⚠️ El courier no pudo agendar la recogida automáticamente. Puedes reagendarla sin coste
+          desde el detalle de tu envío.
+        </div>
+      )}
       <div className="redsys-resultado__actions">
+        {guia?.labelUrl && (
+          <button onClick={descargarEtiqueta} className="btn-secondary">🖨️ Descargar etiqueta</button>
+        )}
         <button onClick={() => navigate('/home')}                     className="btn-primary">Ir al Inicio</button>
         <button onClick={() => navigate(`/tracking/${guia?.nGuia}`)}  className="btn-secondary">🔍 Rastrear envío</button>
       </div>
+      {labelError && <p className="redsys-resultado__label-error">⚠️ {labelError}</p>}
     </div>
   );
 

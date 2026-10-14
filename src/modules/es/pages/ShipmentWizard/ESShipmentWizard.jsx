@@ -60,6 +60,14 @@ const INITIAL_STATE = {
   courierServiceId: null,   // ID del servicio seleccionado (ej: 4)
   courierQuote:     null,   // Objeto completo del quote seleccionado
 
+  // Modalidad de origen (igual que USA): 'pickup' (Correos Express) | 'dropoff' (SEUR)
+  // Pre-determinado: drop-off (acordado con SendSei)
+  deliveryMethod: 'dropoff',
+  pickupDate:     null,     // YYYY-MM-DD (fecha local)
+  pickupTimeFrom: null,     // HH:mm
+  pickupTimeTo:   null,     // HH:mm
+  dropoffPoint:   null,     // Punto SEUR elegido { pudo_id, name, address, city, postal_code, hours }
+
   seguroActivo: false,
   metodoPago: 'card',
   cardData: {

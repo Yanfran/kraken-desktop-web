@@ -1,7 +1,7 @@
 // src/services/es/spainGuiaService.js
 // ✅ Crea la guía en el backend después del pago exitoso (wizard España)
 
-import axiosInstance from '../axiosInstance';
+import axiosInstance, { axiosPaymentInstance } from '../axiosInstance';
 
 const BASE = '/spain/guia';
 
@@ -25,6 +25,9 @@ export const createSpainGuia = async (
   // ↑ renombrado pickupDate → pickupCode
   try {
     const quote = wizardData?.courierQuote ?? null;
+    const esDropOff = wizardData?.deliveryMethod === 'dropoff';
+    const punto     = esDropOff ? wizardData?.dropoffPoint : null;
+    const pickup    = pickupData?.pickups?.[0] ?? null;
 
     // Desglose real de la tarifa Kraken (Flete Internacional, Gastos de Salida,
     // Seguro, etc.) tal como lo vio el cliente en el resumen — excluye la línea TOTAL
@@ -56,7 +59,7 @@ export const createSpainGuia = async (
       largo:               parseFloat(largo  || 0),
       ancho:               parseFloat(ancho  || 0),
       alto:                parseFloat(alto   || 0),
-      unidadPeso:          unidadPeso,
+      unidadPeso:          'kg',      // peso ya convertido a kg arriba
       tipoPaquete:         tipoPaquete,
       fragil:              wizardData?.fragil ?? false,
 
@@ -64,7 +67,12 @@ export const createSpainGuia = async (
       courierName:         quote?.courier      ?? null,
       courierService:      quote?.service      ?? null,
       courierTotal:        quote ? parseFloat(quote.total) : null,
-      pickupCode:          pickupCode   ?? null,
+      pickupCode:          esDropOff ? null : (pickupCode ?? null),
+
+      // ✅ Mismo criterio que USA: 5 = Pickup, 7 = Drop-off
+      idFormaCreacion:      esDropOff ? 7 : 5,
+      pickupPendiente:      !esDropOff && !pickupCode ? true : null,
+      puntoOrigenCodigo:    punto?.pudo_id ?? null,   // drop-off: se guarda en PickupCode
 
       // ✅ Sin esto el backend nunca vincula el pago Redsys ni guarda la dirección de recogida
       numeroPedidoRedsys:  numeroPedidoRedsys ?? null,
@@ -76,14 +84,16 @@ export const createSpainGuia = async (
       contenidosIds: (wizardData?.packages?.[0]?.contenidos ?? []).map(c => c.id),
 
       sendSeiTrackingNumber: sendSeiShipmentData?.tracking_number ?? null,
-      sendSeiPickupUuid:     pickupData?.pickups?.[0]?.pickup_uuid ?? null,
+      sendSeiPickupUuid:     pickup?.pickup_uuid ?? null,
       labelUrl:              sendSeiShipmentData?.label_url ?? null,
-      pickupFecha:           pickupData?.pickups?.[0]?.scheduled_date ?? null,
-      pickupHoraDesde:       pickupData?.pickups?.[0]?.scheduled_time_from ?? null,
-      pickupHoraHasta:       pickupData?.pickups?.[0]?.scheduled_time_to ?? null,
+      pickupFecha:           pickup?.scheduled_date ?? null,
+      pickupHoraDesde:       pickup?.scheduled_time_from?.slice(0, 5) ?? null,
+      pickupHoraHasta:       pickup?.scheduled_time_to?.slice(0, 5) ?? null,
     };
 
-    const res = await axiosInstance.post(`${BASE}/create`, payload);
+    // Timeout extendido (pagos): la creación de la guía es post-pago y no debe cortarse a los 60 s.
+    // El backend es idempotente por numeroPedidoRedsys, así que reintentar no duplica.
+    const res = await axiosPaymentInstance.post(`${BASE}/create`, payload);
 
     return {
       success: true,
@@ -98,7 +108,7 @@ export const createSpainGuia = async (
       success: false,
       nGuia:   null,
       guiaId:  null,
-      error:   err?.response?.data?.message ?? err.message,
+      error:   err?.data?.message ?? err?.response?.data?.message ?? err.message,
     };
   }
 };
