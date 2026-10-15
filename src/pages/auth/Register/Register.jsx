@@ -21,7 +21,7 @@ import {
 const COUNTRY_OPTIONS = [
   { prefix: 'KV', countryCode: 've', name: 'Venezuela',      desc: 'Encomiendas y envíos internacionales',  disabled: false },
   { prefix: 'KU', countryCode: 'us', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA',  disabled: false },
-  { prefix: 'KE', countryCode: 'eu', name: 'Europa',         desc: 'Próximamente',                          disabled: true  },
+  { prefix: 'KE', countryCode: 'es', name: 'España',         desc: 'Recogida y drop-off en España',         disabled: false },
 ];
 
 const Register = () => {

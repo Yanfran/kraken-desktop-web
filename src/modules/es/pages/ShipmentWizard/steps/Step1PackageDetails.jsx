@@ -444,7 +444,7 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
   return (
     <div>
       <div className="wizard-card">
-        <h2 className="wizard-card__title">📦 Detalles del Envío</h2>
+        <h2 className="wizard-card__title"><IoCubeOutline size={22} style={{ verticalAlign: 'middle' }} /> Detalles del paquete</h2>
 
         {data.packages.map((pkg, idx) => (
           <React.Fragment key={pkg.id}>

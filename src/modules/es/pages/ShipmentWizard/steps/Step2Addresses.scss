@@ -40,11 +40,9 @@ $radius: 10px;
   }
 
   &__grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
-
-    @media (max-width: 480px) { grid-template-columns: 1fr; }
   }
 
   &__loading {
@@ -122,20 +120,32 @@ $radius: 10px;
   &__actions {
     display: flex;
     gap: 6px;
-    margin-top: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
   }
 
   &__action-btn {
-    background: none;
-    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 7px;
+    width: 32px;
+    height: 32px;
     cursor: pointer;
-    font-size: 0.85rem;
-    padding: 2px 4px;
-    border-radius: 4px;
-    transition: background 0.15s;
-    &:hover { background: #f3f4f6; }
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
+    flex-shrink: 0;
 
-    &--danger:hover { background: #fee2e2; }
+    span { display: none; }
+
+    &--view   { color: #022364; &:hover { background: #EFF6FF; border-color: #022364; } }
+    &--star   { color: #F05A22; &:hover { background: #FFF7ED; border-color: #F05A22; } }
+    &--danger { color: #EF4444; &:hover { background: #FEF2F2; border-color: #EF4444; } }
   }
 }
 
@@ -201,13 +211,18 @@ $radius: 10px;
   border-radius: 14px;
   width: 100%;
   max-width: 480px;
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 
   &__header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.25rem 1.5rem 0;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid $border;
 
     h3 {
       font-size: 1rem;
@@ -228,6 +243,9 @@ $radius: 10px;
   }
 
   &__body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 1.25rem 1.5rem;
     display: flex;
     flex-direction: column;
@@ -235,11 +253,53 @@ $radius: 10px;
   }
 
   &__footer {
-    padding: 0 1.5rem 1.5rem;
+    flex-shrink: 0;
+    padding: 1rem 1.5rem 1.5rem;
+    border-top: 1px solid $border;
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
   }
+}
+
+// ── Botones del footer del modal (disponibles aunque el wizard no esté cargado)
+$primary-hover: #e03d00;
+$transition: 0.2s ease;
+
+.btn-wizard-back {
+  padding: 0.75rem 1.75rem;
+  border-radius: 25px;
+  border: 2px solid $border;
+  background: transparent;
+  color: $text-muted;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition;
+
+  &:hover {
+    border-color: $navy;
+    color: $navy;
+  }
+}
+
+.btn-wizard-next {
+  padding: 0.75rem 2.25rem;
+  border-radius: 25px;
+  border: none;
+  background: $primary;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background $transition, transform $transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:hover { background: $primary-hover; transform: translateY(-1px); }
+  &:disabled { background: #ccc; cursor: not-allowed; transform: none; }
 }
 
 // ── Spinner pequeño ───────────────────────────────────────────────────────────
@@ -301,7 +361,7 @@ $radius: 10px;
 
 // ── Modal más ancho para Venezuela (tiene más campos) ────────────────────────
 .addr-modal--wide {
-  max-width: 580px;
+  max-width: 680px;
 }
 
 // ── Selector de tipo (Retiro en Tienda / Enviar a dirección) ─────────────────
@@ -362,9 +422,11 @@ $radius: 10px;
 
 // ── Etiqueta "opcional" ───────────────────────────────────────────────────────
 .label-optional {
-  font-size: 0.78rem;
+  font-size: 0.65rem;
   font-weight: 400;
   color: #9ca3af;
+  text-transform: none;  // evita que herede el uppercase del <label>
+  letter-spacing: 0;
 }
 
 // ── Checkbox del modal ────────────────────────────────────────────────────────
@@ -381,6 +443,27 @@ $radius: 10px;
     height: 16px;
     accent-color: #FF4500;
     cursor: pointer;
+  }
+}
+
+// ── Divisor de sección dentro del modal ──────────────────────────────────────
+.addr-modal__section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
   }
 }
 
@@ -405,9 +488,10 @@ $radius: 10px;
   margin-bottom: 6px;
 }
 
-// ── Botón estrella (marcar predeterminada) ────────────────────────────────────
-.addr-card__action-btn--star {
-  &:hover { background: #fef9c3; color: #ca8a04; }
+// ── Botón editar ──────────────────────────────────────────────────────────────
+.addr-card__action-btn--edit {
+  color: #2563eb;
+  &:hover { background: #eff6ff; border-color: #bfdbfe; }
 }
 
 // ── Error de campo ────────────────────────────────────────────────────────────
@@ -416,4 +500,228 @@ $radius: 10px;
   font-size: 0.76rem;
   color: #dc2626;
   margin-top: 3px;
+}
+
+// Borde rojo en inputs/selects inválidos
+.input--error {
+  border-color: #dc2626 !important;
+  &:focus { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important; }
+}
+
+// Columna de dirección con error (sin selección al intentar continuar)
+.addr-col--error {
+  .addr-col__title { color: #dc2626; }
+  .addr-col__grid  { border: 1.5px solid #fca5a5; border-radius: 10px; padding: 0.5rem; }
+}
+
+// ── Teléfono Venezuela: operadora + número ────────────────────────────────────
+.phone-ve-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.phone-ve-operator {
+  flex: 0 0 110px;
+  padding: 0.6rem 0.5rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+
+  &:focus { outline: none; border-color: #FF4500; }
+  &.input--error { border-color: #dc2626; }
+}
+
+.phone-ve-number {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: #fff;
+  transition: border-color 0.2s;
+
+  &:focus { outline: none; border-color: #FF4500; }
+  &:disabled { background: #f9fafb; cursor: not-allowed; color: #9ca3af; }
+  &.input--error { border-color: #dc2626; }
+  &::placeholder { color: #9ca3af; }
+}
+
+// ── Identificación: país + tipo + número ──────────────────────────────────────
+.doc-ident-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1.6fr);
+  gap: 0.5rem;
+  width: 100%;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr 1fr;
+
+    .doc-num { grid-column: 1 / -1; }
+  }
+}
+
+.doc-country,
+.doc-type {
+  width: 100%;
+  min-width: 0;
+  padding: 0.6rem 0.4rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:focus { outline: none; border-color: #FF4500; }
+  &:disabled { background: #f9fafb; cursor: not-allowed; color: #9ca3af; }
+  &.input--error { border-color: #dc2626; }
+}
+
+// ── Wrapper del número de documento (muestra prefijo V- J- etc.) ──────────────
+.doc-num-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  min-width: 0;
+  transition: border-color 0.2s;
+
+  &:focus-within { border-color: #FF4500; }
+  &--error { border-color: #dc2626 !important; }
+}
+
+.doc-prefix {
+  flex-shrink: 0;
+  padding: 0.6rem 0 0.6rem 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.doc-num-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.65rem;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #1a1a1a;
+  background: transparent;
+
+  &:disabled { background: #f9fafb; cursor: not-allowed; color: #9ca3af; }
+  &::placeholder { color: #9ca3af; }
+}
+
+// ── Texto de ayuda debajo del campo ──────────────────────────────────────────
+.field-hint {
+  display: block;
+  font-size: 0.74rem;
+  color: #9ca3af;
+  margin-top: 3px;
+}
+
+// ── Detail Modal ──
+.addr-detail-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.addr-detail-modal {
+  background: #fff; border-radius: 16px;
+  width: 90%; max-width: 480px; max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+
+  &__header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px; border-bottom: 1px solid #E5E7EB;
+    h3 { font-size: 18px; font-weight: 700; color: #022364; margin: 0; }
+    button { background: none; border: none; cursor: pointer; color: #6B7280; padding: 4px;
+      &:hover { color: #1A1A1A; }
+    }
+  }
+
+  &__body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+
+  &__row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 12px 0; border-bottom: 1px solid #F3F4F6;
+  }
+
+  &__label { font-size: 14px; color: #6B7280; flex: 1; }
+  &__value { font-size: 14px; font-weight: 600; color: #1A1A1A; flex: 1.5; text-align: right; }
+
+  &__close-btn {
+    margin: 16px 20px 20px; padding: 14px;
+    background: #022364; color: #fff;
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer;
+    &:hover { background: #1a3a8a; }
+  }
+}
+
+// ── Wizard Login Modal ──
+.wizard-login-overlay {
+  position: fixed; inset: 0; z-index: 1100;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.wizard-login-modal {
+  background: #fff; border-radius: 16px;
+  width: 90%; max-width: 420px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+
+  &__header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px; border-bottom: 1px solid #E5E7EB;
+    h3 { font-size: 18px; font-weight: 700; color: #022364; margin: 0; }
+    button { background: none; border: none; cursor: pointer; color: #6B7280; padding: 4px;
+      &:hover { color: #1A1A1A; }
+    }
+  }
+
+  &__body { padding: 20px; }
+
+  &__info {
+    font-size: 14px; color: #4B5563; line-height: 1.5;
+    margin-bottom: 16px;
+    strong { color: #022364; }
+  }
+
+  &__pass-row {
+    display: flex; align-items: center; gap: 8px;
+    input { flex: 1; }
+  }
+
+  &__eye {
+    background: none; border: none; cursor: pointer;
+    color: #6B7280; padding: 6px; flex-shrink: 0;
+    &:hover { color: #022364; }
+  }
+
+  &__footer {
+    display: flex; gap: 12px;
+    padding: 16px 20px 20px;
+    button { flex: 1; }
+  }
+}
+// ── Botón estrella (marcar predeterminada) ────────────────────────────────────
+.addr-card__action-btn--star {
+  &:hover { background: #fef9c3; color: #ca8a04; }
 }

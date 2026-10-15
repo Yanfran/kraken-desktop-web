@@ -60,6 +60,8 @@ export const createSendSeiShipment = async (payload) => {
       destination:      mapAddress(payload.destination),
       packages:         (payload.packages ?? []).map(mapPackage),
       originPickupPointCode: payload.originPickupPointCode ?? null,
+      // El backend solo crea el envío si este pedido Redsys está APROBADO
+      numeroPedidoRedsys:    payload.numeroPedidoRedsys ?? null,
     });
     return { success: true, data: res.data };
   } catch (err) {

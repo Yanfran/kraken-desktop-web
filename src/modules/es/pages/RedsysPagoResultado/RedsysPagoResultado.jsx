@@ -90,15 +90,14 @@ export default function RedsysPagoResultado() {
       const pkg = packages?.[0] ?? {};
       const esDropOff = deliveryMethod === 'dropoff';
 
-      // 1.5 Intentar confirmar el pago antes de seguir (solo para mostrar "ko" rápido
-      //     si Redsys ya rechazó la tarjeta). El webhook server-to-server de Redsys
-      //     suele llegar antes que este redirect del navegador, pero NO es garantía
-      //     — así que si no llega a tiempo, seguimos igual: la guía nunca debe
-      //     depender del webhook para poder crearse. Si el webhook llega después
-      //     (durante o tras la creación de la guía), el backend vincula el pago en
-      //     ese momento (ver CreateGuia / Notificacion / VincularGuia).
+      // 1.5 Confirmar el pago antes de crear nada. Redsys notifica al backend de
+      //     forma síncrona (antes de devolver al cliente), así que normalmente ya está
+      //     APROBADO. Si se rechazó → "ko". Si aún no hay confirmación → "pendiente":
+      //     no se crea el envío ni la guía (el backend también lo exige).
       setFase('verificando');
-      const MAX_INTENTOS = 5;
+      // Primero se paga y después se crea todo (igual que USA). Con la notificación
+      // síncrona de Redsys el pago suele estar confirmado a la primera.
+      const MAX_INTENTOS = 10;
       const INTERVALO_MS = 2000;
       let estadoPago = null;
 
@@ -111,11 +110,15 @@ export default function RedsysPagoResultado() {
         await new Promise((resolve) => setTimeout(resolve, INTERVALO_MS));
       }
 
-      // Solo bloqueamos si Redsys YA confirmó explícitamente el rechazo.
-      // Si no llegó respuesta todavía (estadoPago === null), seguimos optimistamente.
       if (estadoPago && !estadoPago.autorizado) {
         limpiar();
         setFase('ko');
+        return;
+      }
+
+      // Sin confirmación todavía: NO se crea nada. El cliente puede volver a verificar.
+      if (!estadoPago?.autorizado) {
+        setFase('pendiente');
         return;
       }
 
@@ -140,6 +143,7 @@ export default function RedsysPagoResultado() {
         },
         destination: KRAKEN_WAREHOUSE,
         originPickupPointCode: esDropOff ? dropoffPoint?.pudo_id : null,
+        numeroPedidoRedsys: numeroPedido,
         packages: [{
           weightKg:           toKg(pkg.peso, pkg.unidadPeso),
           lengthCm:           String(parseFloat(pkg.largo || 0)),
@@ -297,6 +301,19 @@ export default function RedsysPagoResultado() {
       <div className="redsys-resultado__actions">
         <button onClick={() => navigate('/pickup')} className="btn-primary">← Volver a intentar</button>
         <button onClick={() => navigate('/home')}   className="btn-secondary">Ir al Inicio</button>
+      </div>
+    </div>
+  );
+
+  if (fase === 'pendiente') return (
+    <div className="redsys-resultado redsys-resultado--verificando">
+      <div className="redsys-resultado__icon">⏳</div>
+      <h2>Pago en verificación</h2>
+      <p>Todavía no recibimos la confirmación del banco. Tu envío se creará en cuanto el pago esté confirmado.</p>
+      <p style={{ fontSize: '0.82rem', color: '#6b7280' }}>N.º de pedido: <strong>{pedido}</strong></p>
+      <div className="redsys-resultado__actions">
+        <button onClick={() => procesarPagoOk()} className="btn-primary">🔄 Volver a verificar</button>
+        <button onClick={() => navigate('/home')} className="btn-secondary">Ir al Inicio</button>
       </div>
     </div>
   );

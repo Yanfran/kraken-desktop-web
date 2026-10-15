@@ -18,11 +18,31 @@ $radius-sm:     8px;
 $transition:    0.2s ease;
 
 // ─── Wrapper del wizard ───────────────────────────────────────────────────────
+// Igual que USA con sesión (.us-wizard--auth en USShipmentWizard.scss):
+// sin fondo propio y con la barra de pasos al mismo ancho que las tarjetas.
 .es-wizard {
   min-height: 100vh;
-  background: $bg-page;
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding-top: 1rem;       // espacio entre TopNav del layout y el stepper
+  background: transparent; // hereda el fondo del page-content → sin capa gris
+
+  // ── Contenedor central (iguala ancho de stepper y tarjetas) ────────────────
+  &__content {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 2rem;
+    box-sizing: border-box;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 640px) {
+      padding: 0 1rem;
+    }
+  }
 
   // ── Barra de pasos — card flotante (mismo estilo que el wizard de USA) ──────
   &__header {
@@ -34,12 +54,6 @@ $transition:    0.2s ease;
     border-radius: 14px;
     box-shadow: 0 4px 20px rgba(27,43,107,0.2);
     overflow: hidden;
-    max-width: 960px;
-    margin: 1rem auto 0;
-
-    @media (max-width: 768px) {
-      margin: 1rem auto 0;
-    }
   }
 
   &__steps {
@@ -143,14 +157,12 @@ $transition:    0.2s ease;
   // ── Zona de contenido del paso ──────────────────────────────────────────────
   &__body {
     flex: 1;
-    max-width: 960px;
-    width: 100%;
-    margin: 2rem auto;
-    padding: 0 1.5rem 3rem;
+    margin: 1.5rem 0 0;
+    padding: 0 0 3rem;
 
     @media (max-width: 768px) {
-      margin: 1rem auto;
-      padding: 0 1rem 2rem;
+      margin: 1rem 0 0;
+      padding: 0 0 2rem;
     }
   }
 }

@@ -5,6 +5,20 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import {
+  IoStar,
+  IoStarOutline,
+  IoCheckmarkOutline,
+  IoPersonOutline,
+  IoStorefrontOutline,
+  IoCallOutline,
+  IoMailOutline,
+  IoEyeOutline,
+  IoTrashOutline,
+  IoCloseOutline,
+  IoLocationOutline,
+} from 'react-icons/io5';
+import { useAuth } from '../../../../../contexts/AuthContext';
+import {
   fetchOriginAddresses,
   addOriginAddress,
   deleteOriginAddress,
@@ -34,56 +48,73 @@ const getClientId = () => {
 };
 
 // ════════════════════════════════════════════════════════════════════════════
-// ██  TARJETA DE DIRECCIÓN
+// ██  TARJETA DE DIRECCIÓN (mismo diseño que el wizard de USA)
 // ════════════════════════════════════════════════════════════════════════════
-const AddressCard = ({ address, selected, onSelect, onDelete, onSetDefault, flag }) => (
+const AddressCard = ({ address, selected, onSelect, onView, onDelete, onSetDefault, flag, userInfo }) => {
+  const displayName = address.contactoNombres
+    ? `${address.contactoNombres} ${address.contactoApellidos ?? ''}`.trim()
+    : userInfo?.name ?? null;
+  const displayPhone = address.contactoTelefono ?? address.phone ?? null;
+  const displayEmail = address.contactoEmail ?? userInfo?.email ?? null;
+
+  return (
   <button
     type="button"
     className={`addr-card ${selected ? 'addr-card--selected' : ''}`}
     onClick={() => onSelect(address.id)}
   >
     {address.esPredeterminada && (
-      <span className="addr-card__badge">⭐ Predeterminada</span>
+      <span className="addr-card__badge"><IoStar size={12} style={{ verticalAlign: 'middle' }} /> Predeterminada</span>
     )}
-    {selected && <span className="addr-card__check">✓</span>}
+    {selected && <span className="addr-card__check"><IoCheckmarkOutline size={14} /></span>}
 
     <div className="addr-card__body">
       <p className="addr-card__alias">{flag} {address.alias}</p>
+      {displayName && (
+        <p className="addr-card__line"><IoPersonOutline size={13} style={{ verticalAlign: 'middle' }} /> {displayName}</p>
+      )}
       <p className="addr-card__line">{address.line1}</p>
       {address.city && (
         <p className="addr-card__line">
           {address.city}{address.zip ? ` - ${address.zip}` : ''}
         </p>
       )}
-      {address.phone && <p className="addr-card__phone">📞 {address.phone}</p>}
       {address.tipoDireccion === 'store' && address.nombreLocker && (
-        <p className="addr-card__line">🏪 {address.nombreLocker}</p>
+        <p className="addr-card__line"><IoStorefrontOutline size={13} style={{ verticalAlign: 'middle' }} /> {address.nombreLocker}</p>
       )}
+      {displayPhone && <p className="addr-card__phone"><IoCallOutline size={13} style={{ verticalAlign: 'middle' }} /> {displayPhone}</p>}
+      {displayEmail && <p className="addr-card__line"><IoMailOutline size={13} style={{ verticalAlign: 'middle' }} /> {displayEmail}</p>}
     </div>
 
     <div className="addr-card__actions" onClick={(e) => e.stopPropagation()}>
+      <button
+        className="addr-card__action-btn addr-card__action-btn--view"
+        title="Ver detalle"
+        onClick={() => onView(address.id)}
+      ><IoEyeOutline size={16} /> <span>Ver</span></button>
       {!address.esPredeterminada && (
         <button
           className="addr-card__action-btn addr-card__action-btn--star"
           title="Marcar como predeterminada"
           onClick={() => onSetDefault(address.id)}
-        >☆</button>
+        ><IoStarOutline size={16} /> <span>Predeterminada</span></button>
       )}
       <button
         className="addr-card__action-btn addr-card__action-btn--danger"
         title="Eliminar"
         onClick={() => onDelete(address.id)}
-      >🗑️</button>
+      ><IoTrashOutline size={16} /> <span>Eliminar</span></button>
     </div>
   </button>
-);
+  );
+};
 
 // ════════════════════════════════════════════════════════════════════════════
-// ██  COLUMNA DE DIRECCIONES
+// ██  COLUMNA DE DIRECCIONES (mismo diseño que el wizard de USA)
 // ════════════════════════════════════════════════════════════════════════════
 const AddressColumn = ({
   title, flag, country, addresses, selectedId,
-  onSelect, onAdd, onDelete, onSetDefault, loading,
+  onSelect, onView, onAdd, onDelete, onSetDefault, loading, userInfo,
 }) => (
   <div className="addr-col">
     <h3 className="addr-col__title">
@@ -107,15 +138,23 @@ const AddressColumn = ({
             address={addr}
             selected={addr.id === selectedId}
             onSelect={onSelect}
+            onView={onView}
             onDelete={onDelete}
             onSetDefault={onSetDefault}
             flag={flag}
+            userInfo={userInfo}
           />
         ))}
-        <button className="addr-add-btn" onClick={onAdd}>
-          <span className="addr-add-btn__icon">+</span>
-          <span>Añadir Nueva Dirección</span>
-        </button>
+        {addresses.length < 4 ? (
+          <button className="addr-add-btn" onClick={onAdd}>
+            <span className="addr-add-btn__icon">+</span>
+            <span>Añadir Nueva Dirección</span>
+          </button>
+        ) : (
+          <p style={{ fontSize: '12px', color: '#9CA3AF', textAlign: 'center', margin: '8px 0' }}>
+            Máximo 4 direcciones alcanzado
+          </p>
+        )}
       </div>
     )}
   </div>
@@ -552,6 +591,8 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   const [loading,    setLoading]    = useState({ origin: true, dest: true });
   const [saving,     setSaving]     = useState(false);
   const [modal,      setModal]      = useState(null);
+  const [viewDetail, setViewDetail] = useState(null);
+  const { user } = useAuth();
   const [errors,     setErrors]     = useState({});
 
   // ✅ FIX: Subir allTiendas al nivel del componente padre (antes solo estaba en DestinationModal)
@@ -705,7 +746,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
   return (
     <div>
       <div className="wizard-card">
-        <h2 className="wizard-card__title">📍 Recogida y Entrega</h2>
+        <h2 className="wizard-card__title"><IoLocationOutline size={22} style={{ verticalAlign: 'middle' }} /> Recogida y Entrega</h2>
         <p className="wizard-card__subtitle">
           Selecciona las direcciones de origen y destino de tu envío
         </p>
@@ -722,7 +763,9 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
             title="Origen" flag="🇪🇸" country="España"
             addresses={originList} selectedId={data.originAddressId}
             loading={loading.origin}
+            userInfo={user ? { name: [user.name, user.lastName].filter(Boolean).join(' '), email: user.email } : null}
             onSelect={(id) => { updateData({ originAddressId: id }); setErrors((p) => ({ ...p, origin: null })); }}
+            onView={(id) => { const a = originList.find((x) => x.id === id); if (a) setViewDetail({ type: 'origin', data: a }); }}
             onAdd={() => setModal('origin')}
             onDelete={(id) => handleDelete('origin', id)}
             onSetDefault={(id) => handleSetDefault('origin', id)}
@@ -732,6 +775,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
             addresses={destList} selectedId={data.destinationAddressId}
             loading={loading.dest}
             onSelect={(id) => { updateData({ destinationAddressId: id }); setErrors((p) => ({ ...p, dest: null })); }}
+            onView={(id) => { const a = destList.find((x) => x.id === id); if (a) setViewDetail({ type: 'dest', data: a }); }}
             onAdd={() => setModal('dest')}
             onDelete={(id) => handleDelete('dest', id)}
             onSetDefault={(id) => handleSetDefault('dest', id)}
@@ -757,7 +801,65 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas}  />
       )}
 
+      {viewDetail && (
+        <div className="addr-detail-overlay" onClick={() => setViewDetail(null)}>
+          <div className="addr-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="addr-detail-modal__header">
+              <h3>{viewDetail.type === 'origin' ? 'Dirección de Origen' : 'Dirección de Destino'}</h3>
+              <button onClick={() => setViewDetail(null)}><IoCloseOutline size={22} /></button>
+            </div>
+            <div className="addr-detail-modal__body">
+              {viewDetail.type === 'origin' ? (
+                <>
+                  <DetailRow label="Alias" value={viewDetail.data.alias} />
+                  <DetailRow label="Dirección" value={viewDetail.data.line1} />
+                  <DetailRow label="Ciudad" value={viewDetail.data.city} />
+                  <DetailRow label="Provincia" value={viewDetail.data.province} />
+                  <DetailRow label="Código Postal" value={viewDetail.data.zip} />
+                  <DetailRow label="Teléfono" value={viewDetail.data.phone} />
+                  <DetailRow label="Referencia" value={viewDetail.data.referencia} />
+                  <DetailRow label="Predeterminada" value={viewDetail.data.esPredeterminada ? 'Sí' : 'No'} />
+                </>
+              ) : (
+                <>
+                  <DetailRow label="Alias" value={viewDetail.data.alias} />
+                  <DetailRow label="Tipo" value={viewDetail.data.tipoDireccion === 'store' ? 'Retiro en tienda' : 'Domicilio'} />
+                  {viewDetail.data.nombreLocker && <DetailRow label="Tienda" value={viewDetail.data.nombreLocker} />}
+                  <DetailRow label="Dirección" value={viewDetail.data.line1} />
+                  <DetailRow label="Estado" value={viewDetail.data.city} />
+                  <DetailRow label="Referencia" value={viewDetail.data.referencia} />
+                  <DetailRow label="Predeterminada" value={viewDetail.data.esPredeterminada ? 'Sí' : 'No'} />
+                  {(viewDetail.data.contactoNombres || viewDetail.data.contactoTelefono) && (
+                    <>
+                      <h4 style={{ margin: '20px 0 10px', color: '#022364', fontSize: '15px', fontWeight: '700' }}>
+                        <IoPersonOutline size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                        Contacto de entrega
+                      </h4>
+                      <DetailRow label="Nombres" value={viewDetail.data.contactoNombres} />
+                      <DetailRow label="Apellidos" value={viewDetail.data.contactoApellidos} />
+                      <DetailRow label="Email" value={viewDetail.data.contactoEmail} />
+                      <DetailRow label="Teléfono" value={viewDetail.data.contactoTelefono} />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+            <button className="addr-detail-modal__close-btn" onClick={() => setViewDetail(null)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+
       <CustomAlert {...confirmAlert.alertProps} />
+    </div>
+  );
+};
+
+const DetailRow = ({ label, value }) => {
+  if (!value) return null;
+  return (
+    <div className="addr-detail-modal__row">
+      <span className="addr-detail-modal__label">{label}</span>
+      <span className="addr-detail-modal__value">{value}</span>
     </div>
   );
 };

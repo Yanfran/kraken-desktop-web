@@ -236,6 +236,8 @@ const ESShipmentWizard = () => {
 
   return (
     <div className="es-wizard">
+      {/* Contenedor central: iguala el ancho del stepper y las tarjetas (igual que USA) */}
+      <div className="es-wizard__content">
       <div className="es-wizard__header">
         <div className="es-wizard__steps">
           {STEPS.map((step, idx) => {
@@ -272,6 +274,7 @@ const ESShipmentWizard = () => {
 
       <div className="es-wizard__body">
         {renderStep()}
+      </div>
       </div>
     </div>
   );

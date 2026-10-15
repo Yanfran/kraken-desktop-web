@@ -53,6 +53,8 @@ export const createSpainGuia = async (
       : parseFloat(peso || 0);
 
     const payload = {
+      // N.º de guía reservado por el backend al crear el envío (sale en la etiqueta)
+      nGuia:               sendSeiShipmentData?.kraken_nguia ?? undefined,
       packageDescription:  descripcion,
       peso:                weightKg,   
       declaredValueUSD:    parseFloat(valorFOB || 0),

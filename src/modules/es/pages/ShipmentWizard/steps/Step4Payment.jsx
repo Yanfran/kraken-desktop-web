@@ -11,7 +11,9 @@ import './Step4Payment.scss';
 // ── Métodos de pago disponibles ───────────────────────────────────────────────
 const PAYMENT_METHODS = [
   { id: 'card',     label: 'Tarjeta de Crédito/Débito', render: () => '💳' },
-  { id: 'bizum',    label: 'Bizum (Pago Manual)',       render: () => '📱' },
+  // Bizum oculto: no tiene pago real todavía (TODO) y la regla es "primero se paga,
+  // después se crea todo". Reactivar cuando se integre Bizum por Redsys.
+  // { id: 'bizum',    label: 'Bizum (Pago Manual)',       render: () => '📱' },
 ];
 
 // ── Bloque informativo Redsys ─────────────────────────────────────────────────
