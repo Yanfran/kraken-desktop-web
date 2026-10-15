@@ -162,7 +162,7 @@ const PreAlertEdit = () => {
     return deliveryData.tiendas      
         .filter((t) => {
           // ✅ Aceptar tipo 2 (Lockers Kraken) Y tipo 3 (Aliados como MRW)
-        const isTipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3 || t.idTiendaTipo === 8;
+        const isTipoValido = t.idTiendaTipo === 2 || t.idTiendaTipo === 3 || t.idTiendaTipo === 8 || t.idTiendaTipo === 13;
         
         // Filtrar por ciudad seleccionada
         const matchesCity = addressState.selectedCity 
