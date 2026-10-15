@@ -1,7 +1,7 @@
 // src/utils/config.js - CONFIGURACIÓN CENTRALIZADA WEB
 // 🎯 Cambia este valor para alternar entre desarrollo y producción
 
-const USE_PRODUCTION = false; // 👈 true para producción, false para desarrollo
+const USE_PRODUCTION = true; // 👈 true para producción, false para desarrollo
 
 // ═══════════════════════════════════════
 // 📡 URLs DEL BACKEND API

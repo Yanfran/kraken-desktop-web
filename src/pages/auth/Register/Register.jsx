@@ -18,10 +18,17 @@ import {
   IoEyeOffOutline,
 } from 'react-icons/io5';
 
+// 🇪🇸 España en el registro: false = "Próximamente" (producción) · true = habilitado (pruebas)
+const ESPANA_HABILITADA = false;
+
 const COUNTRY_OPTIONS = [
   { prefix: 'KV', countryCode: 've', name: 'Venezuela',      desc: 'Encomiendas y envíos internacionales',  disabled: false },
   { prefix: 'KU', countryCode: 'us', name: 'Estados Unidos', desc: 'Recogida directa en tu dirección USA',  disabled: false },
-  { prefix: 'KE', countryCode: 'es', name: 'España',         desc: 'Recogida y drop-off en España',         disabled: false },
+  {
+    prefix: 'KE', countryCode: 'es', name: 'España',
+    desc: ESPANA_HABILITADA ? 'Recogida y drop-off en España' : 'Próximamente',
+    disabled: !ESPANA_HABILITADA,
+  },
 ];
 
 const Register = () => {
