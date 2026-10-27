@@ -435,6 +435,83 @@
       color: var(--color-text-secondary, $text-secondary);
     }
   }
+
+  /* ===== PAGINACIÓN ===== */
+  &__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 0 8px;
+    flex-wrap: wrap;
+  }
+
+  &__page-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--color-border, $border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text-primary, $text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-primary, $primary);
+      color: var(--color-primary, $primary);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__page-number {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--color-border, $border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text-primary, $text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: var(--color-primary, $primary);
+      color: var(--color-primary, $primary);
+    }
+
+    &--active {
+      background: var(--color-primary, $primary);
+      border-color: var(--color-primary, $primary);
+      color: var(--color-button-text, $text-light);
+      font-weight: 600;
+
+      &:hover {
+        color: var(--color-button-text, $text-light);
+      }
+    }
+  }
+
+  &__ellipsis {
+    color: var(--color-text-secondary, $text-secondary);
+    padding: 0 4px;
+    font-size: 14px;
+  }
+
+  &__page-info {
+    font-size: 13px;
+    color: var(--color-text-secondary, $text-secondary);
+    margin-left: 8px;
+  }
 }
 
 /* ============================================

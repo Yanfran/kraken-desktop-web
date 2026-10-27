@@ -347,8 +347,8 @@ const Step4Payment = ({ data, updateData, onBack }) => {
   const usd      = (n) => `$${Number(n || 0).toFixed(2)} USD`;
   const isPickup = data.deliveryMethod === 'pickup';
   const shipping = Number(calculationResult?.data?.total || 0);
-  const courier  = isDoc ? 0 : (courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0);
-  const pickup   = (isDoc || !isPickup) ? 0 : Number(data.pickupRate ?? 0);
+  const courier  = courierQuote ? Number(courierQuote.cost || courierQuote.total || 0) : 0;
+  const pickup   = isPickup ? Number(data.pickupRate ?? 0) : 0;
   const discountPct    = 0;
   const discountAmount = 0;
   const discountName   = null;
@@ -498,6 +498,8 @@ const Step4Payment = ({ data, updateData, onBack }) => {
         idDireccionOrigen:  data.originAddressId      ?? data.selectedOriginAddress?.id      ?? null,
         idDireccionDestino: data.destinationAddressId ?? data.selectedDestinationAddress?.id ?? null,
         costoBase:          Number(data.calculationResult?.data?.total || 0),
+        courierTotal:       Number(courierQuote?.cost || courierQuote?.total || 0),
+        pickupCost:         isPickup ? Number(data.pickupRate ?? 0) : 0,
         idFormaCreacion:    isPickup ? 5 : 7,
         pickupCode:         prn || null,
         pickupFecha:        pickupFechaIso,

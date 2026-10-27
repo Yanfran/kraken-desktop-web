@@ -36,6 +36,55 @@ import './Step2Addresses.scss';
 import { useCustomAlert } from '../../../../../hooks/useCustomAlert';
 import CustomAlert from '../../../../../components/common/CustomAlert/CustomAlert';
 
+// ── Operadoras Venezuela y tipos de documento (igual que el wizard de USA) ───
+const VENEZ_OPERATORS = ['0412', '0414', '0416', '0422', '0424', '0426'];
+
+const formatVenezPhone = (v) => {
+  const d = v.replace(/\D/g, '').slice(0, 7);
+  if (d.length <= 3) return d;
+  if (d.length <= 5) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
+};
+
+const VE_DOC_TYPES = [
+  { value: 'cedulavenezolana', label: 'Cédula Venezolana' },
+  { value: 'cedulaextranjera', label: 'Cédula Extranjera' },
+  { value: 'pasaporte',        label: 'Pasaporte' },
+  { value: 'rifjuridico',      label: 'RIF Jurídico' },
+  { value: 'rifgubernamental', label: 'RIF Gubernamental' },
+  { value: 'rifcomuna',        label: 'RIF Comuna' },
+  { value: 'riffirmapersonal', label: 'RIF Firma Personal' },
+];
+
+const VE_DOC_CONFIG = {
+  cedulavenezolana: { pattern: /^[0-9]+$/,         min: 4,  max: 9,  hint: '4–9 dígitos numéricos' },
+  cedulaextranjera: { pattern: /^[A-Za-z0-9]+$/,   min: 4,  max: 12, hint: '4–12 caracteres alfanuméricos' },
+  pasaporte:        { pattern: /^[A-Za-z0-9]+$/,   min: 6,  max: 15, hint: '6–15 caracteres alfanuméricos' },
+  rifjuridico:      { pattern: /^[A-Za-z0-9-]+$/, min: 6,  max: 12, hint: '6–12 caracteres (ej: 12345678-9)' },
+  rifgubernamental: { pattern: /^[A-Za-z0-9-]+$/, min: 6,  max: 12, hint: '6–12 caracteres' },
+  rifcomuna:        { pattern: /^[A-Za-z0-9-]+$/, min: 6,  max: 12, hint: '6–12 caracteres' },
+  riffirmapersonal: { pattern: /^[A-Za-z0-9-]+$/, min: 6,  max: 12, hint: '6–12 caracteres' },
+};
+
+const VE_DOC_PREFIX_MAP = {
+  cedulavenezolana: 'V', cedulaextranjera: 'E', rifjuridico: 'J',
+  rifgubernamental: 'G', rifcomuna: 'C', riffirmapersonal: 'R',
+};
+
+// Igual que DOC_TYPE_DB_ID de la app (spa_tbClienteTipoIdentificacion)
+const VE_DOC_DB_ID = {
+  pasaporte: 1, rifjuridico: 2, cedulavenezolana: 3,
+  cedulaextranjera: 7, rifgubernamental: 8, rifcomuna: 9, riffirmapersonal: 10,
+};
+
+const cleanVeDocInput = (docType, text) => {
+  const cfg = VE_DOC_CONFIG[docType];
+  if (!cfg) return text;
+  if (/cedula/.test(docType)) return text.replace(/\D/g, '').slice(0, cfg.max);
+  if (/rif/.test(docType))    return text.replace(/[^A-Za-z0-9-]/g, '').slice(0, cfg.max);
+  return text.replace(/[^A-Za-z0-9]/g, '').slice(0, cfg.max);
+};
+
 // ── Helper: clientId del usuario logueado ──────────────────────────────────
 const getClientId = () => {
   try {
@@ -282,6 +331,14 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
   const [loadingGeo,  setLoadingGeo]  = useState(false);
   const [errors,      setErrors]      = useState({});
 
+  // ── Datos del destinatario (se registra como Cliente real, sin su consentimiento,
+  //     igual que krakenAdmin en el mostrador) ─────────────────────────────────
+  const [contactoForm, setContactoForm] = useState({
+    nombres: '', apellidos: '', email: '',
+    telOperator: '', telDigits: '', docType: '', docNum: '',
+  });
+  const setContacto = (k, v) => setContactoForm((p) => ({ ...p, [k]: v }));
+
   const setStore = (k, v) => setStoreForm((p) => ({ ...p, [k]: v }));
   const setHome  = (k, v) => setHomeForm((p) => ({ ...p, [k]: v }));
 
@@ -356,6 +413,18 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
       if (!homeForm.idParroquia)     e.idParroquia = 'Selecciona una parroquia';
       if (!homeForm.direccion.trim()) e.direccion  = 'La dirección es obligatoria';
     }
+
+    if (!contactoForm.nombres.trim()) e.cNombres = 'El nombre del destinatario es obligatorio';
+    if (!contactoForm.telOperator || contactoForm.telDigits.replace(/\D/g, '').length !== 7)
+      e.cTelefono = 'Teléfono venezolano inválido (operadora + 7 dígitos)';
+    if (!contactoForm.docType) e.docType = 'Selecciona el tipo de documento';
+    else {
+      const cfg = VE_DOC_CONFIG[contactoForm.docType];
+      const v = contactoForm.docNum.trim();
+      if (!v) e.docNum = 'Ingresa el número de documento';
+      else if (v.length < cfg.min || !cfg.pattern.test(v)) e.docNum = 'Número de documento inválido para el tipo seleccionado';
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -363,6 +432,16 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
   // ── Guardar ────────────────────────────────────────────────────────────────
   const handleSave = () => {
     if (!validate()) return;
+
+    const docPrefix = VE_DOC_PREFIX_MAP[contactoForm.docType] ?? '';
+    const contacto = {
+      contactoNombres:              contactoForm.nombres.trim(),
+      contactoApellidos:            contactoForm.apellidos.trim(),
+      contactoEmail:                contactoForm.email.trim(),
+      contactoTelefono:             `+58 (${contactoForm.telOperator}) ${contactoForm.telDigits}`,
+      contactoNumeroIdentificacion: `${docPrefix}-${contactoForm.docNum.trim()}`,
+      contactoIdTipoIdentificacion: VE_DOC_DB_ID[contactoForm.docType] ?? null,
+    };
 
     if (tipo === 'store') {
       const tiendaSeleccionada = allTiendas.find((t) => t.id === parseInt(storeForm.store));
@@ -376,6 +455,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
         direccion:     null,
         referencia:    null,
         setAsDefault:  false,
+        ...contacto,
       });
     } else {
       onSave({
@@ -388,6 +468,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
         direccion:     homeForm.direccion.trim(),
         referencia:    homeForm.referencia.trim(),
         setAsDefault:  homeForm.setAsDefault,
+        ...contacto,
       });
     }
   };
@@ -404,7 +485,6 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
         <div className="addr-modal__body">
 
           {/* ── Selector de tipo ─────────────────────────────────────────── */}
-           {/* 🚧 TEMPORALMENTE DESHABILITADO: Retiro en tienda pendiente de implementación
           <div className="addr-modal__type-selector">
             <button
               type="button"
@@ -421,51 +501,42 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <span>🏠</span> Enviar a otra dirección
             </button>
           </div>
-           */}
+
           {/* ══════════════════════════════════════════════════════════════
               SECCIÓN TIENDA — Ciudad + Tienda (filtrada)
           ══════════════════════════════════════════════════════════════ */}
-
-          {/* ══════════════════════════════════════════════════════════════
-              SECCIÓN TIENDA — 🚧 TEMPORALMENTE DESHABILITADO
-          ══════════════════════════════════════════════════════════════ */}
-          
-          {/* {tipo === 'store' && (
-            <>
-              <div className="wizard-grid-2">
-                
-                <div className="wizard-field">
-                  <label>Ciudad *</label>
-                  <select
-                    value={storeForm.city}
-                    onChange={(e) => setStore('city', e.target.value)}
-                  >
-                    <option value="">Seleccione una ciudad</option>
-                    {ciudades.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                  {errors.city && <span className="field-error">{errors.city}</span>}
-                </div>
-
-                
-                <div className="wizard-field">
-                  <label>Tienda *</label>
-                  <select
-                    value={storeForm.store}
-                    onChange={(e) => setStore('store', e.target.value)}
-                    disabled={!storeForm.city}
-                  >
-                    <option value="">Seleccione una tienda</option>
-                    {filteredTiendas.map((t) => (
-                      <option key={t.id} value={t.id}>{t.nombre}</option>
-                    ))}
-                  </select>
-                  {errors.store && <span className="field-error">{errors.store}</span>}
-                </div>
+          {tipo === 'store' && (
+            <div className="wizard-grid-2">
+              <div className="wizard-field">
+                <label>Ciudad *</label>
+                <select
+                  value={storeForm.city}
+                  onChange={(e) => setStore('city', e.target.value)}
+                >
+                  <option value="">Seleccione una ciudad</option>
+                  {ciudades.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {errors.city && <span className="field-error">{errors.city}</span>}
               </div>
-            </>
-          )} */}
+
+              <div className="wizard-field">
+                <label>Tienda *</label>
+                <select
+                  value={storeForm.store}
+                  onChange={(e) => setStore('store', e.target.value)}
+                  disabled={!storeForm.city}
+                >
+                  <option value="">Seleccione una tienda</option>
+                  {filteredTiendas.map((t) => (
+                    <option key={t.id} value={t.id}>{t.nombre}</option>
+                  ))}
+                </select>
+                {errors.store && <span className="field-error">{errors.store}</span>}
+              </div>
+            </div>
+          )}
 
           {/* ══════════════════════════════════════════════════════════════
               SECCIÓN DOMICILIO — Nombre + Estado + Municipio + Parroquia + Dirección
@@ -566,6 +637,102 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               </label>
             </>
           )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              DATOS DEL DESTINATARIO — se registra como Cliente real, sin su
+              consentimiento, igual que krakenAdmin en Nuevo Envío Prepaid.
+          ══════════════════════════════════════════════════════════════ */}
+          <h4 className="addr-modal__section-title">Datos del destinatario</h4>
+          <p className="addr-modal__section-hint">
+            Con estos datos se registra al destinatario en Kraken para que pueda hacer seguimiento de su envío.
+          </p>
+
+          <div className="wizard-grid-2">
+            <div className="wizard-field">
+              <label>Nombres *</label>
+              <input
+                placeholder="Nombres"
+                value={contactoForm.nombres}
+                onChange={(e) => setContacto('nombres', e.target.value)}
+              />
+              {errors.cNombres && <span className="field-error">{errors.cNombres}</span>}
+            </div>
+            <div className="wizard-field">
+              <label>Apellidos</label>
+              <input
+                placeholder="Apellidos"
+                value={contactoForm.apellidos}
+                onChange={(e) => setContacto('apellidos', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="wizard-field">
+            <label>Teléfono (Venezuela) *</label>
+            <div className="phone-ve-row">
+              <select
+                className={`phone-ve-operator${errors.cTelefono ? ' input--error' : ''}`}
+                value={contactoForm.telOperator}
+                onChange={(e) => setContacto('telOperator', e.target.value)}
+              >
+                <option value="">Operadora</option>
+                {VENEZ_OPERATORS.map((op) => (
+                  <option key={op} value={op}>{op}</option>
+                ))}
+              </select>
+              <input
+                className={`phone-ve-number${errors.cTelefono ? ' input--error' : ''}`}
+                placeholder="000-00-00"
+                value={contactoForm.telDigits}
+                onChange={(e) => setContacto('telDigits', formatVenezPhone(e.target.value))}
+                inputMode="numeric"
+                disabled={!contactoForm.telOperator}
+              />
+            </div>
+            {errors.cTelefono && <span className="field-error">{errors.cTelefono}</span>}
+          </div>
+
+          <div className="wizard-field">
+            <label>Email <span className="label-optional">(opcional)</span></label>
+            <input
+              type="email"
+              placeholder="correo@ejemplo.com"
+              value={contactoForm.email}
+              onChange={(e) => setContacto('email', e.target.value)}
+            />
+          </div>
+
+          <div className="wizard-field wizard-field--full">
+            <label>Identificación *</label>
+            <div className="doc-ident-row">
+              <select
+                className={`doc-type${errors.docType ? ' input--error' : ''}`}
+                value={contactoForm.docType}
+                onChange={(e) => { setContacto('docType', e.target.value); setContacto('docNum', ''); }}
+              >
+                <option value="">Tipo de documento</option>
+                {VE_DOC_TYPES.map((d) => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+              <div className={`doc-num-wrapper${errors.docNum ? ' doc-num-wrapper--error' : ''}`}>
+                {VE_DOC_PREFIX_MAP[contactoForm.docType] && (
+                  <span className="doc-prefix">{VE_DOC_PREFIX_MAP[contactoForm.docType]}-</span>
+                )}
+                <input
+                  className="doc-num-input"
+                  placeholder={VE_DOC_CONFIG[contactoForm.docType]?.hint ?? 'Número'}
+                  value={contactoForm.docNum}
+                  onChange={(e) => setContacto('docNum', cleanVeDocInput(contactoForm.docType, e.target.value))}
+                  disabled={!contactoForm.docType}
+                  inputMode={/cedula/.test(contactoForm.docType) ? 'numeric' : 'text'}
+                />
+              </div>
+            </div>
+            {(errors.docType || errors.docNum) && (
+              <span className="field-error">{errors.docType || errors.docNum}</span>
+            )}
+          </div>
         </div>
 
         <div className="addr-modal__footer">

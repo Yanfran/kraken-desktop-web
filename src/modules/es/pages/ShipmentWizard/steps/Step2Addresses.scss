@@ -400,6 +400,22 @@ $transition: 0.2s ease;
   }
 }
 
+// ── Título/pista de la sección "Datos del destinatario" ──────────────────────
+.addr-modal__section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1B2B6B;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin: 1.25rem 0 0.15rem;
+}
+
+.addr-modal__section-hint {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin: 0 0 0.75rem;
+}
+
 // ── Textarea dentro del modal ─────────────────────────────────────────────────
 .addr-modal__textarea {
   width: 100%;

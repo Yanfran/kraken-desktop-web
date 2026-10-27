@@ -14,12 +14,6 @@ import {
 import { createSpainGuia } from '../../../../services/es/spainGuiaService';
 import './RedsysPagoResultado.scss';
 
-const KRAKEN_WAREHOUSE = {
-  fullName: 'Kraken Courier España', email: 'operaciones@krakencourier.com',
-  phoneNumber: '+34600000000', address: 'Calle Mayor',
-  addressNumber: '1', postalCode: '28013', city: 'Madrid',
-};
-
 const toKg = (peso, unidad) => {
   const n = parseFloat(peso || 0);
   return String(unidad).toLowerCase() === 'lb' ? (n / 2.20462).toFixed(2) : n.toFixed(2);
@@ -141,7 +135,9 @@ export default function RedsysPagoResultado() {
           postalCode:    origin.postalCode ?? origin.zip ?? '',
           city:          origin.city      ?? '',
         },
-        destination: KRAKEN_WAREHOUSE,
+        // El destino siempre es el almacén Kraken España: el backend lo resuelve
+        // desde su propia configuración (AlmacenKE), igual que en USA (KU).
+        destination: {},
         originPickupPointCode: esDropOff ? dropoffPoint?.pudo_id : null,
         numeroPedidoRedsys: numeroPedido,
         packages: [{

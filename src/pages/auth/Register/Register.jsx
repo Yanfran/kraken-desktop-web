@@ -19,7 +19,7 @@ import {
 } from 'react-icons/io5';
 
 // 🇪🇸 España en el registro: false = "Próximamente" (producción) · true = habilitado (pruebas)
-const ESPANA_HABILITADA = false;
+const ESPANA_HABILITADA = true;
 
 const COUNTRY_OPTIONS = [
   { prefix: 'KV', countryCode: 've', name: 'Venezuela',      desc: 'Encomiendas y envíos internacionales',  disabled: false },

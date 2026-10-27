@@ -79,6 +79,7 @@ export const createSpainGuia = async (
       // ✅ Sin esto el backend nunca vincula el pago Redsys ni guarda la dirección de recogida
       numeroPedidoRedsys:  numeroPedidoRedsys ?? null,
       idDireccionOrigen:   wizardData?.selectedOriginAddress?.id ?? null,
+      idDireccionDestino:  wizardData?.destinationAddressId ?? null,
       tarifaDetalles:      tarifaDetalles.length > 0 ? tarifaDetalles : null,
 
       // ✅ FIX: usar las variables ya extraídas, no "packages" que no existe

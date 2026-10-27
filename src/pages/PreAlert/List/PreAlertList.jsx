@@ -9,9 +9,9 @@ import './PreAlertList.styles.scss';
 import iconImage from '../../../assets/images/icon-kraken-web-parlante_1.png'; 
 
 // Services
-import { 
-  getPreAlertasPendientes, 
-  deletePreAlerta 
+import {
+  fetchPreAlertasPendientes,
+  deletePreAlerta
 } from '@services/preAlertService';
 
 // Components
@@ -46,6 +46,9 @@ const PreAlertList = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [visibleMenus, setVisibleMenus] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const pageSize = 10;
   const [alert, setAlert] = useState({
     visible: false,
     type: 'info',
@@ -64,19 +67,16 @@ const PreAlertList = () => {
     if (!user?.id) return;
 
     try {
-      const response = await getPreAlertasPendientes();
-      if (response.success) {
-        setPreAlertas(response.data);
-      } else {
-        showAlert('error', 'No pudimos cargar tus pre-alertas', response.message || 'Verifica tu conexión e intenta de nuevo.');
-      }
+      const { data, pagination: paginationResult } = await fetchPreAlertasPendientes({ page: currentPage, pageSize });
+      setPreAlertas(data);
+      setPagination(paginationResult);
     } catch (error) {
       console.error('Error loading pre-alerts:', error);
       showAlert('error', 'Sin conexión', error.message || 'No pudimos cargar tus pre-alertas. Verifica tu conexión e intenta de nuevo.');
     }
-  }, [user?.id]);
+  }, [user?.id, currentPage]);
 
-  // Initial load
+  // Initial load / cambio de página
   useEffect(() => {
     if (user?.id) {
       setLoading(true);
@@ -396,6 +396,57 @@ const PreAlertList = () => {
                 </div>
               </div>
             </div>
+
+            {pagination && pagination.totalPages > 1 && (
+              <div className="pre-alert-list__pagination">
+                <button
+                  className="pre-alert-list__page-btn"
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  disabled={!pagination.hasPreviousPage}
+                >
+                  {t('pre_alert.pagination_prev')}
+                </button>
+
+                <div className="pre-alert-list__page-numbers">
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                    .filter(p =>
+                      p === 1 ||
+                      p === pagination.totalPages ||
+                      Math.abs(p - currentPage) <= 2
+                    )
+                    .reduce((acc, p, idx, arr) => {
+                      if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      item === '...' ? (
+                        <span key={`ellipsis-${idx}`} className="pre-alert-list__ellipsis">…</span>
+                      ) : (
+                        <button
+                          key={item}
+                          className={`pre-alert-list__page-number${item === currentPage ? ' pre-alert-list__page-number--active' : ''}`}
+                          onClick={() => setCurrentPage(item)}
+                        >
+                          {item}
+                        </button>
+                      )
+                    )}
+                </div>
+
+                <button
+                  className="pre-alert-list__page-btn"
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  disabled={!pagination.hasNextPage}
+                >
+                  {t('pre_alert.pagination_next')}
+                </button>
+
+                <span className="pre-alert-list__page-info">
+                  {pagination.totalRecords} {pagination.totalRecords !== 1 ? t('pre_alert.pagination_total_plural') : t('pre_alert.pagination_total')}
+                </span>
+              </div>
+            )}
           </>
         )}
 

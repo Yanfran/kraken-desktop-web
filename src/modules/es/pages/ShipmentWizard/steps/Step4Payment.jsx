@@ -141,6 +141,7 @@ const Step4Payment = ({ data, updateData, onBack }) => {
           courierId:             data.courierId,
           courierServiceId:      data.courierServiceId,
           selectedOriginAddress: data.selectedOriginAddress,
+          destinationAddressId:  data.destinationAddressId,
           packages:              data.packages,
           calculationResult:     data.calculationResult,
           courierQuote:          data.courierQuote,

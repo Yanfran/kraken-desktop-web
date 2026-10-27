@@ -523,7 +523,7 @@ const PreAlertEdit = () => {
     const newErrors = {};
 
     const hasValidTracking = formState.trackings.some(
-      (t) => t.trim().length > 0 && t.trim().length <= 30
+      (t) => t.trim().length >= 6 && t.trim().length <= 30
     );
     if (!hasValidTracking) {
       newErrors.tracking = t('pre_alert.error_invalid_tracking');
@@ -706,7 +706,7 @@ const PreAlertEdit = () => {
 
   const isFormValid = useMemo(() => {
     const hasValidTracking = formState.trackings.some(
-      (t) => t.trim().length > 0 && t.trim().length <= 30
+      (t) => t.trim().length >= 6 && t.trim().length <= 30
     );
     const hasContent = formState.contenidos.length > 0;
     return hasValidTracking && hasContent;

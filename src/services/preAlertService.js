@@ -276,6 +276,34 @@ export const getPreAlertasPendientes = async () => {
 };
 
 /**
+ * Obtener pre-alertas pendientes, paginadas (para el listado "Mis Pre-Alertas").
+ * @param {{ page?: number, pageSize?: number }} params
+ * @returns {Promise<{ data: Array, pagination: object }>}
+ */
+export const fetchPreAlertasPendientes = async ({ page = 1, pageSize = 10 } = {}) => {
+  const response = await axiosInstance.get('/PostPreAlert/getPreAlertasPendientes', {
+    params: { page, pageSize },
+  });
+  const apiResponse = response.data;
+
+  if (!apiResponse.success) {
+    throw new Error(apiResponse.message || 'No pudimos cargar las pre-alertas.');
+  }
+
+  return {
+    data: Array.isArray(apiResponse.data) ? apiResponse.data : [],
+    pagination: apiResponse.pagination || {
+      currentPage: page,
+      pageSize,
+      totalRecords: 0,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+  };
+};
+
+/**
  * Obtener pre-alerta por ID
  * @param {number} id - ID de la pre-alerta
  * @returns {Promise<Object>}
