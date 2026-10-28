@@ -36,6 +36,14 @@ import './Step2Addresses.scss';
 import { useCustomAlert } from '../../../../../hooks/useCustomAlert';
 import CustomAlert from '../../../../../components/common/CustomAlert/CustomAlert';
 
+// ── Validación genérica de campos de direcciones (origen España y destino VE) ─
+const NAME_CHARS_REGEX    = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]{2,50}$/;
+const ADDRESS_CHARS_REGEX = /^[a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s.,ºª°/-]{5,150}$/;
+const ES_ZIP_REGEX        = /^\d{5}$/;
+const ES_PHONE_REGEX      = /^(\+34)?\d{9}$/;
+const EMAIL_REGEX         = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_REFERENCIA      = 150;
+
 // ── Operadoras Venezuela y tipos de documento (igual que el wizard de USA) ───
 const VENEZ_OPERATORS = ['0412', '0414', '0416', '0422', '0424', '0426'];
 
@@ -222,9 +230,28 @@ const OriginModal = ({ onSave, onClose, saving }) => {
 
   const validate = () => {
     const e = {};
+
     if (!form.alias.trim()) e.alias = 'El nombre/alias es obligatorio';
+    else if (form.alias.trim().length < 2 || form.alias.trim().length > 40) e.alias = 'Debe tener entre 2 y 40 caracteres';
+
     if (!form.line1.trim()) e.line1 = 'La dirección es obligatoria';
-    if (!form.city.trim())  e.city  = 'La ciudad es obligatoria';
+    else if (!ADDRESS_CHARS_REGEX.test(form.line1.trim())) e.line1 = 'Dirección inválida (5 a 150 caracteres)';
+
+    if (!form.city.trim()) e.city = 'La ciudad es obligatoria';
+    else if (!NAME_CHARS_REGEX.test(form.city.trim())) e.city = 'Solo letras, entre 2 y 50 caracteres';
+
+    if (form.province.trim() && !NAME_CHARS_REGEX.test(form.province.trim()))
+      e.province = 'Solo letras, entre 2 y 50 caracteres';
+
+    if (form.zip.trim() && !ES_ZIP_REGEX.test(form.zip.trim()))
+      e.zip = 'Código postal de España: 5 dígitos';
+
+    if (form.phone.trim() && !ES_PHONE_REGEX.test(form.phone.replace(/\s/g, '')))
+      e.phone = 'Teléfono de España inválido (9 dígitos, opcional +34)';
+
+    if (form.referencia.trim().length > MAX_REFERENCIA)
+      e.referencia = `Máximo ${MAX_REFERENCIA} caracteres`;
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -245,42 +272,61 @@ const OriginModal = ({ onSave, onClose, saving }) => {
         <div className="addr-modal__body">
           <div className="wizard-field">
             <label>Nombre / Alias *</label>
-            <input placeholder="Ej. Casa, Oficina..." value={form.alias} onChange={(e) => set('alias', e.target.value)} />
+            <input placeholder="Ej. Casa, Oficina..." maxLength={40} value={form.alias} onChange={(e) => set('alias', e.target.value)} />
             {errors.alias && <span className="field-error">{errors.alias}</span>}
           </div>
 
           <div className="wizard-field">
             <label>Dirección *</label>
-            <input placeholder="Calle de Alcalá 123, 2º A" value={form.line1} onChange={(e) => set('line1', e.target.value)} />
+            <input placeholder="Calle de Alcalá 123, 2º A" maxLength={150} value={form.line1} onChange={(e) => set('line1', e.target.value)} />
             {errors.line1 && <span className="field-error">{errors.line1}</span>}
           </div>
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
               <label>Ciudad *</label>
-              <input placeholder="Madrid" value={form.city} onChange={(e) => set('city', e.target.value)} />
+              <input placeholder="Madrid" maxLength={50} value={form.city} onChange={(e) => set('city', e.target.value)} />
               {errors.city && <span className="field-error">{errors.city}</span>}
             </div>
             <div className="wizard-field">
               <label>Provincia</label>
-              <input placeholder="Madrid" value={form.province} onChange={(e) => set('province', e.target.value)} />
+              <input placeholder="Madrid" maxLength={50} value={form.province} onChange={(e) => set('province', e.target.value)} />
+              {errors.province && <span className="field-error">{errors.province}</span>}
             </div>
           </div>
 
           <div className="wizard-grid-2">
             <div className="wizard-field">
               <label>Código Postal</label>
-              <input placeholder="28001" maxLength={10} value={form.zip} onChange={(e) => set('zip', e.target.value)} />
+              <input
+                placeholder="28001"
+                maxLength={5}
+                value={form.zip}
+                onChange={(e) => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))}
+              />
+              {errors.zip && <span className="field-error">{errors.zip}</span>}
             </div>
             <div className="wizard-field">
               <label>Teléfono</label>
-              <input placeholder="+34 600 000 000" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
+              <input
+                placeholder="+34 600 000 000"
+                maxLength={17}
+                value={form.phone}
+                onChange={(e) => set('phone', e.target.value.replace(/[^\d+\s]/g, ''))}
+              />
+              {errors.phone && <span className="field-error">{errors.phone}</span>}
             </div>
           </div>
 
           <div className="wizard-field">
             <label>Referencia adicional</label>
-            <input placeholder="Portero automático #3, timbre azul..." value={form.referencia} onChange={(e) => set('referencia', e.target.value)} />
+            <input
+              placeholder="Portero automático #3, timbre azul..."
+              maxLength={MAX_REFERENCIA}
+              value={form.referencia}
+              onChange={(e) => set('referencia', e.target.value)}
+            />
+            {errors.referencia && <span className="field-error">{errors.referencia}</span>}
           </div>
 
           <label className="addr-modal__checkbox">
@@ -407,14 +453,28 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
       if (!storeForm.city)  e.city  = 'Selecciona una ciudad';
       if (!storeForm.store) e.store = 'Selecciona una tienda';
     } else {
-      if (!homeForm.alias.trim())    e.alias       = 'El nombre de la dirección es obligatorio';
+      if (!homeForm.alias.trim()) e.alias = 'El nombre de la dirección es obligatorio';
+      else if (homeForm.alias.trim().length < 2 || homeForm.alias.trim().length > 40) e.alias = 'Debe tener entre 2 y 40 caracteres';
+
       if (!homeForm.idEstado)        e.idEstado    = 'Selecciona un estado';
       if (!homeForm.idMunicipio)     e.idMunicipio = 'Selecciona un municipio';
       if (!homeForm.idParroquia)     e.idParroquia = 'Selecciona una parroquia';
-      if (!homeForm.direccion.trim()) e.direccion  = 'La dirección es obligatoria';
+
+      if (!homeForm.direccion.trim()) e.direccion = 'La dirección es obligatoria';
+      else if (!ADDRESS_CHARS_REGEX.test(homeForm.direccion.trim())) e.direccion = 'Dirección inválida (5 a 150 caracteres)';
+
+      if (homeForm.referencia.trim().length > MAX_REFERENCIA) e.referencia = `Máximo ${MAX_REFERENCIA} caracteres`;
     }
 
     if (!contactoForm.nombres.trim()) e.cNombres = 'El nombre del destinatario es obligatorio';
+    else if (!NAME_CHARS_REGEX.test(contactoForm.nombres.trim())) e.cNombres = 'Solo letras, entre 2 y 50 caracteres';
+
+    if (contactoForm.apellidos.trim() && !NAME_CHARS_REGEX.test(contactoForm.apellidos.trim()))
+      e.cApellidos = 'Solo letras, entre 2 y 50 caracteres';
+
+    if (contactoForm.email.trim() && !EMAIL_REGEX.test(contactoForm.email.trim()))
+      e.cEmail = 'Email inválido';
+
     if (!contactoForm.telOperator || contactoForm.telDigits.replace(/\D/g, '').length !== 7)
       e.cTelefono = 'Teléfono venezolano inválido (operadora + 7 dígitos)';
     if (!contactoForm.docType) e.docType = 'Selecciona el tipo de documento';
@@ -548,6 +608,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                 <label>Nombre de la Dirección *</label>
                 <input
                   placeholder="Ej. Casa, Oficina, etc."
+                  maxLength={40}
                   value={homeForm.alias}
                   onChange={(e) => setHome('alias', e.target.value)}
                 />
@@ -608,6 +669,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                   className="addr-modal__textarea"
                   placeholder="Ej: Barrio, Vicario 3, Carrera 9 entre Calles 5 y 7"
                   rows={3}
+                  maxLength={150}
                   value={homeForm.direccion}
                   onChange={(e) => setHome('direccion', e.target.value)}
                 />
@@ -621,9 +683,11 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
                   className="addr-modal__textarea"
                   placeholder="Punto de referencia adicional (opcional)"
                   rows={2}
+                  maxLength={MAX_REFERENCIA}
                   value={homeForm.referencia}
                   onChange={(e) => setHome('referencia', e.target.value)}
                 />
+                {errors.referencia && <span className="field-error">{errors.referencia}</span>}
               </div>
 
               {/* Predeterminada */}
@@ -652,6 +716,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <label>Nombres *</label>
               <input
                 placeholder="Nombres"
+                maxLength={50}
                 value={contactoForm.nombres}
                 onChange={(e) => setContacto('nombres', e.target.value)}
               />
@@ -661,9 +726,11 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
               <label>Apellidos</label>
               <input
                 placeholder="Apellidos"
+                maxLength={50}
                 value={contactoForm.apellidos}
                 onChange={(e) => setContacto('apellidos', e.target.value)}
               />
+              {errors.cApellidos && <span className="field-error">{errors.cApellidos}</span>}
             </div>
           </div>
 
@@ -697,9 +764,11 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
             <input
               type="email"
               placeholder="correo@ejemplo.com"
+              maxLength={100}
               value={contactoForm.email}
               onChange={(e) => setContacto('email', e.target.value)}
             />
+            {errors.cEmail && <span className="field-error">{errors.cEmail}</span>}
           </div>
 
           <div className="wizard-field wizard-field--full">

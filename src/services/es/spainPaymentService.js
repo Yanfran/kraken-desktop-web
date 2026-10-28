@@ -19,12 +19,16 @@ export const iniciarPagoRedsys = async (importeEuros, referenciaPedido) => {
   }
 };
 
-// Pre-registra la sesión ANTES de redirigir a Redsys
-export const preRegistrarSesion = async (numeroPedido, importeEuros) => {
+// Pre-registra la sesión ANTES de redirigir a Redsys. datosEnvio es el wizardData
+// completo (origen, destino, paquete, courier) — si el cliente paga pero nunca
+// vuelve a darle "Continuar" en Redsys, esto permite reenviar el pedido manualmente
+// desde el admin sin pedirle los datos de nuevo.
+export const preRegistrarSesion = async (numeroPedido, importeEuros, datosEnvio = null) => {
   try {
     const res = await axiosInstance.post(`${BASE}/pre-registrar`, {
       numeroPedido,
       importeEuros: Number(importeEuros), // ✅ Forzamos a que sea Número
+      datosEnvioJson: datosEnvio ? JSON.stringify(datosEnvio) : null,
     });
     return { success: true, data: res.data };
   } catch (err) {

@@ -131,26 +131,31 @@ const Step4Payment = ({ data, updateData, onBack }) => {
       const { urlTPV, ds_SignatureVersion, ds_MerchantParameters,
               ds_Signature, numeroPedido } = pagoRes.data;
 
+      // Mismo wizardData que se usa para crear el envío al volver de Redsys — se manda
+      // también al backend ANTES de ir a Redsys, por si el cliente paga pero nunca
+      // vuelve a darle "Continuar" en la pantalla de Redsys (no depende del navegador).
+      const wizardData = {
+        courierId:             data.courierId,
+        courierServiceId:      data.courierServiceId,
+        selectedOriginAddress: data.selectedOriginAddress,
+        destinationAddressId:  data.destinationAddressId,
+        packages:              data.packages,
+        calculationResult:     data.calculationResult,
+        courierQuote:          data.courierQuote,
+        deliveryMethod:        data.deliveryMethod,
+        pickupDate:            data.pickupDate,
+        pickupTimeFrom:        data.pickupTimeFrom,
+        pickupTimeTo:          data.pickupTimeTo,
+        dropoffPoint:          data.dropoffPoint,
+      };
+
       // ✅ Enviamos 'total' limpio como Number
-      await preRegistrarSesion(numeroPedido, total);
+      await preRegistrarSesion(numeroPedido, total, wizardData);
 
       sessionStorage.setItem('ke_pago_pendiente', JSON.stringify({
         numeroPedido,
         total,
-        wizardData: {
-          courierId:             data.courierId,
-          courierServiceId:      data.courierServiceId,
-          selectedOriginAddress: data.selectedOriginAddress,
-          destinationAddressId:  data.destinationAddressId,
-          packages:              data.packages,
-          calculationResult:     data.calculationResult,
-          courierQuote:          data.courierQuote,
-          deliveryMethod:        data.deliveryMethod,
-          pickupDate:            data.pickupDate,
-          pickupTimeFrom:        data.pickupTimeFrom,
-          pickupTimeTo:          data.pickupTimeTo,
-          dropoffPoint:          data.dropoffPoint,
-        },
+        wizardData,
       }));
 
       const form = document.createElement('form');

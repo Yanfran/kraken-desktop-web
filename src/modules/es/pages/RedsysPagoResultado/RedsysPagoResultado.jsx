@@ -84,15 +84,18 @@ export default function RedsysPagoResultado() {
       const pkg = packages?.[0] ?? {};
       const esDropOff = deliveryMethod === 'dropoff';
 
-      // 1.5 Confirmar el pago antes de crear nada. Redsys notifica al backend de
-      //     forma síncrona (antes de devolver al cliente), así que normalmente ya está
-      //     APROBADO. Si se rechazó → "ko". Si aún no hay confirmación → "pendiente":
-      //     no se crea el envío ni la guía (el backend también lo exige).
+      // 1.5 Confirmar el pago antes de crear nada. El backend ya confirma el pago de forma
+      //     síncrona en verificar-retorno (antes de redirigir aquí), así que normalmente ya
+      //     está APROBADO. El webhook notificacion queda como respaldo si ese camino falla.
+      //     Si se rechazó → "ko". Si aún no hay confirmación → "pendiente": no se crea el
+      //     envío ni la guía (el backend también lo exige).
       setFase('verificando');
-      // Primero se paga y después se crea todo (igual que USA). Con la notificación
-      // síncrona de Redsys el pago suele estar confirmado a la primera.
-      const MAX_INTENTOS = 10;
-      const INTERVALO_MS = 2000;
+      // Primero se paga y después se crea todo (igual que USA). La confirmación normalmente
+      // ya está lista al llegar aquí, pero se espera hasta ~90s antes de rendirse por si el
+      // banco/red tardan, o si tocó caer en el camino de respaldo (webhook) — si el
+      // cliente ve "pendiente" aunque el pago sí se vaya a confirmar segundos después.
+      const MAX_INTENTOS = 30;
+      const INTERVALO_MS = 3000;
       let estadoPago = null;
 
       for (let intento = 0; intento < MAX_INTENTOS; intento++) {
@@ -191,8 +194,9 @@ export default function RedsysPagoResultado() {
       if (!guiaRes?.nGuia) throw new Error(guiaRes?.error ?? 'Error creando la guía.');
 
       // 5. ✅ Vincular NGuia a la sesión pre-registrada
-      //    Si el webhook ya llegó → VincularGuia marca TienePago=true automáticamente
-      //    Si el webhook aún no llegó → cuando llegue encontrará el NGuia y lo marcará
+      //    Si ya se confirmó el pago → VincularGuia marca TienePago=true automáticamente
+      //    Si aún no se confirma → cuando llegue (verificar-retorno o webhook) encontrará
+      //    el NGuia y lo marcará
       await vincularGuiaASesion(numeroPedido, guiaRes.nGuia, guiaRes.guiaId);
 
       limpiar();

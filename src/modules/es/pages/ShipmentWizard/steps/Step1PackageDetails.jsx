@@ -469,9 +469,11 @@ const Step1PackageDetails = ({ data, updateData, onNext }) => {
 
       {/* Acciones */}
       <div className="step1-footer">
-        <button className="btn-add-box" onClick={handleAdd}>
+        {/* Multi-paquete deshabilitado: el pago/envío solo procesa packages[0]
+            (igual que en USA, ver Step1PackageDetails.jsx del módulo us). */}
+        {/* <button className="btn-add-box" disabled onClick={handleAdd}>
           + Añadir otra caja
-        </button>
+        </button> */}
 
         <div className="wizard-actions">
           <button className="btn-wizard-next" onClick={handleNext}>

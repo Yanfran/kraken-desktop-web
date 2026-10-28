@@ -114,12 +114,14 @@ const Register = () => {
         email: formData.email.trim(),
         password: formData.password,
         clientPrefix: prefix,
-        fromWizard: prefix === 'KU',
+        // KU y KE activan la cuenta sin verificar email (el backend ya trata a ambos
+        // como "quick tenants" en el registro con Google; faltaba aquí también).
+        fromWizard: prefix === 'KU' || prefix === 'KE',
       });
 
       if (result.success) {
         toast.success(t('auth.register_success'));
-        if (prefix === 'KU') {
+        if (prefix === 'KU' || prefix === 'KE') {
           navigate('/pickup');
         } else {
           navigate('/email-confirmation', { state: { email: formData.email } });
