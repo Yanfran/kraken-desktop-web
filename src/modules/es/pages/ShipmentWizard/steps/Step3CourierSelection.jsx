@@ -266,7 +266,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
             onClick={() => handleToggleMethod('dropoff')}
           >
             <IoStorefrontOutline size={18} />
-            <span>Drop-off</span>
+            <span>Punto de entrega</span>
             <small>Llevo mi paquete a un punto SEUR</small>
           </button>
           <button
@@ -275,7 +275,7 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
             onClick={() => handleToggleMethod('pickup')}
           >
             <IoCarOutline size={18} />
-            <span>Pickup</span>
+            <span>Recogida</span>
             <small>El courier recoge en mi dirección</small>
           </button>
         </div>
@@ -287,11 +287,11 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
           <span><IoBusinessOutline size={14} style={{ verticalAlign: 'middle' }} /> Destino: <strong>{KRAKEN_ES_POSTAL_CODE} (Almacén Kraken)</strong></span>
           {isPickup ? (
             <span>
-              <IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> <strong>Pickup</strong> · Recogida incluida en la tarifa
+              <IoCarOutline size={14} style={{ verticalAlign: 'middle' }} /> Recogida incluida en la tarifa
             </span>
           ) : (
             <span>
-              <IoStorefrontOutline size={14} style={{ verticalAlign: 'middle' }} /> <strong>Drop-off</strong> · Elige un punto SEUR cerca de {originPostalCode}
+              <IoStorefrontOutline size={14} style={{ verticalAlign: 'middle' }} /> <strong>Punto de entrega</strong> · Elige un punto SEUR cerca de {originPostalCode}
             </span>
           )}
         </div>
@@ -401,8 +401,8 @@ const Step3CourierSelection = ({ data, updateData, onNext, onBack }) => {
         {!loading && !error && visibleQuotes.length === 0 && (
           <p className="courier-step__empty">
             {isPickup
-              ? 'No hay servicios de recogida disponibles para este código postal. Prueba con Drop-off.'
-              : 'No hay servicios de Drop-off disponibles para este código postal. Prueba con Pickup.'}
+              ? 'No hay servicios de recogida disponibles para este código postal. Prueba con Punto de entrega.'
+              : 'No hay servicios de Punto de entrega disponibles para este código postal. Prueba con Recogida.'}
           </p>
         )}
 

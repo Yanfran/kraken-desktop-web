@@ -416,6 +416,86 @@ $transition: 0.2s ease;
   margin: 0 0 0.75rem;
 }
 
+// ── Destinatarios guardados (quick-pick) ───────────────────────────────────────
+.addr-modal__contactos-guardados {
+  margin: 0.5rem 0 1rem;
+}
+
+.addr-modal__contactos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.addr-modal__contacto-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  border: 1px solid #e5e9f2;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: #f7f9fd;
+    border-color: #c9d4e8;
+  }
+
+  &--selected {
+    background: #eef2fb;
+    border-color: #1B2B6B;
+  }
+}
+
+.addr-modal__contacto-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #1B2B6B;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.addr-modal__contacto-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.addr-modal__contacto-nombre {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #1B2B6B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addr-modal__contacto-detalle {
+  font-size: 0.76rem;
+  color: #8a93a6;
+}
+
+.addr-modal__contacto-check {
+  flex-shrink: 0;
+  color: #1B2B6B;
+  font-size: 1.1rem;
+}
+
 // ── Textarea dentro del modal ─────────────────────────────────────────────────
 .addr-modal__textarea {
   width: 100%;

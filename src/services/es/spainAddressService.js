@@ -92,9 +92,16 @@ export const deleteOriginAddress = async (clientId, addressId) => {
 // ██  DESTINO — Venezuela (spa_tbClienteDirecciones existente)
 // ════════════════════════════════════════════════════════════
 
-export const fetchDestinationAddresses = async (clientId) => {
+// Direcciones de los destinatarios a los que este cliente (remitente) ya le ha
+// enviado antes. Ya no son direcciones "propias" del remitente — cada una
+// pertenece al Cliente real del destinatario (destinatarioId en la respuesta),
+// así que si un mismo destinatario recibe de varios remitentes, comparten la
+// misma libreta de direcciones. "term" filtra por nombre, teléfono, cédula, etc.
+export const fetchDestinationAddresses = async (clientId, term = '') => {
   try {
-    const response = await axiosInstance.get(`/spain/addresses/destination?clientId=${clientId}`);
+    const params = new URLSearchParams({ clientId });
+    if (term) params.set('term', term);
+    const response = await axiosInstance.get(`/spain/addresses/destination?${params.toString()}`);
     const apiResponse = response.data;
     return {
       success: apiResponse.success,

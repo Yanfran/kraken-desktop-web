@@ -85,6 +85,27 @@ const VE_DOC_DB_ID = {
   cedulaextranjera: 7, rifgubernamental: 8, rifcomuna: 9, riffirmapersonal: 10,
 };
 
+// Reconstruye { docType, docNum } a partir del "V-12345678" guardado en
+// spa_tbClienteContactos (ver línea ~496 handleSave). Pasaporte no lleva
+// prefijo, así que si ninguno coincide se asume pasaporte.
+const parseStoredDocumento = (numeroIdentificacion) => {
+  const raw = (numeroIdentificacion ?? '').trim();
+  for (const [docType, prefix] of Object.entries(VE_DOC_PREFIX_MAP)) {
+    if (raw.startsWith(`${prefix}-`)) {
+      return { docType, docNum: raw.slice(prefix.length + 1) };
+    }
+  }
+  return { docType: 'pasaporte', docNum: raw.replace(/^-/, '') };
+};
+
+// Reconstruye { telOperator, telDigits } a partir de "+58 (0412) 123-45-67"
+// guardado en spa_tbClienteContactos.
+const parseStoredTelefono = (telefonoCelular) => {
+  const match = /^\+58 \((\d{4})\)\s*(.+)$/.exec((telefonoCelular ?? '').trim());
+  if (!match) return { telOperator: '', telDigits: '' };
+  return { telOperator: match[1], telDigits: match[2] };
+};
+
 const cleanVeDocInput = (docType, text) => {
   const cfg = VE_DOC_CONFIG[docType];
   if (!cfg) return text;
@@ -350,7 +371,7 @@ const OriginModal = ({ onSave, onClose, saving }) => {
 // ██  MODAL — DESTINO (Venezuela) 🇻🇪
 //     Lógica idéntica a /profile/addresses de la app
 // ════════════════════════════════════════════════════════════════════════════
-const DestinationModal = ({ onSave, onClose, saving }) => {
+const DestinationModal = ({ onSave, onClose, saving, clientId }) => {
   // ── Tipo de entrega ────────────────────────────────────────────────────────
   const [tipo, setTipo] = useState('home'); // 'store' | 'home'
 
@@ -384,6 +405,54 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
     telOperator: '', telDigits: '', docType: '', docNum: '',
   });
   const setContacto = (k, v) => setContactoForm((p) => ({ ...p, [k]: v }));
+
+  // ── Destinatarios a los que este cliente ya le ha enviado antes ────────────
+  // Salen de fetchDestinationAddresses (cada destinatario puede tener varias
+  // direcciones guardadas; aquí solo se usa para rellenar sus datos de contacto,
+  // una fila por persona).
+  const [destinatariosPrevios, setDestinatariosPrevios] = useState([]);
+  const [loadingContactos,     setLoadingContactos]     = useState(false);
+  const [contactoFiltro,       setContactoFiltro]       = useState('');
+  const [contactoSelId,        setContactoSelId]        = useState(null);
+
+  useEffect(() => {
+    if (!clientId) return;
+    setLoadingContactos(true);
+    fetchDestinationAddresses(clientId)
+      .then((res) => {
+        const porPersona = new Map();
+        for (const d of res.data ?? []) {
+          if (!porPersona.has(d.destinatarioId)) porPersona.set(d.destinatarioId, d);
+        }
+        setDestinatariosPrevios(Array.from(porPersona.values()));
+      })
+      .finally(() => setLoadingContactos(false));
+  }, [clientId]);
+
+  const contactosFiltrados = useMemo(() => {
+    const t = contactoFiltro.trim().toLowerCase();
+    if (!t) return destinatariosPrevios;
+    return destinatariosPrevios.filter((c) =>
+      `${c.destinatarioNombre ?? ''} ${c.destinatarioApellidos ?? ''} ${c.destinatarioTelefono ?? ''} ${c.destinatarioDocumento ?? ''}`
+        .toLowerCase()
+        .includes(t)
+    );
+  }, [destinatariosPrevios, contactoFiltro]);
+
+  const usarContactoGuardado = (c) => {
+    const { telOperator, telDigits } = parseStoredTelefono(c.destinatarioTelefono);
+    const { docType, docNum } = parseStoredDocumento(c.destinatarioDocumento);
+    setContactoForm({
+      nombres: c.destinatarioNombre ?? '',
+      apellidos: c.destinatarioApellidos ?? '',
+      email: '',
+      telOperator,
+      telDigits,
+      docType,
+      docNum,
+    });
+    setContactoSelId(c.destinatarioId);
+  };
 
   const setStore = (k, v) => setStoreForm((p) => ({ ...p, [k]: v }));
   const setHome  = (k, v) => setHomeForm((p) => ({ ...p, [k]: v }));
@@ -472,8 +541,10 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
     if (contactoForm.apellidos.trim() && !NAME_CHARS_REGEX.test(contactoForm.apellidos.trim()))
       e.cApellidos = 'Solo letras, entre 2 y 50 caracteres';
 
-    if (contactoForm.email.trim() && !EMAIL_REGEX.test(contactoForm.email.trim()))
-      e.cEmail = 'Email inválido';
+    // Obligatorio: es el usuario con el que el destinatario podría iniciar sesión más
+    // adelante, igual que cualquier Cliente KV real — no es un dato opcional.
+    if (!contactoForm.email.trim()) e.cEmail = 'El email del destinatario es obligatorio';
+    else if (!EMAIL_REGEX.test(contactoForm.email.trim())) e.cEmail = 'Email inválido';
 
     if (!contactoForm.telOperator || contactoForm.telDigits.replace(/\D/g, '').length !== 7)
       e.cTelefono = 'Teléfono venezolano inválido (operadora + 7 dígitos)';
@@ -711,6 +782,47 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
             Con estos datos se registra al destinatario en Kraken para que pueda hacer seguimiento de su envío.
           </p>
 
+          {destinatariosPrevios.length > 0 && (
+            <div className="addr-modal__contactos-guardados">
+              <div className="wizard-field">
+                <label>¿Enviar a un destinatario anterior?</label>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, teléfono o cédula..."
+                  value={contactoFiltro}
+                  onChange={(e) => setContactoFiltro(e.target.value)}
+                />
+              </div>
+              <div className="addr-modal__contactos-list">
+                {contactosFiltrados.map((c) => {
+                  const nombreCompleto = `${c.destinatarioNombre ?? ''} ${c.destinatarioApellidos ?? ''}`.trim() || 'Sin nombre';
+                  const selected = contactoSelId === c.destinatarioId;
+                  return (
+                    <button
+                      type="button"
+                      key={c.destinatarioId}
+                      className={`addr-modal__contacto-row ${selected ? 'addr-modal__contacto-row--selected' : ''}`}
+                      onClick={() => usarContactoGuardado(c)}
+                    >
+                      <span className="addr-modal__contacto-avatar">{nombreCompleto.charAt(0).toUpperCase()}</span>
+                      <span className="addr-modal__contacto-info">
+                        <span className="addr-modal__contacto-nombre">{nombreCompleto}</span>
+                        <span className="addr-modal__contacto-detalle">
+                          {c.destinatarioTelefono || 'Sin teléfono'}
+                          {c.destinatarioDocumento ? ` · ${c.destinatarioDocumento}` : ''}
+                        </span>
+                      </span>
+                      {selected && <IoCheckmarkOutline className="addr-modal__contacto-check" />}
+                    </button>
+                  );
+                })}
+                {contactosFiltrados.length === 0 && !loadingContactos && (
+                  <span className="addr-modal__section-hint">Sin resultados.</span>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="wizard-grid-2">
             <div className="wizard-field">
               <label>Nombres *</label>
@@ -760,7 +872,7 @@ const DestinationModal = ({ onSave, onClose, saving }) => {
           </div>
 
           <div className="wizard-field">
-            <label>Email <span className="label-optional">(opcional)</span></label>
+            <label>Email *</label>
             <input
               type="email"
               placeholder="correo@ejemplo.com"
@@ -879,7 +991,10 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
           toast.success('Dirección de origen eliminada');
         } else { toast.error(res.message); }
       } else {
-        const res = await deleteDestinationAddress(clientId, id);
+        // La dirección le pertenece al destinatario (su propio Cliente), no al remitente —
+        // hay que borrar/editar usando SU id, no el del remitente logueado.
+        const destinatarioId = destList.find((a) => a.id === id)?.destinatarioId;
+        const res = await deleteDestinationAddress(destinatarioId, id);
         if (res.success) {
           setDestList((p) => p.filter((a) => a.id !== id));
           if (data.destinationAddressId === id) updateData({ destinationAddressId: null });
@@ -887,7 +1002,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         } else { toast.error(res.message); }
       }
     }, () => {});
-  }, [clientId, data, updateData]);
+  }, [clientId, data, destList, updateData]);
 
   // ── Predeterminada ─────────────────────────────────────────────────────────
   const handleSetDefault = useCallback(async (type, id) => {
@@ -898,13 +1013,18 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         toast.success('Predeterminada de origen actualizada');
       } else { toast.error(res.message); }
     } else {
-      const res = await setDestinationDefault(clientId, id);
+      // "Predeterminada" es por destinatario, no global: al marcar una dirección de Joel,
+      // solo se desmarcan las OTRAS direcciones de Joel, no las de otros destinatarios.
+      const destinatarioId = destList.find((a) => a.id === id)?.destinatarioId;
+      const res = await setDestinationDefault(destinatarioId, id);
       if (res.success) {
-        setDestList((p) => p.map((a) => ({ ...a, esPredeterminada: a.id === id })));
+        setDestList((p) => p.map((a) =>
+          a.destinatarioId === destinatarioId ? { ...a, esPredeterminada: a.id === id } : a
+        ));
         toast.success('Predeterminada de destino actualizada');
       } else { toast.error(res.message); }
     }
-  }, [clientId]);
+  }, [clientId, destList]);
 
   // ── Guardar dirección ORIGEN ───────────────────────────────────────────────
   const handleSaveOrigin = async (formData) => {
@@ -948,9 +1068,16 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
       idMunicipio:      res.data.idMunicipio ?? formData.idMunicipio ?? null,
       // ✅ FIX: Guardar idLocker para poder enriquecer si idEstado es null
       idLocker:         formData.idLocker ?? null,
+      destinatarioId:        res.data.destinatarioId,
+      destinatarioNombre:    res.data.destinatarioNombre,
+      destinatarioApellidos: res.data.destinatarioApellidos,
     };
     setDestList((p) => {
-      const lista = formData.setAsDefault ? p.map((a) => ({ ...a, esPredeterminada: false })) : [...p];
+      // "Predeterminada" es por destinatario: solo se desmarcan SUS otras direcciones,
+      // no las de otros destinatarios.
+      const lista = formData.setAsDefault
+        ? p.map((a) => a.destinatarioId === card.destinatarioId ? { ...a, esPredeterminada: false } : a)
+        : [...p];
       return [...lista, card];
     });
     updateData({ destinationAddressId: res.data.id });
@@ -1034,7 +1161,7 @@ const Step2Addresses = ({ data, updateData, onNext, onBack, calculating }) => {
         <OriginModal onSave={handleSaveOrigin} onClose={() => setModal(null)} saving={saving} />
       )}
       {modal === 'dest' && (
-        <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas}  />
+        <DestinationModal onSave={handleSaveDestination} onClose={() => setModal(null)} saving={saving} allTiendasProp={allTiendas} clientId={clientId} />
       )}
 
       {viewDetail && (

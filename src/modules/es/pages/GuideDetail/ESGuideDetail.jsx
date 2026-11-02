@@ -150,7 +150,7 @@ export default function ESGuideDetail() {
           <div className={clsx(styles.alertContainer, styles.alertInfo)}>
             <IoStorefrontOutline size={24} style={{ color: '#3b82f6', flexShrink: 0 }} />
             <p className={styles.alertText}>
-              Drop-off — imprime la etiqueta y entrega tu paquete en el punto SEUR indicado.
+              Punto de entrega — imprime la etiqueta y entrega tu paquete en el punto SEUR indicado.
             </p>
           </div>
         ) : (
