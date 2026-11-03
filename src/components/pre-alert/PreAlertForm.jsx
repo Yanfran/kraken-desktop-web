@@ -17,6 +17,9 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  // Evita que los useEffect de reset en cascada (Estado→Municipio→Parroquia)
+  // borren los valores justo después de precargarlos en modo edición.
+  const isPrefillingRef = useRef(false);
 
   const {
     register,
@@ -43,6 +46,8 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
   // Effect to pre-fill form in edit mode
   useEffect(() => {
     if (isEditMode && initialData) {
+      isPrefillingRef.current = true;
+
       setValue('valorDeclarado', initialData.valorDeclarado?.toString() || '');
       setValue('moneda', initialData.moneda || 'USD');
       setValue('direccionTipo', initialData.direccionTipo || 'home');
@@ -77,12 +82,16 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
         }));
         setSelectedFiles(existingFileMocks);
       }
+
+      setTimeout(() => { isPrefillingRef.current = false; }, 0);
     }
   }, [isEditMode, initialData, setValue]);
 
   // Effect to pre-fill form in edit mode
   useEffect(() => {
     if (isEditMode && initialData) {
+      isPrefillingRef.current = true;
+
       setValue('valorDeclarado', initialData.valorDeclarado?.toString() || '');
       setValue('moneda', initialData.moneda || 'USD');
       setValue('direccionTipo', initialData.direccionTipo || 'home');
@@ -117,12 +126,16 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
         }));
         setSelectedFiles(existingFileMocks);
       }
+
+      setTimeout(() => { isPrefillingRef.current = false; }, 0);
     }
   }, [isEditMode, initialData, setValue]);
 
   // Effect to pre-fill form in edit mode
   useEffect(() => {
     if (isEditMode && initialData) {
+      isPrefillingRef.current = true;
+
       setValue('valorDeclarado', initialData.valorDeclarado?.toString() || '');
       setValue('moneda', initialData.moneda || 'USD');
       setValue('direccionTipo', initialData.direccionTipo || 'home');
@@ -157,6 +170,8 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
         }));
         setSelectedFiles(existingFileMocks);
       }
+
+      setTimeout(() => { isPrefillingRef.current = false; }, 0);
     }
   }, [isEditMode, initialData, setValue]);
 
@@ -213,8 +228,12 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
     }, // Format for SearchableSelect
   });
 
-  // Reset dependent selects when parent changes
+  // Reset dependent selects when parent changes.
+  // Se omite mientras isPrefillingRef está activo (modo edición cargando
+  // los valores guardados) para no borrar la parroquia que se acaba de
+  // precargar — antes se perdía siempre que se editaba una pre-alerta.
   useEffect(() => {
+    if (isPrefillingRef.current) return;
     if (direccionTipo === 'home') {
       setValue('idMunicipio', '');
       setValue('idParroquia', '');
@@ -229,11 +248,13 @@ const PreAlertForm = ({ initialData, isEditMode = false }) => {
   }, [direccionTipo, setValue]);
 
   useEffect(() => {
+    if (isPrefillingRef.current) return;
     setValue('idMunicipio', '');
     setValue('idParroquia', '');
   }, [selectedStateId, setValue]);
 
   useEffect(() => {
+    if (isPrefillingRef.current) return;
     setValue('idParroquia', '');
   }, [selectedMunicipalityId, setValue]);
 
