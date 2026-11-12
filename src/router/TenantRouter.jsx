@@ -182,6 +182,10 @@ const TenantRouter = () => {
                         <Route path="/pickup" element={<ESShipmentWizard />} />
                         {/* <Route path="/shipment/new"   element={<ESShipmentWizard />} /> */}
 
+                        {/* "Ver Nuestras Tiendas" del sidebar (ver Sidebar.jsx) — mismo
+                            componente que usa USA en /stores, ya muestra la tarjeta ESPAÑA. */}
+                        <Route path="/stores" element={<Addresses />} />
+
                         {/* Detalle de guía */}
                         <Route path="/guide/detail/:idGuia" element={<ESGuideDetail />} />
 

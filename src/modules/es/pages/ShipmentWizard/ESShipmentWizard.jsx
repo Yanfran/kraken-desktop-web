@@ -1,6 +1,6 @@
 // src/modules/es/pages/ShipmentWizard/ESShipmentWizard.jsx
 import React, { useState, useCallback } from 'react';
-import { calculateSpainShipping } from '../../../../services/es/spainCalculatorService';
+import { calculateSpainShipping, calculateSpainDocumentShipping } from '../../../../services/es/spainCalculatorService';
 import toast from 'react-hot-toast';
 import { fetchMunicipios } from '../../../../services/es/spainAddressService';
 import Step1PackageDetails from './steps/Step1PackageDetails';
@@ -142,17 +142,29 @@ const ESShipmentWizard = () => {
       const ancho = parseFloat(pkg.ancho) || 0;
       const alto  = parseFloat(pkg.alto)  || 0;
 
+      // "Sobre" (Documento) usa su propio tarifario ESDO-, sin volumétrico — mismo
+      // criterio que isDoc en el wizard de USA (KU).
+      const isDoc = pkg.tipoPaquete === 'Sobre';
+
       setCalculating(true);
-      
-      // ── Llamada sincronizada con nuestro SpainCalculatorController ──
-      const result = await calculateSpainShipping({
-        weight:         pesoKg,
-        length:         largo,
-        width:          ancho,
-        height:         alto,
-        declaredValue:  parseFloat(pkg.valorFOB) || 0,
-      });
-      
+
+      const result = isDoc
+        ? await calculateSpainDocumentShipping({
+            weight:         pesoKg,
+            declaredValue:  parseFloat(pkg.valorFOB) || 0,
+            estadoId:       stateId,
+            tipoDireccion:  destino.tipoDireccion,
+          })
+        : await calculateSpainShipping({
+            weight:         pesoKg,
+            length:         largo,
+            width:          ancho,
+            height:         alto,
+            declaredValue:  parseFloat(pkg.valorFOB) || 0,
+            estadoId:       stateId,
+            tipoDireccion:  destino.tipoDireccion,
+          });
+
       setCalculating(false)
 
       if (!result.success) {

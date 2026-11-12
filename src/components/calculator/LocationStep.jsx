@@ -25,7 +25,8 @@ const LocationStep = ({
 
   const originCountryOptions = [
     { label: '🇺🇸 Estados Unidos', value: 'US' },
-    { label: '🇨🇳 China', value: 'CN' }
+    { label: '🇨🇳 China', value: 'CN' },
+    { label: '🇪🇸 España', value: 'ES' }
   ];
 
   const handleNext = () => {

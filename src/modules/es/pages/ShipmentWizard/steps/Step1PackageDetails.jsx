@@ -28,14 +28,19 @@ const newPackage = () => ({
 });
 
 // ── Validación de un paquete ─────────────────────────────────────────────────
+// "Sobre" (Documento) no pide dimensiones ni contenido — mismo criterio que
+// buildValidationErrors de KU (modules/us/.../Step1PackageDetails.jsx) para isDoc.
 const validatePackage = (pkg) => {
   const errors = {};
-  if (!pkg.largo  || isNaN(pkg.largo)  || Number(pkg.largo)  <= 0) errors.largo  = 'Requerido';
-  if (!pkg.ancho  || isNaN(pkg.ancho)  || Number(pkg.ancho)  <= 0) errors.ancho  = 'Requerido';
-  if (!pkg.alto   || isNaN(pkg.alto)   || Number(pkg.alto)   <= 0) errors.alto   = 'Requerido';
+  const isDoc = pkg.tipoPaquete === 'Sobre';
+  if (!isDoc) {
+    if (!pkg.largo  || isNaN(pkg.largo)  || Number(pkg.largo)  <= 0) errors.largo  = 'Requerido';
+    if (!pkg.ancho  || isNaN(pkg.ancho)  || Number(pkg.ancho)  <= 0) errors.ancho  = 'Requerido';
+    if (!pkg.alto   || isNaN(pkg.alto)   || Number(pkg.alto)   <= 0) errors.alto   = 'Requerido';
+    if (!pkg.contenidos?.length) errors.contenidos = 'Selecciona al menos un contenido';
+  }
   if (!pkg.peso   || isNaN(pkg.peso)   || Number(pkg.peso)   <= 0) errors.peso   = 'Requerido';
   if (!pkg.valorFOB || isNaN(pkg.valorFOB) || Number(pkg.valorFOB) < 0) errors.valorFOB = 'Requerido';
-  if (!pkg.contenidos?.length) errors.contenidos = 'Selecciona al menos un contenido';
   return errors;
 };
 
@@ -126,9 +131,34 @@ const ContenidoSelector = ({ selected, onChange }) => {
   );
 };
 
+// ── Ilustración del sobre (Documento) — igual que KU (modules/us/.../Step1PackageDetails.jsx) ──
+const DocumentIllustration = () => (
+  <svg viewBox="0 0 340 180" className="pkg-form__box-svg" aria-hidden="true" fill="none">
+    <ellipse cx="170" cy="162" rx="100" ry="8" fill="#CBD5E1" opacity="0.5"/>
+    <path d="M52 68 L288 68 L288 148 L52 148 Z" fill="#FFFFFF" stroke="#94A3B8" strokeWidth="2"/>
+    <path d="M52 68 L170 28 L288 68 Z" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="2" strokeLinejoin="round"/>
+    <path d="M52 68 L170 108 L288 68" stroke="#94A3B8" strokeWidth="1.5" strokeDasharray="5 3"/>
+    <path d="M52 68 L52 148 L170 108 Z" fill="#F1F5F9" stroke="#94A3B8" strokeWidth="1.5"/>
+    <path d="M288 68 L288 148 L170 108 Z" fill="#E8EFF6" stroke="#94A3B8" strokeWidth="1.5"/>
+    <line x1="110" y1="95" x2="230" y2="95" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="110" y1="108" x2="230" y2="108" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="110" y1="121" x2="190" y2="121" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round"/>
+    <rect x="228" y="72" width="38" height="26" rx="4" fill="#FFF7F5" stroke="#F05A22" strokeWidth="1.5"/>
+    <rect x="233" y="77" width="28" height="16" rx="2" fill="#F05A22" opacity="0.15"/>
+    <line x1="235" y1="82" x2="259" y2="82" stroke="#F05A22" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="235" y1="87" x2="255" y2="87" stroke="#F05A22" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="170" y1="154" x2="170" y2="163" stroke="#64748B" strokeWidth="1.2"/>
+    <text x="170" y="176" textAnchor="middle" fontFamily="system-ui, sans-serif" fontSize="12" fontWeight="700" fill="#64748B" letterSpacing="0.5">PESO (kg)</text>
+    <line x1="52" y1="156" x2="288" y2="156" stroke="#94A3B8" strokeWidth="1.2"/>
+    <line x1="52" y1="152" x2="52" y2="160" stroke="#94A3B8" strokeWidth="1.2"/>
+    <line x1="288" y1="152" x2="288" y2="160" stroke="#94A3B8" strokeWidth="1.2"/>
+  </svg>
+);
+
 // ── Componente de una caja individual ───────────────────────────────────────
 const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
   const [showFOBTooltip, setShowFOBTooltip] = useState(false);
+  const isDoc = pkg.tipoPaquete === 'Sobre';
 
   const set = (field, value) => onChange(pkg.id, field, value);
 
@@ -166,6 +196,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
       {/* ── Ilustración de la caja (solo en la primera) ── */}
       {index === 0 && (
         <div className="pkg-form__illustration">
+          {isDoc ? <DocumentIllustration /> : (
           <svg viewBox="0 0 860 360" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="pkgBoxTitle pkgBoxDesc" className="pkg-form__box-svg">
             <title id="pkgBoxTitle">Dimensiones del paquete</title>
             <desc id="pkgBoxDesc">Caja con las cotas Alto, Ancho y Largo y su significado.</desc>
@@ -259,10 +290,12 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
               <text x="508" y="323" fontSize="13.5" fill="#5A6273">hacia el fondo.</text>
             </g>
           </svg>
+          )}
         </div>
       )}
 
-      {/* ── Fila 1: Largo | Ancho | Alto ── */}
+      {/* ── Fila 1: Largo | Ancho | Alto — solo para Caja ── */}
+      {!isDoc && (
       <div className="pkg-form__dims-row">
         <div className="wizard-field">
           <label>Largo (cm)</label>
@@ -303,6 +336,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
           {errors?.alto && <span className="field-error-msg">{errors.alto}</span>}
         </div>
       </div>
+      )}
 
       {/* ── Fila 2: Peso | Valor FOB — en la misma fila ── */}
       <div className="wizard-grid-2" style={{ marginBottom: '1rem' }}>
@@ -364,7 +398,8 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
         </div>
       </div>
 
-      {/* Descripción del contenido */}
+      {/* Descripción del contenido — solo para Caja */}
+      {!isDoc && (
       <div className="wizard-field">
         <label>Descripción del Contenido</label>
         <ContenidoSelector
@@ -375,6 +410,7 @@ const PackageForm = ({ pkg, index, total, onChange, onRemove, errors }) => {
         />
         {errors?.descripcion && <span className="field-error-msg">{errors.descripcion}</span>}
       </div>
+      )}
     </div>
   );
 };

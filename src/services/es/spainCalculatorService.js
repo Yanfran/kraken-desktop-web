@@ -63,6 +63,8 @@ export const calculateSpainShipping = async ({
   width,
   height,
   declaredValue,
+  estadoId,
+  tipoDireccion,
 }) => {
   try {
     const payload = {
@@ -70,7 +72,9 @@ export const calculateSpainShipping = async ({
       length: parseFloat(length),
       width: parseFloat(width),
       height: parseFloat(height),
-      declaredValue: parseFloat(declaredValue)
+      declaredValue: parseFloat(declaredValue),
+      estadoId: estadoId ?? null,
+      tipoDireccion: tipoDireccion ?? null,
     };
 
     // Llamada al nuevo controlador especializado
@@ -89,6 +93,45 @@ export const calculateSpainShipping = async ({
       };
     }
     
+    return { success: false, message: api.message };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message ?? 'Error en la conexión con el calculador de España',
+    };
+  }
+};
+
+/**
+ * Calcula tarifa de Documento (Sobre) España — mismo patrón que calculateUSDocumentShipping (KU).
+ * POST /api/ESP/SpainCalculator/calculate-documento
+ */
+export const calculateSpainDocumentShipping = async ({
+  weight,
+  declaredValue,
+  estadoId,
+  tipoDireccion,
+}) => {
+  try {
+    const payload = {
+      weight: parseFloat(weight),
+      declaredValue: parseFloat(declaredValue),
+      estadoId: estadoId ?? null,
+      tipoDireccion: tipoDireccion ?? null,
+    };
+
+    const response = await axiosInstance.post('/ESP/SpainCalculator/calculate-documento', payload);
+    const api = response.data;
+
+    if (api.success) {
+      return {
+        success: true,
+        data: api.data,
+        billedWeight: api.billedWeight,
+        message: 'Cálculo completado'
+      };
+    }
+
     return { success: false, message: api.message };
   } catch (error) {
     return {

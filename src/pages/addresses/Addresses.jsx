@@ -105,6 +105,10 @@ export default function AddressesPage() {
 
   const usaAddress = addresses?.[0];
   const chinaAddress = addresses?.[1];
+  // España: tercera fila de spa_tbCasilleros (ver AddressesController.BuscarCasilleroEuropa
+  // en el backend — ahí se identifica por país/ciudad, no por posición; aquí sí asumimos
+  // posición [2] igual que USA/CHINA ya asumen [0]/[1]).
+  const espanaAddress = addresses?.[2];
 
   const copyUSAAddress = async () => {
     if (!usaAddress) return;
@@ -149,6 +153,28 @@ export default function AddressesPage() {
     await copyToClipboard(address);
   };
 
+  const copyEspanaAddress = async () => {
+    if (!espanaAddress) return;
+
+    const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
+    const userCode = user?.codCliente || "KVXXXXXXXX";
+    const casilleroName = espanaAddress.nombre || espanaAddress.addressLine1;
+
+    let address = "🇪🇸 DIRECCIÓN ESPAÑA\n";
+
+    if (casilleroName) address += `Tu Casillero Kraken: ${casilleroName}\n`;
+    if (userName) address += `Full Name: ${userName}\n`;
+    if (espanaAddress.addressLine1) address += `Address Line 1: ${espanaAddress.addressLine1}\n`;
+    if (userCode) address += `Address Line 2: (${userCode})\n`;
+    if (espanaAddress.city) address += `City: ${espanaAddress.city}\n`;
+    if (espanaAddress.stateProvince) address += `State: ${espanaAddress.stateProvince}\n`;
+    if (espanaAddress.zip) address += `ZIP: ${espanaAddress.zip}\n`;
+    if (espanaAddress.country) address += `Country: ${espanaAddress.country}\n`;
+    if (espanaAddress.phoneNumber) address += `Phone Number: ${espanaAddress.phoneNumber}`;
+
+    await copyToClipboard(address);
+  };
+
   const shareAddresses = async () => {
     const userName = `${user?.name ?? ""} ${user?.lastName ?? ""}`.trim();
     const userCode = user?.codCliente || "KVXXXXXXXX";
@@ -181,9 +207,24 @@ export default function AddressesPage() {
       if (chinaAddress.zip) text += `Postal Code: ${chinaAddress.zip}\n`;
       if (userName) text += `Full Name: ${userName}\n`;
       if (chinaAddress.phoneNumber) text += `Phone: ${chinaAddress.phoneNumber}`;
+      text += "\n";
     }
 
-    if (usaAddress || chinaAddress) {
+    if (espanaAddress) {
+      const espanaCasillero = espanaAddress.nombre || espanaAddress.addressLine1;
+      text += "🇪🇸 ESPAÑA\n";
+      if (espanaCasillero) text += `Tu Casillero Kraken: ${espanaCasillero}\n`;
+      if (userName) text += `Full Name: ${userName}\n`;
+      if (espanaAddress.addressLine1) text += `Address Line 1: ${espanaAddress.addressLine1}\n`;
+      if (userCode) text += `Address Line 2: (${userCode})\n`;
+      if (espanaAddress.city) text += `City: ${espanaAddress.city}\n`;
+      if (espanaAddress.stateProvince) text += `State: ${espanaAddress.stateProvince}\n`;
+      if (espanaAddress.zip) text += `ZIP: ${espanaAddress.zip}\n`;
+      if (espanaAddress.country) text += `Country: ${espanaAddress.country}\n`;
+      if (espanaAddress.phoneNumber) text += `Phone Number: ${espanaAddress.phoneNumber}`;
+    }
+
+    if (usaAddress || chinaAddress || espanaAddress) {
       if (navigator.share) {
         try {
           await navigator.share({ title: t('addresses.share_title'), text });
@@ -208,7 +249,7 @@ export default function AddressesPage() {
   }
 
   // Cambio aquí: mostrar si hay al menos una dirección
-  if (!usaAddress && !chinaAddress) {
+  if (!usaAddress && !chinaAddress && !espanaAddress) {
     return (
       <div className="addresses-page__loading">
         <p>{t('addresses.not_found')}</p>
@@ -297,6 +338,42 @@ export default function AddressesPage() {
               />
             </div>
           )}
+          {/* España Address - Solo mostrar si existe */}
+          {espanaAddress && (
+            <div className="addresses-page__section">
+              <div className="addresses-page__row">
+                <span
+                  role="img"
+                  aria-label="España"
+                  style={{
+                    display: 'inline-block',
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    marginRight: '0.5rem',
+                    background: 'linear-gradient(to bottom, #AA151B 25%, #F1BF00 25% 75%, #AA151B 75%)',
+                  }}
+                />
+                <h2 className="addresses-page__country-title">ESPAÑA</h2>
+                <button onClick={copyEspanaAddress} className="addresses-page__copy-button">
+                  <Copy size={18} />
+                </button>
+              </div>
+              <AddressBlock
+                casilleroName={espanaAddress.nombre || espanaAddress.addressLine1}
+                name={`${user.name ?? ""} ${user.lastName ?? ""}`.trim()}
+                line1={espanaAddress.addressLine1}
+                line2={`(${user.codCliente || "KVXXXXXXXX"})`}
+                city={espanaAddress.city}
+                state={espanaAddress.stateProvince}
+                zip={espanaAddress.zip}
+                country={espanaAddress.country}
+                phone={espanaAddress.phoneNumber}
+                isChina={false}
+                t={t}
+              />
+            </div>
+          )}
         </div>
 
         {/* Help */}
@@ -308,7 +385,7 @@ export default function AddressesPage() {
         </button>
 
         {/* Share - Solo mostrar si hay al menos una dirección */}
-        {(usaAddress || chinaAddress) && (
+        {(usaAddress || chinaAddress || espanaAddress) && (
           <div className="addresses-page__share-section">
             <p className="addresses-page__share-title">{t('addresses.share')}</p>
             <button onClick={shareAddresses} className="addresses-page__share-button">
