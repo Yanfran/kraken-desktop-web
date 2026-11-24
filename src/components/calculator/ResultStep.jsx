@@ -11,13 +11,12 @@ import {
   IoEyeOffOutline,     // Para el ojo cerrado 🙈
 } from 'react-icons/io5';
 
-const ResultStep = ({ 
-  result, 
-  selectedState, 
-  selectedMunicipality, 
-  declaredValue, 
+const ResultStep = ({
+  result,
+  selectedState,
+  declaredValue,
   originCountry,
-  onNewCalculation 
+  onNewCalculation
 }) => {
   const { t } = useTranslation();
   const [expandedCards, setExpandedCards] = useState({
@@ -331,7 +330,7 @@ const ResultStep = ({
       <div className="result-step__container">
         <p className="result-step__title">
           {t('calculator.shipment_from')} {originCountry === 'US' ? '🇺🇸 Estados Unidos' : originCountry}
-          {' '}{t('calculator.to')} {selectedState?.label}, {selectedMunicipality?.label} 🇻🇪
+          {' '}{t('calculator.to')} {selectedState?.label} 🇻🇪
         </p>
 
         <div className="result-step__package-info">

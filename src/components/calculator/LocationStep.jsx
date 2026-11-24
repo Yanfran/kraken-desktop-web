@@ -7,15 +7,9 @@ import './LocationStep.scss';
 
 const LocationStep = ({
   statesList,
-  municipalitiesList,
-  parishesList,
   selectedState,
-  selectedMunicipality,
-  selectedParish,
   originCountry, // 🆕 País de origen seleccionado
   onStateChange,
-  onMunicipalityChange,
-  onParishChange,
   onOriginCountryChange, // 🆕 Callback para cambiar país
   onNext,
   isLoading
@@ -37,22 +31,12 @@ const LocationStep = ({
       return;
     }
 
-    if (!selectedMunicipality || selectedMunicipality.trim() === '') {
-      setValidationError(t('calculator.error_select_municipality'));
-      return;
-    }
-
     onNext();
   };
 
   const handleStateChange = (value) => {
     setValidationError('');
     onStateChange(value);
-  };
-
-  const handleMunicipalityChange = (value) => {
-    setValidationError('');
-    onMunicipalityChange(value);
   };
 
   // 🆕 Handler para cambio de país de origen
@@ -88,8 +72,8 @@ const LocationStep = ({
           </div>
         </div>
 
-        {/* ✅ CONTENEDOR 2: ESTADO Y MUNICIPIO EN 2 COLUMNAS */}
-        <div className="location-step__grid"> 
+        {/* ✅ CONTENEDOR 2: ESTADO */}
+        <div className="location-step__grid">
           <div className="location-step__col">
             <label className="location-step__label">{t('calculator.state')} *</label>
             <SearchableSelect
@@ -100,20 +84,6 @@ const LocationStep = ({
               disabled={isLoading}
               className={validationError && !selectedState ?
                 'location-step__select location-step__select--error' :
-                'location-step__select'}
-            />
-          </div>
-
-          <div className="location-step__col">
-            <label className="location-step__label">{t('calculator.municipality')} *</label>
-            <SearchableSelect
-              options={municipalitiesList}
-              value={selectedMunicipality}
-              onChange={handleMunicipalityChange}
-              placeholder={selectedState ? t('calculator.select_municipality') : t('calculator.select_municipality_first')}
-              disabled={isLoading || !selectedState || municipalitiesList.length === 0}
-              className={validationError && !selectedMunicipality ? 
-                'location-step__select location-step__select--error' : 
                 'location-step__select'}
             />
           </div>

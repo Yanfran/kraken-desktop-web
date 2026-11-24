@@ -9,11 +9,6 @@ import PackageStep from '../../../components/calculator/PackageStep';
 import ResultStep from '../../../components/calculator/ResultStep';
 import axiosInstance from '../../../services/axiosInstance';
 import { API_URL } from '../../../utils/config';
-import { 
-  getStatesByCountry, 
-  getMunicipalitiesByState, 
-  getParishesByMunicipality 
-} from '../../../services/address/addressService';
 import './Calculator.scss';
 import './calculator-fixes.scss';
 
@@ -22,8 +17,6 @@ const LB_TO_KG = 0.453592;
 
 const getInitialCalculation = () => ({
   state: '',
-  municipality: '',
-  parish: '',
   originCountry: 'US', // 🆕 País de origen (US por defecto)
   destinationCountry: 'Venezuela',
   currency: 'USD',
@@ -53,8 +46,6 @@ const Calculator = () => {
 
   const [locationData, setLocationData] = useState({
     statesList: [],
-    municipalitiesList: [],
-    parishesList: [],
   });
 
   const [contentOptions, setContentOptions] = useState([]);
@@ -64,47 +55,27 @@ const Calculator = () => {
     loadInitialData();
   }, []);
 
-  useEffect(() => {
-    if (state.calculation.state) {
-      loadMunicipalities(Number(state.calculation.state));
-    } else {
-      setLocationData(prev => ({
-        ...prev,
-        municipalitiesList: [],
-        parishesList: []
-      }));
-    }
-  }, [state.calculation.state]);
-
-  useEffect(() => {
-    if (state.calculation.municipality) {
-      loadParishes(Number(state.calculation.municipality));
-    } else {
-      setLocationData(prev => ({
-        ...prev,
-        parishesList: []
-      }));
-    }
-  }, [state.calculation.municipality]);
-
   const loadInitialData = async () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
-      
+
+      // 🆕 Nueva calculadora (16/11/2026): estados SIN restringir por cobertura de
+      // tienda — la calculadora cotiza para cualquier estado, distinto del formulario
+      // real de direcciones (que sí restringe por spa_tbTiendaParroquias).
       const [estadosResp, contentResp] = await Promise.all([
-        getStatesByCountry(1), // Venezuela = 1
+        axiosInstance.get(`${API_URL}/Calculator/estados`),
         axiosInstance.get(`${API_URL}/PaqueteContenidos/getContent`)
       ]);
-      
-      const formattedStates = estadosResp.success && estadosResp.data 
-        ? estadosResp.data.map(e => ({
+
+      const formattedStates = estadosResp.data?.success && estadosResp.data?.data
+        ? estadosResp.data.data.map(e => ({
             label: e.name,
             value: e.id.toString(),
           }))
         : [];
-      
+
       setLocationData(prev => ({ ...prev, statesList: formattedStates }));
-      
+
       if (contentResp.data?.success && Array.isArray(contentResp.data.data)) {
         const lista = contentResp.data.data.map(e => ({
           label: e.contenido,
@@ -119,68 +90,9 @@ const Calculator = () => {
     }
   };
 
-  const loadMunicipalities = async (stateId) => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
-      const response = await getMunicipalitiesByState(stateId);
-      
-      const formatted = response.success && response.data
-        ? response.data.map(m => ({
-            label: m.name,
-            value: m.id.toString(),
-          }))
-        : [];
-      
-      setLocationData(prev => ({ ...prev, municipalitiesList: formatted }));
-      
-      setState(prev => ({
-        ...prev,
-        calculation: {
-          ...prev.calculation,
-          municipality: '',
-          parish: ''
-        }
-      }));
-    } catch (error) {
-      toast.error(t('calculator.error_load_municipalities'));
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  const loadParishes = async (municipalityId) => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
-      const response = await getParishesByMunicipality(municipalityId);
-      
-      const formatted = response.success && response.data
-        ? response.data.map(p => ({
-            label: p.name,
-            value: p.id.toString(),
-          }))
-        : [];
-      
-      setLocationData(prev => ({ ...prev, parishesList: formatted }));
-      
-      setState(prev => ({
-        ...prev,
-        calculation: {
-          ...prev.calculation,
-          parish: ''
-        }
-      }));
-    } catch (error) {
-      toast.error(t('calculator.error_load_parishes'));
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
-  };
-
   const handleLocationNext = () => {
-    if (!state.calculation.state || !state.calculation.municipality) {
-      toast.error(t('calculator.error_select_state_municipality'));
+    if (!state.calculation.state) {
+      toast.error(t('calculator.error_select_state'));
       return;
     }
     setState(prev => ({ ...prev, currentStep: 2 }));
@@ -231,7 +143,6 @@ const Calculator = () => {
       
       const calculationForAPI = {
         stateId: parseInt(state.calculation.state),
-        municipalityId: state.calculation.municipality ? parseInt(state.calculation.municipality) : undefined,
         declaredValue: declaredValueNum,
         currency: state.calculation.currency,
         content: contentString,
@@ -374,15 +285,9 @@ const Calculator = () => {
         return (
           <LocationStep
             statesList={locationData.statesList}
-            municipalitiesList={locationData.municipalitiesList}
-            parishesList={locationData.parishesList}
             selectedState={state.calculation.state}
-            selectedMunicipality={state.calculation.municipality}
-            selectedParish={state.calculation.parish}
             originCountry={state.calculation.originCountry} // 🆕 Pasar país
             onStateChange={(value) => updateCalculation({ state: value })}
-            onMunicipalityChange={(value) => updateCalculation({ municipality: value })}
-            onParishChange={(value) => updateCalculation({ parish: value })}
             onOriginCountryChange={handleOriginCountryChange} // 🆕 Callback
             onNext={handleLocationNext}
             isLoading={state.isLoading}
@@ -420,13 +325,11 @@ const Calculator = () => {
         if (!state.result) return null;
         
         const selectedState = locationData.statesList.find(s => s.value === state.calculation.state);
-        const selectedMunicipality = locationData.municipalitiesList.find(m => m.value === state.calculation.municipality);
-        
+
         return (
           <ResultStep
             result={state.result}
             selectedState={selectedState}
-            selectedMunicipality={selectedMunicipality}
             declaredValue={parseFormattedValue(state.calculation.declaredValue)}
             originCountry={state.calculation.originCountry}
             onNewCalculation={handleNewCalculation}
