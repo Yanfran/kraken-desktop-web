@@ -130,6 +130,24 @@ export const getSpainGuia = async (nGuia) => {
   }
 };
 
+// ── Lista de guías del cliente ─────────────────────────────────────────────────
+/**
+ * GET api/spain/guia/my-shipments
+ * Usado en la pantalla "Mis Envíos".
+ */
+export const getSpainMyShipments = async () => {
+  try {
+    const { data } = await axiosInstance.get(`${BASE}/my-shipments`);
+    return data;
+  } catch (err) {
+    return {
+      success: false,
+      data: [],
+      message: err?.response?.data?.message ?? 'Error cargando los envíos',
+    };
+  }
+};
+
 // ── Detalle completo de una guía ──────────────────────────────────────────────
 /**
  * GET api/spain/guia/{guiaId}/detail

@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '@/services/axiosInstance';
 import './TrackingPage.scss';
 
-const STATUS_STEPS = ['Registrado', 'Recogido', 'En tránsito', 'En reparto', 'Entregado'];
+// Barra de progreso deshabilitada: no hay API que mapee el estatus real a estos pasos
+// const STATUS_STEPS = ['Registrado', 'Recogido', 'En tránsito', 'En reparto', 'Entregado'];
 
-const getStepIndex = (status) => {
-  const idx = STATUS_STEPS.findIndex(s =>
-    s.toLowerCase() === status?.toLowerCase()
-  );
-  return idx === -1 ? 0 : idx;
-};
+// const getStepIndex = (status) => {
+//   const idx = STATUS_STEPS.findIndex(s =>
+//     s.toLowerCase() === status?.toLowerCase()
+//   );
+//   return idx === -1 ? 0 : idx;
+// };
 
 export default function TrackingPage() {
   const { nGuia }  = useParams();
@@ -47,7 +48,7 @@ export default function TrackingPage() {
       .finally(() => setLoading(false));
   };
 
-  const activeStep = data ? getStepIndex(data.currentStatus) : 0;
+  // const activeStep = data ? getStepIndex(data.currentStatus) : 0;
 
   return (
     <div className="ke-tracking">
@@ -109,7 +110,7 @@ export default function TrackingPage() {
             )}
           </div>
 
-          {/* Barra de progreso */}
+          {/* Barra de progreso deshabilitada: no hay API que mapee el estatus real a estos pasos
           <div className="ke-tracking__steps">
             {STATUS_STEPS.map((step, i) => (
               <div
@@ -130,6 +131,7 @@ export default function TrackingPage() {
               </div>
             ))}
           </div>
+          */}
 
           {/* Info general */}
           <div className="ke-tracking__info-grid">

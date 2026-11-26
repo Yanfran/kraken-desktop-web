@@ -69,6 +69,7 @@ const ESShipmentWizard = React.lazy(() => import('../modules/es/pages/ShipmentWi
 const ESTracking = React.lazy(() => import('../modules/es/pages/TrackingPage/TrackingPage'));
 const RedsysPagoResultado = React.lazy(() => import('../modules/es/pages/RedsysPagoResultado/RedsysPagoResultado'));
 const ESGuideDetail = React.lazy(() => import('../modules/es/pages/GuideDetail/ESGuideDetail'));
+const ESGuidesList = React.lazy(() => import('../modules/es/pages/GuidesList/ESGuidesList'));
 
 const TenantRouter = () => {
     const { tenant, isLoading } = useTenant();
@@ -185,6 +186,9 @@ const TenantRouter = () => {
                         {/* "Ver Nuestras Tiendas" del sidebar (ver Sidebar.jsx) — mismo
                             componente que usa USA en /stores, ya muestra la tarjeta ESPAÑA. */}
                         <Route path="/stores" element={<Addresses />} />
+
+                        {/* Mis Envíos */}
+                        <Route path="/guide/guides" element={<ESGuidesList />} />
 
                         {/* Detalle de guía */}
                         <Route path="/guide/detail/:idGuia" element={<ESGuideDetail />} />

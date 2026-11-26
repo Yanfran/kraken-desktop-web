@@ -118,8 +118,7 @@ export const TENANTS = {
               { id: 'addresses', label: 'Mis Direcciones', path: '/profile/addresses' },
               { id: 'password', label: 'Cambiar Contraseña', path: '/change-password' }
             ]
-          },
-          { id: 'support', label: 'Soporte', path: '/support' }
+          }
         ]
       }
     }

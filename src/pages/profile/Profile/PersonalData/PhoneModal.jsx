@@ -20,6 +20,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
   const countries = [
     { code: '+58', name: t('profile.venezuela'), flag: '🇻🇪' },
     { code: '+1',  name: t('profile.united_states'), flag: '🇺🇸' },
+    { code: '+34', name: t('profile.spain'), flag: '🇪🇸' },
   ];
 
   const venezuelanOperators = [
@@ -33,6 +34,7 @@ const PhoneModal = ({ show, onClose, onSave, initialPhone, initialPhoneSecondary
   const phoneFormats = {
     '+58': { mask: '###-##-##',     length: 7  },
     '+1':  { mask: '(###) ###-####', length: 10 },
+    '+34': { mask: '(###) ###-###', length: 9  },
   };
 
   useEffect(() => {
