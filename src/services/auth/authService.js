@@ -131,17 +131,23 @@ export const authService = {
         };
       }
       
-      // Usuario nuevo con correo sin verificar: tokenVerify presente → redirigir a confirmación
-      if (response.data.tokenVerify) {
+      // Usuario con correo sin verificar: completar registro y permitir reenviar verificación
+      if (
+        response.data.code === 'EMAIL_NOT_VERIFIED' ||
+        response.data.tokenVerify ||
+        (response.data.user?.clienteActivo === false && response.data.user?.fromEmail === false)
+      ) {
         return {
           success: false,
+          code: 'EMAIL_NOT_VERIFIED',
           tokenVerify: response.data.tokenVerify,
-          message: response.data.message || 'Verifica tu correo electrónico',
+          email: response.data.user?.email ?? credentials.email,
+          message: response.data.message || 'Tu correo electrónico aún no ha sido verificado. Debes completar tu registro.',
         };
       }
 
       // Cuenta deshabilitada por el administrador: sin tokenVerify + clienteActivo false
-      if (response.data.user?.clienteActivo === false) {
+      if (response.data.code === 'ACCOUNT_INACTIVE' || response.data.user?.clienteActivo === false) {
         return {
           success: false,
           message: 'Tu cuenta ha sido deshabilitada. Contacta al administrador.',

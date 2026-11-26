@@ -146,9 +146,7 @@ const Login = () => {
         redirectAfterAuth(result.user);
       } else {
 
-        if (result.tokenVerify) {
-          toast('Tu cuenta no está verificada. Reenvía el correo de confirmación.', { icon: '📧' });
-          navigate('/email-confirmation', { state: { email: formData.email } });
+        if (result.code === 'EMAIL_NOT_VERIFIED' || result.tokenVerify) {
           return;
         }
 

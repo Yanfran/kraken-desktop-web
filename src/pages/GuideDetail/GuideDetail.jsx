@@ -611,7 +611,7 @@ export default function GuideDetail() {
 
                   return (
                     <div key={detalle.numLinea} className={rowClass}>
-                      <p className={labelClass}>{isTotal ? 'Total' : detalle.descripcionItem}</p>
+                      <p className={labelClass}>{isTotal ? 'Total (Bs)' : detalle.descripcionItem}</p>
                       <span className={valueClass}>{formatBolivar(detalle.montoBs)}</span>
                     </div>
                   );

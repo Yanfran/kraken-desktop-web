@@ -4,6 +4,7 @@ import { authService } from '../services/auth/authService';
 import { googleService } from '../services/auth/googleService';
 import { useQueryClient } from '@tanstack/react-query';
 import Cookies from 'js-cookie';
+import toast from 'react-hot-toast';
 import CustomAlert from '../components/common/CustomAlert/CustomAlert';
 
 // ===== ESTADO INICIAL =====
@@ -82,6 +83,7 @@ export const AuthContext = createContext({
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const [showInactiveAlert, setShowInactiveAlert] = useState(false);
+  const [unverifiedAlert, setUnverifiedAlert] = useState({ visible: false, email: '', resending: false });
   const queryClient = useQueryClient();
 
   // ===== LISTENER: cuenta deshabilitada desde axiosInstance =====
@@ -197,7 +199,13 @@ export const AuthProvider = ({ children }) => {
         return { success: true };
       } else {
         dispatch({ type: 'ERROR', payload: response.message });
-        if (response.code === 'ACCOUNT_INACTIVE') {
+        if (response.code === 'EMAIL_NOT_VERIFIED') {
+          setUnverifiedAlert({
+            visible: true,
+            email: response.email || email.trim(),
+            resending: false,
+          });
+        } else if (response.code === 'ACCOUNT_INACTIVE') {
           setShowInactiveAlert(true);
         }
         return response;
@@ -480,6 +488,28 @@ export const AuthProvider = ({ children }) => {
             window.location.href = '/login';
           }
         }}
+      />
+      <CustomAlert
+        visible={unverifiedAlert.visible}
+        title="Registro incompleto"
+        message="Tu correo electrónico aún no ha sido verificado. Debes completar tu registro para iniciar sesión."
+        type="warning"
+        showCancel={true}
+        confirmText="Reenviar correo"
+        cancelText="Entendido"
+        loading={unverifiedAlert.resending}
+        onConfirm={async () => {
+          setUnverifiedAlert(prev => ({ ...prev, resending: true }));
+          const res = await resendVerificationEmail(unverifiedAlert.email);
+          setUnverifiedAlert({ visible: false, email: '', resending: false });
+          if (res.success) {
+            toast.success('Correo de verificación reenviado. Revisa tu bandeja de entrada y spam.');
+          } else {
+            toast.error(res.message || 'No se pudo reenviar el correo de verificación.');
+          }
+        }}
+        onCancel={() => setUnverifiedAlert({ visible: false, email: '', resending: false })}
+        onClose={() => setUnverifiedAlert({ visible: false, email: '', resending: false })}
       />
     </AuthContext.Provider>
   );

@@ -20,12 +20,12 @@ export const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user?.clienteActivo === false) {
-    return <Navigate to="/login" state={{ from: location, reason: 'account_inactive' }} replace />;
-  }
-
   if (user && !user.emailVerified && !user.fromEmail) {
     return <Navigate to="/email-confirmation" replace />;
+  }
+
+  if (user?.clienteActivo === false) {
+    return <Navigate to="/login" state={{ from: location, reason: 'account_inactive' }} replace />;
   }
 
   if (user && !user.profileComplete) {
