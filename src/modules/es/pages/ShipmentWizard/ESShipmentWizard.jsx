@@ -148,12 +148,15 @@ const ESShipmentWizard = () => {
 
       setCalculating(true);
 
+      const lockerId = destino.tipoDireccion === 'store' ? (destino.idLocker ?? null) : null;
+
       const result = isDoc
         ? await calculateSpainDocumentShipping({
             weight:         pesoKg,
             declaredValue:  parseFloat(pkg.valorFOB) || 0,
             estadoId:       stateId,
             tipoDireccion:  destino.tipoDireccion,
+            lockerId,
           })
         : await calculateSpainShipping({
             weight:         pesoKg,
@@ -163,6 +166,7 @@ const ESShipmentWizard = () => {
             declaredValue:  parseFloat(pkg.valorFOB) || 0,
             estadoId:       stateId,
             tipoDireccion:  destino.tipoDireccion,
+            lockerId,
           });
 
       setCalculating(false)

@@ -65,6 +65,7 @@ export const calculateSpainShipping = async ({
   declaredValue,
   estadoId,
   tipoDireccion,
+  lockerId,
 }) => {
   try {
     const payload = {
@@ -75,6 +76,7 @@ export const calculateSpainShipping = async ({
       declaredValue: parseFloat(declaredValue),
       estadoId: estadoId ?? null,
       tipoDireccion: tipoDireccion ?? null,
+      lockerId: lockerId ? Number(lockerId) : null,
     };
 
     // Llamada al nuevo controlador especializado
@@ -111,6 +113,7 @@ export const calculateSpainDocumentShipping = async ({
   declaredValue,
   estadoId,
   tipoDireccion,
+  lockerId,
 }) => {
   try {
     const payload = {
@@ -118,6 +121,7 @@ export const calculateSpainDocumentShipping = async ({
       declaredValue: parseFloat(declaredValue),
       estadoId: estadoId ?? null,
       tipoDireccion: tipoDireccion ?? null,
+      lockerId: lockerId ? Number(lockerId) : null,
     };
 
     const response = await axiosInstance.post('/ESP/SpainCalculator/calculate-documento', payload);
